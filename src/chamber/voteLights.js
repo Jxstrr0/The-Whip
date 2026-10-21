@@ -134,7 +134,8 @@ export function createVoteLights(records) {
       pulse = result.paired.flat().map(seatOfMp).filter(Boolean);
       for (const sid of pulse) set(sid, 'paired');
       pulseT = 0;
-      queue = [...result.yeas.map((id) => ['yea', seatOfMp(id)]), ...result.nays.map((id) => ['nay', seatOfMp(id)])];
+      // Each entry keeps the member's id so the board can read the name as the seat lights.
+      queue = [...result.yeas.map((id) => ['yea', seatOfMp(id), id]), ...result.nays.map((id) => ['nay', seatOfMp(id), id])];
       this.counts = { yea: 0, nay: 0 };
       timer = 0;
       if (!queue.length) done?.();
@@ -155,11 +156,11 @@ export function createVoteLights(records) {
         timer += dt;
         while (timer >= step && queue.length) {
           timer -= step;
-          const [k, sid] = queue.shift();
+          const [k, sid, mpId] = queue.shift();
           set(sid, k);
           this.counts[k]++;
           flashes.push({ i: byId.get(sid), k, t: 0 });
-          onTick?.(this.counts);
+          onTick?.(this.counts, mpId, k);
           if (!queue.length) {
             const d = onDone;
             onDone = null;
