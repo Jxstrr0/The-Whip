@@ -1,10 +1,10 @@
 // The shared figure kit: a stylised, faceless silhouette (shoulders, neck, an egg of a head under a hair cap,
 // a white collar, a lap when seated) built once per body part and drawn as instanced crowds, so a full House
-// costs eight draw calls. Expression lives in pose and in the UI's mood pill, not in faces. What the parts are
+// costs eight draw calls. Expression lives in pose, in the brows of a painted face, and in the UI's mood pill. What the parts are
 // made of (worsted, hair, skin, silk) is painted by figureTextures.js and worn through partMaterial().
 import * as THREE from 'three';
 import { merge, figureMaterial, worldUVs } from './kit3d.js';
-import { figureTextures } from './figureTextures.js';
+import { figureTextures, faceTexture } from './figureTextures.js';
 
 export const SKIN_TONES = ['#f1c8a5', '#e0ac85', '#c68d63', '#a26b45', '#7c4f31', '#5b3a24', '#efd2b8', '#d6a07a'];
 export const HAIR_COLOURS = ['#1a1412', '#2e1f16', '#4a3222', '#6b3a1f', '#8a8580', '#d9d4cc'];
@@ -91,7 +91,7 @@ export function capsule(r, len, segs = 8) {
 // Materials for the parts of a figure, with their cloth, hair, grain and silk. Crowds leave `color` unset
 // (instance colours carry it); the articulated figure sets one per part. `weave` and `tieStyle` come from
 // wardrobe(); crowds take the defaults.
-export function partMaterial(part, { color = null, weave = 'plain', tieStyle = 'solid' } = {}) {
+export function partMaterial(part, { color = null, weave = 'plain', tieStyle = 'solid', mood = 'neutral' } = {}) {
   const T = figureTextures();
   const opts = color ? { color } : {};
   const n = (scale) => new THREE.Vector2(scale, scale);
@@ -99,9 +99,10 @@ export function partMaterial(part, { color = null, weave = 'plain', tieStyle = '
     case 'suit':
       return figureMaterial({ ...opts, roughness: 0.84, map: weave === 'pinstripe' ? T.pinstripe : weave === 'chalk' ? T.chalk : T.cloth, normalMap: T.clothN, normalScale: n(0.55) });
     case 'hands':
-    case 'head':
     case 'skin':
       return figureMaterial({ ...opts, roughness: 0.62, normalMap: T.grainN, normalScale: n(0.3) });
+    case 'head':
+      return figureMaterial({ ...opts, roughness: 0.62, map: faceTexture(mood), normalMap: T.grainN, normalScale: n(0.3) });
     case 'hair':
       return figureMaterial({ ...opts, roughness: 0.78, map: T.hair, normalMap: T.hairN, normalScale: n(0.9) });
     case 'shirt':

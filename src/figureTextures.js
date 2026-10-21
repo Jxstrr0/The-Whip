@@ -157,6 +157,79 @@ function rep(n) {
   return { map: toTexture(c, 0.04, true) };
 }
 
+// A face, drawn once over the whole head: two dark eyes and a brow line each, and a faint mouth, in the
+// register of a boardroom chess piece rather than a portrait. The brows and mouth carry the mood of the
+// articulated figure; crowds wear the neutral face. Greyscale, multiplied over the skin tone, so it reads
+// on every complexion without whites of the eyes (which would need a second colour).
+// u runs round the head with +z (the front) at u = 0.25; v runs from the chin (0) to the crown (1).
+const FACES = {
+  neutral: { browTilt: 0, browLift: 0, mouth: 0, mouthW: 1 },
+  cooperative: { browTilt: 0.012, browLift: 0.008, mouth: 0.35, mouthW: 1.1 },
+  guarded: { browTilt: -0.02, browLift: -0.012, mouth: 0, mouthW: 0.85 },
+  angry: { browTilt: -0.05, browLift: -0.025, mouth: -0.3, mouthW: 0.8 },
+  anxious: { browTilt: 0.05, browLift: 0.03, mouth: -0.15, mouthW: 0.6 },
+};
+function face(mood) {
+  const f = FACES[mood] || FACES.neutral;
+  const W = 512;
+  const H = 256;
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const g = c.getContext('2d');
+  g.fillStyle = '#ffffff';
+  g.fillRect(0, 0, W, H);
+  const X = (u) => u * W;
+  const Y = (v) => (1 - v) * H;
+  const cx = 0.25;
+  for (const s of [-1, 1]) {
+    // The eye: a dark almond, a little darker toward its centre.
+    const ex = cx + s * 0.046;
+    const ey = 0.53;
+    g.save();
+    g.translate(X(ex), Y(ey));
+    g.scale(1, 1.15);
+    g.fillStyle = '#2a211c';
+    g.beginPath();
+    g.ellipse(0, 0, W * 0.012, H * 0.012, 0, 0, Math.PI * 2);
+    g.fill();
+    g.restore();
+    // The brow: a short stroke above the eye, its inner end lifted (anxious) or lowered (angry).
+    const by = 0.595 + f.browLift;
+    g.strokeStyle = '#3a2d25';
+    g.lineCap = 'round';
+    g.lineWidth = H * 0.016;
+    g.beginPath();
+    g.moveTo(X(ex - s * 0.02), Y(by + f.browTilt * 0.5));
+    g.lineTo(X(ex + s * 0.02), Y(by - f.browTilt * 0.5));
+    g.stroke();
+  }
+  // The mouth: a faint short line, curving up or down with the mood.
+  const my = 0.4;
+  g.strokeStyle = '#7a5e52';
+  g.lineWidth = H * 0.009;
+  g.beginPath();
+  g.moveTo(X(cx - 0.022 * f.mouthW), Y(my));
+  g.quadraticCurveTo(X(cx), Y(my - f.mouth * 0.03), X(cx + 0.022 * f.mouthW), Y(my));
+  g.stroke();
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  // One face per head: the head's UVs are in metres, so the repeat is the head's own size.
+  t.repeat.set(1 / HEAD_U, 1 / HEAD_V);
+  SHARED_TEXTURES.add(t);
+  return t;
+}
+// The head's UV extents in metres (see egg() and HEAD_R in figures.js): once round, and chin to crown.
+const HEAD_U = Math.PI * 2 * 0.115 * 1.01;
+const HEAD_V = Math.PI * 0.115 * 1.12;
+const faces = new Map();
+export function faceTexture(mood = 'neutral') {
+  const k = FACES[mood] ? mood : 'neutral';
+  if (!faces.has(k)) faces.set(k, face(k));
+  return faces.get(k);
+}
+
 let cache = null;
 // Every figure map, built on first use and shared by every room for the life of the page.
 export function figureTextures() {

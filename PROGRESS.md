@@ -698,3 +698,17 @@ Kelbo's once-over picked twelve things. This is the first: the two rooms where a
 - Cloth patterns are per figure, not per instance, so the benches and the caucus table are all plain weave; stripes would not read at that distance anyway.
 - `tools/lineup.html` now dresses its figures with `wardrobe()` and takes `?zoom=1` (the articulated figures) or `?zoom=2` (two crowd figures) for judging the cloth and hair up close.
 - `tests.html`: 74 of 74. Chamber, office (all four moods), caucus, riding and the town hall checked at phone size in portrait and landscape; no console errors.
+
+## 2026-10-21 · Faces (an exploration, for Kelbo to keep or drop)
+
+**What was built**
+
+- Kelbo asked to see faces. The art pass had ruled them out for fear of the uncanny valley, so this is kept to the register of a boardroom chess piece: two dark almond eyes, a brow stroke over each, a faint mouth line. No whites of the eyes, no nose, no shading. The face is one greyscale map multiplied over the skin, so it reads on every complexion and costs nothing extra to draw.
+- In the office and the riding, the face follows the mood. Cooperative: brows level, a slight smile. Guarded: brows a touch lower, mouth flat and short. Angry: brows down and in, mouth turned down. Anxious: inner brows lifted, a small mouth. The crowds wear the neutral face. The mood was already in the pose and the pill; now it is on the face too, which is where a player looks first.
+- This is its own commit, so it can be reverted on its own if the faces are a mistake.
+
+**Things to know / decisions I made**
+
+- At bench distance the face is two dark dots, which is how it should be. The near shots (office visitor, the riding's callers, the caucus table from the whip's seat) are where it shows.
+- Five face maps, 512×256 each, drawn once and shared.
+- `tests.html`: 74 of 74 after the faces; same rooms checked again, no console errors.
