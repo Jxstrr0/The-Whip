@@ -1,10 +1,12 @@
-// The whip's record: the last page of a career, stamped with how it ended, and a way to start another.
+// The whip's record: the last page of a career, stamped with how it ended, then the memoir of the moments
+// that made it, the numbers, and a way to start another.
 import { t, esc, stamp } from './text.js';
+import { timelineHTML, statsHTML, wireTimeline } from './memoirUI.js';
 
-const STAMP = { retirement: 'brass', cabinet: 'yea', exit: 'grey', fall: 'nay', revolt: 'nay' };
+const STAMP = { retirement: 'brass', cabinet: 'yea', exit: 'grey', fall: 'nay', revolt: 'nay', defeated: 'nay', nomination: 'nay' };
 const ROWS = ['weeks', 'parliaments', 'votesWon', 'votesLost', 'confidenceSurvived', 'promoted', 'expelled', 'promisesKept', 'promisesBroken', 'mentored'];
 
-export function createRecordUI(root, { getState, onNewGame }) {
+export function createRecordUI(root, { getState, onNewGame, onPerson }) {
   const sheet = document.createElement('section');
   sheet.className = 'sheet record-sheet hidden';
   root.appendChild(sheet);
@@ -26,6 +28,10 @@ export function createRecordUI(root, { getState, onNewGame }) {
       <p class="muted">${esc(r.name)} · ${esc(r.riding)} · ${esc(r.party)}</p>
       <p>${stamp(t('ending.' + p.endingKind), STAMP[p.endingKind] || '', true)}</p>
       <blockquote class="line">${esc(p.epilogue || '')}</blockquote>
+      ${statsHTML(state, ['weeks', 'parliaments', 'votesWon', 'promisesKept'])}
+      <h3>${t('memoir.moments')}</h3>
+      ${timelineHTML(state)}
+      <h3>${t('memoir.numbers')}</h3>
       <div class="kvs">
         <div class="kv"><span class="k">${t('record.act')}</span><span class="v">${esc(r.rank)} · ${t('career.act', { n: r.act })}</span></div>
         <div class="kv"><span class="k">${t('record.style')}</span><span class="v">${esc(t('rep.' + r.style))}</span></div>
@@ -34,6 +40,8 @@ export function createRecordUI(root, { getState, onNewGame }) {
       <div class="card-actions"><button class="btn primary" data-act="new">${t('ending.new')}</button></div>`;
     sheet.querySelector('[data-act="new"]').onclick = onNewGame;
     sheet.classList.remove('hidden');
+    sheet.scrollTop = 0;
+    wireTimeline(sheet, { onPerson });
   }
   return { render };
 }

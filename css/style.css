@@ -2245,3 +2245,278 @@ body.cold-open .topbar {
     max-height: none;
   }
 }
+
+/* ---- The memoir: a career set down as a timeline, chapters by rank, a rule for each Parliament ---------- */
+
+.memoir-sheet,
+.record-sheet {
+  top: calc(64px + env(safe-area-inset-top));
+  max-height: none;
+  z-index: 6; /* above whichever room sheet is open */
+}
+.mp-card {
+  z-index: 7; /* a name tapped in the memoir or the record opens over it */
+}
+@media (orientation: landscape) and (min-width: 700px) {
+  .memoir-sheet,
+  .record-sheet {
+    width: min(560px, 58vw);
+    bottom: 0; /* a short screen needs every line; the page has its own close */
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+}
+.memoir-stats {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  margin: 12px 0 4px;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink-3);
+}
+.memoir-stats > div {
+  padding: 8px 4px 7px;
+  text-align: center;
+}
+.memoir-stats > div + div {
+  border-left: 1px solid var(--ink-3);
+}
+.memoir-stats b {
+  display: block;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.memoir-stats small {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  line-height: 1.15;
+  color: var(--ink-2);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.05em;
+}
+.memoir-from {
+  font-style: italic;
+}
+
+.timeline {
+  position: relative;
+  margin: 8px 0 18px;
+  padding-left: 26px;
+}
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 10px;
+  bottom: 18px;
+  width: 0;
+  border-left: 3px double var(--ink-3);
+}
+.timeline .chapter {
+  position: relative;
+  margin: 22px 0 10px;
+  padding-bottom: 4px;
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 500;
+  font-variant-caps: normal;
+  letter-spacing: -0.005em;
+  border-bottom: 1px solid var(--ink);
+}
+.timeline .chapter:first-child {
+  margin-top: 10px;
+}
+.timeline .chapter small {
+  display: block;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brass);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.12em;
+}
+.timeline .chapter::before {
+  content: "";
+  position: absolute;
+  left: -23px;
+  bottom: 7px;
+  width: 9px;
+  height: 9px;
+  background: var(--brass);
+  transform: rotate(45deg);
+  box-shadow: 0 0 0 3px var(--paper);
+}
+.timeline .parl-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 26px 0 6px -26px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.12em;
+}
+.timeline .parl-mark::before,
+.timeline .parl-mark::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--ink-2);
+}
+.timeline .parl-mark span {
+  padding: 2px 8px;
+  background: var(--paper);
+  border: 1px solid var(--ink-2);
+}
+
+.moment {
+  --tone: var(--grey);
+  position: relative;
+  margin: 0 0 14px;
+  padding: 9px 12px 11px;
+  background: rgba(255, 252, 244, 0.42);
+  border: 1px solid var(--ink-4);
+  border-top: 2px solid var(--tone);
+  box-shadow: 0 1px 2px rgba(29, 26, 22, 0.12);
+}
+.moment.tone-brass {
+  --tone: var(--brass);
+}
+.moment.tone-yea {
+  --tone: var(--yea);
+}
+.moment.tone-nay {
+  --tone: var(--nay);
+}
+.moment::before {
+  content: "";
+  position: absolute;
+  left: -23px;
+  top: 12px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--tone);
+  box-shadow: 0 0 0 3px var(--paper);
+}
+.moment.tone-brass::before {
+  width: 11px;
+  height: 11px;
+  left: -24px;
+  background: var(--paper);
+  border: 3px solid var(--brass);
+  box-sizing: border-box;
+}
+.moment .when {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+}
+.moment .when .what {
+  flex: none;
+  font-weight: 600;
+  color: var(--tone);
+}
+.moment.tone-grey .when .what {
+  color: var(--ink-2);
+}
+.moment h4 {
+  margin: 2px 0 4px;
+  font-family: var(--serif);
+  font-size: 18.5px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.moment .said {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.moment .people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+.moment .who {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 4px 10px 4px 9px;
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--ink-3);
+  border-left: 4px solid var(--party, var(--grey));
+  border-radius: 2px;
+}
+.moment button.who {
+  cursor: pointer;
+  box-shadow: 0 1px 0 var(--ink-3);
+}
+.moment button.who:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+.moment .who b {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.moment .who small {
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--ink-2);
+}
+.moment .who.gone {
+  border-style: dashed;
+  border-left-style: solid;
+  opacity: 0.78;
+}
+
+/* Moments come up off the page as they scroll in. */
+.timeline .moment,
+.timeline .chapter,
+.timeline .parl-mark {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 420ms ease-out, transform 480ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.timeline .seen {
+  opacity: 1;
+  transform: none;
+}
+.timeline .moment.seen::before {
+  animation: memoir-dot 520ms 140ms both;
+}
+@keyframes memoir-dot {
+  from {
+    transform: scale(0.2);
+  }
+  60% {
+    transform: scale(1.35);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .timeline .moment,
+  .timeline .chapter,
+  .timeline .parl-mark {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .timeline .moment.seen::before {
+    animation: none;
+  }
+}

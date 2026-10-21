@@ -5,6 +5,7 @@ import { registerActions } from './actions.js';
 import { log } from './pacing.js';
 import { reseat } from './modes.js';
 import { reputation } from './relationships.js';
+import { remember, person } from './memoir.js';
 
 const ROLE_RANK = { backbencher: 'Backbencher', committeeChair: 'Committee chair', assistantWhip: 'Assistant whip', deputyWhip: 'Deputy whip', chiefWhip: 'Chief Whip', parliamentarySecretary: 'Parliamentary secretary', cabinet: 'Minister' };
 
@@ -35,6 +36,11 @@ export function whipRecord(state) {
 
 // Close the career. The ending stop shows the record; nothing moves past it.
 export function endCareer(state, kind, extra = {}) {
+  // The last page of the memoir (a lost seat already has its election night there).
+  if (!['defeated', 'nomination'].includes(kind)) {
+    const leader = state.parties[state.mps[state.player.mpId].party]?.leader;
+    remember(state, 'ending', { sub: kind, ctx: { portfolio: extra.portfolio || 'a portfolio', leader: leader ? `${state.mps[leader].name.first} ${state.mps[leader].name.last}` : 'The leader' }, people: kind === 'cabinet' || kind === 'exit' ? [person(state, leader, data().memoir.notes.leader)] : [] });
+  }
   state.ending = { endingKind: kind, week: state.date.absWeek, record: whipRecord(state), epilogue: data().career.ending[kind] || '', ...extra };
   state.flow.pending = { kind: 'ending', important: true, needsChoice: true, ...state.ending };
   log(state, `The whip's career ends: ${kind}.`, 'career');
@@ -86,6 +92,7 @@ export function crossFloor(state, partyId) {
   p.whipTrust[from?.id] = -40;
   delete p.whipTrust[partyId];
   reseat(state);
+  remember(state, 'crossed', { ctx: { from: from ? from.name : 'your old party', to: to.name }, people: [person(state, to.leader, data().memoir.notes.tookYouIn)] });
   log(state, `You crossed the floor to ${to.name}. ${from ? from.name : 'Your old caucus'} won't forget it. You start again as a rookie, with your name going ahead of you.`, 'career');
   return { ok: true };
 }

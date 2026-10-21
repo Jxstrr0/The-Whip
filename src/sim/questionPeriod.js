@@ -8,6 +8,7 @@ import { hooks, resolvers, log, isSittingWeek } from './pacing.js';
 import { adjustRapport, addStyle } from './relationships.js';
 import { headline } from './media.js';
 import { ridingVars } from './riding.js';
+import { remember, person } from './memoir.js';
 
 export const FRAMINGS = ['soft', 'pointed', 'offScript'];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -159,6 +160,7 @@ export function ask(state, rng, framing) {
   }
   qp.effects = fx;
   p.record.questions = (p.record.questions || 0) + 1;
+  remember(state, 'firstQuestion', { sub: outcome, once: true, ctx: { minister: fullName(minister) || 'the minister', topic: framing === 'offScript' || !qp.bill ? qp.local.issue : qp.bill }, people: [person(state, minister?.id, data().memoir.notes.minister)] });
   log(state, `Question Period: you asked ${fullName(minister) || 'the minister'} about ${framing === 'offScript' ? qp.local.issue : qp.bill || qp.local.issue}. ${qp.gallery}`, 'info');
 }
 

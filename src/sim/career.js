@@ -4,6 +4,7 @@ import { withRng, createRng } from './rng.js';
 import { makeBill } from './bills.js';
 import { hooks, log, resolvers, queueStop } from './pacing.js';
 import { adjustRapport } from './relationships.js';
+import { remember, person } from './memoir.js';
 
 export function blankPlayer(mpId) {
   return {
@@ -197,6 +198,8 @@ function graduateAct1(state) {
   p.slots = tuning().meetings.slotsByAct?.[2] ?? p.slots;
   const rival = p.rival ? state.mps[p.rival] : null;
   log(state, `Act 2. The whip's office has you down as ${p.reputation === 'reliable' ? 'reliable' : 'useful trouble'}.${rival ? ` ${fullName(rival)} wants the same things you do.` : ''}`, 'career');
+  const M = data().memoir;
+  remember(state, 'act2', { sub: p.reputation, people: [person(state, p.rival, M.notes.rival), person(state, whipOf(state), M.notes.whip)], aside: rival ? fill(M.asides.rival, { rival: fullName(rival) }) : '' });
   return { kind: 'career', event: 'act2', important: true, needsChoice: true, reputation: p.reputation, rival: p.rival, text: data().career.act2[p.reputation], rivalText: rival ? fill(data().career.rival, { rival: fullName(rival) }) : '' };
 }
 
@@ -275,6 +278,7 @@ function decideVacancy(state, rng, choice) {
     p.slots = tuning().meetings.slotsByAct?.[3] ?? p.slots;
     if (whip) adjustRapport(state, whip, 5);
     log(state, `The chair is yours. You're an assistant whip, with a row to answer for.`, 'career');
+    remember(state, 'act3', { ctx: { whip: ctx.whip, rival: ctx.rival }, people: [person(state, p.rival, data().memoir.notes.lostToYou), person(state, whip, data().memoir.notes.whip)] });
     return { kind: 'career', event: 'act3', important: true, needsChoice: true, text: fill(V.won, ctx) + ' ' + data().career.act3, score: [Math.round(mine), Math.round(theirs)] };
   }
   if (rival) {
@@ -282,6 +286,7 @@ function decideVacancy(state, rng, choice) {
     party.assistantWhips.push(rival.id);
   }
   log(state, `${ctx.rival} got the chair in the whip's office. 'Next time,' the whip said.`, 'career');
+  remember(state, 'vacancyLost', { once: true, ctx: { whip: ctx.whip, rival: ctx.rival }, people: [person(state, p.rival, data().memoir.notes.gotChair), person(state, whip, data().memoir.notes.whip)] });
   return { kind: 'career', event: 'lost', important: true, needsChoice: true, rival: p.rival, text: fill(V.lost, ctx), score: [Math.round(mine), Math.round(theirs)], options: [{ id: 'wait', label: V.wait, note: V.waitNote, enabled: true }, { id: 'changeClique', label: V.changeClique, note: V.changeCliqueNote, enabled: true }, { id: 'committeeChair', label: V.committeeChair, note: V.committeeChairNote, enabled: me.caucusRole !== 'committeeChair' }] };
 }
 
@@ -307,6 +312,7 @@ function afterLoss(state, choice) {
     me.caucusRole = 'committeeChair';
     p.standing = Math.min(100, (p.standing || 50) + 5);
     log(state, `You took the committee chair. A title, a staff, and your name still on the whip's list.`, 'career');
+    remember(state, 'committeeChair');
   } else {
     log(state, `You'll wait for the next vacancy.`, 'career');
   }

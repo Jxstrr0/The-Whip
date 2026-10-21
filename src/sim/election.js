@@ -10,6 +10,7 @@ import { buildCliques, buildRelations, assignMentors } from './relationships.js'
 import { reseat } from './modes.js';
 import { endCareer } from './record.js';
 import { headline } from './media.js';
+import { remember, ordinal } from './memoir.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
@@ -200,6 +201,12 @@ export function runElection(state, rng, choice = 'canvass') {
   const gov = state.parties[state.house.government];
   const summary = { kind: 'election', phase: 'result', important: true, needsChoice: true, parliament: newParliament, government: gov.id, governmentName: gov.name, minority: state.house.minority, seats, campaignText, cohortLost, newcomers: openings.length, gone: gone.length, player: { riding: me.riding.name, result: deselected ? 'deselected' : playerLost ? 'lost' : 'held', margin: clamp(Math.abs(Math.round(scores.get(me.id))), 1, 40), standing: p.ridingStanding }, changed: gov.id !== oldGov };
   log(state, `Election night: ${gov.name} ${state.house.minority ? 'forms a minority government' : 'forms the government'} with ${gov.seats} seats.`, 'confidence');
+  const govCtx = { gov: gov.name, govKind: state.house.minority ? 'minority' : 'majority' };
+  remember(state, 'election', {
+    sub: summary.player.result,
+    ctx: { nth: ordinal(newParliament), ...govCtx },
+    aside: summary.player.result === 'held' ? fill(data().memoir.asides[summary.changed ? 'govChanged' : 'govSame'], govCtx) : '',
+  });
   if (playerLost) {
     log(state, deselected ? `The riding association deselected you before the writ.` : `You lost ${me.riding.name}.`, 'career');
     summary.needsChoice = true;

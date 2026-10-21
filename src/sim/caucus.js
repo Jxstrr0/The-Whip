@@ -8,12 +8,29 @@ import { revealMany, touch } from './knowledge.js';
 import { adjustRapport, addStyle } from './relationships.js';
 import { dilemmaFor } from './career.js';
 import { baseScore } from './mp.js';
+import { remember, person } from './memoir.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
 const fillText = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
 
 // Seat the caucus by clique around the table, leader at the head; the player moves up with rank.
+// A revolt in the caucus room goes in the memoir (the first one, any that won, any you took a side in): who
+// led it, who it was for, and where you stood.
+function rememberRevolt(state, r, won, oldLeader) {
+  if (!won && r.choice !== 'join' && r.choice !== 'back' && state.memoir?.some((e) => e.kind === 'revolt')) return;
+  const M = data().memoir;
+  const party = state.parties[state.mps[state.player.mpId].party];
+  const ring = state.mps[r.ringleader];
+  const newLeader = r.target === 'leader' && won ? state.mps[party.leader] : null;
+  const ctx = { ringleader: ring ? fullName(ring) : 'The ringleader', leader: oldLeader ? fullName(oldLeader) : 'the leader', newLeader: newLeader ? fullName(newLeader) : '' };
+  const sub = `${r.target === 'leader' ? 'leader' : 'whip'}${won ? 'Won' : 'Lost'}`;
+  const stood = r.target === 'leader' ? M.asides[r.choice === 'join' ? 'revoltJoin' : r.choice === 'back' ? 'revoltBack' : 'revoltStay'] : '';
+  const people = [person(state, r.ringleader, M.notes.ringleader)];
+  if (r.target === 'leader') people.push(person(state, oldLeader?.id, M.notes.oldLeader), newLeader && newLeader !== ring ? person(state, newLeader.id, M.notes.newLeader) : null);
+  remember(state, 'revolt', { sub, ctx, people, aside: stood ? stood.replace('{leader}', ctx.leader) : '' });
+}
+
 export function caucusSeating(state, partyId) {
   const p = state.parties[partyId];
   const members = Object.values(state.mps).filter((m) => m.party === partyId && m.caucusRole !== 'speaker');
@@ -220,6 +237,7 @@ export function resolveRevolt(state, rng) {
   r.won = won;
   r.outcome = text;
   p.lastRevolt = { week: state.date.absWeek, target: r.target, won, choice: r.choice };
+  rememberRevolt(state, r, won, leader);
   log(state, text, 'caucus');
   return { won, text };
 }
