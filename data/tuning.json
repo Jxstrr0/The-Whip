@@ -376,6 +376,7 @@
   "media": {
     "pollSwing": {
       "confidenceLost": -2.5,
+      "confidenceLostHandover": -2.0,
       "confidenceSurvived": 0.6,
       "billDefeated": -1.2,
       "rebellion": -0.8,

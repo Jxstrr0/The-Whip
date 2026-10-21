@@ -54,6 +54,12 @@
     { "id": "h034", "event": "confidenceLost", "text": "{party} loses the House, and maybe much more" },
     { "id": "h035", "event": "confidenceLost", "text": "Minority Parliament ends on a {nays}–{yeas} vote" },
 
+    { "id": "h066", "event": "confidenceLostHandover", "text": "Government falls, {nays} to {yeas}; the Governor General sends for {opposition}" },
+    { "id": "h067", "event": "confidenceLostHandover", "text": "{leader} out after {bill}. No election: {opposition} asked to govern" },
+    { "id": "h068", "event": "confidenceLostHandover", "text": "A new government without a vote: {opposition} takes the Treasury benches" },
+    { "id": "h069", "event": "confidenceLostHandover", "text": "{bill} brings down the government in its first months; {opposition} to try its hand" },
+    { "id": "h070", "event": "confidenceLostHandover", "text": "Minority falls early. Caledor gets a new government, not a campaign" },
+
     { "id": "h036", "event": "closeVote", "text": "{bill} squeaks through, {yeas} to {nays}" },
     { "id": "h037", "event": "closeVote", "text": "Nail-biter in the House as {bill} decided by a handful" },
     { "id": "h038", "event": "closeVote", "text": "{yeas}–{nays}: the closest vote of the session" },
