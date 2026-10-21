@@ -817,6 +817,50 @@ input::placeholder {
   display: inline-block;
   margin-right: 8px;
 }
+/* The Clerk's roll: the last few names read, newest at the right and darkest; the others fade behind it. */
+.roll {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  min-height: 24px;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 24px;
+}
+.roll span {
+  opacity: 0.35;
+  animation: roll-in 160ms ease-out;
+}
+.roll span:nth-last-child(2) {
+  opacity: 0.6;
+}
+.roll span:last-child {
+  opacity: 1;
+}
+.roll span::before {
+  content: '✔ ';
+  color: var(--yea);
+}
+.roll span.nay::before {
+  content: '✖ ';
+  color: var(--nay);
+}
+.roll span.mine {
+  font-weight: 700;
+}
+.roll span.me {
+  text-decoration: underline;
+  text-decoration-color: var(--brass);
+  text-underline-offset: 3px;
+}
+@keyframes roll-in {
+  from {
+    transform: translateX(10px);
+    opacity: 0;
+  }
+}
 .verdict {
   font-size: 18px;
   font-weight: 600;

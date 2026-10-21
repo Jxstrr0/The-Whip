@@ -607,3 +607,16 @@ Kelbo's once-over picked twelve things. This is the first: the two rooms where a
 - The turn is a small rotation of the look direction, not a lens shift, so verticals stay straight and the shots in each scene file are untouched.
 - The chamber keeps its own camera (it has orbit and focus moves of its own); the division sheet in landscape is a separate question.
 - `tests.html`: 69 of 69. Checked in portrait and landscape at phone size with a visitor seated in the office and in the riding, and the caucus in landscape; no console errors.
+
+## 2026-10-21 · Round two, 2 of 12: the Clerk reads the names
+
+**What was built**
+
+- **The roll on the count board.** During a recorded division the board already said "The Clerk reads the names"; now it does. As each seat lights, that member's name slides onto a strip under the tally, the newest at the right and darkest, the last three fading behind it. Each carries its ✔ or ✖. Names from your own caucus are bold; your own is underlined in brass, so you can see yourself counted.
+- **The vote lights pass the member through.** `voteLights.play` keeps each member's id in its queue and hands it to the board on every tick, with the count. Nothing in the sim changed.
+
+**Things to know / decisions I made**
+
+- Surnames only, with no honorifics: the sim doesn't carry a form of address, and the Clerk's roll in the real House is names, not titles. The strip appends one span and drops the oldest rather than redrawing, so the names already read stay still.
+- At the tuned 0.08 s a seat the strip runs quickly; that's the point, the count moving under you. "Show result" still jumps to the end.
+- `tests.html`: 69 of 69. Checked at phone size in portrait and landscape through a real division; no console errors.
