@@ -33,3 +33,9 @@ Files: desk, chairDesk, chairCushion, loungeChair, loungeChairRelax, loungeSofa,
 From **KayKit** (https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits), licence **CC0 1.0 Universal** (the repo's `LICENSE.txt`: "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/"). Used as shipped (glTF + bin + the shared `citybits_texture.png` atlas, which stays on the models). About 1:5 scale; the loader scales them.
 
 Files: streetlight, bench, car_sedan, firehydrant, trash_A, bush.
+
+### `food/` — Kenney Food Kit
+
+From **Kenney** (https://kenney.nl/assets/food-kit), licence **CC0 1.0 Universal** (the pack's `License.txt`). Used as shipped (GLB + `Textures/colormap.png`, which stays on the models). About 2.4× real scale; the loader scales them down.
+
+Files: bottle-oil (the water carafe), glass, cup-coffee, cup-saucer.

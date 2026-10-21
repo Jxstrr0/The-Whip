@@ -365,3 +365,20 @@ The first step of `ART-PASS.md`. Nothing in the rooms was redesigned yet; this i
 
 - Placards are blank boards on purpose; what the crowd is saying is in the sheet. Lettering them is a later flourish if you want it.
 - The street props keep KayKit's own painted colours; the furniture is retinted to the game's palette. Both read as one set under the same light.
+
+---
+
+## 2026-10-21 · Art pass V6: the caucus room
+
+**What changed**
+
+- **The room.** A walnut table with a green baize runner down the middle, papers squared at every place, water carafes and glasses every third seat (from Kenney's Food Kit, CC0, 52 KB, listed in `assets/LICENSES.md`), the kit's chairs round the table drawn as one instanced mesh, the leader in the tall desk chair at the head. Oak wainscot with panel strips to 1.2 m, plaster above, a beamed plaster ceiling, three pendants with brass rings. Behind the head of the table: the party's banner on a brass rod and two portraits in gilt frames.
+- **The camera** stands a step behind your own chair at seated eye height, looking along the table past your neighbours' backs; drag still pans along it. Opening **Speak** turns the camera to the head of the table and brings it back a moment after you've spoken.
+- **The whip's read, without recolouring people.** Everyone keeps their party colour. The seats you can read carry their mood as a shaped mark above the head (a green circle, a grey square, a red triangle, an amber diamond, so they read without colour) and a matching glow on the floor behind the chair. A brass ring marks your own seat.
+- **"Keeps leaning over to"** is now something you see: after you listen, each pair you heard about turns toward each other for a couple of seconds.
+- Kit props everywhere now take the right hue per surface (frames oak, seats green leather); before this the chairs came out pale.
+
+**Checks**
+
+- Guided week through the real buttons in a headless phone browser: no console errors. `tests.html`: 33 of 33.
+- The room checked in portrait from your seat and in landscape at the head of the table, with moods marked and two pairs leaning.
