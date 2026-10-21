@@ -23,7 +23,7 @@ Kelbo's words: "remember this is a flagship game, let's do this right." The Whip
 
 - No build step. Plain HTML, CSS and ES modules.
 - Three.js `0.160.0` only, through the import map from `cdn.jsdelivr.net`. No other external resources.
-- Phone-first. Deployed to GitHub Pages from `main` at the repo root (`.nojekyll`).
+- Phone-first. Deployed to GitHub Pages from `main` at the repo root (`.nojekyll`). `.github/workflows/pages.yml` publishes every push to `main`; after a merge, check the run went green and the live URL loads.
 - Saves in `localStorage` under `whip:` keys, always wrapped in try/catch.
 - Deterministic sim: no `Math.random` in `src/sim/`; all randomness through the seeded RNG.
 - `src/sim/` never touches the DOM or Three.js.
