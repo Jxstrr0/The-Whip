@@ -382,3 +382,24 @@ The first step of `ART-PASS.md`. Nothing in the rooms was redesigned yet; this i
 
 - Guided week through the real buttons in a headless phone browser: no console errors. `tests.html`: 33 of 33.
 - The room checked in portrait from your seat and in landscape at the head of the table, with moods marked and two pairs leaning.
+
+---
+
+## 2026-10-21 · Art pass V7: motion and life
+
+**What changed**
+
+- **The chamber breathes.** On an ordinary sitting day a member slips out of their seat every twenty seconds or so, walks down to the aisle and out past the bar, and later someone comes back in and sits down. It pauses for the bells and the count. Two Clerks sit at the Speaker's end of the table and stand for the count. The Speaker's gavel lifts and falls when the result is in.
+- **The camera settles instead of sitting.** Every state change in the chamber gives the view a tiny nudge that eases back, so the picture never feels frozen; the office, riding and caucus cameras already ease between shots and sway a little.
+- **The title page has the House behind it.** The start menu now sits over the real chamber, seated for whichever seed is in the box (change the seed and the House reseats itself), with the camera drifting slowly from side to side. The paper title page stays on top.
+- A number for the walkers' rhythm (`look.walkerEvery`) joins `data/tuning.json`.
+
+**Checks**
+
+- A 76-second soak in the chamber while members came and went: geometries flat at 41, draw calls flat at 36, no growth. `tests.html`: 33 of 33. Guided week through the real buttons, headless phone browser: no console errors.
+- The Parliament hash for `TEST-1` is unchanged: nothing in the sim moved.
+
+**Things to know**
+
+- The walker is a cosmetic figure; nobody's attendance changes. If a member is out when a vote is called they're simply back in their seat for it.
+- The menu preview builds the game's world before you press Start, which is why the first frame of the chamber appears a beat after the title page.

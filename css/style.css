@@ -851,11 +851,16 @@ input::placeholder {
 
 /* ---- The start menu: a title page ---------------------------------------------------------------------- */
 
+/* While the title page is up, the game's own bars and panels stay out of sight behind it. */
+#ui:has(.start-menu) > :not(.start-menu) {
+  visibility: hidden;
+}
+
 .start-menu {
   position: absolute;
   inset: 0;
   overflow-y: auto;
-  background: radial-gradient(ellipse at 50% 30%, #2b2620 0%, #15130f 70%);
+  background: linear-gradient(180deg, rgba(21, 19, 15, 0.42) 0%, rgba(21, 19, 15, 0.7) 40%, rgba(21, 19, 15, 0.9) 100%);
   pointer-events: auto;
   z-index: 20;
   padding: calc(20px + env(safe-area-inset-top)) 14px calc(28px + env(safe-area-inset-bottom));
