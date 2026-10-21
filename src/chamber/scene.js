@@ -5,6 +5,7 @@ import { box, slab, panel, cylinder, sphere, merge, vertexMaterial, glowMaterial
 import { surface } from '../textures.js';
 import { PALETTE } from '../look.js';
 import { tuning } from '../sim/config.js';
+import { GREY_SKIES, mix } from '../weatherFx.js';
 import { createSeats } from './seats.js';
 import { createChamberCamera } from './camera.js';
 import { createPicker } from './picking.js';
@@ -28,6 +29,12 @@ const C = {
   leather: '#2f5a3c',
 };
 
+// Window light by season: the pane colour and how strong the daylight key is.
+const PANE_BY_SEASON = { autumn: ['#f1dfb0', 1], winter: ['#cfdbea', 0.7], spring: ['#e6e9ee', 0.95], summer: ['#fff1c4', 1.25] };
+// The sun through the high windows on a clear day: its colour and how much of it hangs in the air. None on
+// a grey day; a faint glow in fog.
+const SHAFTS_BY_SEASON = { autumn: ['#ffd49a', 0.32], winter: ['#d3e0f4', 0.22], spring: ['#f6f1e2', 0.26], summer: ['#fff0c4', 0.4] };
+
 // Muted suits for the people in the galleries: staff, press, the public.
 const GALLERY_SUITS = ['#4a4a4f', '#5c4a3a', '#3d4650', '#6b5a48', '#2f3a44', '#7a6a5a', '#444'];
 
@@ -36,7 +43,7 @@ function buildShell() {
   const W = G.floorWidth / 2;
   const H = G.ceiling;
   // Parts grouped by surface, so each group gets its own grain: one mesh per group.
-  const g = { carpet: [], oak: [], walnut: [], leather: [], stone: [], plaster: [], metal: [], glow: [], wash: [] };
+  const g = { carpet: [], oak: [], walnut: [], leather: [], stone: [], plaster: [], metal: [], glow: [], pane: [], wash: [] };
 
   // Floor, aisle runner and the tiered platforms that lift each row; oak riser faces read as steps.
   g.carpet.push(slab(-W, -0.05, -L, W, 0, L, C.carpet, 1.5));
@@ -66,7 +73,7 @@ function buildShell() {
     g.oak.push(panel(G.floorLength, 0.1, wx(0.02), 2.2, 0, C.oakDark, facing));
     g.oak.push(panel(G.floorLength, 0.06, wx(0.02), 0.2, 0, C.oakDark, facing));
     for (let i = -3; i <= 3; i++) {
-      g.glow.push(panel(1.6, 2.6, wx(0.02), 7.9, i * 3.4, PALETTE.paneWarm, facing));
+      g.pane.push(panel(1.6, 2.6, wx(0.02), 7.9, i * 3.4, PALETTE.paneWarm, facing));
       g.oak.push(panel(0.08, 2.6, wx(0.03), 7.9, i * 3.4, C.oakDark, facing));
       g.oak.push(panel(1.6, 0.08, wx(0.03), 7.9, i * 3.4, C.oakDark, facing));
       g.oak.push(panel(1.9, 0.12, wx(0.03), 6.55, i * 3.4, C.oakDark, facing));
@@ -153,13 +160,63 @@ function buildShell() {
       geo = worldUVs(bakeAO(geo, { bounds, ceilY: kind === 'stone' ? H : null, reach: kind === 'stone' ? 1.8 : 0.9, strength: kind === 'plaster' ? 0.2 : null }));
       mat = surface(textured[kind]);
     } else if (kind === 'metal') mat = vertexMaterial({ metalness: 0.7, roughness: 0.35, envMapIntensity: 1 });
-    else if (kind === 'glow') mat = glowMaterial();
+    else if (kind === 'glow' || kind === 'pane') mat = glowMaterial();
     else mat = washMaterial(0.5);
     const mesh = new THREE.Mesh(geo, mat);
+    mesh.name = kind;
     if (kind === 'wash') mesh.renderOrder = 2;
     group.add(mesh);
   }
   return group;
+}
+
+// Sunlight falling from the windows on the sunward wall down across the government benches: for each window,
+// two crossed ribbons that fade from the glass to the floor. Additive, so they only ever brighten.
+function buildSunShafts() {
+  const W = G.floorWidth / 2;
+  const c = document.createElement('canvas');
+  c.width = 32;
+  c.height = 128;
+  const g2 = c.getContext('2d');
+  const img = g2.createImageData(32, 128);
+  for (let y = 0; y < 128; y++) {
+    const v = y / 127; // 0 at the glass, 1 at the floor
+    const along = Math.min(1, v * 14) * Math.pow(1 - v, 1.4);
+    for (let x = 0; x < 32; x++) {
+      const a = Math.round(255 * along * Math.pow(Math.sin((Math.PI * (x + 0.5)) / 32), 1.5));
+      img.data.set([a, a, a, 255], (y * 32 + x) * 4);
+    }
+  }
+  g2.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(c);
+  const dir = new THREE.Vector3(-5.2, -7, 1).normalize();
+  const pos = [];
+  const uv = [];
+  const index = [];
+  const quad = (a, b, cc, d) => {
+    const n = pos.length / 3;
+    for (const p of [a, b, cc, d]) pos.push(p.x, p.y, p.z);
+    uv.push(0, 1, 1, 1, 0, 0, 1, 0);
+    index.push(n, n + 2, n + 1, n + 1, n + 2, n + 3);
+  };
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  for (let i = -3; i <= 3; i++) {
+    const top = V(W - 0.06, 7.9, i * 3.4);
+    const end = top.clone().addScaledVector(dir, (7.9 - 0.4) / -dir.y);
+    // A ribbon as wide as the window, and one as tall as it, widening a little as the light spreads.
+    quad(top.clone().add(V(0, 0, -0.8)), top.clone().add(V(0, 0, 0.8)), end.clone().add(V(0, 0, -1.05)), end.clone().add(V(0, 0, 1.05)));
+    quad(top.clone().add(V(0, 1.3, 0)), top.clone().add(V(0, -1.3, 0)), end.clone().add(V(0.6, 1.6, 0)), end.clone().add(V(-0.6, -1.6, 0)));
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.setIndex(index);
+  const mat = new THREE.MeshBasicMaterial({ color: '#ffd49a', alphaMap: tex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.name = 'shafts';
+  mesh.renderOrder = 3;
+  mesh.visible = false;
+  return mesh;
 }
 
 // A few people in the galleries, seated on the front bench, in muted clothes.
@@ -189,9 +246,14 @@ export function create(ctx) {
   const lightsRig = roomLights(scene, { hemi: 0.4, key: 1.0, fill: 0.2, ground: '#5a4a38', keyPos: [9, 14, -4] });
   const hemiBase = lightsRig.hemi.intensity;
   let hemiGoal = hemiBase;
+  const keyBase = lightsRig.key.intensity;
+  let weatherKey = null;
   for (const z of [-7, 0, 7]) lamp(scene, { intensity: tuning().look.chandelier, distance: 18, y: G.ceiling - 2.8, z });
 
-  scene.add(buildShell());
+  const shell = buildShell();
+  scene.add(shell);
+  const shafts = buildSunShafts();
+  scene.add(shafts);
   const spectators = buildSpectators();
   scene.add(spectators.group);
   const seats = createSeats();
@@ -295,6 +357,27 @@ export function create(ctx) {
       applyHomeHiding();
     },
     nudge: () => controls.nudge(),
+    // The daylight in the high windows by season: gold in September, thin and blue in January, grey when
+    // the week is wet, bright in June. Tints the panes and the wash they throw, and the key light with them.
+    setWeather(wx) {
+      const key = `${wx.season}:${wx.kind}`;
+      if (key === weatherKey) return;
+      weatherKey = key;
+      let [tint, k] = PANE_BY_SEASON[wx.season] || PANE_BY_SEASON.autumn;
+      if (GREY_SKIES.has(wx.kind)) {
+        tint = mix(tint, '#cfd3d9', 0.75);
+        k *= wx.kind === 'storm' ? 0.5 : 0.75;
+      }
+      shell.getObjectByName('pane').material.color.set(tint);
+      shell.getObjectByName('wash').material.color.set(mix('#ffffff', tint, 0.7));
+      lightsRig.key.intensity = keyBase * k;
+      lightsRig.key.color.set(mix('#fff6e8', '#dfe8f8', wx.season === 'winter' ? 0.8 : GREY_SKIES.has(wx.kind) ? 0.5 : 0));
+      const [sun, haze] = SHAFTS_BY_SEASON[wx.season] || SHAFTS_BY_SEASON.autumn;
+      const strength = wx.kind === 'clear' ? haze : wx.kind === 'fog' ? 0.06 : 0;
+      shafts.visible = strength > 0;
+      shafts.material.opacity = strength;
+      shafts.material.color.set(wx.kind === 'fog' ? '#d8dce2' : sun);
+    },
     autoOrbit: (on) => controls.autoOrbit(on),
     get view() {
       return controls.mode;

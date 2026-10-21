@@ -20,6 +20,7 @@ import './pmb.js';
 import './record.js';
 import './media.js';
 import './election.js';
+import './calendar.js';
 
 export const SAVE_VERSION = 2;
 

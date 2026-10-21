@@ -4,6 +4,7 @@
 import { t, esc, scenarioVerdict } from './text.js';
 import { data, tuning } from '../sim/config.js';
 import { quietLead } from '../sim/media.js';
+import { calendarOf, weatherOf } from '../sim/calendar.js';
 
 const fill = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? '');
 
@@ -67,7 +68,11 @@ export function renderFrontPage(state, p, photoUrl) {
   const caption = fill(H.captions[(week * 3 + 1) % H.captions.length], ctx);
   const photo = photoUrl && lead?.you ? `<figure class="press-photo"><img src="${photoUrl}" alt="" width="150" height="190"><figcaption>${esc(caption)}</figcaption></figure>` : '';
   const delta = ([a, b]) => `${a} → <b>${b}</b>${b > a ? ' ▲' : b < a ? ' ▼' : ''}`;
-  const dateText = p.firstWeek ? t('week.firstTitle') : t('front.date', { week: s.week, year: s.year });
+  // The paper is dated the Saturday of the week just closed; the date has already moved on to Monday.
+  const cal = calendarOf({ week: s.week, year: s.year, dayOfWeek: 6 });
+  const wx = weatherOf(state, Math.max(0, state.date.absWeek - 1));
+  const dateText = p.firstWeek ? t('week.firstTitle') : t('front.date', { date: cal.dayOfMonth, month: cal.month, year: s.year });
+  const weatherText = t('front.weather', { kind: t(`weather.${wx.kind}`), temp: String(wx.temp).replace('-', '\u2212') });
 
   const elsewhere = rest.length
     ? `<section class="front-elsewhere"><h4>${t('front.elsewhere')}</h4><ul>${rest.map((e) => `<li><span class="paper">${esc(e.paper)}</span> ${esc(e.text)}</li>`).join('')}</ul></section>`
@@ -75,7 +80,7 @@ export function renderFrontPage(state, p, photoUrl) {
   return `<div class="sheet-handle"></div>
     <article class="front-page">
       <header class="masthead">
-        <div class="ears"><span>${t('front.edition')}</span><span>${esc(dateText)}</span></div>
+        <div class="ears"><span class="ear-edition">${t('front.edition')}</span><span class="ear-weather">${esc(weatherText)}</span><span>${esc(dateText)}</span></div>
         <h2>${esc(lead?.paper || H.papers[0])}</h2>
         <div class="dateline">${t('front.dateline', { polls: pollTicker(state, polling) })}</div>
       </header>

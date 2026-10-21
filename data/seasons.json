@@ -1,0 +1,35 @@
+{
+  "turns": {
+    "autumn": [
+      "The House comes back. The lawn has been cut for the first time since June and the maples along the drive have started to turn.",
+      "A new session, and the first cold morning. Someone has already complained about the heating in the East Block.",
+      "September on the Hill: new staff with lanyards, old members with tans, and the trees going early this year."
+    ],
+    "winter": [
+      "First morning of the winter sitting. Snow on the lawn, salt on the steps, and the members from the coast arriving in the wrong coats.",
+      "Winter. The light is gone by half past four and the office window shows nothing but your own reflection.",
+      "December on the Hill. The rink on the canal is open, which the pages talk about, and the supply bill is due, which nobody does."
+    ],
+    "spring": [
+      "The thaw. The lawn is brown, the drive is a river, and every member who went south over the break has come back with opinions.",
+      "March. The snowbanks on the drive have shrunk to grey ridges and the first tourists are photographing the wrong building.",
+      "Spring sitting. Puddles on the steps, the flag snapping in a wet wind, and the budget six weeks out."
+    ],
+    "summer": [
+      "June on the Hill. The windows are open, the Speaker has lost patience with the fans, and everyone is counting the days to the rising.",
+      "The summer sitting: shirtsleeves in the lobby, a heat haze over the lawn, and the government trying to pass four bills before the House rises.",
+      "Summer. The tourists are back on the lawn, the air conditioning is not, and the whip is counting who has already booked flights."
+    ]
+  },
+  "weather": {
+    "storm": [
+      "A blizzard. The airport is closed, the drive is a white wall, and the whips on both sides are on the phone to anyone within walking distance.",
+      "Snow all night and still falling. The buses are off, the galleries are empty, and Monday's count has a new column: stranded.",
+      "The storm of the winter. Plows on the Hill since four, and the member for the farthest riding arriving on foot, triumphant."
+    ],
+    "firstSnow": [
+      "First snow of the year, wet and heavy, gone from the pavement by noon and not from the lawn.",
+      "The first snow. Light, then not. The pages are delighted; the members with early flights are not."
+    ]
+  }
+}

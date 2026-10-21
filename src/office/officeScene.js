@@ -10,6 +10,7 @@ import { tuning } from '../sim/config.js';
 import { createOfficeCamera } from './officeCamera.js';
 import { createVisitor, createFigure, poseFigure } from './visitor.js';
 import { wardrobe } from '../figures.js';
+import { createPrecipitation, DEFAULT_WEATHER, GREY_SKIES, mix } from '../weatherFx.js';
 
 const H = 3.2;
 const C = { plaster: '#d6ccb8', plasterDark: '#b9ab93', floor: '#5e4b3a', oak: '#6e4a2b', oakDark: '#3f2a17', walnut: '#3b2616', paper: '#ece6d6', brass: '#c9a24a', steel: '#6f746f', card: '#b8956a', rug: '#5b2b2b', rugGreen: '#2f4a3a' };
@@ -21,16 +22,19 @@ const DESK_SEAT = [0, 0.9];
 const doorZ = (D) => D - 0.5;
 const visitorPath = (W, D) => [[W - 0.25, doorZ(D)], [W - 1.3, D - 0.8], [W - 1.4, -1.65], [-0.5, -1.65], VISITOR_SEAT];
 
-// Dusk over the lawn: the office is where evenings happen.
-function paintLawn(g, w, h) {
+// What the window shows depends on the time of year: a long dusk over the lawn in September, dark by five
+// with snow on the ground in January, wet and grey in March, a bright late evening in June.
+function paintLawn(g, w, h, wx = DEFAULT_WEATHER) {
+  const grey = GREY_SKIES.has(wx.kind) ? 0.65 : 0;
+  const dark = wx.dark;
   const sky = g.createLinearGradient(0, 0, 0, h * 0.62);
-  sky.addColorStop(0, '#2f3d63');
-  sky.addColorStop(0.55, '#8a6f8f');
-  sky.addColorStop(1, '#e8a66a');
+  sky.addColorStop(0, mix(mix('#2f3d63', '#0b1020', dark), '#3c414c', grey));
+  sky.addColorStop(0.55, mix(mix('#8a6f8f', '#2a2f4a', dark), '#656a76', grey));
+  sky.addColorStop(1, mix(mix(wx.season === 'summer' ? '#f2c47a' : '#e8a66a', '#5a4040', dark), '#8c8c90', grey));
   g.fillStyle = sky;
   g.fillRect(0, 0, w, h);
-  // The Gothic tower across the lawn, dark against the dusk, a few windows lit.
-  g.fillStyle = '#3a3a44';
+  // The Gothic tower across the lawn, dark against the sky, its windows lit as the evening darkens.
+  g.fillStyle = mix('#3a3a44', '#1c1c24', dark);
   g.fillRect(w * 0.62, h * 0.16, w * 0.08, h * 0.47);
   g.beginPath();
   g.moveTo(w * 0.605, h * 0.17);
@@ -38,22 +42,112 @@ function paintLawn(g, w, h) {
   g.lineTo(w * 0.715, h * 0.17);
   g.fill();
   g.fillRect(w * 0.45, h * 0.4, w * 0.45, h * 0.23);
+  if (wx.snow > 0.4) {
+    g.fillStyle = '#dfe6ee';
+    g.fillRect(w * 0.45, h * 0.4, w * 0.45, h * 0.012);
+    g.fillRect(w * 0.62, h * 0.16, w * 0.08, h * 0.01);
+  }
   g.fillStyle = '#f2d59a';
-  for (let i = 0; i < 7; i++) g.fillRect(w * (0.47 + i * 0.06), h * 0.47, w * 0.015, h * 0.035);
+  g.globalAlpha = 0.45 + dark * 0.55;
+  for (let i = 0; i < 7; i++) if (dark > 0.3 || i % 2) g.fillRect(w * (0.47 + i * 0.06), h * 0.47, w * 0.015, h * 0.035);
   g.fillRect(w * 0.645, h * 0.3, w * 0.012, h * 0.04);
-  // Trees in two dark layers.
-  for (const [col, y0, r] of [['#3d4a3a', 0.6, 30], ['#2a3328', 0.64, 22]]) {
-    g.fillStyle = col;
+  g.globalAlpha = 1;
+  // Trees in two layers: green, then turning, then bare with snow on the boughs, then green again.
+  const bare = wx.season === 'winter' || (wx.season === 'spring' && wx.snow > 0.3);
+  const leaf = wx.season === 'autumn' ? [['#7a4a22', '#4a2e1a'], ['#9a5a26', '#5a3a1c']] : wx.season === 'summer' ? [['#3b5a36', '#263a24'], ['#2f4a2c', '#1d2d1b']] : [['#3d4a3a', '#2a3328'], ['#36443a', '#24302a']];
+  for (const [li, [y0, r]] of [[0.6, 30], [0.64, 22]].entries()) {
+    const [near, far] = leaf[li];
+    g.fillStyle = mix(near, far, dark * 0.7);
     for (let i = 0; i < 14; i++) {
-      g.beginPath();
-      g.arc((i / 13) * w, h * y0, r + (i % 3) * 8, 0, Math.PI * 2);
-      g.fill();
+      const cx = (i / 13) * w;
+      const rr = r + (i % 3) * 8;
+      if (bare) {
+        // A haze of twigs makes the crown, then the limbs over it; snow lies along the top of each limb.
+        const path = (dy) => {
+          g.moveTo(cx, h * (y0 + 0.08));
+          g.lineTo(cx, h * y0 - rr * 0.9 + dy);
+          for (let k = -2; k <= 2; k++) {
+            if (!k) continue;
+            const sx = cx;
+            const sy = h * y0 - rr * (0.2 + Math.abs(k) * 0.2) + dy;
+            const ex = cx + k * rr * 0.45;
+            const ey = h * y0 - rr * (0.9 + Math.abs(k) * 0.15) + dy;
+            g.moveTo(sx, sy);
+            g.quadraticCurveTo(sx + k * rr * 0.12, (sy + ey) / 2 - rr * 0.1, ex, ey);
+          }
+        };
+        g.fillStyle = mix('#5a4a40', '#26242c', dark * 0.6);
+        g.globalAlpha = 0.32;
+        g.beginPath();
+        g.ellipse(cx, h * y0 - rr * 0.62, rr * 1.05, rr * 0.62, 0, 0, Math.PI * 2);
+        g.fill();
+        g.globalAlpha = 1;
+        g.strokeStyle = mix('#4a3a30', '#222028', dark * 0.6);
+        g.lineWidth = 3;
+        g.lineCap = 'round';
+        g.beginPath();
+        path(0);
+        g.stroke();
+        if (wx.snow > 0.4) {
+          g.strokeStyle = mix('#e8edf3', '#aab4c6', dark * 0.6);
+          g.lineWidth = 1.8;
+          g.beginPath();
+          path(-2);
+          g.stroke();
+          // Snow caught on the crown, a few soft clots.
+          g.fillStyle = g.strokeStyle;
+          g.globalAlpha = 0.55;
+          for (let k = 0; k < 5; k++) {
+            g.beginPath();
+            g.ellipse(cx + (k - 2) * rr * 0.36, h * y0 - rr * (0.95 + ((k * 7 + i) % 3) * 0.1), rr * 0.16, rr * 0.06, 0, 0, Math.PI * 2);
+            g.fill();
+          }
+          g.globalAlpha = 1;
+        }
+        g.lineCap = 'butt';
+        g.fillStyle = mix(near, far, dark * 0.7);
+      } else {
+        g.beginPath();
+        g.arc(cx, h * y0, rr, 0, Math.PI * 2);
+        g.fill();
+        if (wx.snow > 0.4) {
+          g.fillStyle = '#dde4ec';
+          g.beginPath();
+          g.arc(cx, h * y0, rr, Math.PI * 1.15, Math.PI * 1.85);
+          g.fill();
+          g.fillStyle = mix(near, far, dark * 0.7);
+        }
+      }
     }
   }
-  g.fillStyle = '#2f4a2c';
+  // The lawn: green, wet and dark, or under snow with blue shadows.
+  const grass = mix(wx.season === 'autumn' ? '#3a4a2a' : '#2f4a2c', '#1d2e1c', Math.max(dark * 0.6, wx.wet * 0.5));
+  g.fillStyle = mix(grass, mix('#e6ebf1', '#9aa6bc', dark * 0.7), wx.snow);
   g.fillRect(0, h * 0.66, w, h * 0.34);
-  g.fillStyle = '#3a5a34';
+  g.fillStyle = mix(mix('#3a5a34', '#243a22', dark * 0.6), mix('#c9d3e0', '#7f8ca6', dark * 0.7), wx.snow);
   for (let i = 0; i < 6; i++) g.fillRect(0, h * (0.7 + i * 0.05), w, h * 0.018);
+  if (wx.wet > 0.5 && wx.snow < 0.3) {
+    // A wet lawn throws the sky back in streaks.
+    g.fillStyle = 'rgba(190,200,220,0.16)';
+    for (let i = 0; i < 5; i++) g.fillRect(w * (0.05 + i * 0.19), h * (0.72 + (i % 2) * 0.08), w * 0.12, h * 0.02);
+  }
+  if (wx.kind === 'fog') {
+    g.fillStyle = 'rgba(200,205,215,0.45)';
+    g.fillRect(0, 0, w, h);
+  }
+  if (wx.kind === 'rain') {
+    // Rain on the glass: thin runs down the pane.
+    g.strokeStyle = 'rgba(230,236,245,0.22)';
+    g.lineWidth = 1.5;
+    g.beginPath();
+    for (let i = 0; i < 26; i++) {
+      const x = ((i * 97) % w) + 3;
+      const y = (i * 53) % h;
+      g.moveTo(x, y);
+      g.lineTo(x + 4, y + 24 + (i % 4) * 14);
+    }
+    g.stroke();
+  }
 }
 
 // The count board is a corkboard with pinned cards: what's coming up and your line on each.
@@ -380,7 +474,7 @@ export const SETS = {
 export const setFor = (act) => SETS[Math.max(1, Math.min(5, act || 1))];
 
 // Build one whole room (shell, windows, blinds, board, furniture) as a group that can be shown or hidden.
-function buildRoom(scene, set, ctx, lawn, boardTex, lamps) {
+function buildRoom(scene, set, ctx, lawn, boardTex, lamps, fx) {
   const { W, D } = set;
   const bounds = { x0: -W, x1: W, z0: -D, z1: D };
   const room = new THREE.Group();
@@ -396,6 +490,13 @@ function buildRoom(scene, set, ctx, lawn, boardTex, lamps) {
     room.add(new THREE.Mesh(merge(slats), vertexMaterial({ roughness: 0.8 })));
     const [px, pz] = at(0, 0.02);
     room.add(texturedPanel(win.w, win.h, lawn, { x: px, y: win.y, z: pz, rotY: rot }));
+    // Snow or rain falling just outside the glass, between the painted view and the blinds.
+    const [fx0, fz0] = at(0, 0.055);
+    const p = createPrecipitation({ w: win.w, h: win.h, d: 0.03, size: 0.028 });
+    p.group.position.set(fx0, win.y, fz0);
+    p.group.rotation.y = rot;
+    room.add(p.group);
+    fx.push(p);
   }
   room.add(texturedPanel(set.board, 1.2, boardTex, { x: -W + 0.03, y: 1.75, z: set.boardZ, rotY: Math.PI / 2 }));
   const spots = set.furnish(room, { W, D, ctx, bounds, scene, lamps });
@@ -416,7 +517,10 @@ export function create(ctx) {
   const lawn = paintedTexture(512, 320, paintLawn);
   const boardTex = paintedTexture(512, 256, (g, w, h) => drawBoard(g, w, h, [], 'Coming up'));
   const myLamps = [];
-  const mine = buildRoom(scene, mySet, ctx, lawn, boardTex, myLamps);
+  const fx = [];
+  let weather = DEFAULT_WEATHER;
+  let weatherKey = null;
+  const mine = buildRoom(scene, mySet, ctx, lawn, boardTex, myLamps, fx);
   scene.add(mine);
   // The whip's office only ever appears in Act 1, when the whip calls you in.
   let whipRoom = null;
@@ -434,10 +538,14 @@ export function create(ctx) {
 
   function light(set, on) {
     const L = { hemi: 0.32, key: 0.7, fill: 0.25, lamp: 1, warm: '#ffe6cf', ...(set.light || {}) };
-    rig.key.intensity = L.key;
+    // The season sets the daylight left in the window: a brighter, warmer key in June, a cold weak one in
+    // January, when the lamps do the work.
+    const cold = Math.max(weather.snow * 0.6, weather.dark * 0.5);
+    rig.key.intensity = L.key * (1.15 - 0.45 * weather.dark);
+    rig.key.color.set(mix('#fff6e8', '#cfd8ee', cold));
     rig.hemi.intensity = L.hemi;
     rig.fill.intensity = L.fill;
-    rig.hemi.color.set(L.warm);
+    rig.hemi.color.set(mix(L.warm, '#e3e8f2', cold * 0.5));
     deskLamp.intensity = tuning().look.deskLamp * L.lamp;
     for (const l of myLamps) l.visible = on;
   }
@@ -445,7 +553,8 @@ export function create(ctx) {
 
   function dress(asWhip) {
     if (asWhip && !whipRoom) {
-      whipRoom = buildRoom(scene, whipSet, ctx, lawn, boardTex, []);
+      whipRoom = buildRoom(scene, whipSet, ctx, lawn, boardTex, [], fx);
+      for (const p of fx) p.setKind(weather.falling);
       scene.add(whipRoom);
     }
     mine.visible = !asWhip;
@@ -532,6 +641,18 @@ export function create(ctx) {
     pushIn(on) {
       cam.shot(reversal ? (on ? 'reversalDeal' : 'reversal') : on ? 'hostDeal' : 'host');
     },
+    // The time of year, from the sim's calendar: repaints the view, sets what's falling, and tunes the light.
+    setWeather(wx) {
+      const key = `${wx.season}:${wx.kind}:${wx.snow}:${wx.wet}:${wx.dark}`;
+      if (key === weatherKey) return;
+      weatherKey = key;
+      weather = wx;
+      const c = lawn.userData.canvas;
+      paintLawn(c.getContext('2d'), c.width, c.height, wx);
+      lawn.needsUpdate = true;
+      for (const p of fx) p.setKind(wx.falling);
+      light(reversal ? whipSet : mySet, !reversal);
+    },
     setBoard(rows, title = 'Coming up') {
       const c = boardTex.userData.canvas;
       drawBoard(c.getContext('2d'), c.width, c.height, rows, title);
@@ -543,6 +664,7 @@ export function create(ctx) {
     update(dt) {
       visitor?.update(dt);
       cam.update(dt);
+      for (const p of fx) p.update(dt);
       if (colleague) {
         // Typing, mostly; now and then a glance over at whoever's in the chair.
         t += dt;

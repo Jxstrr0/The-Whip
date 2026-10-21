@@ -69,7 +69,7 @@
   "agenda.continue": "Continue",
   "agenda.skip": "Skip ahead",
   "agenda.skipHint": "to the next thing that matters",
-  "agenda.date": "{day} · Week {week}, Year {year}",
+  "agenda.date": "{day} {date} {month} · Week {week}, Year {year}",
   "agenda.constituency": "Constituency week",
   "agenda.orderPaper": "Today's order paper",
   "agenda.noVotes": "No votes today.",
@@ -435,7 +435,7 @@
   "settings.largeTextNote": "Scales the whole Order Paper up a notch.",
   "settings.done": "Done",
   "front.edition": "Weekend edition",
-  "front.date": "Week {week} · Year {year}",
+  "front.date": "{date} {month} · Year {year}",
   "front.dateline": "Ostrava · Parliament Hill · {polls}",
   "front.elsewhere": "Elsewhere in the press",
   "front.numbers": "By the numbers",
@@ -443,5 +443,12 @@
   "front.pollsNote": "National polling, week by week",
   "front.pollsFirst": "The first reading. A line needs a second week.",
   "front.brief": "The week in brief",
-  "front.quietBrief": "A week that made no news is still a week on the record."
+  "front.quietBrief": "A week that made no news is still a week on the record.",
+  "front.weather": "{kind} · {temp}°",
+  "weather.clear": "Clear",
+  "weather.overcast": "Overcast",
+  "weather.rain": "Rain",
+  "weather.fog": "Fog",
+  "weather.snow": "Snow",
+  "weather.storm": "Blizzard"
 }
