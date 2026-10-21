@@ -877,3 +877,7 @@ Kelbo asked if we could stop the player spending time on themselves by accident.
 - **The book leaves you out when it's choosing someone.** Opened from Invite or Call, it lists everyone but you, and the count reads "119 of 119 members". Opened as the plain book, it still shows you with the "You" badge.
 - **The game refuses as well.** A phone call, an invitation or any whip's tool aimed at you is turned down before it spends anything: no evening slot, no House time, no favour. So even if a future screen offers you by mistake, nothing is lost.
 - A new test in `tests.html` tries every office tool, a call and an invitation on yourself and checks that none of them spend anything.
+
+## 2026-10-21 · "Your riding" when the whip pays you
+
+Kelbo noticed that in a deal with your own whip, the card the whip offers you read "A mention of their riding", as if the mention were for the whip's riding and not yours. A card's wording now depends on which way it goes. When it comes to you, it says **your** riding ("A mention of your riding", "A project for your riding"). When you give it away, it says **their** riding. This holds on the deal table, on a counter-offer, in the line that sums up a meeting, and in the ledger. It also fixed the reverse case: once you hold the whip's cards, a riding project you offered another MP used to read "A project for your riding". A new test checks both directions. `tests.html`: 90 passed, 0 failed.

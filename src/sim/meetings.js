@@ -60,7 +60,8 @@ export function fillLine(state, text, ctx = {}) {
 
 // ---------- cards ----------
 
-export function cardLabel(state, card) {
+// toYou: the player is the one receiving the card, so a riding on it is theirs ("your"), not the counterpart's.
+export function cardLabel(state, card, toYou = false) {
   const [k, a, b] = card.split(':');
   const bill = state.bills[a]?.title;
   switch (k) {
@@ -73,7 +74,7 @@ export function cardLabel(state, card) {
     case 'speakingTime':
       return 'Your speaking slot';
     case 'ridingMention':
-      return 'A mention of their riding';
+      return toYou ? 'A mention of your riding' : 'A mention of their riding';
     case 'qpSlot':
       return 'A Question Period slot';
     case 'committeeSeat':
@@ -81,7 +82,7 @@ export function cardLabel(state, card) {
     case 'leave':
       return 'Friday leave for the riding';
     case 'ridingProject':
-      return 'A project for your riding';
+      return toYou ? 'A project for your riding' : 'A project for their riding';
     case 'info':
       return 'What they know';
     default:
@@ -524,7 +525,7 @@ export function meetingSummary(state, mt) {
   const deal = mt.deal;
   if (deal.result === 'accepted') {
     const give = deal.offers.map((c) => cardLabel(state, c).toLowerCase()).join(', ');
-    const get = deal.asks.map((c) => cardLabel(state, c).toLowerCase()).join(', ');
+    const get = deal.asks.map((c) => cardLabel(state, c, true).toLowerCase()).join(', ');
     return `Meeting with ${who}: deal. You give ${give || 'nothing'}; you get ${get || 'nothing'}.`;
   }
   if (deal.result === 'walked') return `Meeting with ${who}: they walked out.`;
