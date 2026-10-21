@@ -131,3 +131,62 @@ The running log of what each build session finished, written for Kelbo in plain 
 - **Your own small promises keep themselves.** When they come due, things like your speaking slot or a riding mention are handed over automatically. The promises with teeth are votes, and those are yours to keep or break in the division.
 - **Not going when the whip calls** costs you with the whip. So does turning the whip down, but less than taking the deal and then voting the other way.
 - **Saves stay small.** Old division roll calls and old meetings collapse to summaries. A whole four-year Parliament saves at about 0.6 MB.
+
+---
+
+## 2026-10-21 · Stage 4b: the vertical slice (Act 1, week one)
+
+**What was built**
+
+- **Start menu** (`src/ui/menus.js`): Continue (if there's a save), or a new career with your first and last name, party (with a one-line description), background (each with a strength), riding type, province, age, and the seed. You become a rookie in that party, in a riding of the type you asked for where one exists.
+- **Saving** (`src/save.js`): the game autosaves to the browser after every move (slot 1), and Continue picks it up. Export/import code is there for stage 9's menu. The ☰ button in the top bar shows the seed and goes back to the title.
+- **The guided first week** (`setupFirstWeek` in `src/sim/career.js`):
+  - **Monday:** first readings, a short note on how things work, and the whip's office calls you in about Thursday's vote. That's the reversal scene.
+  - **Tuesday:** a backbencher tries to recruit you into a rebellion, and your mentor drops by.
+  - **Wednesday:** caucus.
+  - **Thursday:** the dilemma vote, a bill your riding pulls hard against while your party whips the other way. It's chosen fresh for every player.
+  - **Friday:** the riding. The whip lets rookies go home in week one.
+  - **Weekend:** the review: riding standing, the whip's view of you, rebellions, divisions, and the week's feed.
+  - After that the game runs normally: routine days settle themselves and only what matters stops you.
+- **The caucus room** (`src/caucus/`, `src/sim/caucus.js`, `src/ui/caucusUI.js`): a long table with the leader at the head, the Chief Whip at the leader's right and the House Leader at the left, everyone seated by clique. You see it from behind your own chair. The leader sets the week's line in their own style (controlling, hands-off, paranoid or loyal), and the unhappiest members air grievances. You get three moves:
+  - **Listen**: reads six moods, which turn their seats green, grey, red or amber, and shows who's talking to whom.
+  - **Speak** (once): back the line, speak for your riding, or challenge. Each moves the leader's trust, your standing in the room and your riding.
+  - **Whisper**: to a neighbour.
+
+  Caucus meets every sitting Wednesday. It only stops you when your own dilemma is the week's question or the room is angry.
+- **The riding** (`src/riding/`, `src/sim/riding.js`, `src/ui/ridingUI.js`): a storefront constituency office whose window shows your riding type (prairie town, suburb, downtown, or northern settlement), plus a photo wall and a waiting area.
+  - **Visitors:** two constituents with cases you can carry to Ottawa or not, the local reporter (your answer gets quoted and the whip reads it), and the riding association president, whose mood tracks your standing and the nomination.
+  - **Town hall:** the camera cuts outside to a crowd of 28, with a crowd-mood bar and questions about the week's bill and a local issue.
+  - **Announcement:** if the whip promised you a project, you can announce it at home.
+
+  Leaving Ottawa on a sitting Friday needs the whip's leave. The visit stops you every few weeks or when your standing is low; otherwise Fridays at home are a one-line summary.
+
+**Checks**
+
+- `tests.html`: 33 of 33 pass. New for 4b:
+  - The guided week visits morning → office → meeting → caucus → division → riding in order, with the whip calling, and ends at the first-week review for all four parties.
+  - The dilemma is always a real one, voted Thursday.
+  - Caucus listen, speak and whisper all work.
+  - A save round-trips through export and import unchanged.
+- In a headless phone browser I played the whole week through the actual buttons from the start menu to the review, as two different parties. No console errors. Portrait and landscape both lay out.
+
+**Things to know / decisions I made**
+
+- **A honeymoon for new governments.** Without it, a minority government sometimes fell in its first two months. Now the smaller parties don't bring a government down in its first 26 weeks. Elections don't exist until stage 8, so a fall currently ends the game with "Parliament is dissolved".
+- **The riding camera.** The handoff puts it "behind the desk at (0.4, 1.6, 0.4)", but the desk is at z = −1 and you face +z, so that spot is in front of the desk. I put it behind the desk on the −z side at the same height.
+- **Portrait framing.** In portrait the bottom sheet covers about half the screen, so every room's camera aims a little low to keep the people in the visible top half. The sheets scroll rather than grow.
+- **Files beyond the handoff's layout:** `src/kit3d.js` (shared room-building helpers), `src/loadData.js`, `src/sim/config.js` (loaded data), `src/sim/actions.js` (the action table behind `dispatch`), `src/sim/bot.js` (the test bot), and `src/ui/text.js` (UI text helpers).
+
+**Kelbo's playtest: to fill in**
+
+The handoff asks for this slice to be played before stage 5, and for your verdict to be recorded here. Things worth noticing as you play:
+
+1. Does the Thursday vote feel like a real dilemma? Is the whip's call on Monday leaning on you the right amount?
+2. Are meetings (talk then deal) quick enough on a phone, or do they drag?
+3. Caucus: are three moves right? Does "listen" tell you enough?
+4. The riding: too many visitors, or too few? Is the town hall worth doing?
+5. After week one, does Skip stop you often enough, or too often?
+
+*What worked:* (your notes)
+
+*What didn't:* (your notes)
