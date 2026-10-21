@@ -359,3 +359,232 @@ html, body {
 .mp-card {
   max-height: 55dvh;
 }
+
+/* The agenda bar sits at the bottom; sheets open above it. */
+:root {
+  --agenda-h: calc(64px + env(safe-area-inset-bottom));
+}
+
+.sheet {
+  bottom: var(--agenda-h);
+  padding-bottom: 16px;
+}
+
+.agenda {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(20, 23, 28, 0.96);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  pointer-events: auto;
+  max-height: 50dvh;
+  overflow-y: auto;
+}
+
+.agenda-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agenda-date {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  text-align: left;
+  background: none;
+  border: 0;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+.agenda-date small {
+  display: block;
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+}
+
+.feed {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.feed li {
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.feed li.division,
+.feed li.confidence {
+  color: var(--text);
+}
+
+.order-paper {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.order-paper li {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.order-paper p,
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.warn {
+  color: #f2c14e;
+}
+
+.bells {
+  color: #f2c14e;
+  font-weight: 600;
+}
+
+.choices {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.choices .btn {
+  min-height: 52px;
+  text-align: left;
+}
+
+.count-board {
+  position: absolute;
+  top: calc(64px + env(safe-area-inset-top));
+  left: 8px;
+  right: 8px;
+  background: rgba(31, 36, 44, 0.94);
+  border-radius: 14px;
+  padding: 10px 14px;
+  pointer-events: auto;
+  font-size: 14px;
+}
+
+@media (orientation: landscape) and (min-width: 700px) {
+  .count-board {
+    right: auto;
+    width: min(420px, 44vw);
+  }
+}
+
+.count-board p {
+  margin: 4px 0;
+}
+
+.tally {
+  display: grid;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 32px;
+  align-items: center;
+  gap: 8px;
+}
+
+.bar-row b {
+  text-align: right;
+}
+
+.bar {
+  position: relative;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 7px;
+  overflow: visible;
+}
+
+.bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 7px;
+}
+
+.bar i.yea {
+  background: #2e9e5b;
+}
+
+.bar i.nay {
+  background: #c8423b;
+}
+
+.bar em {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: #f2c14e;
+}
+
+.pr {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.verdict {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.verdict.yea {
+  color: #2e9e5b;
+}
+
+.verdict.nay {
+  color: #e0605a;
+}
+
+.tuning-panel {
+  position: absolute;
+  top: calc(80px + env(safe-area-inset-top));
+  left: 8px;
+  max-width: 300px;
+  max-height: 50dvh;
+  overflow-y: auto;
+  background: rgba(20, 23, 28, 0.92);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 11px;
+  pointer-events: auto;
+}
+
+.tuning-panel summary {
+  min-height: 32px;
+  line-height: 32px;
+  cursor: pointer;
+}
+
+.tuning-rows label {
+  display: grid;
+  grid-template-columns: 1fr;
+  margin: 6px 0;
+}
+
+.tuning-rows input {
+  width: 100%;
+}

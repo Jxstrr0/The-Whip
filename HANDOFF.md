@@ -475,13 +475,13 @@ Build one stage per session, in order. A stage is done only when every check und
 
 **Stage 3: Votes, divisions and pacing.** Write `bills.js`, `mp.js` (the decision model from `DESIGN.md`), `vote.js`, `voteLights.js`, `pacing.js`, `ui/agenda.js` and `ui/countBoard.js`, plus `data/tuning.json`. A division runs the bells (shortened to real seconds), then the standing count animation. Routine days auto-resolve into a summary line. **By the end of this stage the sim must play a full Parliament headless from `tests.html`.**
 
-- [ ] Voice votes resolve without a division when nobody objects
-- [ ] Divisions count standing members only, honour pairs, and send ties to the Speaker
-- [ ] Changing an MP's loyalty or clique lean in the console visibly changes their vote
-- [ ] Bills move through all five stages, with amendments at committee and report
-- [ ] Routine days auto-resolve; the game stops only for days that matter, and "skip to the next thing that matters" works
-- [ ] `tests.html` can run a whole Parliament headless with a random bot player and no errors
-- [ ] Vote lights carry icons as well as color
+- [x] Voice votes resolve without a division when nobody objects
+- [x] Divisions count standing members only, honour pairs, and send ties to the Speaker
+- [x] Changing an MP's loyalty or clique lean in the console visibly changes their vote
+- [x] Bills move through all five stages, with amendments at committee and report
+- [x] Routine days auto-resolve; the game stops only for days that matter, and "skip to the next thing that matters" works
+- [x] `tests.html` can run a whole Parliament headless with a random bot player and no errors
+- [x] Vote lights carry icons as well as color
 
 **Stage 4: The office and meetings.** Write `rooms.js`, `office/`, `sim/meetings.js`, `ui/talk.js` and `ui/dealTable.js`, plus `data/dialogue-lines.json`. Add the evening phase with slots, walk-ins and phone calls, and the Act 1 reversal (the whip calls you in).
 

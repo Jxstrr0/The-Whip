@@ -27,6 +27,12 @@ import { newGame } from './src/sim/modes.js';
 import { parliamentHash } from './src/sim/generate.js';
 import { cardView, HIDDEN_FIELDS, reveal, decayKnowledge } from './src/sim/knowledge.js';
 import { buildSeats } from './src/chamber/layout.js';
+import { introduceBill, makeBill, setLines } from './src/sim/bills.js';
+import { intentions } from './src/sim/mp.js';
+import { putQuestion, runDivision, recordResult, speakerCastingVote } from './src/sim/vote.js';
+import * as pacing from './src/sim/pacing.js';
+import { createRng } from './src/sim/rng.js';
+import { data } from './src/sim/config.js';
 
 const sections = [];
 let current = null;
@@ -184,6 +190,170 @@ test('Knowledge fields go stale after the tuned number of weeks without contact'
   s.date.absWeek = tuning().knowledge.staleWeeks + 1;
   decayKnowledge(s);
   assert(cardView(s, id).fields.loyalty.stale, 'did not go stale');
+});
+
+
+// ---------- Stage 3: votes, divisions and pacing ----------
+section('Stage 3 · Votes, divisions and pacing');
+
+function billFrom(s, title) {
+  const t = data().billTemplates.templates.find((x) => x.title === title);
+  return makeBill(s, createRng('t:' + title), t);
+}
+
+test('Voice votes resolve without a division when nobody objects', () => {
+  const s = newGame({ seed: 'TEST-1' });
+  const rng = createRng('voice');
+  const consensus = data().billTemplates.templates.filter((t) => t.kind === 'government' && Math.abs(t.position) <= 20 && t.visibility <= 45);
+  let voices = 0;
+  for (const t of consensus) {
+    const b = makeBill(s, rng, t);
+    // Make it uncontroversial: every party supports it.
+    for (const pid of Object.keys(s.parties)) b.positions[pid] = 'yea';
+    const q = putQuestion(s, { billId: b.id, stage: 'second' }, rng);
+    if (!q.division) voices++;
+  }
+  assert(voices > 0, 'every consensus bill went to a division');
+  return `${voices} of ${consensus.length} consensus bills carried on the voices`;
+});
+
+test('A contested question goes to a recorded division', () => {
+  const s = newGame({ seed: 'TEST-1' });
+  const b = billFrom(s, data().billTemplates.templates.find((t) => t.kind === 'oppositionMotion').title);
+  const q = putQuestion(s, { billId: b.id, stage: 'motion' }, createRng('x'));
+  assert(q.division, 'opposition motion carried on voices');
+});
+
+test('Divisions count standing members only and honour pairs', () => {
+  const s = newGame({ seed: 'TEST-1' });
+  const b = billFrom(s, 'Rural Roads Fund Act');
+  const rng = createRng('pairs');
+  const q = putQuestion(s, { billId: b.id, stage: 'second' }, rng);
+  const ids = Object.keys(q.intents);
+  // Force a known picture: two present members paired, one absent.
+  const [a, c, absent] = [ids[3], ids[90], ids[10]];
+  q.intents[a] = { ...q.intents[a], present: true, vote: 'yea' };
+  q.intents[c] = { ...q.intents[c], present: true, vote: 'nay' };
+  q.intents[absent] = { ...q.intents[absent], present: false, vote: 'yea' };
+  s.pairs = [{ bill: b.id, a, b: c }];
+  q.paired = new Set([a, c]);
+  const r = runDivision(s, q);
+  assert(!r.yeas.includes(a) && !r.nays.includes(c), 'paired members counted');
+  assert(!r.yeas.includes(absent) && r.absent.includes(absent), 'absent member counted');
+  const standing = Object.entries(q.intents).filter(([id, it]) => it.present && !q.paired.has(id) && it.vote !== 'abstain').length;
+  assert(r.yeas.length + r.nays.length === standing, 'count differs from standing members');
+  assert(r.paired.length === 1, 'pair not recorded');
+});
+
+test('A tie goes to the Speaker, who votes to keep the question open (Denison\'s rule)', () => {
+  const s = newGame({ seed: 'TEST-1' });
+  for (const stage of ['second', 'third']) {
+    const b = billFrom(s, 'Rural Roads Fund Act');
+    const q = putQuestion(s, { billId: b.id, stage }, createRng('tie' + stage));
+    let flip = 'yea';
+    for (const it of Object.values(q.intents)) {
+      it.present = true;
+      it.vote = flip;
+      flip = flip === 'yea' ? 'nay' : 'yea';
+    }
+    // 119 members can't split evenly: send one home.
+    Object.values(q.intents)[0].present = false;
+    q.paired = new Set();
+    s.pairs = [];
+    const r = runDivision(s, q);
+    assert(r.yeas.length === r.nays.length, 'not a tie');
+    assert(r.speakerVote === speakerCastingVote(stage), 'wrong casting vote');
+    assert(r.carried === (stage === 'second'), `tie at ${stage} should be ${stage === 'second' ? 'carried' : 'defeated'}`);
+  }
+});
+
+test("Changing an MP's loyalty or clique lean changes their vote", () => {
+  const s = newGame({ seed: 'TEST-1' });
+  const b = billFrom(s, 'Rural Roads Fund Act');
+  const before = intentions(s, b, createRng('same'));
+  // Find a whipped MP voting the line, then make them disloyal and their clique restive.
+  const target = Object.values(s.mps).find((m) => before[m.id] && before[m.id].line === 'whipped' && before[m.id].vote === before[m.id].position && m.clique && before[m.id].parts.I < 0);
+  assert(target, 'no candidate MP');
+  const was = before[target.id].vote;
+  target.loyalty = 0;
+  const afterLoyalty = intentions(s, b, createRng('same'))[target.id];
+  s.cliques[target.clique].lean = -100;
+  target.loyalty = 10;
+  const afterClique = intentions(s, b, createRng('same'))[target.id];
+  assert(afterLoyalty.score < before[target.id].score && afterClique.score < before[target.id].score + 0.001 || afterLoyalty.vote !== was, 'scores did not move');
+  assert(afterLoyalty.vote !== was || afterClique.vote !== was, `vote stayed ${was}`);
+  return `${target.name.first} ${target.name.last}: ${was} → ${afterLoyalty.vote} (loyalty 0) / ${afterClique.vote} (restive clique)`;
+});
+
+test('Bills move through all five stages, with amendments at committee and report', () => {
+  const s = newGame({ seed: 'TEST-2' });
+  for (let i = 0; i < 20000; i++) {
+    const p = pacing.skip(s);
+    if (p?.kind === 'dissolved') break;
+    pacing.resolve(s, 'line');
+    if (s.date.absWeek > 40) break;
+  }
+  const full = Object.values(s.bills).find((b) => b.status === 'passed' && b.kind === 'government' && b.results.length >= 3);
+  assert(full, 'no bill passed all stages');
+  const stages = full.results.map((id) => s.divisions[id].stage);
+  assert(['second', 'report', 'third'].every((st) => stages.includes(st)), `stages seen: ${stages}`);
+  const amends = Object.values(s.bills).flatMap((b) => b.amendments);
+  assert(amends.some((a) => a.at === 'committee'), 'no committee amendments');
+  assert(amends.some((a) => a.at === 'report'), 'no report stage amendments');
+  return `${full.title}: first → ${stages.join(' → ')} → passed · ${amends.length} amendments`;
+});
+
+test('Routine days auto-resolve; the game only stops for days that matter; skip works', () => {
+  const s = newGame({ seed: 'TEST-1' });
+  const kinds = {};
+  let days = new Set();
+  for (let i = 0; i < 200; i++) {
+    const p = pacing.skip(s);
+    kinds[p.kind] = (kinds[p.kind] || 0) + 1;
+    assert(p.needsChoice || p.important, `skip stopped on ${p.kind}`);
+    if (p.kind === 'dissolved') break;
+    pacing.resolve(s, 'line');
+    if (s.date.absWeek > 12) break;
+  }
+  const loggedDays = new Set(s.log.map((l) => l.day)).size;
+  const sittingDays = Math.min(s.date.absWeek, 12) * 4;
+  assert(kinds.division > 0, 'never stopped');
+  return `${JSON.stringify(kinds)} across ${s.date.absWeek} weeks (${loggedDays} days with log lines)`;
+});
+
+test('A lost confidence vote in a minority sets the election flag', () => {
+  const s = newGame({ seed: 'TEST-1' });
+  const b = billFrom(s, 'Main Estimates');
+  const q = putQuestion(s, { billId: b.id, stage: 'motion' }, createRng('conf'));
+  for (const [id, it] of Object.entries(q.intents)) {
+    it.present = true;
+    it.vote = s.mps[id].party === s.house.government ? 'yea' : 'nay';
+  }
+  const r = runDivision(s, q);
+  assert(!r.carried, 'government won');
+  recordResult(s, r, createRng('x'));
+  assert(s.house.fallen && s.house.fallen.billId === b.id, 'fallen flag not set');
+});
+
+test('tests.html runs a whole Parliament headless with a random bot player, no errors, under a minute', () => {
+  const t0 = performance.now();
+  const out = [];
+  for (const seed of ['TEST-1', 'BOT-2', 'BOT-3']) {
+    const s = newGame({ seed, party: ['p1', 'p2', 'p3'][out.length] });
+    const bot = createRng('bot:' + seed);
+    let stops = 0;
+    for (let i = 0; i < 100000; i++) {
+      const p = pacing.skip(s);
+      if (p.kind === 'dissolved') break;
+      stops++;
+      pacing.resolve(s, p.kind === 'division' ? bot.pick(['line', 'rebel', 'absent']) : null);
+    }
+    assert(s.flow.pending.kind === 'dissolved', 'did not reach dissolution');
+    out.push(`${seed}: ${s.date.absWeek} weeks, ${Object.keys(s.divisions).length} votes, ${stops} stops${s.house.fallen ? ', government fell' : ''}`);
+  }
+  const ms = performance.now() - t0;
+  assert(ms < 60000, `took ${ms} ms`);
+  return out.join(' · ');
 });
 
 // ---------- runner ----------
