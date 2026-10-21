@@ -850,3 +850,20 @@ Kelbo asked for the UI to look less "AI-made" and a bit softer. It's still the O
 - Three places keep their capitals on purpose, because that's what the real thing looks like: the stamps (PASSED, DEFEATED), the newspaper's front page, and the game's title on the start card.
 - The new shared values are at the top of `css/style.css` (`--r-sm/md/lg` for corners, `--line`, `--fill`, `--lift`, `--float`), so the softness can be turned up or down in one place.
 - Only styles changed (plus the skip icon); nothing about how the game plays. Checked at phone size in portrait and landscape: the start menu, the office, an MP card and the division sheet.
+
+## 2026-10-21 · Tidier sheets, nothing hidden under the bar
+
+Kelbo sent a phone shot of the "A pair before a confidence vote" sheet. The date bar at the bottom had wrapped onto two lines and covered the foot of the sheet, a grey Continue button sat there doing nothing, and the hint under the second choice was too faint to read. The ask was for less overlap and easier reading.
+
+**What changed**
+
+- **Nothing sits under the bar any more.** Sheets used to stop at a fixed height above the bottom bar. The bar now reports its real height (long dates, bigger text, the phone's safe area), and every sheet stops exactly above it.
+- **The date fits on one line.** The bar reads "Monday 15 October · Week 7", with the latest line from the day underneath. Tapping it opens the day's feed, which keeps the full date, year included, as its heading.
+- **No dead buttons.** While a sheet is waiting for you to choose, Continue and Skip step aside instead of sitting greyed out. They come back as soon as there's nothing to choose.
+- **Easier to read.** The hint under each choice is larger and in a darker brass that reads clearly on paper. The party-colour bars beside card titles and in the book are now small dots.
+- **Landscape side sheets run full height.** In landscape the bar keeps to the left under the room, and the sheet on the right runs from the top bar to the bottom of the screen, so both choices are in view and nothing is squeezed.
+
+**Things to know**
+
+- Only layout, styles and the bar's wording changed. Nothing about how the game plays.
+- Checked at phone size in portrait and landscape: the morning order paper, the office, the division, the weekend paper, a career choice, the caucus, the riding and an MP card. No sheet overlaps the bar. `tests.html` shows 88 passed, 0 failed, with no console errors.

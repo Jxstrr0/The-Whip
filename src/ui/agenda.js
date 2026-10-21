@@ -16,6 +16,13 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
   root.appendChild(sheet);
   let expanded = false;
 
+  // Sheets sit on top of the bar, so the bar's real height (a long date, larger text, the safe area) sets
+  // where they end. The expanded feed is left out: it is meant to lie over whatever is open.
+  const fit = () => {
+    if (!expanded && bar.offsetHeight) document.documentElement.style.setProperty('--agenda-h', `${bar.offsetHeight}px`);
+  };
+  if (typeof ResizeObserver === 'function') new ResizeObserver(fit).observe(bar);
+
   function dateText(state) {
     const d = state.date;
     const day = tuning().calendar.days[d.dayOfWeek - 1];
@@ -23,24 +30,35 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
     return t('agenda.date', { day, date: c.dayOfMonth, month: c.month, week: c.week, year: c.year }) + (d.constituencyWeek ? ` · ${t('agenda.constituency')}` : '');
   }
 
+  // The bar's short form: the day in full and the week, on one line.
+  function dayText(state) {
+    const d = state.date;
+    const c = calendarOf(d);
+    const day = t('agenda.day', { day: tuning().calendar.days[d.dayOfWeek - 1], date: c.dayOfMonth, month: c.month });
+    return `${esc(day)} <span>· ${esc(d.constituencyWeek ? t('agenda.constituency') : t('agenda.week', { week: c.week }))}</span>`;
+  }
+
   function renderBar() {
     const state = getState();
     const p = state.flow.pending;
     const blocked = p && p.needsChoice;
     const last = state.log.slice(-1)[0]?.text || '';
-    const feed = expanded ? `<ol class="feed">${state.log.slice(-25).reverse().map((l) => `<li class="${l.kind}">${esc(l.text)}</li>`).join('')}</ol>` : '';
+    const feed = expanded ? `<p class="feed-head">${esc(dateText(state))}</p><ol class="feed">${state.log.slice(-25).reverse().map((l) => `<li class="${l.kind}">${esc(l.text)}</li>`).join('')}</ol>` : '';
     bar.innerHTML = `
       <div class="agenda-row">
-        <button class="agenda-date" data-act="expand" aria-expanded="${expanded}">${esc(dateText(state))}<small>${esc(last)}</small></button>
-        <button class="btn primary" data-act="continue" ${blocked ? 'disabled' : ''}>${t('agenda.continue')}</button>
-        <button class="btn" data-act="skip" ${blocked ? 'disabled' : ''} title="${t('agenda.skipHint')}" aria-label="${t('agenda.skipHint')}"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5l5 5-5 5M10 5l5 5-5 5"/></svg></button>
+        <button class="agenda-date" data-act="expand" aria-expanded="${expanded}" aria-label="${esc(dateText(state))}"><span class="day">${dayText(state)}</span><small>${esc(last)}</small></button>
+        ${blocked ? '' : `<button class="btn primary" data-act="continue">${t('agenda.continue')}</button>
+        <button class="btn" data-act="skip" title="${t('agenda.skipHint')}" aria-label="${t('agenda.skipHint')}"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5l5 5-5 5M10 5l5 5-5 5"/></svg></button>`}
       </div>${feed}`;
     bar.querySelector('[data-act="expand"]').onclick = () => {
       expanded = !expanded;
       renderBar();
     };
-    bar.querySelector('[data-act="continue"]').onclick = onContinue;
-    bar.querySelector('[data-act="skip"]').onclick = onSkip;
+    if (!blocked) {
+      bar.querySelector('[data-act="continue"]').onclick = onContinue;
+      bar.querySelector('[data-act="skip"]').onclick = onSkip;
+    }
+    fit();
   }
 
   function showMorning(p) {
