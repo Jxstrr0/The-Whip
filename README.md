@@ -61,6 +61,6 @@ Opening `index.html` straight from the file system won't work, because browsers 
 
 ## Tech
 
-Plain HTML, CSS and JavaScript modules, with Three.js `0.160.0` from jsDelivr through an import map. Deployed to GitHub Pages from `main` at the repo root. Saves live in the browser's `localStorage` under `whip:` keys.
+Plain HTML, CSS and JavaScript modules, with Three.js `0.160.0` from jsDelivr through an import map. Deployed to GitHub Pages from `main` at the repo root: every push to `main` publishes automatically through `.github/workflows/pages.yml` (no build, it uploads the repo as is). Saves live in the browser's `localStorage` under `whip:` keys.
 
 Everything in the game (the country, parties, ridings and MPs) is fictional. The procedures are Canadian.
