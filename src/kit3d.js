@@ -6,6 +6,8 @@ import { tuning } from './sim/config.js';
 
 const tmpColor = new THREE.Color();
 const look = () => tuning().look;
+// Textures shared across rooms (the texture cache registers them) are never disposed with a room.
+export const SHARED_TEXTURES = new Set();
 
 // Paint every vertex of a geometry one colour, so many parts can share one material and one draw call.
 export function paint(geo, color) {
@@ -70,6 +72,55 @@ export function merge(parts) {
   for (const g of parts) g.dispose();
   for (const g of flat) g.dispose();
   return merged;
+}
+
+// Planar UVs in metres from world position, picked per vertex by the face's dominant axis, so one tiling
+// texture reads at the same density on every box, slab and panel in a merged geometry.
+export function worldUVs(geo) {
+  const pos = geo.attributes.position;
+  const nor = geo.attributes.normal;
+  const uv = new Float32Array(pos.count * 2);
+  for (let i = 0; i < pos.count; i++) {
+    const nx = Math.abs(nor.getX(i));
+    const ny = Math.abs(nor.getY(i));
+    const nz = Math.abs(nor.getZ(i));
+    let u;
+    let v;
+    if (ny >= nx && ny >= nz) {
+      u = pos.getX(i);
+      v = pos.getZ(i);
+    } else if (nx >= nz) {
+      u = pos.getZ(i);
+      v = pos.getY(i);
+    } else {
+      u = pos.getX(i);
+      v = pos.getY(i);
+    }
+    uv[i * 2] = u;
+    uv[i * 2 + 1] = v;
+  }
+  geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  return geo;
+}
+
+// A soft white-to-black radial, for additive light washes (window light on a wall, a lamp's pool).
+let softTexture = null;
+export function softTex() {
+  if (softTexture) return softTexture;
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const g = c.getContext('2d');
+  const grad = g.createRadialGradient(32, 32, 1, 32, 32, 32);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(0.5, '#555555');
+  grad.addColorStop(1, '#000000');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 64, 64);
+  softTexture = new THREE.CanvasTexture(c);
+  return softTexture;
+}
+export function washMaterial(opacity = 0.35) {
+  return new THREE.MeshBasicMaterial({ vertexColors: true, alphaMap: softTex(), transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
 }
 
 // Fake baked light. Vertices close to the floor, the walls or the ceiling get darker, and downward-facing
@@ -162,7 +213,7 @@ export function disposeTree(root) {
     for (const m of mats) {
       if (seen.has(m)) continue;
       seen.add(m);
-      for (const v of Object.values(m)) if (v && v.isTexture && v !== blobTexture) v.dispose();
+      for (const v of Object.values(m)) if (v && v.isTexture && v !== blobTexture && v !== softTexture && !SHARED_TEXTURES.has(v)) v.dispose();
       m.dispose();
     }
     if (o.isInstancedMesh) o.dispose();

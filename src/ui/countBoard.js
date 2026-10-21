@@ -54,9 +54,11 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
         <button class="btn" data-c="absent">${t('div.choose.absent')}</button>
       </div>`;
     sheet.classList.remove('hidden');
+    getRoom()?.setBells?.(true);
     sheet.querySelectorAll('[data-c]').forEach((b) => {
       b.onclick = () => {
         stopBells();
+        getRoom()?.setBells?.(false);
         onChoose(b.dataset.c);
       };
     });
@@ -68,6 +70,7 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
       if (el) el.textContent = t('div.doorsClose', { s: Math.max(0, secs) });
       if (secs <= 0) {
         stopBells();
+        getRoom()?.setBells?.(false);
         onChoose('line');
       }
     }, 1000);
