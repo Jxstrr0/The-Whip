@@ -515,11 +515,11 @@ Build one stage per session, in order. A stage is done only when every check und
 
 **Stage 7: The career, Acts 3 to 5, and the caucus room.** Extend `career.js` (assistant and deputy whip duties, opposite numbers, cabinet offers, demotion, floor-crossing, retirement, endings), write `caucus.js`, `caucus/`, `ui/caucusUI.js` and `record.js`. Add the weekly caucus meeting, revolts, expulsions, leader personalities, the Act 3 friend set piece, the Act 4 pairing set piece, knowledge sharing from the whip's office at Act 3, and the whip's record screen.
 
-- [ ] A player can rise from Act 3 to Chief Whip, with each act's graduation and failure both reachable
-- [ ] Caucus meets every Wednesday; listen, speak and whisper work; a revolt can be called and resolved
-- [ ] A cabinet offer can be accepted (career ends with an epilogue and record) or declined at no cost, and offers keep coming
-- [ ] Floor-crossing resets the player to Act 1 in the new caucus with reputation carried over
-- [ ] Retirement is available from Act 2 and shows the whip's record
+- [x] A player can rise from Act 3 to Chief Whip, with each act's graduation and failure both reachable
+- [x] Caucus meets every Wednesday; listen, speak and whisper work; a revolt can be called and resolved
+- [x] A cabinet offer can be accepted (career ends with an epilogue and record) or declined at no cost, and offers keep coming
+- [x] Floor-crossing resets the player to Act 1 in the new caucus with reputation carried over
+- [x] Retirement is available from Act 2 and shows the whip's record
 
 **Stage 8: Confidence, consequences and elections.** Write `confidence.js`, `media.js` and `election.js`. Add confidence votes, confidence-and-supply agreements, a government falling, headlines, scandal scores, the pressure meter, fixed-date elections, reseating, new cohorts and ledger carryover.
 

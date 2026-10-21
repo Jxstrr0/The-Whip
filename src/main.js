@@ -28,6 +28,7 @@ import { createRidingUI } from './ui/ridingUI.js';
 import { createStartMenu, createGameMenu } from './ui/menus.js';
 import { createLedger } from './ui/ledger.js';
 import { createCareerUI } from './ui/careerUI.js';
+import { createRecordUI } from './ui/recordUI.js';
 import { canUse, nextVote } from './sim/tools.js';
 import { t, partyColor } from './ui/text.js';
 import { stageLabel } from './sim/vote.js';
@@ -193,6 +194,8 @@ function buildWorld() {
       location.href = location.pathname;
     },
     onLedger: () => ledger.open(),
+    onRetire: () => dispatch({ type: 'retire' }),
+    onCross: (party) => dispatch({ type: 'crossFloor', party }),
   });
   hud = createHud(ui, {
     buttons: [
@@ -232,6 +235,7 @@ function buildWorld() {
   });
   const officeUI = createOfficeUI(ui, { getState, dispatch, pickMp, onLedger: () => ledger.open() });
   const careerUI = createCareerUI(ui, { getState, dispatch });
+  const recordUI = createRecordUI(ui, { getState, onNewGame: () => (location.href = location.pathname) });
   const caucusUI = createCaucusUI(ui, { getState, dispatch, getRoom: () => (rooms.name === 'caucus' ? rooms.room : null) });
   const ridingUI = createRidingUI(ui, { getState, dispatch });
 
@@ -283,6 +287,7 @@ function buildWorld() {
     countBoard.render(state);
     officeUI.render(state);
     careerUI.render(state);
+    recordUI.render(state);
     caucusUI.render(state);
     ridingUI.render(state);
     card.refresh();
@@ -360,7 +365,7 @@ async function debugTools(w) {
   document.body.appendChild(stats.dom);
   w.setStats(stats);
   createTuningPanel(w.ui, tuning());
-  const names = ['generate', 'knowledge', 'relationships', 'rng', 'bills', 'mp', 'vote', 'pacing', 'meetings', 'caucus', 'riding', 'career'];
+  const names = ['generate', 'knowledge', 'relationships', 'rng', 'bills', 'mp', 'vote', 'pacing', 'meetings', 'caucus', 'riding', 'career', 'tools', 'ranks', 'record'];
   const sim = {};
   for (const n of names) sim[n] = await import(`./sim/${n}.js`);
   window.whip = {

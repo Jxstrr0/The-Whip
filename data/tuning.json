@@ -337,5 +337,40 @@
     "noteRapport": 4,
     "ignoreRapport": -4,
     "retirementAge": 65
+  },
+  "ranks": {
+    "act3MinWeeks": 10,
+    "rowCarriesForAct4": 3,
+    "rowRebelsForFailure": 3,
+    "act4MinWeeks": 12,
+    "chiefVacancyOdds": 0.08,
+    "caucusSupportForChief": 55,
+    "leaderTrustForChief": 60,
+    "wrongCountsForFailure": 1,
+    "temptationWeek": 6,
+    "temptationTrust": -5,
+    "cabinetOfferOdds": 0.06,
+    "cabinetOfferFromAct": 4,
+    "leanGentleNudge": 0.4,
+    "leanHardNudge": 0.9,
+    "leanHardRapport": -15,
+    "leanGentleRapport": 4,
+    "freeVoteTrust": {
+      "controlling": -8,
+      "handsOff": 0,
+      "paranoid": -5,
+      "loyal": -2
+    },
+    "confidenceTrust": 4,
+    "revoltHeat": 7,
+    "revoltOdds": 0.5,
+    "revoltJoin": 8,
+    "revoltBack": -8,
+    "revoltLeaderTrustJoin": 55,
+    "revoltLeaderTrustBack": 12,
+    "revoltPunish": -20,
+    "crossFloorStanding": -15,
+    "crossFloorRapport": -40,
+    "retireFromAct": 2
   }
 }

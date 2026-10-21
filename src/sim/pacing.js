@@ -249,6 +249,10 @@ export function weekSummary(state) {
 export function next(state) {
   const flow = state.flow;
   if (flow.pending) return flow.pending;
+  if (state.ending) {
+    flow.pending = { kind: 'ending', important: true, needsChoice: true, ...state.ending };
+    return flow.pending;
+  }
   if (flow.queued?.length) {
     flow.pending = flow.queued.shift();
     flow.week.stops++;
@@ -310,7 +314,7 @@ function runHooks(list, state, rng) {
 export function resolve(state, choice = null) {
   const p = state.flow.pending;
   if (!p) return null;
-  if (p.kind === 'dissolved') return p;
+  if (p.kind === 'dissolved' || p.kind === 'ending') return p;
   if (p.kind === 'division') {
     state.flow.choices[`${p.billId}:${p.stage}`] = choice || 'line';
   }
@@ -327,7 +331,7 @@ export function skip(state, limit = 5000) {
   for (let i = 0; i < limit; i++) {
     const p = state.flow.pending;
     if (p && (p.needsChoice || p.important) && i > 0) return p;
-    if (p && p.kind === 'dissolved') return p;
+    if (p && (p.kind === 'dissolved' || p.kind === 'ending')) return p;
     if (p) {
       if (p.needsChoice) return p;
       resolve(state);

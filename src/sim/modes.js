@@ -10,6 +10,8 @@ import './count.js';
 import './rivals.js';
 import './lifeEvents.js';
 import './pmb.js';
+import './ranks.js';
+import './record.js';
 
 export const SAVE_VERSION = 1;
 
