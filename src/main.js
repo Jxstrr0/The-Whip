@@ -4,7 +4,7 @@ import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { setupRenderer, sharedEnvironment } from './look.js';
 import { loadData } from './loadData.js';
 import { setData, tuning } from './sim/config.js';
-import { newGame } from './sim/modes.js';
+import { newGame, scenarioGame, dailyGame } from './sim/modes.js';
 import { parliamentHash } from './sim/generate.js';
 import { getState, setState, dispatch, subscribe } from './state.js';
 import './sim/pacing.js';
@@ -391,6 +391,9 @@ async function boot() {
   setData(await loadData());
   document.title = t('title');
   const seed = params.get('seed');
+  // Debug starts skip the menu: ?scenario=<id>, ?daily=1, or a seed (with ?guided=1 for the first-week walkthrough).
+  if (params.get('scenario')) return startGame(scenarioGame(params.get('scenario'), { seed: seed || undefined }));
+  if (params.get('daily') === '1') return startGame(dailyGame({}));
   if (seed) {
     // Debug and shared-seed starts skip the menu; ?guided=1 adds the first-week walkthrough.
     return startGame(newGame({ seed, party: params.get('party') || undefined, guided: params.get('guided') === '1', act: params.get('act') }));

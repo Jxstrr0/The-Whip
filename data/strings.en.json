@@ -343,5 +343,22 @@
   "ending.nomination": "Deselected",
   "week.pressure": "Pressure from above",
   "career.replacedTitle": "Replaced",
-  "agenda.agreement": "Confidence and supply: {party} ({until})"
+  "agenda.agreement": "Confidence and supply: {party} ({until})",
+  "scenario.brief": "The brief",
+  "scenario.verdict": "Verdict",
+  "scenario.stamp.won": "Carried",
+  "scenario.stamp.lost": "Defeated",
+  "scenario.stamp.fell": "Fell",
+  "scenario.stamp.noVote": "No vote",
+  "scenario.stamp.held": "Held",
+  "scenario.stamp.ousted": "Ousted",
+  "scenario.stamp.noRevolt": "Quiet",
+  "scenario.stamp.riding": "Riding",
+  "scenario.stamp.party": "Party",
+  "menu.scenarios": "Scenarios",
+  "menu.scenarioNote": "One week, one problem. The verdict comes on Friday.",
+  "menu.daily": "Today's seed",
+  "menu.dailyNote": "Everyone who plays today gets this Parliament and this MP.",
+  "menu.shared": "Shared seed",
+  "menu.sharedNote": "Type a friend's seed and you sit in the same House they did."
 }

@@ -1,6 +1,6 @@
 // The writ and election night as sheets of the Order Paper: the campaign choice, then the result with the
 // seats before and after, your riding stamped HELD or LOST, and the door into the next Parliament.
-import { t, esc, stamp } from './text.js';
+import { t, esc, stamp, scenarioVerdict } from './text.js';
 
 export function createElectionUI(root, { getState, dispatch }) {
   const sheet = document.createElement('section');
@@ -12,7 +12,7 @@ export function createElectionUI(root, { getState, dispatch }) {
     const me = state.mps[state.player.mpId];
     const nom = state.player.nominationThreat >= 60 ? `<p class="note bad">${t('dissolved.nomination')}</p>` : '';
     sheet.innerHTML = `<div class="sheet-handle"></div><h2>${t('dissolved.title')}</h2>
-      <blockquote class="line">${t('dissolved.' + (p.reason || 'fixedDate'))}</blockquote>
+      ${scenarioVerdict(state)}<blockquote class="line">${t('dissolved.' + (p.reason || 'fixedDate'))}</blockquote>
       <p>${esc(t('dissolved.yourRiding', { riding: me.riding.name, margin: me.margin, standing: Math.round(state.player.ridingStanding) }))}</p>${nom}
       <div class="choices">
         <button class="btn primary" data-c="canvass">${t('dissolved.canvass')}<small class="approach">${t('dissolved.canvassNote')}</small></button>
