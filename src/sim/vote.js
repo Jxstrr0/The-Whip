@@ -157,8 +157,8 @@ export function recordResult(state, result, rng) {
 // Keep saves small: old division rolls collapse to counts after a while.
 function pruneHistory(state) {
   const ids = Object.keys(state.divisions);
-  if (ids.length <= 400) return;
-  for (const id of ids.slice(0, ids.length - 400)) {
+  if (ids.length <= 80) return;
+  for (const id of ids.slice(0, ids.length - 80)) {
     const d = state.divisions[id];
     if (!d.recorded || d.compact) continue;
     const me = state.player?.mpId;
@@ -168,7 +168,19 @@ function pruneHistory(state) {
     d.yeas = [];
     d.nays = [];
     d.absent = [];
+    delete d.question;
+    delete d.lines;
+    delete d.paired;
+    delete d.positions;
+    delete d.date;
     d.compact = true;
+  }
+  // Dead bills from long ago keep their title and results, not their details.
+  const cutoff = state.date.absWeek * 5 - 200;
+  for (const b of Object.values(state.bills)) {
+    if (b.status === 'active' || b.compact || b.introduced > cutoff) continue;
+    for (const k of ['summary', 'ridingEffects', 'regionEffects', 'beneficiaryRidings', 'lines', 'amendments']) delete b[k];
+    b.compact = true;
   }
 }
 

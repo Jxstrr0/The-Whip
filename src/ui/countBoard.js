@@ -11,7 +11,7 @@ function feeling(v) {
   return `leaning ${v > 0 ? 'for' : 'against'}`;
 }
 
-export function createCountBoard(root, { getState, onChoose, onContinue, room }) {
+export function createCountBoard(root, { getState, onChoose, onContinue, getRoom }) {
   const sheet = document.createElement('section');
   sheet.className = 'sheet division-sheet hidden';
   root.appendChild(sheet);
@@ -109,11 +109,11 @@ export function createCountBoard(root, { getState, onChoose, onContinue, room })
       <div class="card-actions">${done ? `<button class="btn primary" data-act="cont">${t('div.continue')}</button>` : `<button class="btn" data-act="fast">${t('div.skipAnim')}</button>`}</div>`;
     board.querySelector('[data-act="cont"]')?.addEventListener('click', () => {
       board.classList.add('hidden');
-      room.clearDivision();
+      getRoom()?.clearDivision();
       shownResult = null;
       onContinue();
     });
-    board.querySelector('[data-act="fast"]')?.addEventListener('click', () => room.lights.finish());
+    board.querySelector('[data-act="fast"]')?.addEventListener('click', () => getRoom()?.lights.finish());
   }
 
   function showResult(p) {
@@ -127,6 +127,8 @@ export function createCountBoard(root, { getState, onChoose, onContinue, room })
     let counts = { yea: 0, nay: 0 };
     renderBoard(result, counts, false);
     let last = 0;
+    const room = getRoom();
+    if (!room) return renderBoard(result, { yea: result.yeas.length, nay: result.nays.length }, true);
     room.playDivision(result, {
       secondsPerSeat: tuning().vote.secondsPerSeat,
       tick(c) {
@@ -160,7 +162,7 @@ export function createCountBoard(root, { getState, onChoose, onContinue, room })
       if (p?.kind === 'result') showResult(p);
       else if (shownResult) {
         board.classList.add('hidden');
-        room.clearDivision();
+        getRoom()?.clearDivision();
         shownResult = null;
       }
     },

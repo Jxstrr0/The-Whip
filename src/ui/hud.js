@@ -44,3 +44,20 @@ export function createTuningPanel(root, tuning) {
   root.prepend(wrap);
   return wrap;
 }
+
+// A short message across the top: meeting outcomes, calls, deliveries.
+export function createToast(root) {
+  const el = document.createElement('div');
+  el.className = 'toast hidden';
+  root.appendChild(el);
+  let timer = null;
+  el.onclick = () => el.classList.add('hidden');
+  return {
+    show(text, ms = 4500) {
+      el.textContent = text;
+      el.classList.remove('hidden');
+      clearTimeout(timer);
+      timer = setTimeout(() => el.classList.add('hidden'), ms);
+    },
+  };
+}
