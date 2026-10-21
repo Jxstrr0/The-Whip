@@ -1478,6 +1478,35 @@ test('Audio is synthesised, not fetched, and is safe to drive before any gesture
   return 'room, gavel, tap, bells and configure all no-ops before the first gesture';
 });
 
+section('Round two · The office by rank');
+
+test('The first evening at each rank logs the new room once, and every rank has a room, a line and a title', () => {
+  const s = toOffice('OFFICE-1', 'p1');
+  const office = data().career.office;
+  const lines = () => s.log.filter((l) => l.kind === 'career' && Object.values(office).includes(l.text));
+  assert(lines().length === 1 && lines()[0].text === office['1'], 'the shared room is not logged on the first evening');
+  pacing.resolve(s);
+  const toNextOffice = () => {
+    for (let i = 0; i < 400; i++) {
+      const p = pacing.skip(s);
+      if (p.kind === 'office') return;
+      if (p.kind === 'dissolved') throw new Error('dissolved');
+      pacing.resolve(s, 'line');
+    }
+    throw new Error('never reached the office');
+  };
+  toNextOffice();
+  assert(lines().length === 1, 'the shared room was logged twice');
+  pacing.resolve(s);
+  ranks.assignRank(s, 4, 'deputyWhip');
+  toNextOffice();
+  assert(lines().length === 2 && lines()[1].text === office['4'], "the deputy's office was not logged on promotion");
+  for (let a = 1; a <= 5; a++) {
+    assert(office[String(a)], `no office line for act ${a}`);
+    assert(data().strings[`office.title.${a}`], `no office title for act ${a}`);
+  }
+});
+
 section('Round two · Question Period');
 
 // Play a fresh guided game forward to its first Question Period stop.

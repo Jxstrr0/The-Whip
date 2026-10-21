@@ -1,26 +1,25 @@
-// The office: an MP's small room (desk, two visitor chairs, the count board, a window on the lawn, the door),
-// dressed darker as the whip's office for the Act 1 reversal. Furniture from the Kenney kit, retinted.
+// The office: where evenings happen. It grows with rank: a shared room in Act 1, your own room in Act 2, the
+// annex off the whip's office in Act 3, the deputy's room in Act 4 and the chief whip's corner office in
+// Act 5. The whip's own office is built alongside and swapped in for the Act 1 reversal (the whip calls you
+// in). Furniture from the Kenney kit, retinted; cabinets, rugs, flags and nameplates built here.
 import * as THREE from 'three';
 import { box, slab, panel, cylinder, merge, vertexMaterial, glowMaterial, worldUVs, disposeTree, roomLights, lamp, bakeAO, contactShadows, paintedTexture, texturedPanel } from '../kit3d.js';
 import { surface } from '../textures.js';
-import { PALETTE } from '../look.js';
 import { placeModel } from '../models.js';
 import { tuning } from '../sim/config.js';
 import { createOfficeCamera } from './officeCamera.js';
 import { createVisitor, createFigure, poseFigure } from './visitor.js';
 import { wardrobe } from '../figures.js';
 
-const W = 3; // half of 6 m (x)
-const D = 2.5; // half of 5 m (z)
 const H = 3.2;
-const C = { plaster: '#d6ccb8', plasterDark: '#b9ab93', floor: '#5e4b3a', oak: '#6e4a2b', oakDark: '#3f2a17', walnut: '#3b2616', paper: '#ece6d6', brass: '#c9a24a' };
+const C = { plaster: '#d6ccb8', plasterDark: '#b9ab93', floor: '#5e4b3a', oak: '#6e4a2b', oakDark: '#3f2a17', walnut: '#3b2616', paper: '#ece6d6', brass: '#c9a24a', steel: '#6f746f', card: '#b8956a', rug: '#5b2b2b', rugGreen: '#2f4a3a' };
 
-// Visitors come in the door on the +x wall and walk round the desk to the left-hand visitor chair.
-const DOOR = [2.75, 2.0];
+// The desk sits at the origin in every set, so the camera and the chairs never move: visitors come in the
+// door on the +x wall and walk round the desk to the left-hand visitor chair.
 const VISITOR_SEAT = [-0.5, -1.0];
-const VISITOR_PATH = [DOOR, [1.7, 1.7], [1.6, -1.65], [-0.5, -1.65], VISITOR_SEAT];
 const DESK_SEAT = [0, 0.9];
-const WINDOW = { w: 2.0, h: 1.25, y: 1.7 };
+const doorZ = (D) => D - 0.5;
+const visitorPath = (W, D) => [[W - 0.25, doorZ(D)], [W - 1.3, D - 0.8], [W - 1.4, -1.65], [-0.5, -1.65], VISITOR_SEAT];
 
 // Dusk over the lawn: the office is where evenings happen.
 function paintLawn(g, w, h) {
@@ -92,8 +91,42 @@ export function drawBoard(g, w, h, rows, title) {
   });
 }
 
-function buildShell() {
-  const g = { plaster: [], oak: [], walnut: [], wool: [], glow: [] };
+// A brass nameplate for the desk, facing the visitors.
+function paintNameplate(name) {
+  return paintedTexture(256, 56, (g, w, h) => {
+    g.fillStyle = '#c9a24a';
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = '#2b2214';
+    g.font = '600 26px Fraunces, Georgia, serif';
+    g.textAlign = 'center';
+    g.fillText(name.toUpperCase().slice(0, 18), w / 2, 37);
+  });
+}
+
+// ---------- the sets ----------
+// Each set: the room's half-size (W along x, D along z), its windows, where the board hangs, the lighting
+// and what's in it. `furnish` places the furniture and returns the contact-shadow spots.
+
+function windowGeometry(win, W, D) {
+  // Frame, sill and a centre mullion, built as if on the -z wall and turned onto the -x wall when asked.
+  const onX = win.wall === '-x';
+  const rot = onX ? Math.PI / 2 : 0;
+  const at = (dx, dz) => (onX ? [-W + dz, win.at - dx] : [win.at + dx, -D + dz]);
+  const parts = [];
+  const put = (w, h, d, dx, y, dz, color) => {
+    const [x, z] = at(dx, dz);
+    parts.push(box(w, h, d, x, y, z, color, rot));
+  };
+  put(win.w + 0.16, 0.08, 0.1, 0, win.y + win.h / 2 + 0.04, 0.05, C.oakDark);
+  put(win.w + 0.3, 0.06, 0.18, 0, win.y - win.h / 2 - 0.03, 0.09, C.oak);
+  for (const dx of [-1, 1]) put(0.08, win.h + 0.1, 0.1, dx * (win.w / 2 + 0.04), win.y, 0.05, C.oakDark);
+  put(0.04, win.h, 0.04, 0, win.y, 0.04, C.oakDark);
+  return { parts, at, rot };
+}
+
+function buildShell(set) {
+  const { W, D } = set;
+  const g = { plaster: [], oak: [], walnut: [], wool: [] };
   g.wool.push(slab(-W, -0.05, -D, W, 0, D, C.floor, 1));
   g.plaster.push(panel(2 * D, H, -W, H / 2, 0, C.plaster, '+x', 1));
   g.plaster.push(panel(2 * D, H, W, H / 2, 0, C.plaster, '-x', 1));
@@ -112,16 +145,12 @@ function buildShell() {
       else g.oak.push(panel(0.05, wain - 0.25, x + s, wain / 2 - 0.02, z + (facing === '+z' ? 0.01 : -0.01), C.oakDark, facing));
     }
   }
-  // The door on the +x wall near z = +2, with a frame and a brass knob.
-  g.walnut.push(panel(0.95, 2.1, W - 0.015, 1.05, DOOR[1], C.walnut, '-x'));
-  g.oak.push(panel(1.15, 0.08, W - 0.02, 2.14, DOOR[1], C.oakDark, '-x'));
-  for (const dz of [-0.55, 0.55]) g.oak.push(panel(0.08, 2.2, W - 0.02, 1.1, DOOR[1] + dz, C.oakDark, '-x'));
-  // The window on the -z wall: frame, sill and blinds. The view is a painted panel behind it.
-  const wy = WINDOW.y;
-  g.oak.push(box(WINDOW.w + 0.16, 0.08, 0.1, 0, wy + WINDOW.h / 2 + 0.04, -D + 0.05, C.oakDark));
-  g.oak.push(box(WINDOW.w + 0.3, 0.06, 0.18, 0, wy - WINDOW.h / 2 - 0.03, -D + 0.09, C.oak));
-  for (const dx of [-1, 1]) g.oak.push(box(0.08, WINDOW.h + 0.1, 0.1, dx * (WINDOW.w / 2 + 0.04), wy, -D + 0.05, C.oakDark));
-  g.oak.push(box(0.04, WINDOW.h, 0.04, 0, wy, -D + 0.04, C.oakDark));
+  // The door on the +x wall, with a frame and a brass knob.
+  const dz = doorZ(D);
+  g.walnut.push(panel(0.95, 2.1, W - 0.015, 1.05, dz, C.walnut, '-x'));
+  g.oak.push(panel(1.15, 0.08, W - 0.02, 2.14, dz, C.oakDark, '-x'));
+  for (const d of [-0.55, 0.55]) g.oak.push(panel(0.08, 2.2, W - 0.02, 1.1, dz + d, C.oakDark, '-x'));
+  for (const win of set.windows) g.oak.push(...windowGeometry(win, W, D).parts);
   return g;
 }
 
@@ -130,19 +159,253 @@ function buildMeshes(g, bounds) {
   const kinds = { plaster: 'plaster', oak: 'oak', walnut: 'walnut', wool: 'wool' };
   for (const [kind, parts] of Object.entries(g)) {
     if (!parts.length) continue;
-    let geo = merge(parts);
-    let mat;
-    if (kinds[kind]) {
-      geo = worldUVs(bakeAO(geo, { bounds, ceilY: kind === 'plaster' ? H : null, reach: 0.7 }));
-      mat = surface(kinds[kind], kind === 'plaster' ? { roughness: 0.95 } : {});
-    } else mat = glowMaterial();
-    out.add(new THREE.Mesh(geo, mat));
+    const geo = worldUVs(bakeAO(merge(parts), { bounds, ceilY: kind === 'plaster' ? H : null, reach: 0.7 }));
+    out.add(new THREE.Mesh(geo, surface(kinds[kind], kind === 'plaster' ? { roughness: 0.95 } : {})));
   }
   return out;
 }
 
+// Built props. A steel filing cabinet with four drawers and brass pulls.
+function cabinet(x, z, rotY = 0, h = 1.1) {
+  const parts = [box(0.5, h, 0.62, 0, h / 2, 0, C.steel, rotY)];
+  for (let i = 0; i < 4; i++) {
+    const y = h - 0.14 - i * (h / 4);
+    parts.push(box(0.44, h / 4 - 0.04, 0.02, 0, y, -0.31, '#7d827c', rotY));
+    parts.push(box(0.12, 0.02, 0.03, 0, y + 0.06, -0.33, C.brass, rotY));
+  }
+  const geo = merge(parts);
+  geo.translate(x, 0, z);
+  return new THREE.Mesh(geo, vertexMaterial({ metalness: 0.35, roughness: 0.55 }));
+}
+
+// Cardboard archive boxes, taped, stacked two high.
+function boxes(x, z) {
+  const parts = [];
+  for (const [dx, y, dz, r] of [[0, 0.17, 0, 0.1], [0.05, 0.51, 0.02, -0.15]]) {
+    parts.push(box(0.5, 0.34, 0.38, dx, y, dz, C.card, r));
+    parts.push(box(0.08, 0.342, 0.39, dx, y, dz, '#9a7a4e', r));
+  }
+  const geo = merge(parts);
+  geo.translate(x, 0, z);
+  return new THREE.Mesh(geo, vertexMaterial({ roughness: 0.95 }));
+}
+
+function rug(w, d, color, x = 0, z = -0.1) {
+  return new THREE.Mesh(box(w, 0.012, d, x, 0.006, z, color), vertexMaterial({ roughness: 1 }));
+}
+
+// A flag in the party colour on a brass pole, furled a little.
+function flag(x, z, color) {
+  const pole = new THREE.Mesh(merge([cylinder(0.025, 0.025, 2.4, x, 1.2, z, C.brass, 10), cylinder(0.3, 0.3, 0.05, x, 0.025, z, C.brass, 16), cylinder(0.05, 0.02, 0.1, x, 2.45, z, C.brass, 8)]), vertexMaterial({ metalness: 0.7, roughness: 0.35, envMapIntensity: 1 }));
+  const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.9), new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide, roughness: 0.9 }));
+  cloth.position.set(x + 0.26, 1.95, z);
+  cloth.rotation.y = -0.4;
+  const g = new THREE.Group();
+  g.add(pole, cloth);
+  return g;
+}
+
+// A walnut partners' desk for the whips: a top on two pedestals with a modesty panel.
+function walnutDesk(bounds, s = 1) {
+  const wd = [box(2.2 * s, 0.08, 1.0 * s, 0, 0.72, 0, C.walnut), box(0.7 * s, 0.68, 0.9 * s, -0.7 * s, 0.34, 0, C.walnut), box(0.7 * s, 0.68, 0.9 * s, 0.7 * s, 0.34, 0, C.walnut), box(0.8 * s, 0.5, 0.06, 0, 0.5, -0.4 * s, C.walnut)];
+  return new THREE.Mesh(worldUVs(bakeAO(merge(wd), { bounds })), surface('walnut', { roughness: 0.45 }));
+}
+
+// A standing lamp: a pole, a drum shade that glows, and a pool of light from the shade.
+function floorLamp(scene, group, x, z) {
+  group.add(new THREE.Mesh(merge([cylinder(0.02, 0.02, 1.5, x, 0.75, z, C.brass, 8), cylinder(0.16, 0.16, 0.03, x, 0.015, z, C.brass, 12)]), vertexMaterial({ metalness: 0.6, roughness: 0.4 })));
+  group.add(new THREE.Mesh(cylinder(0.17, 0.2, 0.3, x, 1.55, z, '#f6e3b8', 16), glowMaterial()));
+  return lamp(scene, { intensity: tuning().look.deskLamp * 0.6, distance: 4, x, y: 1.45, z });
+}
+
+function nameplate(group, name, x, y, z) {
+  if (!name) return;
+  group.add(new THREE.Mesh(box(0.28, 0.065, 0.03, x, y + 0.035, z, C.brass), vertexMaterial({ metalness: 0.7, roughness: 0.35, envMapIntensity: 1 })));
+  group.add(texturedPanel(0.26, 0.055, paintNameplate(name), { x, y: y + 0.037, z: z - 0.017, rotY: Math.PI }));
+}
+
+const commonDesk = (g, { scaleX = 1.25, scaleZ = 1.15 } = {}) => {
+  const desk = placeModel(g, 'desk', { x: 0, z: 0, rotY: Math.PI });
+  desk.scale.set(scaleX, 1, scaleZ);
+  placeModel(g, 'chairDesk', { x: DESK_SEAT[0], z: DESK_SEAT[1] + 0.05, rotY: Math.PI });
+  placeModel(g, 'chairCushion', { x: -0.5, z: -1.0, rotY: 0 });
+  placeModel(g, 'chairCushion', { x: 0.5, z: -1.0, rotY: 0 });
+  placeModel(g, 'books', { x: -0.5, y: 0.72, z: -0.12, rotY: 0.3 });
+  placeModel(g, 'lampRoundTable', { x: -0.62, y: 0.72, z: 0.12 });
+  placeModel(g, 'laptop', { x: 0.25, y: 0.72, z: 0.12, rotY: Math.PI });
+};
+const deskShadows = [{ x: 0, z: 0, sx: 2.4, sz: 1.4 }, { x: DESK_SEAT[0], z: DESK_SEAT[1], sx: 0.9, sz: 0.9 }, { x: -0.5, z: -1.0, sx: 0.9, sz: 0.9 }, { x: 0.5, z: -1.0, sx: 0.9, sz: 0.9 }];
+
+export const SETS = {
+  // Act 1: a shared room. Two desks, one window, a cabinet, last year's boxes, and a strip light.
+  1: {
+    W: 2.4, D: 2.1, board: 1.7, boardZ: -0.9,
+    empty: { pos: [1.5, 1.55, 1.5], look: [-0.9, 0.85, -0.4], drop: 0.6 },
+    windows: [{ wall: '-z', at: -0.3, w: 1.3, h: 1.1, y: 1.7 }],
+    light: { hemi: 0.46, key: 0.5, fill: 0.3, lamp: 0.7, warm: '#e6eaf2' },
+    furnish(g, { W, D, scene, ctx }) {
+      commonDesk(g, { scaleX: 1.1, scaleZ: 1.05 });
+      // The colleague's desk along the far wall, their screen still on.
+      placeModel(g, 'desk', { x: -W + 0.6, z: 0.8, rotY: -Math.PI / 2 });
+      placeModel(g, 'chairDesk', { x: -W + 1.25, z: 0.8, rotY: -Math.PI / 2 });
+      placeModel(g, 'computerScreen', { x: -W + 0.55, y: 0.72, z: 0.8, rotY: Math.PI / 2 });
+      placeModel(g, 'books', { x: -W + 0.6, y: 0.72, z: 1.3, rotY: 1.2 });
+      g.add(cabinet(-W + 0.35, -D + 0.42, Math.PI));
+      placeModel(g, 'plantSmall2', { x: -W + 0.35, y: 1.1, z: -D + 0.42 });
+      g.add(boxes(W - 0.45, -D + 0.45));
+      placeModel(g, 'coatRackStanding', { x: -W + 0.45, z: D - 0.4 });
+      placeModel(g, 'trashcan', { x: 0.8, z: 1.5 });
+      // A fluorescent strip on the ceiling: the light nobody chose.
+      g.add(new THREE.Mesh(box(1.3, 0.05, 0.3, 0, H - 0.03, 0.2, '#f4f1e6'), glowMaterial({ vertexColors: false, color: '#eef1f6' })));
+      return [...deskShadows, { x: -W + 0.6, z: 0.8, sx: 0.9, sz: 1.5 }, { x: -W + 1.25, z: 0.8, sx: 0.8, sz: 0.8 }, { x: -W + 0.35, z: -D + 0.42, sx: 0.6, sz: 0.7 }, { x: W - 0.45, z: -D + 0.45, sx: 0.6, sz: 0.5 }];
+    },
+  },
+  // Act 2: your own room, with your name on the desk.
+  2: {
+    W: 3, D: 2.5, board: 2.4, boardZ: -0.2,
+    empty: { pos: [1.7, 1.6, 1.9], look: [-0.9, 0.85, -0.5], drop: 0.9 },
+    windows: [{ wall: '-z', at: 0, w: 2.0, h: 1.25, y: 1.7 }],
+    furnish(g, { W, D, ctx }) {
+      commonDesk(g);
+      nameplate(g, ctx.playerName, 0.62, 0.72, -0.3);
+      placeModel(g, 'bookcaseClosedWide', { x: W - 0.26, z: -1.3, rotY: -Math.PI / 2 });
+      placeModel(g, 'bookcaseOpen', { x: -W + 0.26, z: 1.7, rotY: Math.PI / 2 });
+      placeModel(g, 'pottedPlant', { x: -W + 0.5, z: -D + 0.5 });
+      placeModel(g, 'coatRackStanding', { x: W - 0.5, z: D - 0.45 });
+      placeModel(g, 'trashcan', { x: 1.0, z: 0.7 });
+      return [...deskShadows, { x: W - 0.3, z: -1.3, sx: 0.8, sz: 2.0 }, { x: -W + 0.3, z: 1.7, sx: 0.7, sz: 1.2 }, { x: -W + 0.5, z: -D + 0.5, sx: 0.7, sz: 0.7 }];
+    },
+  },
+  // Act 3: the annex off the whip's office. The files arrive in cabinets, and there's coffee.
+  3: {
+    W: 3, D: 2.5, board: 3.0, boardZ: -0.2,
+    empty: { pos: [1.7, 1.6, 1.9], look: [-0.9, 0.85, -0.5], drop: 0.9 },
+    windows: [{ wall: '-z', at: 0, w: 2.0, h: 1.25, y: 1.7 }],
+    furnish(g, { W, D, ctx }) {
+      commonDesk(g);
+      nameplate(g, ctx.playerName, 0.62, 0.72, -0.3);
+      placeModel(g, 'bookcaseClosedWide', { x: W - 0.26, z: -1.3, rotY: -Math.PI / 2 });
+      placeModel(g, 'bookcaseOpen', { x: -W + 0.26, z: 1.7, rotY: Math.PI / 2 });
+      g.add(cabinet(-W + 0.35, -1.9, -Math.PI / 2), cabinet(-W + 0.35, -1.25, -Math.PI / 2));
+      placeModel(g, 'tableCross', { x: W - 0.5, z: 0.5, scale: 0.6 });
+      placeModel(g, 'kitchenCoffeeMachine', { x: W - 0.5, y: 0.5, z: 0.5, rotY: -Math.PI / 2 });
+      placeModel(g, 'pottedPlant', { x: -W + 0.5, z: -D + 0.5 });
+      placeModel(g, 'coatRackStanding', { x: W - 0.5, z: D - 0.45 });
+      placeModel(g, 'trashcan', { x: 1.0, z: 0.7 });
+      return [...deskShadows, { x: W - 0.3, z: -1.3, sx: 0.8, sz: 2.0 }, { x: -W + 0.3, z: 1.7, sx: 0.7, sz: 1.2 }, { x: -W + 0.35, z: -1.6, sx: 0.8, sz: 1.5 }, { x: W - 0.5, z: 0.5, sx: 0.8, sz: 0.8 }, { x: -W + 0.5, z: -D + 0.5, sx: 0.7, sz: 0.7 }];
+    },
+  },
+  // Act 4: the deputy's room. Walnut, a rug, the flag, and a wall of files.
+  4: {
+    W: 3.5, D: 2.8, board: 3.0, boardZ: -0.4,
+    empty: { pos: [2.0, 1.7, 2.2], look: [-1.1, 0.85, -0.6], drop: 1.2 },
+    windows: [{ wall: '-z', at: 0, w: 2.4, h: 1.3, y: 1.7 }],
+    light: { hemi: 0.3, key: 0.65, fill: 0.25, lamp: 1.15, warm: '#ffe6cf' },
+    furnish(g, { W, D, ctx, bounds }) {
+      g.add(rug(3.4, 2.4, C.rug));
+      g.add(walnutDesk(bounds));
+      placeModel(g, 'chairDesk', { x: DESK_SEAT[0], z: DESK_SEAT[1] + 0.05, rotY: Math.PI });
+      placeModel(g, 'chairCushion', { x: -0.5, z: -1.0, rotY: 0 });
+      placeModel(g, 'chairCushion', { x: 0.5, z: -1.0, rotY: 0 });
+      placeModel(g, 'lampRoundTable', { x: -0.85, y: 0.76, z: 0.2 });
+      placeModel(g, 'books', { x: -0.55, y: 0.76, z: -0.15, rotY: 0.3 });
+      placeModel(g, 'laptop', { x: 0.3, y: 0.76, z: 0.1, rotY: Math.PI });
+      nameplate(g, ctx.playerName, 0.75, 0.76, -0.35);
+      placeModel(g, 'bookcaseClosedWide', { x: W - 0.26, z: -1.6, rotY: -Math.PI / 2 });
+      placeModel(g, 'bookcaseClosedWide', { x: W - 0.26, z: 0.4, rotY: -Math.PI / 2 });
+      g.add(cabinet(-W + 0.35, -2.1, -Math.PI / 2), cabinet(-W + 0.35, -1.45, -Math.PI / 2), cabinet(-W + 0.35, -0.8, -Math.PI / 2));
+      g.add(flag(-W + 1.2, D - 0.6, ctx.playerColor || '#555'));
+      placeModel(g, 'loungeChair', { x: -W + 0.9, z: 1.4, rotY: Math.PI / 2 + 0.5 });
+      placeModel(g, 'pottedPlant', { x: W - 0.5, z: -D + 0.5 });
+      placeModel(g, 'coatRackStanding', { x: W - 0.5, z: D - 0.45 });
+      return [{ x: 0, z: 0, sx: 2.8, sz: 1.5 }, ...deskShadows.slice(1), { x: W - 0.3, z: -1.6, sx: 0.8, sz: 2.0 }, { x: W - 0.3, z: 0.4, sx: 0.8, sz: 2.0 }, { x: -W + 0.35, z: -1.45, sx: 0.8, sz: 2.1 }, { x: -W + 0.9, z: 1.4, sx: 1.0, sz: 1.0 }, { x: W - 0.5, z: -D + 0.5, sx: 0.7, sz: 0.7 }];
+    },
+  },
+  // Act 5: the chief whip's corner office. Two windows, the whips' table under the board, a sofa for the
+  // conversations that don't happen across a desk.
+  5: {
+    W: 4, D: 3.2, board: 3.4, boardZ: -0.9,
+    empty: { pos: [2.4, 1.8, 2.6], look: [-1.5, 0.85, -0.8], drop: 1.5 },
+    windows: [{ wall: '-z', at: 0.6, w: 2.6, h: 1.4, y: 1.75 }, { wall: '-x', at: 1.9, w: 1.8, h: 1.4, y: 1.75 }],
+    light: { hemi: 0.34, key: 0.75, fill: 0.28, lamp: 1.1, warm: '#ffe6cf' },
+    furnish(g, { W, D, ctx, bounds, scene, lamps }) {
+      g.add(rug(3.8, 2.6, C.rugGreen));
+      g.add(walnutDesk(bounds, 1.15));
+      placeModel(g, 'chairDesk', { x: DESK_SEAT[0], z: DESK_SEAT[1] + 0.05, rotY: Math.PI });
+      placeModel(g, 'chairCushion', { x: -0.5, z: -1.0, rotY: 0 });
+      placeModel(g, 'chairCushion', { x: 0.5, z: -1.0, rotY: 0 });
+      placeModel(g, 'lampRoundTable', { x: -0.95, y: 0.76, z: 0.2 });
+      placeModel(g, 'books', { x: -0.6, y: 0.76, z: -0.15, rotY: 0.3 });
+      placeModel(g, 'laptop', { x: 0.3, y: 0.76, z: 0.1, rotY: Math.PI });
+      nameplate(g, ctx.playerName, 0.85, 0.76, -0.4);
+      // The whips' table under the board.
+      placeModel(g, 'tableCross', { x: -W + 1.5, z: -0.9, scale: 1.4 });
+      placeModel(g, 'chairCushion', { x: -W + 1.5, z: -0.15, rotY: Math.PI });
+      placeModel(g, 'chairCushion', { x: -W + 1.5, z: -1.65, rotY: 0 });
+      placeModel(g, 'chairCushion', { x: -W + 0.75, z: -0.9, rotY: Math.PI / 2 });
+      placeModel(g, 'chairCushion', { x: -W + 2.25, z: -0.9, rotY: -Math.PI / 2 });
+      placeModel(g, 'bookcaseClosedWide', { x: W - 0.26, z: -1.2, rotY: -Math.PI / 2 });
+      placeModel(g, 'bookcaseClosedWide', { x: W - 0.26, z: 0.8, rotY: -Math.PI / 2 });
+      placeModel(g, 'loungeSofa', { x: 2.2, z: -D + 0.5, rotY: 0 });
+      placeModel(g, 'tableCross', { x: 0.9, z: -D + 0.6, scale: 0.7 });
+      placeModel(g, 'plantSmall2', { x: 0.9, y: 0.5, z: -D + 0.6 });
+      lamps.push(floorLamp(scene, g, 3.3, -D + 0.5));
+      g.add(flag(W - 0.9, -D + 1.6, ctx.playerColor || '#555'));
+      placeModel(g, 'tableCross', { x: -2.2, z: D - 0.55, scale: 0.8 });
+      placeModel(g, 'kitchenCoffeeMachine', { x: -2.2, y: 0.6, z: D - 0.55, rotY: Math.PI });
+      placeModel(g, 'pottedPlant', { x: -W + 0.5, z: -D + 0.5 });
+      placeModel(g, 'coatRackStanding', { x: W - 0.5, z: D - 0.45 });
+      return [{ x: 0, z: 0, sx: 3.2, sz: 1.7 }, ...deskShadows.slice(1), { x: -W + 1.5, z: -0.9, sx: 2.2, sz: 2.2 }, { x: W - 0.3, z: -1.2, sx: 0.8, sz: 2.0 }, { x: W - 0.3, z: 0.8, sx: 0.8, sz: 2.0 }, { x: 2.2, z: -D + 0.5, sx: 1.9, sz: 0.9 }, { x: -2.2, z: D - 0.55, sx: 0.9, sz: 0.9 }, { x: -W + 0.5, z: -D + 0.5, sx: 0.7, sz: 0.7 }];
+    },
+  },
+  // The whip's office, for the Act 1 reversal: a walnut desk, the flag, the blinds shut.
+  whip: {
+    W: 3, D: 2.5, board: 3.0, boardZ: -0.2, blinds: 'closed',
+    windows: [{ wall: '-z', at: 0, w: 2.0, h: 1.25, y: 1.7 }],
+    light: { hemi: 0.26, key: 0.3, fill: 0.25, lamp: 1.4, warm: '#ffe6cf' },
+    furnish(g, { W, D, ctx, bounds }) {
+      g.add(walnutDesk(bounds));
+      placeModel(g, 'chairDesk', { x: DESK_SEAT[0], z: DESK_SEAT[1] + 0.05, rotY: Math.PI });
+      placeModel(g, 'chairCushion', { x: -0.5, z: -1.0, rotY: 0 });
+      placeModel(g, 'chairCushion', { x: 0.5, z: -1.0, rotY: 0 });
+      placeModel(g, 'bookcaseClosedWide', { x: W - 0.26, z: -1.3, rotY: -Math.PI / 2 });
+      placeModel(g, 'bookcaseClosedWide', { x: W - 0.26, z: 0.3, rotY: -Math.PI / 2 });
+      placeModel(g, 'lampRoundTable', { x: -0.85, y: 0.76, z: 0.2 });
+      g.add(flag(-1.4, 1.9, ctx.playerColor || '#555'));
+      return [{ x: 0, z: 0, sx: 2.8, sz: 1.5 }, { x: -0.5, z: -1.0, sx: 0.9, sz: 0.9 }, { x: 0.5, z: -1.0, sx: 0.9, sz: 0.9 }, { x: W - 0.3, z: -0.5, sx: 0.8, sz: 3.4 }];
+    },
+  },
+};
+
+export const setFor = (act) => SETS[Math.max(1, Math.min(5, act || 1))];
+
+// Build one whole room (shell, windows, blinds, board, furniture) as a group that can be shown or hidden.
+function buildRoom(scene, set, ctx, lawn, boardTex, lamps) {
+  const { W, D } = set;
+  const bounds = { x0: -W, x1: W, z0: -D, z1: D };
+  const room = new THREE.Group();
+  room.add(buildMeshes(buildShell(set), bounds));
+  for (const win of set.windows) {
+    const { at, rot } = windowGeometry(win, W, D);
+    const slats = [];
+    for (let i = 0; i < Math.floor(win.h / 0.095); i++) {
+      const y = win.y + win.h / 2 - 0.05 - i * 0.095;
+      const [x, z] = at(0, 0.1);
+      slats.push(set.blinds === 'closed' ? box(win.w, 0.094, 0.03, x, y, z, '#d9cfb8', rot) : box(win.w, 0.035, 0.07, x, y, z, C.paper, rot));
+    }
+    room.add(new THREE.Mesh(merge(slats), vertexMaterial({ roughness: 0.8 })));
+    const [px, pz] = at(0, 0.02);
+    room.add(texturedPanel(win.w, win.h, lawn, { x: px, y: win.y, z: pz, rotY: rot }));
+  }
+  room.add(texturedPanel(set.board, 1.2, boardTex, { x: -W + 0.03, y: 1.75, z: set.boardZ, rotY: Math.PI / 2 }));
+  const spots = set.furnish(room, { W, D, ctx, bounds, scene, lamps });
+  room.add(contactShadows(spots, { radius: 0.55 }));
+  return room;
+}
+
 export function create(ctx) {
-  const tier = ctx.tier || 1;
+  const act = ctx.act || 1;
+  const mySet = setFor(act);
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#1b1a17');
   scene.environment = ctx.environment || null;
@@ -150,91 +413,48 @@ export function create(ctx) {
   const rig = roomLights(scene, { hemi: 0.32, key: 0.7, fill: 0.25, warm: '#ffe6cf', keyPos: [-2, 3, -6], fillPos: [4, 3, 3] });
   const deskLamp = lamp(scene, { intensity: tuning().look.deskLamp, distance: 5, x: -0.6, y: 1.25, z: 0.1 });
 
-  const bounds = { x0: -W, x1: W, z0: -D, z1: D };
-  scene.add(buildMeshes(buildShell(), bounds));
-
-  // Blinds: slats half open for your office, closed tight for the whip's.
-  const slats = [];
-  const closed = [];
-  for (let i = 0; i < 13; i++) {
-    const y = WINDOW.y + WINDOW.h / 2 - 0.05 - i * 0.095;
-    slats.push(box(WINDOW.w, 0.035, 0.07, 0, y, -D + 0.1, C.paper));
-    closed.push(box(WINDOW.w, 0.094, 0.03, 0, y, -D + 0.1, '#d9cfb8'));
-  }
-  const blindsOpen = new THREE.Mesh(merge(slats), vertexMaterial({ roughness: 0.8 }));
-  const blindsClosed = new THREE.Mesh(merge(closed), vertexMaterial({ roughness: 0.8 }));
-  blindsClosed.visible = false;
-  scene.add(blindsOpen, blindsClosed);
   const lawn = paintedTexture(512, 320, paintLawn);
-  scene.add(texturedPanel(WINDOW.w, WINDOW.h, lawn, { x: 0, y: WINDOW.y, z: -D + 0.02 }));
-
-  // The corkboard on the -x wall.
-  const boardW = tier > 1 ? 3.0 : 2.4;
   const boardTex = paintedTexture(512, 256, (g, w, h) => drawBoard(g, w, h, [], 'Coming up'));
-  scene.add(texturedPanel(boardW, 1.2, boardTex, { x: -W + 0.03, y: 1.75, z: -0.2, rotY: Math.PI / 2 }));
-
-  // Your office: the kit's desk and chairs, a bookcase, a lamp, a plant, a coat rack by the door.
-  const mine = new THREE.Group();
+  const myLamps = [];
+  const mine = buildRoom(scene, mySet, ctx, lawn, boardTex, myLamps);
   scene.add(mine);
-  const desk = placeModel(mine, 'desk', { x: 0, z: 0, rotY: Math.PI });
-  desk.scale.set(1.25, 1, 1.15);
-  placeModel(mine, 'chairDesk', { x: DESK_SEAT[0], z: DESK_SEAT[1] + 0.05, rotY: Math.PI });
-  placeModel(mine, 'chairCushion', { x: -0.5, z: -1.0, rotY: 0 });
-  placeModel(mine, 'chairCushion', { x: 0.5, z: -1.0, rotY: 0 });
-  placeModel(mine, 'bookcaseClosedWide', { x: W - 0.26, z: -1.3, rotY: -Math.PI / 2 });
-  placeModel(mine, 'bookcaseOpen', { x: -W + 0.26, z: 1.7, rotY: Math.PI / 2 });
-  placeModel(mine, 'books', { x: -0.5, y: 0.72, z: -0.12, rotY: 0.3 });
-  placeModel(mine, 'lampRoundTable', { x: -0.62, y: 0.72, z: 0.12 });
-  placeModel(mine, 'laptop', { x: 0.25, y: 0.72, z: 0.12, rotY: Math.PI });
-  placeModel(mine, 'pottedPlant', { x: -W + 0.5, z: -D + 0.5 });
-  placeModel(mine, 'coatRackStanding', { x: W - 0.5, z: D - 0.45 });
-  placeModel(mine, 'trashcan', { x: 1.0, z: 0.7 });
-  mine.add(contactShadows([
-    { x: 0, z: 0, sx: 2.4, sz: 1.4 },
-    { x: DESK_SEAT[0], z: DESK_SEAT[1], sx: 0.9, sz: 0.9 },
-    { x: -0.5, z: -1.0, sx: 0.9, sz: 0.9 },
-    { x: 0.5, z: -1.0, sx: 0.9, sz: 0.9 },
-    { x: W - 0.3, z: -1.3, sx: 0.8, sz: 2.0 },
-    { x: -W + 0.3, z: 1.7, sx: 0.7, sz: 1.2 },
-    { x: -W + 0.5, z: -D + 0.5, sx: 0.7, sz: 0.7 },
-  ], { radius: 0.55 }));
+  // The whip's office only ever appears in Act 1, when the whip calls you in.
+  let whipRoom = null;
+  const whipSet = SETS.whip;
 
-  // The whip's office, for the reversal: a bigger walnut desk, a flag in the party colour, the blinds shut.
-  const whip = new THREE.Group();
-  whip.visible = false;
-  scene.add(whip);
-  const wd = [];
-  wd.push(box(2.2, 0.08, 1.0, 0, 0.72, 0, C.walnut));
-  wd.push(box(0.7, 0.68, 0.9, -0.7, 0.34, 0, C.walnut));
-  wd.push(box(0.7, 0.68, 0.9, 0.7, 0.34, 0, C.walnut));
-  wd.push(box(0.8, 0.5, 0.06, 0, 0.5, -0.4, C.walnut));
-  const whipDesk = new THREE.Mesh(worldUVs(bakeAO(merge(wd), { bounds })), surface('walnut', { roughness: 0.45 }));
-  whip.add(whipDesk);
-  placeModel(whip, 'chairDesk', { x: DESK_SEAT[0], z: DESK_SEAT[1] + 0.05, rotY: Math.PI });
-  placeModel(whip, 'chairCushion', { x: -0.5, z: -1.0, rotY: 0 });
-  placeModel(whip, 'chairCushion', { x: 0.5, z: -1.0, rotY: 0 });
-  placeModel(whip, 'bookcaseClosedWide', { x: W - 0.26, z: -1.3, rotY: -Math.PI / 2 });
-  placeModel(whip, 'bookcaseClosedWide', { x: W - 0.26, z: 0.3, rotY: -Math.PI / 2 });
-  placeModel(whip, 'lampRoundTable', { x: -0.85, y: 0.76, z: 0.2 });
-  const pole = new THREE.Mesh(merge([cylinder(0.025, 0.025, 2.4, -1.4, 1.2, 1.9, C.brass, 10), cylinder(0.3, 0.3, 0.05, -1.4, 0.025, 1.9, C.brass, 16)]), vertexMaterial({ metalness: 0.7, roughness: 0.35, envMapIntensity: 1 }));
-  const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.9), new THREE.MeshStandardMaterial({ color: ctx.playerColor || '#555', side: THREE.DoubleSide, roughness: 0.9 }));
-  cloth.position.set(-1.4 + 0.26, 1.95, 1.9);
-  cloth.rotation.y = -0.4;
-  whip.add(pole, cloth);
-  whip.add(contactShadows([{ x: 0, z: 0, sx: 2.8, sz: 1.5 }, { x: -0.5, z: -1.0, sx: 0.9, sz: 0.9 }, { x: 0.5, z: -1.0, sx: 0.9, sz: 0.9 }, { x: W - 0.3, z: -0.5, sx: 0.8, sz: 3.4 }], { radius: 0.55 }));
+  // In the shared room a colleague from your cohort works late at the other desk.
+  let colleague = null;
+  if (act === 1 && ctx.colleague) {
+    colleague = createFigure(ctx.colleague.color, ctx.colleague.id, wardrobe(ctx.colleague.id, ctx.colleague.color));
+    colleague.group.position.set(-mySet.W + 1.2, 0, 0.8);
+    colleague.group.rotation.y = -Math.PI / 2;
+    poseFigure(colleague, 'cooperative', 1);
+    mine.add(colleague.group);
+  }
+
+  function light(set, on) {
+    const L = { hemi: 0.32, key: 0.7, fill: 0.25, lamp: 1, warm: '#ffe6cf', ...(set.light || {}) };
+    rig.key.intensity = L.key;
+    rig.hemi.intensity = L.hemi;
+    rig.fill.intensity = L.fill;
+    rig.hemi.color.set(L.warm);
+    deskLamp.intensity = tuning().look.deskLamp * L.lamp;
+    for (const l of myLamps) l.visible = on;
+  }
+  light(mySet, true);
 
   function dress(asWhip) {
+    if (asWhip && !whipRoom) {
+      whipRoom = buildRoom(scene, whipSet, ctx, lawn, boardTex, []);
+      scene.add(whipRoom);
+    }
     mine.visible = !asWhip;
-    whip.visible = asWhip;
-    blindsOpen.visible = !asWhip;
-    blindsClosed.visible = asWhip;
-    rig.key.intensity = asWhip ? 0.3 : 0.7;
-    rig.hemi.intensity = asWhip ? 0.26 : 0.32;
-    deskLamp.intensity = tuning().look.deskLamp * (asWhip ? 1.4 : 1);
+    if (whipRoom) whipRoom.visible = asWhip;
+    light(asWhip ? whipSet : mySet, !asWhip);
   }
 
   const camera = new THREE.PerspectiveCamera(55, 1, 0.05, 40);
-  const cam = createOfficeCamera(camera);
+  const cam = createOfficeCamera(camera, { empty: mySet.empty });
 
   // The player sits behind the desk (or, in the reversal, in the other visitor chair).
   const player = createFigure(ctx.playerColor || '#555', 'player', wardrobe(ctx.playerId || 'player', ctx.playerColor || '#555'));
@@ -243,6 +463,7 @@ export function create(ctx) {
   let deskFigure = null;
   let visitor = null;
   let reversal = false;
+  let t = 0;
 
   function seatPlayer(rev) {
     reversal = rev;
@@ -262,6 +483,7 @@ export function create(ctx) {
     name: 'office',
     scene,
     camera,
+    act,
     // Show who's here. In the reversal the whip takes the desk chair and the player sits opposite.
     setVisitor(v) {
       if (!v) {
@@ -296,7 +518,7 @@ export function create(ctx) {
         return;
       }
       seatPlayer(false);
-      visitor = createVisitor(scene, { color: v.color, mpId: v.mpId, path: VISITOR_PATH, seat: VISITOR_SEAT, facing: 0, outfit: wardrobe(v.mpId, v.color) });
+      visitor = createVisitor(scene, { color: v.color, mpId: v.mpId, path: visitorPath(mySet.W, mySet.D), seat: VISITOR_SEAT, facing: 0, outfit: wardrobe(v.mpId, v.color) });
       visitor.mpId = v.mpId;
       visitor.setMood(v.mood);
       if (v.snap) visitor.sitNow();
@@ -321,6 +543,13 @@ export function create(ctx) {
     update(dt) {
       visitor?.update(dt);
       cam.update(dt);
+      if (colleague) {
+        // Typing, mostly; now and then a glance over at whoever's in the chair.
+        t += dt;
+        colleague.head.rotation.y = Math.sin(t * 0.35) > 0.92 ? -0.9 : Math.sin(t * 1.1) * 0.05;
+        colleague.arms[0].el.rotation.x = -1.3 + Math.sin(t * 7) * 0.05;
+        colleague.arms[1].el.rotation.x = -1.3 + Math.cos(t * 6) * 0.05;
+      }
     },
     resize(w, h) {
       camera.aspect = w / h;
