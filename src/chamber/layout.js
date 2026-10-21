@@ -7,10 +7,11 @@ export const GEOMETRY = {
   aisleWidth: 4,
   rows: 4,
   seatsPerRow: 15,
-  // The handoff starts row 1 at 2.0 m from the aisle edge, but four rows at 1.3 m pitch from there
-  // would put row 4 outside a 15 m floor. 1.0 m keeps the floor width and still clears the aisle.
-  rowStart: 1.0,
-  rowPitch: 1.3,
+  // The handoff starts row 1 at 2.0 m from the aisle edge, but four rows from there would put row 4
+  // outside a 15 m floor. 0.85 m still clears the aisle with the front desks, and the 1.4 m pitch leaves
+  // a gangway behind each row's chairs that a member can walk along to the end of the bench.
+  rowStart: 0.85,
+  rowPitch: 1.4,
   rowRise: 0.25,
   seatPitch: 1.1,
   dais: { z: -11, height: 0.6, width: 4 },
@@ -63,6 +64,41 @@ export function buildSeats() {
     }
   }
   return seats;
+}
+
+// The way out for a member leaving their seat, as [x, y, z] points (reversed for the way back in): into the
+// gap beside the chair, along the gangway behind the row to the nearer end of the bench, down the steps,
+// up the aisle and round the end of the bar to the doors. Nobody walks through a desk. Null for the front
+// bench (they stay for the business) and the back row, whose gangway is the wall.
+export function walkerPath(s, out = true) {
+  const g = GEOMETRY;
+  if (s.row < 2 || s.row >= g.rows) return null;
+  const side = s.side === 'gov' ? -1 : 1;
+  const x = (d) => side * d;
+  const d = Math.abs(s.x);
+  const dir = s.z >= 0 ? 1 : -1;
+  const gap = s.z + (dir * g.seatPitch) / 2;
+  const end = dir * ((g.seatsPerRow / 2) * g.seatPitch + 0.4);
+  const aisle = g.aisleWidth / 2 - 0.7;
+  const L = g.floorLength / 2;
+  const pts = [
+    [s.x, s.y, gap],
+    [x(d + 0.45), s.y, gap],
+    [x(d + 0.45), s.y, end],
+  ];
+  for (let row = s.row; row >= 2; row--) {
+    const riser = Math.abs(seatX(s.side, row)) - 0.85;
+    pts.push([x(riser + 0.2), rowFloorY(row), end], [x(riser - 0.2), rowFloorY(row - 1), end]);
+  }
+  pts.push(
+    [x(aisle), 0, end],
+    [x(aisle), 0, g.barZ - 1.5],
+    [x(g.aisleWidth / 2 + 0.5), 0, g.barZ - 0.6],
+    [x(g.aisleWidth / 2 + 0.5), 0, g.barZ + 0.6],
+    [x(0.4), 0, L - 0.4],
+    [x(0.3), 0, L + 0.6],
+  );
+  return out ? pts : pts.reverse();
 }
 
 // Desks are paired: seats 1-2, 3-4 ... share a desk, seat 15 has its own.

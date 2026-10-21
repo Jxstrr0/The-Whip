@@ -227,23 +227,29 @@ function buildShell(set) {
   g.plaster.push(panel(2 * W, H, 0, H / 2, -D, C.plaster, '+z', 1));
   g.plaster.push(panel(2 * W, H, 0, H / 2, D, C.plasterDark, '-z', 1));
   g.plaster.push(panel(2 * W, 2 * D, 0, H, 0, '#e9e2d3', 'down', 1));
-  // Oak wainscot to 1.0 m with panel strips, a top rail and a skirting, on every wall.
+  // Oak wainscot to 1.0 m with panel strips, a top rail and a skirting, on every wall. Every layer stands a
+  // clear centimetre proud of the one behind it: coplanar faces shimmer on a phone's shallower depth buffer.
   const wain = 1.0;
   for (const [len, x, z, facing] of [[2 * D, -W + 0.01, 0, '+x'], [2 * D, W - 0.01, 0, '-x'], [2 * W, 0, -D + 0.01, '+z'], [2 * W, 0, D - 0.01, '-z']]) {
-    g.oak.push(panel(len, wain, x, wain / 2, z, C.oak, facing, 1));
-    g.oak.push(panel(len, 0.07, x, wain, z, C.oakDark, facing));
-    g.oak.push(panel(len, 0.1, x, 0.05, z, C.oakDark, facing));
+    const inward = facing === '+x' || facing === '+z' ? 0.01 : -0.01;
     const along = facing === '+x' || facing === '-x';
+    const at = (s, out) => (along ? [x + out, z + s] : [x + s, z + out]);
+    const [rx, rz] = at(0, inward);
+    g.oak.push(panel(len, wain, x, wain / 2, z, C.oak, facing, 1));
+    g.oak.push(panel(len, 0.07, rx, wain, rz, C.oakDark, facing));
+    g.oak.push(panel(len, 0.1, rx, 0.05, rz, C.oakDark, facing));
     for (let s = -len / 2 + 0.6; s < len / 2; s += 0.9) {
-      if (along) g.oak.push(panel(0.05, wain - 0.25, x + (facing === '+x' ? 0.01 : -0.01), wain / 2 - 0.02, z + s, C.oakDark, facing));
-      else g.oak.push(panel(0.05, wain - 0.25, x + s, wain / 2 - 0.02, z + (facing === '+z' ? 0.01 : -0.01), C.oakDark, facing));
+      // No strips behind the door: they would show through it.
+      if (facing === '-x' && Math.abs(z + s - doorZ(D)) < 0.6) continue;
+      const [sx, sz] = at(s, inward);
+      g.oak.push(panel(0.05, wain - 0.25, sx, wain / 2 - 0.02, sz, C.oakDark, facing));
     }
   }
-  // The door on the +x wall, with a frame and a brass knob.
+  // The door on the +x wall, in a frame, standing proud of the wainscot rails.
   const dz = doorZ(D);
-  g.walnut.push(panel(0.95, 2.1, W - 0.015, 1.05, dz, C.walnut, '-x'));
-  g.oak.push(panel(1.15, 0.08, W - 0.02, 2.14, dz, C.oakDark, '-x'));
-  for (const d of [-0.55, 0.55]) g.oak.push(panel(0.08, 2.2, W - 0.02, 1.1, dz + d, C.oakDark, '-x'));
+  g.walnut.push(panel(0.95, 2.1, W - 0.03, 1.05, dz, C.walnut, '-x'));
+  g.oak.push(panel(1.15, 0.08, W - 0.04, 2.14, dz, C.oakDark, '-x'));
+  for (const d of [-0.55, 0.55]) g.oak.push(panel(0.08, 2.2, W - 0.04, 1.1, dz + d, C.oakDark, '-x'));
   for (const win of set.windows) g.oak.push(...windowGeometry(win, W, D).parts);
   return g;
 }
