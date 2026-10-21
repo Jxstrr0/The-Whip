@@ -389,7 +389,11 @@
     },
     "routineOdds": 0.15,
     "scandalLeak": 12,
-    "scandalDecay": 1
+    "scandalDecay": 1,
+    "pollHistoryWeeks": 52,
+    "chartWeeks": 12,
+    "townHallPress": 0.5,
+    "leakPress": 0.35
   },
   "questionPeriod": {
     "slotOdds": { "1": 0.2, "2": 0.12, "3": 0.04 },

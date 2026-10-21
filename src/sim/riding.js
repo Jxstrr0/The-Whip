@@ -7,6 +7,7 @@ import { hooks, resolvers, log, isSittingWeek } from './pacing.js';
 import { adjustRapport } from './relationships.js';
 import { dilemmaFor } from './career.js';
 import { baseScore } from './mp.js';
+import { headline } from './media.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => (m ? `${m.name.first} ${m.name.last}` : '');
@@ -161,6 +162,10 @@ export function answerTownHall(state, index) {
     const swing = Math.round((th.crowd - 50) / 8);
     state.player.ridingStanding = clamp(state.player.ridingStanding + swing, 0, 100);
     log(state, `Town hall in ${v.town}: the crowd ended ${th.crowd >= 60 ? 'on your side' : th.crowd <= 40 ? 'against you' : 'unconvinced'}.`, 'riding');
+    // A full hall is sometimes a story in the weekend paper.
+    withRng(state, (rng) => {
+      if (rng.chance(tuning().media.townHallPress)) headline(state, rng, 'townHall', { bill: v.billId ? state.bills[v.billId]?.title || 'the bill' : 'the bill' });
+    });
     v.phase = 'choose';
   }
   return { crowd: th.crowd };
