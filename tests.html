@@ -51,6 +51,9 @@ import * as pmb from './src/sim/pmb.js';
 import * as lifeEvents from './src/sim/lifeEvents.js';
 import * as ranks from './src/sim/ranks.js';
 import * as record from './src/sim/record.js';
+import * as election from './src/sim/election.js';
+import * as confidence from './src/sim/confidence.js';
+import * as media from './src/sim/media.js';
 
 const sections = [];
 let current = null;
@@ -407,7 +410,12 @@ test('A meeting with a scripted choice sequence produces the expected ledger ent
   ACTIONS.invite(s, { mpId: target.id });
   assert(s.flow.pending.kind === 'meeting', 'meeting did not start');
   const mt = s.meetings[s.meeting];
-  while (mt.phase === 'talk') ACTIONS.talk(s, { index: mt.talk.options.findIndex((o) => o.approach === 'listen') });
+  for (let i = 0; i < 6 && mt.phase === 'talk'; i++) {
+    const listen = mt.talk.options.findIndex((o) => o.approach === 'listen');
+    assert(listen >= 0, 'no way to listen on turn ' + mt.turn + ': ' + mt.talk.options.map((o) => o.approach).join(', '));
+    ACTIONS.talk(s, { index: listen });
+  }
+  assert(mt.phase !== 'talk', 'the talk never ended');
   // Offer a riding mention, ask a favour: a fair trade for a friendly MP.
   target.rapport = 40;
   ACTIONS.propose(s, { offers: ['ridingMention'], asks: ['favor'] });
@@ -433,7 +441,11 @@ test('Meetings reveal fields in the knowledge map', () => {
   const mt = s.meetings[s.meeting];
   assert(cardView(s, target.id).fields.mood.known, 'mood not revealed on sitting down');
   target.mood = mt.mood = 'angry';
-  while (mt.phase === 'talk') ACTIONS.talk(s, { index: Math.max(0, mt.talk.options.findIndex((o) => o.approach === 'listen')) });
+  for (let i = 0; i < 6 && mt.phase === 'talk'; i++) {
+    const listen = mt.talk.options.findIndex((o) => o.approach === 'listen');
+    assert(listen >= 0, 'no way to listen on turn ' + mt.turn);
+    ACTIONS.talk(s, { index: listen });
+  }
   const known = HIDDEN_FIELDS.filter((f) => cardView(s, target.id).fields[f].known);
   assert(known.length >= 3, `only ${known.join(', ')} known`);
   return known.join(', ');
@@ -1144,6 +1156,174 @@ test('Retirement is available from Act 2 and shows the whip\'s record', () => {
   const save = JSON.parse(decodeURIComponent(escape(atob(exportSave(s)))));
   assert(save.ending?.endingKind === 'retirement', 'the ending survives a save');
   return `${p.record.name}: ${p.record.rank}, ${p.record.votesWon} votes won`;
+});
+
+// ---------- Stage 8: confidence, consequences and elections ----------
+section('Stage 8 · Confidence, consequences and elections');
+
+function playToDissolution(s, rng) {
+  for (let i = 0; i < 400000; i++) {
+    const p = s.flow.pending;
+    if (p?.kind === 'dissolved') return p;
+    botAct(s, rng);
+  }
+  return null;
+}
+
+test('A minority government falls on a lost confidence vote and an election is called; early in a Parliament the opposition may take over instead', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2' });
+  const me = s.mps[s.player.mpId];
+  s.house.minority = true;
+  s.date.absWeek = tuning().confidence.handoverWeeks + 5;
+  s.house.fallen = { day: 1, billId: null, divisionId: null };
+  const p = pacing.next(s);
+  assert(p?.kind === 'dissolved' && p.reason === 'fallen', 'the writ drops');
+  pacing.resolve(s, 'canvass');
+  const night = pacing.next(s);
+  assert(night?.kind === 'election' && night.phase === 'result' && night.seats.length === Object.keys(s.parties).length, 'election night');
+  assert(night.player.result === 'held' && s.house.parliament === 25 && s.date.absWeek === 0, 'held the seat; the 25th Parliament opens');
+  assert(Object.keys(s.mps).length === 120 && Object.values(s.parties).reduce((n, q) => n + q.seats, 0) + s.house.independents === 120, 'a full House');
+  pacing.resolve(s, null);
+  for (let i = 0; i < 60 && s.date.absWeek < 1; i++) {
+    const q = pacing.skip(s);
+    if (q && q.kind !== 'dissolved') pacing.resolve(s, q.kind === 'division' ? 'line' : null);
+  }
+  assert(s.date.absWeek >= 1 && s.date.parliament === 25 && Object.values(s.bills).length > 0, 'business resumes');
+  // The handover: a government that falls in its first months hands over to the opposition, no election.
+  const h = newGame({ seed: 'TEST-1', party: 'p2' });
+  const gov0 = h.house.government;
+  h.date.absWeek = 4;
+  h.house.fallen = { day: 1, billId: null, divisionId: null };
+  const stop = pacing.next(h);
+  assert(stop?.kind === 'election' && stop.phase === 'handover' && h.house.government !== gov0 && h.parties[gov0].role === 'opposition' && h.parties[h.house.government].role === 'government', 'the opposition forms a government');
+  assert(h.house.parliament === 24 && !h.house.fallen && Object.values(h.mps).every((m) => m.caucusRole === 'speaker' || m.seatId), 'same Parliament, reseated');
+  return `${night.governmentName} ${night.minority ? 'minority' : 'majority'} after the fall; ${h.parties[h.house.government].short} took over from ${h.parties[gov0].short} in week 4 (${me.name.last} still seated)`;
+});
+
+test('A full four-year Parliament and its election play through with the bot, no errors; the riding can be lost or the nomination', () => {
+  const s = newGame({ seed: 'TEST-3', party: 'p1' });
+  const rng = createRng('bot8');
+  const t0 = performance.now();
+  const writ = playToDissolution(s, rng);
+  assert(writ?.kind === 'dissolved', 'reached the writ');
+  const weeks = s.date.absWeek;
+  pacing.resolve(s, 'tour');
+  const night = pacing.next(s);
+  assert(night?.kind === 'election', 'election night after four years');
+  const held = night.player.result === 'held';
+  pacing.resolve(s, null);
+  if (held) {
+    assert(s.house.parliament === 25 && s.player.record.parliaments === 2, 'second Parliament on the record');
+    for (let i = 0; i < 3000; i++) { const p = s.flow.pending; if (p) { if (p.kind === 'ending') break; botAct(s, rng); } else pacing.next(s); if (s.date.absWeek >= 2) break; }
+    assert(s.date.absWeek >= 2, 'the new Parliament sits');
+  } else assert(['defeated', 'nomination'].includes(s.ending?.endingKind), 'the defeated or deselected ending: ' + s.ending?.endingKind);
+  // Losing the riding: a member the whole country has turned on.
+  const l = newGame({ seed: 'TEST-1', party: 'p2' });
+  const me = l.mps[l.player.mpId];
+  me.margin = 1;
+  me.scandal = 100;
+  l.player.ridingStanding = 5;
+  for (const id of Object.keys(l.polling)) l.polling[id] = id === me.party ? 0.5 : 30;
+  l.flow.pending = { kind: 'dissolved', important: true, needsChoice: true, reason: 'fixedDate' };
+  pacing.resolve(l, 'rest');
+  const ln = pacing.next(l);
+  assert(ln?.kind === 'election' && ln.player.result === 'lost', 'lost the riding: ' + ln?.player?.result);
+  pacing.resolve(l, null);
+  assert(l.ending?.endingKind === 'defeated' && pacing.next(l)?.kind === 'ending', 'the record closes');
+  const n = newGame({ seed: 'TEST-1', party: 'p2' });
+  n.player.nominationThreat = 100;
+  n.player.ridingStanding = 20;
+  n.flow.pending = { kind: 'dissolved', important: true, needsChoice: true, reason: 'fixedDate' };
+  pacing.resolve(n, 'rest');
+  const nn = pacing.next(n);
+  assert(nn.player.result === 'deselected', 'deselected before the writ');
+  pacing.resolve(n, null);
+  assert(n.ending?.endingKind === 'nomination', 'the nomination ending');
+  return `${weeks} weeks, ${Math.round(performance.now() - t0)} ms; ${held ? 'held' : 'lost'} ${night.player.riding} by ${night.player.margin}; the defeat and the deselection both reachable`;
+});
+
+test('After an election the blocks, roles and cohorts are new and the ledger carries over', () => {
+  const s = newGame({ seed: 'TEST-2', party: 'p2' });
+  const me = s.mps[s.player.mpId];
+  const before = Object.fromEntries(Object.values(s.parties).map((q) => [q.id, q.seats]));
+  const other = Object.values(s.mps).find((m) => m.party === me.party && m.id !== me.id && m.caucusRole === 'backbencher');
+  s.ledger.push({ id: 'L1', kind: 'favor', from: other.id, to: me.id, what: 'speakingTime', settled: false, week: 3 });
+  s.player.act = 3;
+  s.parties.p2.assistantWhips.push(me.id);
+  me.caucusRole = 'assistantWhip';
+  // The third party surges. The player sits on a safe margin so the test is about the House, not their seat.
+  me.margin = 30;
+  for (const id of Object.keys(s.polling)) if (id !== me.party) s.polling[id] = id === 'p3' ? 45 : 12;
+  s.flow.pending = { kind: 'dissolved', important: true, needsChoice: true, reason: 'fixedDate' };
+  pacing.resolve(s, 'canvass');
+  const night = pacing.next(s);
+  assert(night.player.result === 'held', 'held (margin ' + night.player.margin + ')');
+  const after = Object.fromEntries(Object.values(s.parties).map((q) => [q.id, q.seats]));
+  assert(after.p3 > before.p3 && s.house.government === 'p3' && s.parties.p3.role === 'government', 'the poll leader forms the government: ' + JSON.stringify(after));
+  const seatCount = Object.values(s.mps).filter((m) => m.seatId).length;
+  assert(seatCount === 119 && s.mps[s.house.speaker]?.caucusRole === 'speaker', 'reseated with a Speaker');
+  for (const q of Object.values(s.parties)) if (q.seats >= 2) assert(q.leader && s.mps[q.leader]?.party === q.id && q.chiefWhip && s.mps[q.chiefWhip]?.party === q.id, `${q.short} has a leader and a whip`);
+  const rookies = Object.values(s.mps).filter((m) => m.cohort === 25);
+  assert(rookies.length === night.newcomers && rookies.every((m) => m.tenure === 0) && night.gone === night.newcomers, 'a new cohort of ' + rookies.length);
+  assert(Object.values(s.mps).filter((m) => m.cohort < 25).every((m) => m.tenure >= 4), 'survivors are four years older in the House');
+  assert(me.caucusRole === 'assistantWhip' && s.parties.p2.assistantWhips.includes(me.id) && s.player.act === 3, 'the player keeps their rank');
+  assert(s.ledger.find((e) => e.id === 'L1'), 'the ledger carried over');
+  const goneIds = Object.keys(s.alumni);
+  assert(goneIds.length === night.gone && goneIds.every((id) => !s.mps[id]), 'the departed are remembered as alumni');
+  assert(Object.values(s.cliques).every((q) => q.members.every((id) => s.mps[id])), 'cliques rebuilt around the living');
+  return `${night.governmentName} ${after.p3} seats; ${rookies.length} rookies; ${night.cohortLost} of the cohort lost; ledger ${s.ledger.length} entries`;
+});
+
+test('Headlines lead with the day\'s biggest story and move polling, standing and the pressure meter', () => {
+  const { s, b, me } = whipScenario(3);
+  s.house.government = me.party;
+  b.confidence = true;
+  b.kind = 'government';
+  const rebels = Object.values(s.mps).filter((m) => m.party === me.party && m.id !== me.id).slice(0, 4).map((m) => m.id);
+  s.divisions.d1 = { id: 'd1', recorded: true, billId: b.id, carried: false, yeas: [me.id], nays: rebels, paired: [], stage: 'second', day: 3 };
+  s.flow.day = { matters: true, results: ['d1'] };
+  const poll0 = s.polling[me.party];
+  const press0 = s.log.filter((l) => l.kind === 'press').length;
+  // Early in the Parliament the gallery knows the opposition will be sent for; later, that an election follows.
+  s.date.absWeek = 2;
+  for (const fn of pacing.hooks.fallout) fn(s, createRng('press'));
+  assert(s.press.at(-1).event === 'confidenceLostHandover' && !/\{\w+\}/.test(s.press.at(-1).text), 'the handover headline: ' + s.press.at(-1)?.text);
+  s.date.absWeek = tuning().confidence.handoverWeeks;
+  for (const fn of pacing.hooks.fallout) fn(s, createRng('press'));
+  const press = s.log.filter((l) => l.kind === 'press');
+  assert(press.length === press0 + 2 && s.press.at(-1).event === 'confidenceLost' && !/\{\w+\}/.test(press.at(-1).text), 'one headline, the government falling: ' + press.at(-1)?.text);
+  assert(s.polling[me.party] < poll0, 'polling fell');
+  assert(s.pressure >= tuning().confidence.pressureConfidenceLost + 20, 'the leader\'s office noticed: pressure ' + s.pressure);
+  // Replacing the whip when the meter tops out.
+  const r = whipScenario(3).s;
+  r.player.actStart = 0;
+  r.parties.p2.assistantWhips.push(r.player.mpId);
+  r.mps[r.player.mpId].caucusRole = 'assistantWhip';
+  r.pressure = 100;
+  const stop = hookEvent(pacing.hooks.weekend, r, createRng('w'), 'replaced');
+  assert(stop?.event === 'replaced' && r.player.act === 2 && r.mps[r.player.mpId].caucusRole === 'backbencher' && r.pressure < 100, 'moved out of the whip\'s office');
+  return `${press.at(-1).text} · polling ${poll0} → ${s.polling[me.party]} · pressure ${s.pressure}`;
+});
+
+test('A minority government signs confidence and supply, the partner is whipped YEA on confidence votes, and either side can break it', () => {
+  const { s, b, me } = whipScenario(2);
+  s.house.government = me.party;
+  s.house.minority = true;
+  s.parties[me.party].role = 'government';
+  b.confidence = true;
+  b.kind = 'government';
+  for (const id of Object.keys(s.polling)) s.polling[id] = 20;
+  const a = confidence.signAgreement(s, createRng('cs'));
+  assert(a && s.parties[a.with].agreements.includes(a) && confidence.activeAgreement(s) === a, 'signed with ' + a?.with);
+  const partner = a.with;
+  b.positions[partner] = 'nay';
+  b.lines[partner] = 'whipped';
+  s.date.dayOfWeek = 1;
+  for (const fn of pacing.hooks.morning) fn(s, createRng('never-breaks-' + 'x'));
+  assert(b.positions[partner] === 'yea' && b.lines[partner] === 'whipped', 'the partner comes home on confidence');
+  confidence.breakAgreement(s, a, 'partner');
+  assert(a.broken && !confidence.activeAgreement(s) && /walks away/.test(s.log.at(-1).text), 'broken and reported');
+  return `${s.parties[partner].name} for ${a.category}, then walked`;
 });
 
 async function run() {

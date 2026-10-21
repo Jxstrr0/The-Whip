@@ -294,9 +294,14 @@ function setupTurn(state, rng, mt) {
   const byApproach = {};
   for (const l of rng.shuffle([...players])) byApproach[l.approach] ||= l;
   const opts = rng.shuffle(Object.values(byApproach)).slice(0, 4);
-  // Always keep a way to listen and (when there's an ask) to concede.
-  for (const must of ['listen', 'concede']) {
-    if (!opts.some((o) => o.approach === must) && byApproach[must]) opts[opts.length - 1] = byApproach[must];
+  // Always keep a way to listen and (when there's an ask) to concede. Each takes a different slot,
+  // so adding one never knocks out the other.
+  const MUST = ['listen', 'concede'];
+  for (const must of MUST) {
+    if (opts.some((o) => o.approach === must) || !byApproach[must]) continue;
+    const slot = opts.findLastIndex((o) => !MUST.includes(o.approach));
+    if (slot >= 0) opts[slot] = byApproach[must];
+    else opts.push(byApproach[must]);
   }
   mt.talk.current = { line: line?.id, text: line ? fillLine(state, line.text, { mp: mt.mpId, bill: mt.billId, other: mt.otherId }) : '…' };
   mt.talk.options = opts.map((l) => ({ id: l.id, approach: l.approach, style: l.style || null, text: fillLine(state, l.text, { mp: mt.mpId, bill: mt.billId, other: mt.otherId }) }));

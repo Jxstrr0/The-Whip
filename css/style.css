@@ -557,6 +557,14 @@ blockquote.line {
 .record-sheet .stamp.big {
   font-size: 24px;
 }
+.election-sheet .kv .k .chip {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 4px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
 blockquote.line.revolt {
   border-left-color: var(--red);
 }
