@@ -1,5 +1,5 @@
 // The office UI: the evening board (slots, walk-ins, invite, call) and the meeting's talk phase.
-import { t, esc, mpName, partyColor, partyShort, firstWeekHint } from './text.js';
+import { t, esc, mpName, partyColor, partyShort, firstWeekHint, jobLine } from './text.js';
 import { fillLine } from '../sim/meetings.js';
 import { renderDealTable } from './dealTable.js';
 import { tuning } from '../sim/config.js';
@@ -69,6 +69,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
       : `<li class="muted">${t('office.none')}</li>`;
     sheet.innerHTML = `<div class="sheet-handle"></div>
       <header class="card-head"><div class="who"><h2>${t(`office.title.${Math.max(1, Math.min(5, state.player.act))}`)}</h2><p>${t('office.slots')}: <span class="slots">${slotDots(e)}</span></p></div></header>
+      ${jobLine(state, 'office', { slots: e.slots, whipCall: !!e.whipCall })}
       ${firstWeekHint(state, 'tutorial.office')}
       ${whip}
       <h3>${t('office.walkIns')}</h3><ul class="book-list">${rows}</ul>
@@ -100,7 +101,8 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
     const m = state.mps[mt.mpId];
     const head = `<div class="sheet-handle"></div>
       <header class="card-head"><span class="chip" style="background:${partyColor(state, m)}"></span>
-        <div class="who"><h2>${esc(mpName(m))}</h2><p><span class="badge mood-${mt.mood}">${t('mood.' + mt.mood)}</span> ${mt.phase === 'talk' ? t('talk.turn', { n: mt.turn, max: mt.maxTurns }) : ''}</p></div></header>`;
+        <div class="who"><h2>${esc(mpName(m))}</h2><p><span class="badge mood-${mt.mood}">${t('mood.' + mt.mood)}</span> ${mt.phase === 'talk' ? t('talk.turn', { n: mt.turn, max: mt.maxTurns }) : ''}</p></div></header>
+      ${jobLine(state, 'meeting', { situation: mt.situation, pos: mt.billId ? t('vote.' + state.bills[mt.billId]?.positions[state.mps[state.player.mpId].party]) : '' })}`;
     if (mt.phase === 'talk') {
       const note = lastNote ? `<p class="note ${lastNote}">${t(lastNote === 'good' ? 'talk.good' : lastNote === 'bad' ? 'talk.bad' : 'talk.ok')}</p>` : '';
       sheet.innerHTML = `${head}${note}<blockquote class="line">${esc(mt.talk.current.text)}</blockquote>
