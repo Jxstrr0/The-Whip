@@ -1,5 +1,5 @@
 // The count board: the bells and your choice during a division, then the standing count ticking up by party.
-import { t, esc, partyShort } from './text.js';
+import { t, esc, stamp, partyShort } from './text.js';
 import { tuning } from '../sim/config.js';
 import { stageLabel, questionText } from '../sim/vote.js';
 
@@ -137,7 +137,7 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
     updateCounts(result, { yea: result.yeas.length, nay: result.nays.length });
     const me = getState().player.mpId;
     const mine = result.yeas.includes(me) ? 'yea' : result.nays.includes(me) ? 'nay' : 'absent';
-    board.querySelector('[data-outcome]').innerHTML = `<p class="verdict ${result.carried ? 'yea' : 'nay'}">${t(result.carried ? 'div.carried' : 'div.defeated', { y: result.yeas.length, n: result.nays.length })}</p>
+    board.querySelector('[data-outcome]').innerHTML = `<p>${stamp(t(result.carried ? 'stamp.carried' : 'stamp.defeated'), result.carried ? 'yea' : 'nay', true)} <span class="verdict ${result.carried ? 'yea' : 'nay'}">${t(result.carried ? 'div.carried' : 'div.defeated', { y: result.yeas.length, n: result.nays.length })}</span></p>
         ${result.speakerVote ? `<p>${t('div.speaker', { v: t('vote.' + result.speakerVote) })}</p>` : ''}
         <p class="muted">${t('div.you', { v: t('vote.' + mine) })}</p>`;
     board.querySelector('.card-actions').innerHTML = `<button class="btn primary" data-act="cont">${t('div.continue')}</button>`;

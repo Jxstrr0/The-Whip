@@ -202,5 +202,8 @@
   "tutorial.d4": "Thursday: the vote your riding cares about. When the bells ring you choose: with the party, with the riding, or somewhere else. Everyone will remember which.",
   "tutorial.d5": "Friday: the riding. The whip lets rookies go home in their first week. The people who elected you are waiting.",
   "week.firstTitle": "Your first week",
-  "week.firstNote": "That's Act 1's first week. From here on, routine days settle themselves and the game stops you only for what matters. Keep going, or start a new career from the menu."
+  "week.firstNote": "That's Act 1's first week. From here on, routine days settle themselves and the game stops you only for what matters. Keep going, or start a new career from the menu.",
+  "menu.studio": "Longlight Interactive",
+  "stamp.carried": "Carried",
+  "stamp.defeated": "Defeated"
 }

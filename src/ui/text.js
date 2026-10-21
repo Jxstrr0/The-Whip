@@ -6,6 +6,11 @@ export function t(key, vars = {}) {
   return s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? `{${k}}`));
 }
 
+// A rubber stamp for an outcome: CARRIED, DEFEATED, DEAL, LEAVE GRANTED. kind: yea | nay | grey | brass.
+export function stamp(text, kind = '', big = false) {
+  return `<span class="stamp ${kind}${big ? ' big' : ''}">${esc(text)}</span>`;
+}
+
 export function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }

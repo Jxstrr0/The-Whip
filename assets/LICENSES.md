@@ -16,6 +16,10 @@ All from **ambientCG** (https://ambientcg.com), licence **CC0 1.0 Universal** (h
 | `leather_n.jpg` | Leather037 | green leather (normal map only; colour from the material) |
 | `wool_c/n.jpg` | Carpet016 | office and caucus carpets |
 
-## Models and fonts
+## Fonts (`assets/fonts/`)
+
+**Fraunces** by Undercase Type, from Google Fonts, licence **SIL Open Font License 1.1** (https://raw.githubusercontent.com/google/fonts/main/ofl/fraunces/OFL.txt: "This Font Software is licensed under the SIL Open Font License, Version 1.1."). `Fraunces-Regular.woff2` and `Fraunces-Italic.woff2` are the variable latin subsets served by Google Fonts (optical size and weight axes), fetched once and committed.
+
+## Models
 
 Added in later steps of the art pass; each gets a row here when it lands.
