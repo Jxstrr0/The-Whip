@@ -53,11 +53,13 @@ function buildShell(partyColor) {
   for (const [len, x, z, facing] of [[2 * L, -W + 0.01, 0, '+x'], [2 * L, W - 0.01, 0, '-x'], [2 * W, 0, -L + 0.01, '+z'], [2 * W, 0, L - 0.01, '-z']]) {
     const full = facing === '+x' || facing === '-x' ? panel(2 * L, H, x < 0 ? -W : W, H / 2, 0, C.plaster, facing, 2) : panel(2 * W, H, 0, H / 2, z < 0 ? -L : L, C.plaster, facing, 2);
     g.plaster.push(full);
-    g.oak.push(panel(len, wain, x, wain / 2, z, C.oak, facing, 2));
-    g.oak.push(panel(len, 0.08, x, wain, z, C.oakDark, facing));
-    g.oak.push(panel(len, 0.1, x, 0.05, z, C.oakDark, facing));
     const along = facing === '+x' || facing === '-x';
     const nudge = facing === '+x' || facing === '+z' ? 0.01 : -0.01;
+    // Rails a centimetre proud of the wainscot: coplanar faces shimmer on a phone's shallower depth buffer.
+    const [rx, rz] = along ? [x + nudge, z] : [x, z + nudge];
+    g.oak.push(panel(len, wain, x, wain / 2, z, C.oak, facing, 2));
+    g.oak.push(panel(len, 0.08, rx, wain, rz, C.oakDark, facing));
+    g.oak.push(panel(len, 0.1, rx, 0.05, rz, C.oakDark, facing));
     for (let s = -len / 2 + 0.6; s < len / 2; s += 1.0) {
       if (along) g.oak.push(panel(0.06, wain - 0.3, x + nudge, wain / 2 - 0.02, z + s, C.oakDark, facing));
       else g.oak.push(panel(0.06, wain - 0.3, x + s, wain / 2 - 0.02, z + nudge, C.oakDark, facing));
