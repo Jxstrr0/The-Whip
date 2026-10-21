@@ -6,6 +6,7 @@ import { log } from './pacing.js';
 import { reseat } from './modes.js';
 import { reputation } from './relationships.js';
 import { remember, person } from './memoir.js';
+import { slotsForAct } from './career.js';
 
 const ROLE_RANK = { backbencher: 'Backbencher', committeeChair: 'Committee chair', assistantWhip: 'Assistant whip', deputyWhip: 'Deputy whip', chiefWhip: 'Chief Whip', parliamentarySecretary: 'Parliamentary secretary', cabinet: 'Minister' };
 
@@ -82,6 +83,8 @@ export function crossFloor(state, partyId) {
   p.act = 1;
   p.actStart = state.date.absWeek;
   p.actProgress = { noticed: 0, rebellions: 0, rowVotesCarried: 0 };
+  p.slots = slotsForAct(1, p.slots);
+  p.rowStats = null;
   p.leaderTrust = 15;
   p.caucusSupport = 25;
   p.rival = null;
