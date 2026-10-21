@@ -130,5 +130,81 @@
     "absentWhipRapport": -3,
     "noticedPerRebellion": 1,
     "noticedPerLoyalVote": 0.25
+  },
+  "meetings": {
+    "slotsByAct": [
+      2,
+      3,
+      3,
+      4,
+      5
+    ],
+    "phoneCallCost": 0.5,
+    "maxWalkIns": 2,
+    "walkInOdds": {
+      "favorAsk": 0.08,
+      "gossip": 0.07,
+      "introduction": 0.2,
+      "complaint": 0.15,
+      "mentorAdvice": 0.08,
+      "rebelRecruit": 0.35
+    },
+    "introductionWeeks": 6,
+    "whipCallDaysAhead": 3,
+    "goodRead": 4,
+    "badRead": -4,
+    "noise": 1.5,
+    "approach": {
+      "cooperative": {
+        "warm": 6,
+        "direct": 5,
+        "listen": 3,
+        "pressure": -2,
+        "deflect": -1,
+        "concede": 2
+      },
+      "guarded": {
+        "warm": 1,
+        "direct": 6,
+        "listen": 4,
+        "pressure": -4,
+        "deflect": -3,
+        "concede": 2
+      },
+      "angry": {
+        "warm": -1,
+        "direct": -2,
+        "listen": 7,
+        "pressure": -8,
+        "deflect": -5,
+        "concede": 5
+      },
+      "anxious": {
+        "warm": 7,
+        "direct": 1,
+        "listen": 5,
+        "pressure": -6,
+        "deflect": -2,
+        "concede": 3
+      }
+    },
+    "turnsBySituation": {
+      "whipCall": 3,
+      "rebelRecruit": 3,
+      "complaint": 3,
+      "favorAsk": 2,
+      "introduction": 2,
+      "gossip": 2,
+      "mentorAdvice": 2
+    },
+    "acceptAt": 0,
+    "counterAt": -5,
+    "rapportPerPoint": 0.1,
+    "walkOutRapport": -6,
+    "ignoredWalkIn": -3,
+    "brokenPromiseHit": 12,
+    "keptPromiseRapport": 4,
+    "whipNeed": 6,
+    "promiseDueWeeks": 2
   }
 }

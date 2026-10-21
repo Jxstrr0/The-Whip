@@ -1,4 +1,4 @@
-// Boot: load data, start a game from the seed, build the chamber and UI, run the loop.
+// Boot: load data, start a game from the seed, build the rooms and UI, run the loop.
 import * as THREE from 'three';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { loadData } from './loadData.js';
@@ -7,27 +7,33 @@ import { newGame, randomSeed } from './sim/modes.js';
 import { parliamentHash } from './sim/generate.js';
 import { getState, setState, dispatch, subscribe } from './state.js';
 import './sim/pacing.js';
+import './sim/meetings.js';
+import { createRooms } from './rooms.js';
 import * as chamber from './chamber/scene.js';
-import { createHud, createTuningPanel } from './ui/hud.js';
+import * as office from './office/officeScene.js';
+import { createHud, createTuningPanel, createToast } from './ui/hud.js';
 import { createMpCard } from './ui/mpCard.js';
 import { createBook } from './ui/book.js';
 import { createAgenda } from './ui/agenda.js';
 import { createCountBoard } from './ui/countBoard.js';
+import { createOfficeUI } from './ui/talk.js';
 import { t, partyColor } from './ui/text.js';
+import { stageLabel } from './sim/vote.js';
 
 const params = new URLSearchParams(location.search);
 const DEBUG = params.get('debug') === '1';
 
 // "At risk" in the book: how likely an MP is to stray on the next whipped vote, from what you can see.
 // Riding effects are public; loyalty only counts once you've learned it.
-function nextBill(state) {
+function nextBills(state, n = 1) {
   return Object.values(state.bills)
     .filter((b) => b.status === 'active' && b.nextVote != null)
-    .sort((a, b) => a.nextVote - b.nextVote)[0];
+    .sort((a, b) => a.nextVote - b.nextVote)
+    .slice(0, n);
 }
 
 function riskOf(state, id, asLabel = false) {
-  const b = nextBill(state);
+  const [b] = nextBills(state);
   const m = state.mps[id];
   if (!b || m.party === 'ind') return asLabel ? '' : -1;
   const sign = { yea: 1, nay: -1 }[b.positions[m.party]] || 0;
@@ -37,11 +43,16 @@ function riskOf(state, id, asLabel = false) {
   return risk > 40 ? '⚠ at risk' : risk > 20 ? 'leaning?' : '';
 }
 
-async function boot() {
-  const data = await loadData();
-  setData(data);
-  document.title = t('title');
+// Which room the current stop belongs in.
+function roomFor(state) {
+  const k = state.flow.pending?.kind;
+  if (k === 'office' || k === 'meeting') return 'office';
+  return 'chamber';
+}
 
+async function boot() {
+  setData(await loadData());
+  document.title = t('title');
   const seed = params.get('seed') || randomSeed();
   setState(newGame({ seed, party: params.get('party') || undefined }));
 
@@ -52,35 +63,78 @@ async function boot() {
   const labels = new CSS2DRenderer();
   labels.domElement.className = 'labels';
   document.body.appendChild(labels.domElement);
-
   const ui = document.getElementById('ui');
   const colorOf = (mp) => partyColor(getState(), mp);
-  const room = chamber.create({
-    renderer,
-    onSeatTap(seat, mpId) {
-      if (mpId) card.show(mpId);
-      else card.hide();
+
+  let card;
+  const rooms = createRooms({
+    factories: { chamber, office },
+    ctx: {
+      renderer,
+      onSeatTap(seat, mpId) {
+        if (mpId) card.show(mpId);
+        else card.hide();
+      },
+    },
+    onChange(name, room) {
+      if (name === 'chamber') room.sync(getState(), colorOf);
+      card?.hide();
     },
   });
-  room.sync(getState(), colorOf);
+  const chamberRoom = () => (rooms.name === 'chamber' ? rooms.room : null);
 
-  const card = createMpCard(ui, { getState, onClose: () => room.select(null) });
+  let picking = null;
   const book = createBook(ui, {
     getState,
     riskOf,
+    onClose: () => (picking = null),
     onPick(mpId) {
+      if (picking) {
+        const cb = picking;
+        picking = null;
+        return cb(mpId);
+      }
       const mp = getState().mps[mpId];
-      if (mp.seatId) {
+      const room = chamberRoom();
+      if (room && mp.seatId) {
         room.select(mp.seatId);
         room.focusSeat(mp.seatId);
       }
       card.show(mpId);
     },
   });
+  const pickMp = (title, cb) => {
+    picking = cb;
+    book.open({ title });
+  };
+
+  card = createMpCard(ui, {
+    getState,
+    onClose: () => chamberRoom()?.select(null),
+    actions(mpId) {
+      const state = getState();
+      const e = state.evening;
+      if (state.flow.pending?.kind !== 'office' || !e || mpId === state.player.mpId) return [];
+      const left = e.slots - e.used;
+      const out = [];
+      if (left >= 1) out.push({ label: t('card.invite'), primary: true, run: () => (card.hide(), dispatch({ type: 'invite', mpId })) });
+      if (left >= 0.5) out.push({ label: t('card.call'), run: () => (card.hide(), dispatch({ type: 'call', mpId })) });
+      return out;
+    },
+  });
+
+  const toast = createToast(ui);
   createHud(ui, {
     buttons: [
       { label: t('btn.book'), run: () => (book.isOpen ? book.close() : book.open()) },
-      { label: t('btn.reset'), run: () => { room.controls.reset(); room.select(null); card.hide(); } },
+      {
+        label: t('btn.reset'),
+        run: () => {
+          chamberRoom()?.controls.reset();
+          chamberRoom()?.select(null);
+          card.hide();
+        },
+      },
     ],
     debugText: DEBUG ? () => `${getState().seed} · ${t('debug.hash', { hash: parliamentHash(getState()) })}` : null,
   });
@@ -97,27 +151,51 @@ async function boot() {
   });
   const countBoard = createCountBoard(ui, {
     getState,
-    room,
+    getRoom: chamberRoom,
     onChoose: (choice) => dispatch({ type: 'resolve', choice }),
     onContinue: () => dispatch({ type: 'advance' }),
   });
+  const officeUI = createOfficeUI(ui, { getState, dispatch, pickMp });
 
-  function renderAll() {
-    const state = getState();
+  // Keep the office room in step with the meeting: who's in the chair, their mood, the board.
+  function syncOffice(state) {
+    const room = rooms.room;
+    const me = state.mps[state.player.mpId];
+    room.setBoard(
+      nextBills(state, 5).map((b) => ({ text: `${b.title} · ${stageLabel(b.stage)} · ${(b.positions[me.party] || '').toUpperCase()}`, color: b.positions[me.party] === 'yea' ? '#1f6f40' : '#8a2a25' })),
+      'Coming up'
+    );
+    const mt = state.meeting && state.meetings[state.meeting];
+    if (mt) {
+      room.setVisitor({ mpId: mt.mpId, mood: mt.mood, color: colorOf(state.mps[mt.mpId]), reversal: mt.reversal });
+      room.pushIn(mt.phase === 'deal');
+    } else room.setVisitor(null);
+  }
+
+  let lastLog = getState().log.length;
+  function renderAll(state = getState()) {
+    const roomName = roomFor(state);
+    rooms.show(roomName, { playerColor: colorOf(state.mps[state.player.mpId]), tier: state.player.act >= 4 ? 2 : 1 });
+    if (roomName === 'office') syncOffice(state);
     agenda.render(state);
     countBoard.render(state);
+    officeUI.render(state);
     card.refresh();
     book.refresh();
+    // Meeting outcomes and calls show briefly as a toast.
+    const fresh = state.log.slice(lastLog).filter((l) => l.kind === 'meeting' || l.kind === 'career');
+    lastLog = state.log.length;
+    if (fresh.length) toast.show(fresh.map((l) => l.text).join(' '));
   }
-  subscribe(renderAll);
-  renderAll();
+  subscribe(() => renderAll());
 
   let stats = null;
   if (DEBUG) {
     const { default: Stats } = await import('three/addons/libs/stats.module.js');
     stats = new Stats();
-    stats.dom.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:50;';
+    stats.dom.style.cssText = 'position:fixed;right:8px;top:120px;z-index:50;pointer-events:none;opacity:.8;';
     document.body.appendChild(stats.dom);
+    createTuningPanel(ui, tuning());
     const sim = {
       generate: await import('./sim/generate.js'),
       knowledge: await import('./sim/knowledge.js'),
@@ -127,9 +205,23 @@ async function boot() {
       mp: await import('./sim/mp.js'),
       vote: await import('./sim/vote.js'),
       pacing: await import('./sim/pacing.js'),
+      meetings: await import('./sim/meetings.js'),
     };
-    createTuningPanel(ui, tuning());
-    window.whip = { get state() { return getState(); }, dispatch, sim, room, renderer, THREE, card, book };
+    window.whip = {
+      get state() {
+        return getState();
+      },
+      dispatch,
+      sim,
+      rooms,
+      get room() {
+        return rooms.room;
+      },
+      renderer,
+      THREE,
+      card,
+      book,
+    };
   }
 
   function resize() {
@@ -137,15 +229,17 @@ async function boot() {
     const h = window.innerHeight;
     renderer.setSize(w, h, false);
     labels.setSize(w, h);
-    room.resize(w, h);
+    rooms.resize(w, h);
   }
   window.addEventListener('resize', resize);
+  renderAll();
   resize();
 
   let last = performance.now();
   renderer.setAnimationLoop((now) => {
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
+    const room = rooms.room;
     room.update(dt);
     renderer.render(room.scene, room.camera);
     labels.render(room.scene, room.camera);
