@@ -634,3 +634,18 @@ Kelbo's once-over picked twelve things. This is the first: the two rooms where a
 
 - Choosing the slogans is sim logic (`townHallPlacards` in `src/sim/riding.js`, deterministic, no DOM), so the main loop just hands the filled strings to the room. A new test checks four boards, no `{placeholder}` left over, no two boards alike, and that the bill's title lands on the board.
 - The lettering is a heavy system sans rather than a loaded font, so the boards paint instantly and need no new resource.
+
+## 2026-10-21 · Round two, 4 of 12: suits, ties and lapel pins
+
+**What was built**
+
+- Every figure now has a tie (knot and a blade that narrows toward it) and a small lapel pin, in the instanced crowds and on the articulated office figure alike. A `wardrobe(id, partyColour)` helper in `src/figures.js` decides what someone wears from who they are, so it's the same across sessions.
+- Up close (the caucus table, the office, the chamber walkers) suits come from eight real suit colours: charcoal, navy, grey, brown, black, dark green, slate, plum. The party shows in the tie (two in three wear the party's; the rest navy, burgundy, charcoal, silver, forest or brown) and in the pin, which every member wears.
+- On the benches the suit keeps the party colour so the House still reads from your seat; there the tie goes neutral and the pin stays the party's.
+- In the riding, the mayor and the plant manager come in a tie of their own; the riding association president wears the party tie and the pin. Farmers, stewards, reporters and the town hall crowd don't.
+- The player's own figure (seen from behind in the office and the riding) wears a real suit with the party tie and pin.
+
+**Things to know / decisions I made**
+
+- The caucus used to recolour every suit to the party colour in `read`; now it dresses each seat with the wardrobe for that party, so the room is varied suits with party ties, and the mood marks and glow are unchanged.
+- Staff keep plain suits with no tie or pin: the Speaker, clerks, and the gallery. Two more instanced parts per crowd (tie, pin), so a full House is eight draw calls instead of six.

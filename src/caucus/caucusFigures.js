@@ -2,7 +2,7 @@
 // carries its mood as a coloured glow on the floor and a shaped mark above the head (circle, square, triangle,
 // diamond), so the room still reads as your party and the moods read without colour.
 import * as THREE from 'three';
-import { createFigureCrowd, lookFor, shade } from '../figures.js';
+import { createFigureCrowd, lookFor, wardrobe } from '../figures.js';
 import { blobMaterial } from '../kit3d.js';
 
 export const MOOD_TINT = { cooperative: '#2E9E5B', guarded: '#8A8F98', angry: '#C8423B', anxious: '#E0A526' };
@@ -45,7 +45,7 @@ export function createCaucusFigures(seats) {
   });
   base.forEach((b, i) => {
     crowd.place(i, b);
-    crowd.dress(i, { ...b.look, suit: '#555' });
+    crowd.dress(i, { ...b.look, ...wardrobe(seats[i].mpId || 'x', '#555') });
   });
   crowd.commit();
   const group = new THREE.Group();
@@ -115,18 +115,19 @@ export function createCaucusFigures(seats) {
   return {
     group,
     torsos: crowd.torsos,
-    // Party colour on every suit; mood marks where the player can read them; a brass ring under the player.
+    // The party's colour in every tie and pin over real suits; mood marks where the player can read them;
+    // a brass ring under the player.
     read(readFor) {
       seats.forEach((s, i) => {
         const r = readFor(s.mpId) || {};
-        crowd.meshes.suit.setColorAt(i, color.set(shade(r.color || '#555', s.mpId)));
+        crowd.dress(i, { ...base[i].look, ...wardrobe(s.mpId || 'x', r.color || '#555') });
         reads[i] = r.mood && MOODS.includes(r.mood) ? r.mood : null;
         if (r.me) {
           ring.visible = true;
           ring.position.set(s.x, 0.02, s.z);
         }
       });
-      crowd.meshes.suit.instanceColor.needsUpdate = true;
+      crowd.commit();
     },
     // Two people lean toward each other for a moment: what "keeps leaning over to" looks like.
     showPairs(pairs) {

@@ -15,9 +15,17 @@ export const ROLE_COLORS = {
 };
 // The reporter stays on their feet; everyone else takes the chair.
 const STANDS = new Set(['reporter']);
+// Who wears a tie to see their MP: the mayor and the plant manager in their own, the riding association
+// president in the party's with the pin.
+function outfitFor(role, partyColor) {
+  if (role === 'mayor') return { tie: '#6b1f2a' };
+  if (role === 'plantManager') return { tie: '#2b2d33' };
+  if (role === 'associationPresident') return { tie: shade(partyColor, 'pres', 0.1), pin: partyColor };
+  return null;
+}
 
-export function createConstituent(scene, { role, id, path, seat, facing }) {
-  const v = createVisitor(scene, { color: ROLE_COLORS[role] || '#777', mpId: id, path, seat, facing });
+export function createConstituent(scene, { role, id, path, seat, facing, partyColor = '#555' }) {
+  const v = createVisitor(scene, { color: ROLE_COLORS[role] || '#777', mpId: id, path, seat, facing, outfit: outfitFor(role, partyColor) });
   if (STANDS.has(role)) {
     const setMood = v.setMood;
     v.setMood = () => setMood('standing');
