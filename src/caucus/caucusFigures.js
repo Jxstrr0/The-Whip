@@ -120,7 +120,7 @@ export function createCaucusFigures(seats) {
     read(readFor) {
       seats.forEach((s, i) => {
         const r = readFor(s.mpId) || {};
-        crowd.dress(i, { ...base[i].look, ...wardrobe(s.mpId || 'x', r.color || '#555') });
+        crowd.dress(i, { ...base[i].look, ...wardrobe(s.mpId || 'x', r.color || '#555'), face: r.face });
         reads[i] = r.mood && MOODS.includes(r.mood) ? r.mood : null;
         if (r.me) {
           ring.visible = true;

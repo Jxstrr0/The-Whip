@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { createFigure, poseFigure, stride } from '../office/visitor.js';
 import { createFigureCrowd, lookFor, wardrobe } from '../figures.js';
+import { faceOf } from '../faces.js';
 import { GEOMETRY as G } from './layout.js';
 import { box, cylinder, merge, vertexMaterial } from '../kit3d.js';
 import { tuning } from '../sim/config.js';
@@ -55,7 +56,7 @@ export function createChamberLife({ scene, seats, figures, getState, colorOf }) 
 
   function makeWalker(mpId, pts, onDone) {
     const state = getState();
-    const f = createFigure(colorOf(state.mps[mpId]), mpId, wardrobe(mpId, colorOf(state.mps[mpId]), { bench: true }));
+    const f = createFigure(colorOf(state.mps[mpId]), mpId, wardrobe(mpId, colorOf(state.mps[mpId]), { bench: true }), faceOf(state, mpId));
     poseFigure(f, 'walking', 1);
     f.group.position.set(...pts[0]);
     scene.add(f.group);
@@ -133,7 +134,7 @@ export function createChamberLife({ scene, seats, figures, getState, colorOf }) 
     const mp = state?.mps[mpId];
     if (!s || !mp) return;
     const color = colorOf(mp);
-    const f = createFigure(color, mpId, wardrobe(mpId, color, { bench: true }));
+    const f = createFigure(color, mpId, wardrobe(mpId, color, { bench: true }), faceOf(state, mpId));
     poseFigure(f, 'standing', 1);
     f.group.position.set(s.x, s.y, s.z);
     f.group.rotation.y = s.rotationY;

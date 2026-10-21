@@ -1,8 +1,12 @@
-// The shared figure kit: a stylised, faceless silhouette (shoulders, neck, an egg of a head under a hair cap,
-// a white collar, a lap when seated) built once per body part and drawn as instanced crowds, so a full House
-// costs six draw calls. Expression lives in pose and in the UI's mood pill, not in faces.
+// The shared figure kit: a stylised silhouette (shoulders, neck, an egg of a head under a hair cap, a white
+// collar, a lap when seated) built once per body part and drawn as instanced crowds, so a full House costs a
+// handful of draw calls. Faces are earned (see faces.js): a stranger is a blank egg. Expression lives in pose
+// and in the UI's mood pill.
 import * as THREE from 'three';
 import { merge, figureMaterial } from './kit3d.js';
+import { HEAD_R, HEAD_PARTS, BODY_PARTS, headGeometries, bodyGeometries, hairCap, partsFor, partColour, tieColour, growScale } from './faces.js';
+
+export { HEAD_R };
 
 export const SKIN_TONES = ['#f1c8a5', '#e0ac85', '#c68d63', '#a26b45', '#7c4f31', '#5b3a24', '#efd2b8', '#d6a07a'];
 export const HAIR_COLOURS = ['#1a1412', '#2e1f16', '#4a3222', '#6b3a1f', '#8a8580', '#d9d4cc'];
@@ -115,7 +119,6 @@ export const POSES = {
     lap: false,
   },
 };
-export const HEAD_R = 0.115;
 
 // One geometry per body part. Parts that take a per-person colour (suit, skin, hair) are separate from the
 // ones that don't (the white collar, the dark shoes), so instance colours stay simple.
@@ -145,15 +148,16 @@ export function figureParts(pose = 'seated') {
   if (P.lap) suit.push(block(0.36, 0.13, 0.42, 0, P.hip + 0.03, 0.17));
   hands.push(limb([0, P.shoulderY - 0.02, 0.01], [0, P.headY - 0.09, 0.01], 0.05, 8));
   head.push(egg(HEAD_R, 0, P.headY, 0, 1, 1.12, 1.02, 14));
-  const cap = new THREE.SphereGeometry(HEAD_R + 0.012, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.64);
-  cap.scale(1, 1.1, 1.02);
-  cap.translate(0, P.headY + 0.005, -0.012);
-  hair.push(cap);
+  hair.push(hairCap().translate(0, P.headY, 0));
   shirt.push(block(0.12, 0.09, 0.02, 0, P.shoulderY - 0.05, 0.133));
-  return { suit: merge(suit), hands: merge(hands), head: merge(head), hair: merge(hair), shirt: merge(shirt), dark: merge(dark), tie: merge(tie), pin: merge(pin), pose: P };
+  const face = headGeometries();
+  for (const g of Object.values(face)) g.translate(0, P.headY, 0);
+  const body = bodyGeometries(P.shoulderY);
+  return { suit: merge(suit), hands: merge(hands), head: merge(head), hair: merge(hair), shirt: merge(shirt), dark: merge(dark), tie: merge(tie), pin: merge(pin), face, body, pose: P };
 }
 
-// An instanced crowd of n figures in one pose. Six draw calls however many people.
+// An instanced crowd of n figures in one pose. Eight draw calls however many people, plus one for each kind
+// of face part someone in the crowd has earned.
 export function createFigureCrowd(n, { pose = 'seated' } = {}) {
   const parts = figureParts(pose);
   const P = parts.pose;
@@ -172,8 +176,21 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
     meshes[k] = new THREE.InstancedMesh(parts[k], mats[k], n);
     meshes[k].frustumCulled = false;
   }
+  // Face parts and keepsakes: one instanced mesh per kind, hidden while nobody in the crowd wears it.
+  const fixed = { eyes: { color: '#1b1714', roughness: 0.35 }, earrings: { color: '#d4b25a', roughness: 0.3, metalness: 0.7 } };
+  const faceMeshes = {};
+  const hidden = new THREE.Matrix4().makeScale(0, 0, 0);
+  for (const k of [...HEAD_PARTS, ...BODY_PARTS]) {
+    const geo = HEAD_PARTS.includes(k) ? parts.face[k] : parts.body.geos[k];
+    const mat = figureMaterial({ roughness: 0.7, ...(fixed[k] || {}), ...(['round', 'square', 'halfMoons'].includes(k) ? { roughness: 0.4, metalness: 0.3 } : {}), side: k === 'beard' ? THREE.DoubleSide : THREE.FrontSide });
+    faceMeshes[k] = new THREE.InstancedMesh(geo, mat, n);
+    faceMeshes[k].frustumCulled = false;
+    faceMeshes[k].visible = false;
+    // Instances start at the identity matrix, which would draw an unworn part at the crowd's origin.
+    for (let i = 0; i < n; i++) faceMeshes[k].setMatrixAt(i, hidden);
+  }
   const group = new THREE.Group();
-  group.add(...Object.values(meshes));
+  group.add(...Object.values(meshes), ...Object.values(faceMeshes));
 
   const base = Array.from({ length: n }, () => new THREE.Matrix4().makeScale(0, 0, 0));
   const shown = new Array(n).fill(false);
@@ -182,6 +199,13 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
   const tieOn = new Uint8Array(n);
   const pinOn = new Uint8Array(n);
   const headYaw = new Float32Array(n);
+  // Earned face parts per person ([part, tier it arrives with]), and the grow-in when the tier rises.
+  const worn = Array.from({ length: n }, () => []);
+  const tierOf = new Int8Array(n).fill(-1);
+  const growFrom = new Int8Array(n).fill(9);
+  const growT = new Float32Array(n).fill(1);
+  const growing = new Set();
+  const anchors = parts.body.anchors;
   const m = new THREE.Matrix4();
   const m2 = new THREE.Matrix4();
   const zero = new THREE.Matrix4().makeScale(0, 0, 0);
@@ -191,6 +215,7 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
   function write(i) {
     if (!shown[i]) {
       for (const k of Object.keys(meshes)) meshes[k].setMatrixAt(i, zero);
+      for (const [k] of worn[i]) faceMeshes[k].setMatrixAt(i, zero);
       return;
     }
     const b = base[i];
@@ -208,6 +233,17 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
     else {
       m2.makeTranslation(0, P.headY, 0).multiply(new THREE.Matrix4().makeScale(1, hairStyle[i], 1)).multiply(new THREE.Matrix4().makeTranslation(0, -P.headY, 0));
       meshes.hair.setMatrixAt(i, m.clone().multiply(m2));
+    }
+    // Face parts ride on the head; keepsakes sit on the jacket. New ones grow out of the head (or the lapel).
+    for (const [k, level] of worn[i]) {
+      const g = level > growFrom[i] ? growScale(growT[i]) : 1;
+      if (HEAD_PARTS.includes(k)) {
+        m2.makeTranslation(0, P.headY, 0).multiply(new THREE.Matrix4().makeScale(g, g, g)).multiply(new THREE.Matrix4().makeTranslation(0, -P.headY, 0));
+      } else {
+        const [ax, ay, az] = anchors[k];
+        m2.makeTranslation(ax, ay, az).multiply(new THREE.Matrix4().makeScale(g, g, g));
+      }
+      faceMeshes[k].setMatrixAt(i, (HEAD_PARTS.includes(k) ? m : b).clone().multiply(m2));
     }
   }
 
@@ -234,7 +270,29 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
     },
     // Colours and hair for one person. `look` comes from lookFor(id); `suit`, `tie` and `pin` from
     // wardrobe() (or a plain suit colour with no tie or pin, for staff and the gallery).
-    dress(i, { suit, skin, hair, hairStyle: style = 1, tie = null, pin = null }) {
+    // `face` is a faces.js faceFor()/faceOf() result (or null for a stranger); when its tier rises on a
+    // figure already dressed, the new parts grow in.
+    dress(i, { suit, skin, hair, hairStyle: style = 1, tie = null, pin = null, face = null }) {
+      const look = { skin, hair, hairStyle: style };
+      for (const [k] of worn[i]) faceMeshes[k].setMatrixAt(i, zero);
+      worn[i] = partsFor(face);
+      const tier = face?.tier || 0;
+      if (tierOf[i] >= 0 && tier > tierOf[i]) {
+        growFrom[i] = tierOf[i];
+        growT[i] = 0;
+        growing.add(i);
+      } else if (tier !== tierOf[i]) {
+        growFrom[i] = 9;
+        growT[i] = 1;
+        growing.delete(i);
+      }
+      tierOf[i] = tier;
+      for (const [k] of worn[i]) {
+        const c = partColour(k, face, look);
+        if (c) faceMeshes[k].setColorAt(i, color.set(c));
+      }
+      tie = tie && tieColour(face, tie);
+      if (face?.tier >= 3 && face.signature === 'bowtie') tie = null;
       meshes.suit.setColorAt(i, color.set(suit));
       meshes.hands.setColorAt(i, color.set(skin));
       meshes.head.setColorAt(i, color.set(skin));
@@ -257,9 +315,24 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
         im.instanceMatrix.needsUpdate = true;
         if (im.instanceColor) im.instanceColor.needsUpdate = true;
       }
+      const used = new Set();
+      for (let i = 0; i < n; i++) if (shown[i]) for (const [k] of worn[i]) used.add(k);
+      for (const [k, im] of Object.entries(faceMeshes)) {
+        im.visible = used.has(k);
+        im.instanceMatrix.needsUpdate = true;
+        if (im.instanceColor) im.instanceColor.needsUpdate = true;
+      }
       meshes.suit.computeBoundingSphere();
     },
     update(dt) {
+      if (growing.size) {
+        for (const i of growing) {
+          growT[i] = Math.min(1, growT[i] + dt / 0.7);
+          write(i);
+          if (growT[i] >= 1) growing.delete(i);
+        }
+        for (const im of Object.values(faceMeshes)) im.instanceMatrix.needsUpdate = true;
+      }
       if (idle) {
         idle.t += dt;
         const { i, dir } = idle;
@@ -270,6 +343,7 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
         write(i);
         meshes.head.instanceMatrix.needsUpdate = true;
         meshes.hair.instanceMatrix.needsUpdate = true;
+        for (const [k] of worn[i]) faceMeshes[k].instanceMatrix.needsUpdate = true;
         if (T >= 1.9) {
           headYaw[i] = 0;
           write(i);
@@ -286,10 +360,10 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
       idle = { i: candidates[Math.floor(Math.random() * candidates.length)], dir: Math.random() < 0.5 ? -1 : 1, t: 0 };
     },
     dispose() {
-      for (const k of Object.keys(meshes)) {
-        meshes[k].geometry.dispose();
-        meshes[k].material.dispose();
-        meshes[k].dispose();
+      for (const im of [...Object.values(meshes), ...Object.values(faceMeshes)]) {
+        im.geometry.dispose();
+        im.material.dispose();
+        im.dispose();
       }
     },
   };

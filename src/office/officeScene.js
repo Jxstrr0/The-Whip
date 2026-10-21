@@ -529,7 +529,7 @@ export function create(ctx) {
   // In the shared room a colleague from your cohort works late at the other desk.
   let colleague = null;
   if (act === 1 && ctx.colleague) {
-    colleague = createFigure(ctx.colleague.color, ctx.colleague.id, wardrobe(ctx.colleague.id, ctx.colleague.color));
+    colleague = createFigure(ctx.colleague.color, ctx.colleague.id, wardrobe(ctx.colleague.id, ctx.colleague.color), ctx.colleague.face);
     colleague.group.position.set(-mySet.W + 1.2, 0, 0.8);
     colleague.group.rotation.y = -Math.PI / 2;
     poseFigure(colleague, 'cooperative', 1);
@@ -608,6 +608,7 @@ export function create(ctx) {
       }
       if (visitor?.mpId === v.mpId || deskFigure?.mpId === v.mpId) {
         room.setMood(v.mood);
+        if (v.face) visitor ? visitor.setFace(v.face) : deskFigure.setFace(v.face, { grow: true });
         return;
       }
       visitor?.dispose();
@@ -616,7 +617,7 @@ export function create(ctx) {
       deskFigure = null;
       if (v.reversal) {
         seatPlayer(true);
-        const f = createFigure(v.color, v.mpId, wardrobe(v.mpId, v.color));
+        const f = createFigure(v.color, v.mpId, wardrobe(v.mpId, v.color), v.face);
         f.group.position.set(DESK_SEAT[0], 0, DESK_SEAT[1]);
         f.group.rotation.y = Math.PI;
         poseFigure(f, v.mood, 1);
@@ -627,7 +628,7 @@ export function create(ctx) {
         return;
       }
       seatPlayer(false);
-      visitor = createVisitor(scene, { color: v.color, mpId: v.mpId, path: visitorPath(mySet.W, mySet.D), seat: VISITOR_SEAT, facing: 0, outfit: wardrobe(v.mpId, v.color) });
+      visitor = createVisitor(scene, { color: v.color, mpId: v.mpId, path: visitorPath(mySet.W, mySet.D), seat: VISITOR_SEAT, facing: 0, outfit: wardrobe(v.mpId, v.color), face: v.face, faceFrom: v.snap ? null : v.faceFrom });
       visitor.mpId = v.mpId;
       visitor.setMood(v.mood);
       if (v.snap) visitor.sitNow();
@@ -663,6 +664,7 @@ export function create(ctx) {
     },
     update(dt) {
       visitor?.update(dt);
+      deskFigure?.tick(dt);
       cam.update(dt);
       for (const p of fx) p.update(dt);
       if (colleague) {
