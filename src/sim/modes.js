@@ -7,12 +7,6 @@ import { initFlow } from './pacing.js';
 
 export const SAVE_VERSION = 1;
 
-export function randomSeed() {
-  // The seed itself may come from anywhere; everything after it is deterministic.
-  const n = Math.floor(Math.random() * 9000) + 1000;
-  return `CALEDOR-${n}`;
-}
-
 export function reseat(state) {
   const seats = assignSeats(state);
   state.seats = {};

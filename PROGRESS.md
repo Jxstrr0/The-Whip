@@ -208,3 +208,22 @@ The handoff asks for this slice to be played before stage 5, and for your verdic
 **Fix found while testing the live site**
 
 - During a vote count, the count board was rebuilding itself every few seats, which replaced the "Show result" button each time. A tap that landed during a rebuild could be lost. The board is now built once per vote, and the count only updates the numbers and bars, so its buttons stay put.
+
+---
+
+## 2026-10-21 · Plan alignment check, and the art pass plan
+
+**Checked the build against `HANDOFF.md`**
+
+- Every stage 0–4b check is ticked except two that need you: "smooth on Kelbo's phone" (stage 1) and your playtest verdict (stage 4b). The stage 0 "live URL loads" box is now ticked, since the site is live and shows the game.
+- Every planned file for stages 0–4b exists. The missing ones (`tools.js`, `rivals.js`, `lifeEvents.js`, `confidence.js`, `media.js`, `election.js`, `record.js`, `ui/ledger.js`, `ui/careerUI.js`) belong to stages 5–9. Because 4b needed all four rooms, parts of stages 6, 7 and 9 already exist: the start menu, saves, the riding room, the caucus room and the guided first week. Those stages should build on them, not rebuild them.
+- Tuning numbers are in `data/tuning.json`, dialogue is data, the yeas and nays light in seat order, the pixel ratio is capped at 2, and only one room lives at a time.
+
+**Two things weren't aligned**
+
+- The menu's "random seed" button used `Math.random` from inside `src/sim/`, which the handoff forbids (the seed may be random; the sim after it may not). It moved to the menu code. The sim folder is clean.
+- The handoff (section 5) says that in Acts 1 and 2 the chamber should open from your own seat, low, looking across the aisle, "to make the backbench feel like a seat, not a map". That was never built; the chamber always opens on the overview. It's the first chamber step in the art pass.
+
+**The art pass plan**
+
+`ART-PASS.md` is new. It says what's wrong with the look today (flat colours, no shading, peg figures, a map-view chamber, a riding shot blocked by a chair back, hard cuts), what the rooms are going for (oak, green leather and stone under baked light; faceless figures with real silhouettes; your seat as the default view; serif display type; small constant motion), the rules (no shadows, no post-processing, budgets per room, procedural first), and nine steps in order with a done-when check for each. It also lists the five decisions I made that you can overturn: no faces, no real models, a serif for headings, your own seat as the default view, and window light that follows the time of day.

@@ -456,7 +456,7 @@ Build one stage per session, in order. A stage is done only when every check und
 
 **Stage 0: Repo and pipeline.** Follow section 3.
 
-- [ ] The live URL loads on a phone and shows the placeholder
+- [x] The live URL loads on a phone and shows the placeholder (it now shows the game)
 - [x] `DESIGN.md`, `HANDOFF.md` and `PROGRESS.md` are in the repo
 
 **Stage 1: The chamber.** Write `layout.js` from section 5, then `scene.js`, `seats.js`, `camera.js` and `picking.js`. Simple primitives for the shell, dais, table, Mace, bar and galleries. Tapping a seat shows a label with its seat id, side, row and index.
