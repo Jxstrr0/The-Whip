@@ -591,3 +591,19 @@ Kelbo sent the studio mark: the sun on the horizon, in purple, near-black, terra
 
 - The brand stays at the studio's touchpoints: loading, the mark, the masthead rule, the tab icon. The Order Paper keeps its own green, brass and paper; purple across the sheets would fight the look the art pass set. If you'd like more of it (the title page's top rule, the primary buttons), it's one token each.
 - `tests.html`: 69 of 69. Title page, colophon, masthead and the loading screen checked at phone size with no console errors.
+
+## 2026-10-21 · Round two, 1 of 12: the office and the riding reframed
+
+Kelbo's once-over picked twelve things. This is the first: the two rooms where a person sits across from you now keep that person in the clear part of the screen, whichever way the phone is held.
+
+**What was built**
+
+- **A shared framing helper** (`src/framing.js`). Every room sheet covers part of the screen: the lower half in portrait, the right-hand 46% in landscape. The office, riding and caucus cameras already aimed down in portrait; now they also turn right in landscape, so the person you're dealing with sits in the middle of the clear left half instead of behind the paper.
+- **The riding desk shot is less steep.** The visitor's head and shoulders sit in the band between the masthead and the sheet; before, the chair back and your own arm filled the frame and the head ran under the masthead.
+- **The riding's name on the glass** is a smaller two-line sign to the right of the visitor (where it isn't hidden by their head), low enough to clear the masthead in portrait. Long riding names drop to a smaller face rather than running off the pane.
+
+**Things to know / decisions I made**
+
+- The turn is a small rotation of the look direction, not a lens shift, so verticals stay straight and the shots in each scene file are untouched.
+- The chamber keeps its own camera (it has orbit and focus moves of its own); the division sheet in landscape is a separate question.
+- `tests.html`: 69 of 69. Checked in portrait and landscape at phone size with a visitor seated in the office and in the riding, and the caucus in landscape; no console errors.
