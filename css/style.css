@@ -1045,3 +1045,117 @@ input::placeholder {
 .tuning-rows input {
   width: 100%;
 }
+
+/* ---- Title page: slots, mode cards and the saved games list --------------------------------------------- */
+
+.small-note {
+  margin: 4px 0 10px;
+  font-size: 14px;
+}
+.slot-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+.btn.slot {
+  display: grid;
+  gap: 2px;
+  min-height: 56px;
+  padding: 6px 8px;
+  text-align: center;
+  border-color: var(--ink-3);
+}
+.btn.slot b {
+  font-size: 18px;
+}
+.btn.slot small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.btn.slot.on {
+  border-color: var(--bench);
+  box-shadow: inset 0 0 0 2px var(--bench);
+}
+.mode-cards .btn {
+  display: grid;
+  gap: 2px;
+  min-height: 72px;
+  padding: 10px 14px;
+}
+.mode-cards .btn b {
+  font-size: 18px;
+}
+.mode-cards .blurb {
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--ink-2);
+  white-space: normal;
+}
+.save-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+.save-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--ink-3);
+}
+.save-head {
+  display: grid;
+  gap: 2px;
+  font-size: 15px;
+}
+.save-head b {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+}
+.save-head small {
+  color: var(--ink-2);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.save-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.save-actions .btn {
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 15px;
+}
+.btn.danger {
+  color: var(--red);
+  border-color: var(--red);
+}
+details.import {
+  margin-top: 12px;
+}
+details.import summary {
+  min-height: 44px;
+  line-height: 44px;
+  cursor: pointer;
+  font-weight: 600;
+}
+details.import textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: 13px/1.3 ui-monospace, monospace;
+  background: var(--paper-2, rgba(0, 0, 0, 0.04));
+  color: var(--ink);
+  border: 1px solid var(--ink-3);
+  border-radius: 3px;
+  padding: 8px;
+}
+.start-menu .status {
+  min-height: 20px;
+  margin: 8px 0 0;
+  font-size: 14px;
+}

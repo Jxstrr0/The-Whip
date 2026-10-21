@@ -42,7 +42,7 @@ import * as caucusSim from './src/sim/caucus.js';
 window.__caucus = caucusSim;
 import './src/sim/riding.js';
 import { botAct } from './src/sim/bot.js';
-import { exportSave, importSave } from './src/save.js';
+import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo } from './src/save.js';
 import * as tools from './src/sim/tools.js';
 import * as count from './src/sim/count.js';
 import * as rivals from './src/sim/rivals.js';
@@ -1378,6 +1378,41 @@ test('A shared seed gives two players the same Parliament; the daily seed is one
   assert(parliamentHash(d1) === parliamentHash(d2) && d1.player.background === d2.player.background, 'same day, same game');
   assert(parliamentHash(d1) !== parliamentHash(d3), 'next day differs');
   return `${d1.seed} · ${d1.parties[d1.mps[d1.player.mpId].party].short} ${d1.player.background}`;
+});
+
+test('A version 1 save migrates to version 2 (mode and last revolt) and a bad save is refused', () => {
+  const s = newGame({ seed: 'MIG-1', party: 'p1' });
+  const old = JSON.parse(JSON.stringify(s));
+  old.version = 1;
+  delete old.mode;
+  delete old.player.lastRevolt;
+  const m = migrate(old);
+  assert(m.version === 2 && m.mode.kind === 'career' && m.player.lastRevolt === null, 'migrated fields');
+  let refused = 0;
+  for (const bad of ['', 'not base64 at all', btoa('{"version":99}'), btoa('{"hello":1}')]) {
+    try { importSave(bad); } catch { refused++; }
+  }
+  assert(refused === 4, 'four bad imports refused');
+  return 'v1 → v2';
+});
+
+test('Saves go to a slot and come back with their slot, time and a one-line description', () => {
+  const s = newGame({ seed: 'SLOT-9', party: 'p2' });
+  const rng = createRng('slot');
+  for (let i = 0; i < 60; i++) botAct(s, rng);
+  const ok = saveGame(s, 'test');
+  if (!ok) return 'no storage here; skipped';
+  try {
+    const back = loadGame('test');
+    assert(back.slot === 'test' && back.savedAt > 0 && back.seed === 'SLOT-9', 'slot and time on the way back');
+    assert(JSON.stringify(back.mps) === JSON.stringify(s.mps) && back.date.absWeek === s.date.absWeek, 'same game');
+    const info = saveInfo('test');
+    assert(info.name.includes(s.mps[s.player.mpId].name.last) && info.mode === 'career' && info.act === s.player.act && info.week === s.date.week, 'description');
+  } finally {
+    deleteSave('test');
+  }
+  assert(loadGame('test') === null, 'deleted');
+  return 'slot test written, read, described and deleted';
 });
 
 async function run() {

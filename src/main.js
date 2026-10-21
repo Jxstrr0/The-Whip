@@ -4,14 +4,14 @@ import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { setupRenderer, sharedEnvironment } from './look.js';
 import { loadData } from './loadData.js';
 import { setData, tuning } from './sim/config.js';
-import { newGame, scenarioGame, dailyGame } from './sim/modes.js';
+import { newGame, scenarioGame, dailyGame, sharedGame, scenarioList } from './sim/modes.js';
 import { parliamentHash } from './sim/generate.js';
 import { getState, setState, dispatch, subscribe } from './state.js';
 import './sim/pacing.js';
 import './sim/meetings.js';
 import { caucusSeating } from './sim/caucus.js';
 import './sim/riding.js';
-import { saveGame, loadGame, saveInfo } from './save.js';
+import { saveGame, loadGame, deleteSave, exportSave, importSave, allSaves, latestSave } from './save.js';
 import { createRooms } from './rooms.js';
 import * as chamber from './chamber/scene.js';
 import * as office from './office/officeScene.js';
@@ -301,7 +301,7 @@ function buildWorld() {
     if (fresh.length) toast.show(fresh.map((l) => l.text).join(' '));
   }
 
-  // Autosave a moment after things settle, to slot 1.
+  // Autosave a moment after things settle, to the game's own slot.
   let saveTimer = null;
   subscribe(() => {
     renderAll();
@@ -345,9 +345,10 @@ function buildWorld() {
   };
 }
 
-async function startGame(state) {
+async function startGame(state, slot = state.slot || 1) {
   // The menu's preview room, if any, goes; the game builds its own.
   world?.rooms.reset();
+  state.slot = slot;
   setState(state);
   if (!world) {
     world = buildWorld();
@@ -399,9 +400,27 @@ async function boot() {
     return startGame(newGame({ seed, party: params.get('party') || undefined, guided: params.get('guided') === '1', act: params.get('act') }));
   }
   const menu = createStartMenu(document.getElementById('ui'), {
-    info: saveInfo(1),
-    onContinue: () => startGame(loadGame(1)),
-    onNew: (opts) => startGame(newGame({ ...opts, guided: true })),
+    saves: allSaves(),
+    latest: latestSave(),
+    scenarios: scenarioList(),
+    onContinue: (slot) => startGame(loadGame(slot), slot),
+    onNew: (opts, slot) => startGame(newGame({ ...opts, guided: true }), slot),
+    onScenario: (id, person, slot) => startGame(scenarioGame(id, person), slot),
+    onDaily: (person, slot) => startGame(dailyGame(person), slot),
+    onShared: (opts, slot) => startGame(sharedGame(opts), slot),
+    onImport: (text, slot) => {
+      try {
+        startGame(importSave(text), slot);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    onDelete: (slot) => deleteSave(slot),
+    onExport: (slot) => {
+      const s = loadGame(slot);
+      return s ? exportSave(s) : null;
+    },
     onSeed: (seed) => {
       clearTimeout(previewTimer);
       previewTimer = setTimeout(() => showPreview(seed), 600);
