@@ -472,7 +472,7 @@ test('Every aim and job line has its words', () => {
   const s = newGame({ seed: 'AIM-2' });
   const has = (key) => key in data().strings;
   const scenes = [['morning', {}], ['morning', { items: [{ stop: 'ownVote' }] }], ['morning', { items: [{}] }], ['office', { whipCall: true }], ['caucus', {}], ['caucus', { revolt: { target: 'whip' } }], ['caucus', { revolt: { target: 'leader' } }], ['questionPeriod'], ['riding'], ['campaign'],
-    ['division', { reason: 'ownBill' }], ['division', { chase: true }], ['division', { dilemma: true }], ['division', { confidence: true }], ['division', { line: 'whipped' }], ['division', { line: 'free' }],
+    ...[{ reason: 'ownBill' }, { chase: true }, { dilemma: true }, { confidence: true }, { line: 'whipped' }, { line: 'free' }].map((x) => ['division', { pos: 'Aye', ...x }]),
     ...['whipCall', 'rebelRecruit', 'favorAsk', 'introduction', 'gossip', 'complaint', 'mentorAdvice', 'somethingNew'].map((x) => ['meeting', { situation: x }])];
   for (const act of [1, 3, 5]) {
     s.player.act = act;
