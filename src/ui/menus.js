@@ -1,6 +1,10 @@
 // Menus: the start screen (continue, or a new career: name, party, background, riding, age, seed) and the
 // in-game menu.
 import { t, esc, longlightMark } from './text.js';
+import { pickerHtml, wirePickers } from './picker.js';
+
+// The riding types are written for mid-sentence use; as a field's value they take a capital.
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 import { data, tuning } from '../sim/config.js';
 
 // A fresh seed for the form. The seed may come from anywhere (this is UI, not sim); everything after it is deterministic.
@@ -20,7 +24,6 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
   const el = document.createElement('section');
   el.className = 'start-menu';
   root.appendChild(el);
-  const opt = (v, label, sel) => `<option value="${esc(v)}"${sel ? ' selected' : ''}>${esc(label)}</option>`;
   const parties = D.parties.core;
   // Start in the first empty slot, so a new game never silently replaces one.
   const firstEmpty = saves.findIndex((x) => !x);
@@ -50,11 +53,11 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
       <div class="form">
         <label>${t('menu.first')}<input name="first" value="${esc(form.first)}" autocomplete="off"></label>
         <label>${t('menu.last')}<input name="last" value="${esc(form.last)}" autocomplete="off"></label>
-        <label>${t('menu.party')}<select name="party">${parties.map((p) => opt(p.id, p.name, p.id === form.party)).join('')}</select></label>
+        <label>${t('menu.party')}${pickerHtml({ name: 'party', options: picks.party, value: form.party, title: t('menu.party') })}</label>
         <div class="party-blurb"></div>
-        <label>${t('menu.background')}<select name="background">${D.backgrounds.backgrounds.map((b) => opt(b.id, `${b.name} · ${b.strength}`, b.id === form.background)).join('')}</select></label>
-        <label>${t('menu.ridingType')}<select name="ridingType">${['urban', 'suburban', 'rural', 'northern'].map((x) => opt(x, t('type.' + x), x === form.ridingType)).join('')}</select></label>
-        <label>${t('menu.province')}<select name="province">${opt('', t('menu.anyProvince'), !form.province)}${D.world.provinces.map((p) => opt(p.id, p.name, p.id === form.province)).join('')}</select></label>
+        <label>${t('menu.background')}${pickerHtml({ name: 'background', options: picks.background, value: form.background, title: t('menu.background') })}</label>
+        <label>${t('menu.ridingType')}${pickerHtml({ name: 'ridingType', options: picks.ridingType, value: form.ridingType, title: t('menu.ridingType') })}</label>
+        <label>${t('menu.province')}${pickerHtml({ name: 'province', options: picks.province, value: form.province, title: t('menu.province') })}</label>
         <label>${t('menu.age')}<input name="age" type="number" min="25" max="70" value="${esc(form.age)}"></label>
         <label>${t('menu.seed')}<input name="seed" value="${esc(form.seed)}" autocomplete="off"></label>
       </div>
@@ -92,6 +95,13 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
   }
 
   const v = (n) => el.querySelector(`[name="${n}"]`)?.value.trim() ?? '';
+  // The paper pickers' lists: who you are, where you come from.
+  const picks = {
+    party: parties.map((p) => ({ value: p.id, label: p.name })),
+    background: D.backgrounds.backgrounds.map((b) => ({ value: b.id, label: b.name, note: b.strength })),
+    ridingType: ['urban', 'suburban', 'rural', 'northern'].map((x) => ({ value: x, label: cap(t('type.' + x)) })),
+    province: [{ value: '', label: t('menu.anyProvince') }, ...D.world.provinces.map((p) => ({ value: p.id, label: p.name }))],
+  };
   const form = { first: pickName(D.names.first), last: pickName(D.names.last), party: parties[0].id, background: D.backgrounds.backgrounds[0].id, ridingType: 'rural', province: '', age: 38, seed: randomSeed(), importText: '', importOpen: false };
   const readForm = () => Object.assign(form, { first: v('first'), last: v('last'), party: v('party'), background: v('background'), ridingType: v('ridingType'), province: v('province'), age: Math.max(25, Math.min(70, Number(v('age')) || 38)), seed: v('seed'), importText: v('importText'), importOpen: !!el.querySelector('details.import')?.open });
   const person = () => ({ first: form.first || undefined, last: form.last || undefined, age: form.age });
@@ -102,6 +112,7 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
   const confirmReplace = () => !saves[slot - 1] || confirm(t('menu.confirmReplace', { name: saves[slot - 1].name }));
 
   function wire() {
+    wirePickers(el, picks);
     el.querySelector('[data-act="settings"]').onclick = () => onSettings?.();
     const blurb = () => {
       const p = parties.find((x) => x.id === el.querySelector('[name="party"]').value);
