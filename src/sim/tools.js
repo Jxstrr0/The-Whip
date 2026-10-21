@@ -290,6 +290,8 @@ function leverage(state, rng, { mpId, billId }) {
   if (leaked) {
     state.player.standing = clamp((state.player.standing || 50) + T.leverageScandal, 0, 100);
     state.pressure = clamp((state.pressure || 0) + 5, 0, 100);
+    m.scandal = clamp((m.scandal || 0) + tuning().media.scandalLeak, 0, 100);
+    state.mps[state.player.mpId].scandal = clamp((state.mps[state.player.mpId].scandal || 0) + tuning().media.scandalLeak, 0, 100);
     log(state, `${data().headlines.papers[0]}: "Whip's office accused of using a member's private life as a lever."`, 'press');
   }
   addStyle(state, 'operator');

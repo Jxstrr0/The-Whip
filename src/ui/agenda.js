@@ -5,7 +5,7 @@ import { stageLabel } from '../sim/vote.js';
 import { prediction } from '../sim/count.js';
 import { countLine } from './text.js';
 
-export function createAgenda(root, { getState, onContinue, onSkip, onNewGame }) {
+export function createAgenda(root, { getState, onContinue, onSkip }) {
   const bar = document.createElement('section');
   bar.className = 'agenda';
   root.appendChild(bar);
@@ -70,17 +70,11 @@ export function createAgenda(root, { getState, onContinue, onSkip, onNewGame }) 
         <div class="kv"><span class="k">${t('week.whip')}</span><span class="v">${delta(s.whipRapport)}</span></div>
         <div class="kv"><span class="k">${t('week.rebellions')}</span><span class="v">${s.rebellions}</span></div>
         <div class="kv"><span class="k">${t('week.divisions')}</span><span class="v">${s.divisions}</span></div>
+        ${state.player.act >= 3 ? `<div class="kv${(state.pressure || 0) >= 70 ? ' stale' : ''}"><span class="k">${t('week.pressure')}</span><span class="v">${Math.round(state.pressure || 0)} / 100</span></div>` : ''}
       </div>
       <h3>${t('agenda.feed')}</h3><ol class="feed">${s.lines.slice().reverse().map((l) => `<li>${esc(l)}</li>`).join('')}</ol>
       <div class="card-actions"><button class="btn primary" data-act="next">${t('week.next')}</button></div>`;
     sheet.querySelector('[data-act="next"]').onclick = onContinue;
-    sheet.classList.remove('hidden');
-  }
-
-  function showDissolved(p) {
-    sheet.innerHTML = `<div class="sheet-handle"></div><h2>${t('dissolved.title')}</h2><p>${t('dissolved.' + p.reason)}</p>
-      <div class="card-actions"><button class="btn primary" data-act="new">${t('dissolved.new')}</button></div>`;
-    sheet.querySelector('[data-act="new"]').onclick = onNewGame;
     sheet.classList.remove('hidden');
   }
 
@@ -90,7 +84,6 @@ export function createAgenda(root, { getState, onContinue, onSkip, onNewGame }) 
       const p = state.flow.pending;
       if (p?.kind === 'morning') showMorning(p);
       else if (p?.kind === 'weekSummary') showWeek(p);
-      else if (p?.kind === 'dissolved') showDissolved(p);
       else sheet.classList.add('hidden');
     },
   };

@@ -145,6 +145,22 @@
     "cabinet": "You took the oath on a grey morning and gave the whip's book to your successor, who will find your notes in the margins for years.",
     "exit": "You took the car and the staff and the title. Cabinet was hinted at. It stayed hinted at.",
     "fall": "The government fell on your count. You resigned before you were asked twice, and the paper spelled your name right.",
-    "revolt": "The caucus turned, and the leader let it. You left the whip's office with the book under your arm and nobody looking up."
+    "revolt": "The caucus turned, and the leader let it. You left the whip's office with the book under your arm and nobody looking up.",
+    "defeated": "The riding decided. You watched the numbers come in at the association office with the lights half off, and the new member sent a gracious note that you did not answer for a week.",
+    "nomination": "The riding association held its meeting on a Tuesday night in the arena, and when the hands went up, they weren't for you. You watched someone else fight the election you'd prepared for."
+  },
+  "replaced": {
+    "intro": "The leader's office has had enough. Lost confidence votes, public rebellions, a whip who couldn't deliver: {leader} has moved you out of the whip's office. You're on the backbench, and the pressure is off, which is its own kind of insult.",
+    "warn": "The leader's office is watching. Another lost vote or a public rebellion and they'll find someone else to count."
+  },
+  "agreement": {
+    "signed": "{gov} and {partner} sign a confidence-and-supply agreement: {partner} votes confidence for {weeks} weeks in return for movement on {category}.",
+    "broken": "{partner} walks away from the confidence-and-supply agreement. \"{gov} hasn't delivered,\" says {leader}. Every confidence vote is live again.",
+    "expired": "The confidence-and-supply agreement with {partner} has run its course. Nobody is renewing it."
+  },
+  "campaign": {
+    "canvass": "Five weeks of doors. Your feet hurt and the riding knows your face again.",
+    "tour": "Five weeks on the leader's bus. You were in every photo and in none of the diners at home.",
+    "rest": "The riding association ran it. They did fine. They know it."
   }
 }

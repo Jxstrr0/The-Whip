@@ -29,6 +29,7 @@ import { createStartMenu, createGameMenu } from './ui/menus.js';
 import { createLedger } from './ui/ledger.js';
 import { createCareerUI } from './ui/careerUI.js';
 import { createRecordUI } from './ui/recordUI.js';
+import { createElectionUI } from './ui/electionUI.js';
 import { canUse, nextVote } from './sim/tools.js';
 import { t, partyColor } from './ui/text.js';
 import { stageLabel } from './sim/vote.js';
@@ -224,7 +225,6 @@ function buildWorld() {
     getState,
     onContinue: () => dispatch({ type: 'advance' }),
     onSkip: () => dispatch({ type: 'skip' }),
-    onNewGame: () => (location.href = location.pathname),
   });
   const countBoard = createCountBoard(ui, {
     getState,
@@ -236,6 +236,7 @@ function buildWorld() {
   const officeUI = createOfficeUI(ui, { getState, dispatch, pickMp, onLedger: () => ledger.open() });
   const careerUI = createCareerUI(ui, { getState, dispatch });
   const recordUI = createRecordUI(ui, { getState, onNewGame: () => (location.href = location.pathname) });
+  const electionUI = createElectionUI(ui, { getState, dispatch });
   const caucusUI = createCaucusUI(ui, { getState, dispatch, getRoom: () => (rooms.name === 'caucus' ? rooms.room : null) });
   const ridingUI = createRidingUI(ui, { getState, dispatch });
 
@@ -288,6 +289,7 @@ function buildWorld() {
     officeUI.render(state);
     careerUI.render(state);
     recordUI.render(state);
+    electionUI.render(state);
     caucusUI.render(state);
     ridingUI.render(state);
     card.refresh();
@@ -365,7 +367,7 @@ async function debugTools(w) {
   document.body.appendChild(stats.dom);
   w.setStats(stats);
   createTuningPanel(w.ui, tuning());
-  const names = ['generate', 'knowledge', 'relationships', 'rng', 'bills', 'mp', 'vote', 'pacing', 'meetings', 'caucus', 'riding', 'career', 'tools', 'ranks', 'record'];
+  const names = ['generate', 'knowledge', 'relationships', 'rng', 'bills', 'mp', 'vote', 'pacing', 'meetings', 'caucus', 'riding', 'career', 'tools', 'ranks', 'record', 'election', 'confidence', 'media'];
   const sim = {};
   for (const n of names) sim[n] = await import(`./sim/${n}.js`);
   window.whip = {
