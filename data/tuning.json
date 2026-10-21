@@ -215,6 +215,7 @@
     "contactShadow": 0.45,
     "chandelier": 22,
     "deskLamp": 10,
-    "pendant": 16
+    "pendant": 16,
+    "walkerEvery": 18
   }
 }

@@ -97,8 +97,8 @@ function buildWorld() {
         fade.classList.add('on');
         requestAnimationFrame(() => requestAnimationFrame(() => fade.classList.remove('on')));
       }
-      if (name === 'chamber') {
-        const state = getState();
+      const state = getState();
+      if (name === 'chamber' && state) {
         room.sync(state, colorOf);
         // Acts 1 and 2 open from your own seat: the backbench is a seat, not a map.
         const me = state.mps[state.player.mpId];
@@ -179,7 +179,7 @@ function buildWorld() {
       },
       { label: '☰', run: () => gameMenu.open() },
     ],
-    debugText: DEBUG ? () => `${getState().seed} · ${t('debug.hash', { hash: parliamentHash(getState()) })}` : null,
+    debugText: DEBUG ? () => (getState() ? `${getState().seed} · ${t('debug.hash', { hash: parliamentHash(getState()) })}` : '') : null,
   });
 
   const agenda = createAgenda(ui, {
@@ -201,6 +201,7 @@ function buildWorld() {
   // Keep each room in step with the sim: who's in the chair, moods, the board, the crowd.
   function syncRoom(name, state) {
     const room = rooms.room;
+    if (name === 'chamber') room.nudge?.();
     if (name === 'office') {
       const me = state.mps[state.player.mpId];
       room.setBoard(
@@ -227,7 +228,8 @@ function buildWorld() {
     }
   }
 
-  let lastLog = getState().log.length;
+  // The world can exist before a game does (the menu's preview), so state may still be null here.
+  let lastLog = getState()?.log.length ?? 0;
   function renderAll(state = getState()) {
     const name = roomFor(state);
     const me = state.mps[state.player.mpId];
@@ -298,6 +300,8 @@ function buildWorld() {
 }
 
 async function startGame(state) {
+  // The menu's preview room, if any, goes; the game builds its own.
+  world?.rooms.reset();
   setState(state);
   if (!world) {
     world = buildWorld();
@@ -345,11 +349,33 @@ async function boot() {
     // Debug and shared-seed starts skip the menu; ?guided=1 adds the first-week walkthrough.
     return startGame(newGame({ seed, party: params.get('party') || undefined, guided: params.get('guided') === '1' }));
   }
-  createStartMenu(document.getElementById('ui'), {
+  const menu = createStartMenu(document.getElementById('ui'), {
     info: saveInfo(1),
     onContinue: () => startGame(loadGame(1)),
     onNew: (opts) => startGame(newGame({ ...opts, guided: true })),
+    onSeed: (seed) => {
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(() => showPreview(seed), 600);
+    },
   });
+  // The seed's own Parliament sits in the chamber behind the title page, the camera drifting slowly.
+  let previewTimer = null;
+  world = buildWorld();
+  if (DEBUG) await debugTools(world);
+  function showPreview(seed) {
+    if (!menu.isConnected) return;
+    try {
+      const st = newGame({ seed: seed || 'CALEDOR-1', party: 'p1' });
+      world.rooms.reset();
+      const room = world.rooms.show('chamber', { playerColor: '#555', tier: 1, ridingType: 'rural', ridingName: '', seating: null, playerId: null });
+      room.sync(st, (mp) => partyColor(st, mp));
+      room.autoOrbit(true);
+      world.resize();
+    } catch (e) {
+      console.warn('menu preview', e);
+    }
+  }
+  showPreview(menu.querySelector('[name="seed"]').value.trim());
 }
 
 boot().catch((err) => {

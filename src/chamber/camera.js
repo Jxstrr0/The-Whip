@@ -186,10 +186,30 @@ export function createChamberCamera(camera, el) {
     modeCbs.forEach((cb) => cb(mode));
   }
 
+  let auto = false;
+  let autoT = 0;
+
   return {
     goal,
     get mode() {
       return mode;
+    },
+    // A tiny impulse on a state change, so the picture settles rather than sits.
+    nudge() {
+      const k = (Math.random() - 0.5) * 0.05;
+      if (mode === 'home') home.yaw += k;
+      else cur.azimuth += k;
+    },
+    // The title page: the overview drifting slowly from side to side.
+    autoOrbit(on) {
+      auto = on;
+      if (on) {
+        setMode('overview');
+        // Low enough to stay under the ceiling in landscape, looking down the chamber at the Speaker.
+        goal.r = 16;
+        goal.polar = 70 * DEG;
+        goal.target.set(0, 1.5, -3);
+      }
     },
     onTap: (cb) => tapCbs.push(cb),
     onDoubleTap: (cb) => dblCbs.push(cb),
@@ -207,6 +227,10 @@ export function createChamberCamera(camera, el) {
       }
     },
     update(dt) {
+      if (auto) {
+        autoT += dt;
+        goal.azimuth = Math.sin(autoT * 0.1) * 0.55;
+      }
       const k = 1 - Math.exp(-dt * 8);
       cur.r += (goal.r - cur.r) * k;
       cur.polar += (goal.polar - cur.polar) * k;

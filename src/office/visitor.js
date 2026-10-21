@@ -142,7 +142,7 @@ export function poseFigure(f, name, k = 1) {
 }
 
 // Legs from the hip, arms opposite, a knee bend on the swing-through.
-function stride(f, t) {
+export function stride(f, t) {
   const s = Math.sin(t * 9);
   f.legs[0].hip.rotation.x = s * 0.5;
   f.legs[1].hip.rotation.x = -s * 0.5;
