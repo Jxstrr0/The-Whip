@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Whip · figure lineup</title>
+<style>html,body{margin:0;background:#1b1a17;height:100%}canvas{display:block;width:100vw;height:100vh}</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev page: the articulated figure in every pose, and a seated and a standing crowd figure, side by side.
+import * as THREE from 'three';
+import { setData } from '../src/sim/config.js';
+import { loadData } from '../src/loadData.js';
+import { setupRenderer, sharedEnvironment } from '../src/look.js';
+import { roomLights, slab, merge, vertexMaterial } from '../src/kit3d.js';
+import { createFigure, poseFigure } from '../src/office/visitor.js';
+import { createFigureCrowd, lookFor } from '../src/figures.js';
+setData(await loadData('../data/'));
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+setupRenderer(renderer, { exposure: 0.9 });
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#2a2622');
+scene.environment = sharedEnvironment(renderer);
+roomLights(scene, { hemi: 0.5, key: 1.0, fill: 0.3 });
+scene.add(new THREE.Mesh(merge([slab(-6, -0.05, -3, 6, 0, 3, '#5a4330')]), vertexMaterial()));
+const names = ['standing', 'walking', 'cooperative', 'guarded', 'angry', 'anxious'];
+const colors = ['#2F6DB5', '#C8423B', '#E0A526', '#4FB3BF', '#8E6BBF', '#2F6DB5'];
+names.forEach((n, i) => {
+  const f = createFigure(colors[i], 'lineup-' + i);
+  f.group.position.x = -3.4 + i * 1.1;
+  poseFigure(f, n, 1);
+  scene.add(f.group);
+});
+const crowd = createFigureCrowd(2, { pose: 'seated' });
+crowd.place(0, { x: 3.4, z: 0, rotY: 0, ...lookFor('m1') });
+crowd.dress(0, { ...lookFor('m1'), suit: '#2F6DB5' });
+crowd.place(1, { x: 4.5, z: 0, rotY: 0 });
+crowd.dress(1, { ...lookFor('m7'), suit: '#C8423B' });
+crowd.commit();
+scene.add(crowd.group);
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
+camera.position.set(0.5, 1.5, 7.5);
+camera.lookAt(0.5, 0.85, 0);
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+renderer.setAnimationLoop(() => renderer.render(scene, camera));
+</script>
+</body>
+</html>

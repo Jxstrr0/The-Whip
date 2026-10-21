@@ -253,3 +253,26 @@ The first step of `ART-PASS.md`. Nothing in the rooms was redesigned yet; this i
 
 - The office and riding camera framing is unchanged and still wrong (the chair back in the riding, the window-and-chairs shot in the office). Those are steps V4 and V5.
 - The figures are still the capsule-and-sphere placeholders. That's V1, next.
+
+---
+
+## 2026-10-21 · Art pass V1: figures
+
+**What changed**
+
+- **One figure kit for everyone** (`src/figures.js`). Every person in the game is now the same stylised silhouette: shoulders, a neck, an egg of a head under a hair cap, a collar, a lap when seated, shoes. No faces (at this budget they'd look wrong, and the mood pill in the UI already says how someone feels). Each MP's skin tone, hair colour and style (full, receding, none), height, lean and the way they sit are decided from their id, so they look the same every time you load.
+- **Crowds are instanced**: the 120 MPs in the chamber are six draw calls however many there are, same for the caucus table and the town hall crowd. Party colours vary slightly from person to person so a bench isn't one flat block. Every few seconds someone turns their head toward a neighbour and back.
+- **The Speaker** is drawn from the same kit, in black, in the chair.
+- **The visitor in the office and riding** (`src/office/visitor.js`) is the same silhouette with elbows, knees, hands and shoes on joints. The four moods now read at phone size: *cooperative* sits upright with hands on knees; *guarded* has the arms genuinely folded across the chest; *angry* leans in with both hands forward on the desk; *anxious* draws in, hands clasped in the lap, head down. Walking in is quicker (3.2 m/s) and the legs swing from the hip with a knee bend. A seated visitor breathes and their head drifts a little, so nobody freezes.
+- **Your own head is hidden** in the office and riding, because the camera sits where your head would be; a skin-coloured blob in the corner of the frame was never the intent.
+- `tools/lineup.html` is a dev page that shows the figure in every pose side by side. It's how the poses were checked, and it's there for the next passes.
+
+**Checks**
+
+- Guided week through the real buttons, headless phone browser: no console errors. `tests.html`: 33 of 33.
+- Chamber: 19 draw calls at rest (budget 60).
+- In a blind look at the lineup, the four moods are tellable apart from the silhouette alone.
+
+**Things to know**
+
+- The office and riding framing is still the old framing (steps V4 and V5). The figures are better; the shots around them aren't yet.

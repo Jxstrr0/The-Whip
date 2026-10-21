@@ -136,6 +136,7 @@ export function create(ctx) {
   scene.add(outside);
 
   const me = createFigure(ctx.playerColor || '#555', 'player');
+  me.setHeadVisible(false);
   me.group.position.set(0, 0, -1.75);
   poseFigure(me, 'cooperative', 1);
   scene.add(me.group);
@@ -175,6 +176,7 @@ export function create(ctx) {
     },
     update(dt) {
       visitor?.update(dt);
+      if (outside.visible) crowd.update(dt);
       cam.update(dt);
     },
     resize(w, h) {
