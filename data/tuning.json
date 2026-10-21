@@ -85,7 +85,8 @@
     "oppositionReflex": 0.28,
     "confidenceAppetiteMargin": 4,
     "confidenceAppetiteFromYear": 2,
-    "ordinaryDealOdds": 0.75
+    "ordinaryDealOdds": 0.75,
+    "honeymoonWeeks": 26
   },
   "vote": {
     "wLine": 1.45,

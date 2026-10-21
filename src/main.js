@@ -1,22 +1,31 @@
-// Boot: load data, start a game from the seed, build the rooms and UI, run the loop.
+// Boot: load data, show the start menu (or start straight from ?seed=), build the rooms and UI, run the loop.
 import * as THREE from 'three';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { loadData } from './loadData.js';
 import { setData, tuning } from './sim/config.js';
-import { newGame, randomSeed } from './sim/modes.js';
+import { newGame } from './sim/modes.js';
 import { parliamentHash } from './sim/generate.js';
 import { getState, setState, dispatch, subscribe } from './state.js';
 import './sim/pacing.js';
 import './sim/meetings.js';
+import { caucusSeating } from './sim/caucus.js';
+import './sim/riding.js';
+import { saveGame, loadGame, saveInfo } from './save.js';
 import { createRooms } from './rooms.js';
 import * as chamber from './chamber/scene.js';
 import * as office from './office/officeScene.js';
+import * as caucus from './caucus/caucusScene.js';
+import * as riding from './riding/ridingScene.js';
+import { MOOD_TINT } from './caucus/caucusFigures.js';
 import { createHud, createTuningPanel, createToast } from './ui/hud.js';
 import { createMpCard } from './ui/mpCard.js';
 import { createBook } from './ui/book.js';
 import { createAgenda } from './ui/agenda.js';
 import { createCountBoard } from './ui/countBoard.js';
 import { createOfficeUI } from './ui/talk.js';
+import { createCaucusUI } from './ui/caucusUI.js';
+import { createRidingUI } from './ui/ridingUI.js';
+import { createStartMenu, createGameMenu } from './ui/menus.js';
 import { t, partyColor } from './ui/text.js';
 import { stageLabel } from './sim/vote.js';
 
@@ -47,15 +56,15 @@ function riskOf(state, id, asLabel = false) {
 function roomFor(state) {
   const k = state.flow.pending?.kind;
   if (k === 'office' || k === 'meeting') return 'office';
+  if (k === 'caucus') return 'caucus';
+  if (k === 'riding') return 'riding';
   return 'chamber';
 }
 
-async function boot() {
-  setData(await loadData());
-  document.title = t('title');
-  const seed = params.get('seed') || randomSeed();
-  setState(newGame({ seed, party: params.get('party') || undefined }));
+let world = null;
 
+// Everything that exists once a game is running: renderer, rooms, UI.
+function buildWorld() {
   const canvas = document.getElementById('scene');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -68,13 +77,14 @@ async function boot() {
 
   let card;
   const rooms = createRooms({
-    factories: { chamber, office },
+    factories: { chamber, office, caucus, riding },
     ctx: {
       renderer,
       onSeatTap(seat, mpId) {
         if (mpId) card.show(mpId);
         else card.hide();
       },
+      onMpTap: (mpId) => card.show(mpId),
     },
     onChange(name, room) {
       if (name === 'chamber') room.sync(getState(), colorOf);
@@ -124,6 +134,13 @@ async function boot() {
   });
 
   const toast = createToast(ui);
+  const gameMenu = createGameMenu(ui, {
+    getState,
+    onQuit: () => {
+      saveGame(getState());
+      location.href = location.pathname;
+    },
+  });
   createHud(ui, {
     buttons: [
       { label: t('btn.book'), run: () => (book.isOpen ? book.close() : book.open()) },
@@ -135,6 +152,7 @@ async function boot() {
           card.hide();
         },
       },
+      { label: '☰', run: () => gameMenu.open() },
     ],
     debugText: DEBUG ? () => `${getState().seed} · ${t('debug.hash', { hash: parliamentHash(getState()) })}` : null,
   });
@@ -143,11 +161,7 @@ async function boot() {
     getState,
     onContinue: () => dispatch({ type: 'advance' }),
     onSkip: () => dispatch({ type: 'skip' }),
-    onNewGame: () => {
-      const url = new URL(location.href);
-      url.searchParams.delete('seed');
-      location.href = url.toString();
-    },
+    onNewGame: () => (location.href = location.pathname),
   });
   const countBoard = createCountBoard(ui, {
     getState,
@@ -156,73 +170,71 @@ async function boot() {
     onContinue: () => dispatch({ type: 'advance' }),
   });
   const officeUI = createOfficeUI(ui, { getState, dispatch, pickMp });
+  const caucusUI = createCaucusUI(ui, { getState, dispatch });
+  const ridingUI = createRidingUI(ui, { getState, dispatch });
 
-  // Keep the office room in step with the meeting: who's in the chair, their mood, the board.
-  function syncOffice(state) {
+  // Keep each room in step with the sim: who's in the chair, moods, the board, the crowd.
+  function syncRoom(name, state) {
     const room = rooms.room;
-    const me = state.mps[state.player.mpId];
-    room.setBoard(
-      nextBills(state, 5).map((b) => ({ text: `${b.title} · ${stageLabel(b.stage)} · ${(b.positions[me.party] || '').toUpperCase()}`, color: b.positions[me.party] === 'yea' ? '#1f6f40' : '#8a2a25' })),
-      'Coming up'
-    );
-    const mt = state.meeting && state.meetings[state.meeting];
-    if (mt) {
-      room.setVisitor({ mpId: mt.mpId, mood: mt.mood, color: colorOf(state.mps[mt.mpId]), reversal: mt.reversal });
-      room.pushIn(mt.phase === 'deal');
-    } else room.setVisitor(null);
+    if (name === 'office') {
+      const me = state.mps[state.player.mpId];
+      room.setBoard(
+        nextBills(state, 5).map((b) => ({ text: `${b.title} · ${stageLabel(b.stage)} · ${(b.positions[me.party] || '').toUpperCase()}`, color: b.positions[me.party] === 'yea' ? '#1f6f40' : '#8a2a25' })),
+        'Coming up'
+      );
+      const mt = state.meeting && state.meetings[state.meeting];
+      if (mt) {
+        room.setVisitor({ mpId: mt.mpId, mood: mt.mood, color: colorOf(state.mps[mt.mpId]), reversal: mt.reversal });
+        room.pushIn(mt.phase === 'deal');
+      } else room.setVisitor(null);
+    } else if (name === 'caucus') {
+      // The whip's read: seats you can read show their mood; the rest show party colours.
+      room.tint((id) => {
+        const k = state.player.knowledge[id]?.mood;
+        if (id === state.player.mpId) return '#f2c14e';
+        return k?.known && !k.stale ? MOOD_TINT[state.mps[id].mood] : colorOf(state.mps[id]);
+      });
+    } else if (name === 'riding') {
+      const v = state.ridingVisit;
+      if (!v) return;
+      room.setTownHall(v.phase === 'townHall', v.townHall?.crowd ?? 50);
+      const item = v.phase === 'visitors' ? v.queue[v.at] : null;
+      room.setVisitor(item ? { key: `${v.week}:${v.at}`, role: item.role } : null);
+    }
   }
 
   let lastLog = getState().log.length;
   function renderAll(state = getState()) {
-    const roomName = roomFor(state);
-    rooms.show(roomName, { playerColor: colorOf(state.mps[state.player.mpId]), tier: state.player.act >= 4 ? 2 : 1 });
-    if (roomName === 'office') syncOffice(state);
+    const name = roomFor(state);
+    const me = state.mps[state.player.mpId];
+    rooms.show(name, {
+      playerColor: colorOf(me),
+      tier: state.player.act >= 4 ? 2 : 1,
+      ridingType: me.riding.type,
+      seating: name === 'caucus' ? caucusSeating(state, me.party) : null,
+      playerId: me.id,
+    });
+    syncRoom(name, state);
     agenda.render(state);
     countBoard.render(state);
     officeUI.render(state);
+    caucusUI.render(state);
+    ridingUI.render(state);
     card.refresh();
     book.refresh();
-    // Meeting outcomes and calls show briefly as a toast.
+    // Meeting outcomes, calls and deliveries show briefly as a toast.
     const fresh = state.log.slice(lastLog).filter((l) => l.kind === 'meeting' || l.kind === 'career');
     lastLog = state.log.length;
     if (fresh.length) toast.show(fresh.map((l) => l.text).join(' '));
   }
-  subscribe(() => renderAll());
 
-  let stats = null;
-  if (DEBUG) {
-    const { default: Stats } = await import('three/addons/libs/stats.module.js');
-    stats = new Stats();
-    stats.dom.style.cssText = 'position:fixed;right:8px;top:120px;z-index:50;pointer-events:none;opacity:.8;';
-    document.body.appendChild(stats.dom);
-    createTuningPanel(ui, tuning());
-    const sim = {
-      generate: await import('./sim/generate.js'),
-      knowledge: await import('./sim/knowledge.js'),
-      relationships: await import('./sim/relationships.js'),
-      rng: await import('./sim/rng.js'),
-      bills: await import('./sim/bills.js'),
-      mp: await import('./sim/mp.js'),
-      vote: await import('./sim/vote.js'),
-      pacing: await import('./sim/pacing.js'),
-      meetings: await import('./sim/meetings.js'),
-    };
-    window.whip = {
-      get state() {
-        return getState();
-      },
-      dispatch,
-      sim,
-      rooms,
-      get room() {
-        return rooms.room;
-      },
-      renderer,
-      THREE,
-      card,
-      book,
-    };
-  }
+  // Autosave a moment after things settle, to slot 1.
+  let saveTimer = null;
+  subscribe(() => {
+    renderAll();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => saveGame(getState()), 800);
+  });
 
   function resize() {
     const w = window.innerWidth;
@@ -232,18 +244,86 @@ async function boot() {
     rooms.resize(w, h);
   }
   window.addEventListener('resize', resize);
-  renderAll();
-  resize();
 
+  let stats = null;
   let last = performance.now();
   renderer.setAnimationLoop((now) => {
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
     const room = rooms.room;
+    if (!room) return;
     room.update(dt);
     renderer.render(room.scene, room.camera);
     labels.render(room.scene, room.camera);
     stats?.update();
+  });
+
+  return {
+    renderer,
+    rooms,
+    card,
+    book,
+    ui,
+    renderAll,
+    resize,
+    setStats(s) {
+      stats = s;
+    },
+  };
+}
+
+async function startGame(state) {
+  setState(state);
+  if (!world) {
+    world = buildWorld();
+    if (DEBUG) await debugTools(world);
+  }
+  world.renderAll();
+  world.resize();
+  // A fresh game opens on its first stop (Monday morning of a guided first week).
+  if (!state.flow.pending && state.flow.forceWatch) dispatch({ type: 'advance' });
+  saveGame(getState());
+}
+
+async function debugTools(w) {
+  const { default: Stats } = await import('three/addons/libs/stats.module.js');
+  const stats = new Stats();
+  stats.dom.style.cssText = 'position:fixed;right:8px;top:120px;z-index:50;pointer-events:none;opacity:.8;';
+  document.body.appendChild(stats.dom);
+  w.setStats(stats);
+  createTuningPanel(w.ui, tuning());
+  const names = ['generate', 'knowledge', 'relationships', 'rng', 'bills', 'mp', 'vote', 'pacing', 'meetings', 'caucus', 'riding', 'career'];
+  const sim = {};
+  for (const n of names) sim[n] = await import(`./sim/${n}.js`);
+  window.whip = {
+    get state() {
+      return getState();
+    },
+    dispatch,
+    sim,
+    rooms: w.rooms,
+    get room() {
+      return w.rooms.room;
+    },
+    renderer: w.renderer,
+    THREE,
+    card: w.card,
+    book: w.book,
+  };
+}
+
+async function boot() {
+  setData(await loadData());
+  document.title = t('title');
+  const seed = params.get('seed');
+  if (seed) {
+    // Debug and shared-seed starts skip the menu; ?guided=1 adds the first-week walkthrough.
+    return startGame(newGame({ seed, party: params.get('party') || undefined, guided: params.get('guided') === '1' }));
+  }
+  createStartMenu(document.getElementById('ui'), {
+    info: saveInfo(1),
+    onContinue: () => startGame(loadGame(1)),
+    onNew: (opts) => startGame(newGame({ ...opts, guided: true })),
   });
 }
 

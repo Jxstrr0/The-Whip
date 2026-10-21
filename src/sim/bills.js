@@ -109,6 +109,8 @@ export function setLines(state, bill, rng) {
       if (appetite) support -= 1.5;
       else if (p.role === 'opposition') support -= 0.8;
       else support += 0.45;
+      // Nobody wants to send voters back to the polls months after an election.
+      if (p.role !== 'opposition' && state.date.absWeek < T.honeymoonWeeks) support += 1;
     }
     const thr = T.partySupportThreshold;
     let position = support > thr ? 'yea' : support < -thr ? 'nay' : bill.confidence && p.id !== gov ? 'abstain' : support >= 0 ? 'yea' : 'nay';
