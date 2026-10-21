@@ -485,12 +485,12 @@ Build one stage per session, in order. A stage is done only when every check und
 
 **Stage 4: The office and meetings.** Write `rooms.js`, `office/`, `sim/meetings.js`, `ui/talk.js` and `ui/dealTable.js`, plus `data/dialogue-lines.json`. Add the evening phase with slots, walk-ins and phone calls, and the Act 1 reversal (the whip calls you in).
 
-- [ ] After a sitting day, the game moves to the office and back to the next morning
-- [ ] A meeting plays talk then deal, and the result lands in the ledger
-- [ ] Mood changes the visitor's pose and the available lines
-- [ ] Meetings reveal fields in the knowledge map, and the card updates
-- [ ] The reversal scene plays when the whip's office calls the player in
-- [ ] Everything works one-handed in portrait
+- [x] After a sitting day, the game moves to the office and back to the next morning
+- [x] A meeting plays talk then deal, and the result lands in the ledger
+- [x] Mood changes the visitor's pose and the available lines
+- [x] Meetings reveal fields in the knowledge map, and the card updates
+- [x] The reversal scene plays when the whip's office calls the player in
+- [x] Everything works one-handed in portrait
 
 **Stage 4b: Vertical slice.** Before stage 5, make Act 1's first week playable end to end across all four rooms with placeholder art: a dilemma vote, a whip's-office reversal meeting, a Friday in the riding, a Wednesday caucus. Kelbo plays it and decides what's fun before the career is built out.
 

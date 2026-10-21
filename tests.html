@@ -33,6 +33,10 @@ import { putQuestion, runDivision, recordResult, speakerCastingVote } from './sr
 import * as pacing from './src/sim/pacing.js';
 import { createRng } from './src/sim/rng.js';
 import { data } from './src/sim/config.js';
+import * as meetings from './src/sim/meetings.js';
+import { botPlayParliament } from './src/sim/bot.js';
+import { ACTIONS } from './src/sim/actions.js';
+import { spreadBrokenPromise } from './src/sim/relationships.js';
 
 const sections = [];
 let current = null;
@@ -297,7 +301,7 @@ test('Bills move through all five stages, with amendments at committee and repor
   assert(full, 'no bill passed all stages');
   const stages = full.results.map((id) => s.divisions[id].stage);
   assert(['second', 'report', 'third'].every((st) => stages.includes(st)), `stages seen: ${stages}`);
-  const amends = Object.values(s.bills).flatMap((b) => b.amendments);
+  const amends = Object.values(s.bills).flatMap((b) => b.amendments || []);
   assert(amends.some((a) => a.at === 'committee'), 'no committee amendments');
   assert(amends.some((a) => a.at === 'report'), 'no report stage amendments');
   return `${full.title}: first → ${stages.join(' → ')} → passed · ${amends.length} amendments`;
@@ -354,6 +358,111 @@ test('tests.html runs a whole Parliament headless with a random bot player, no e
   const ms = performance.now() - t0;
   assert(ms < 60000, `took ${ms} ms`);
   return out.join(' · ');
+});
+
+
+// ---------- Stage 4: the office and meetings ----------
+section('Stage 4 · The office and meetings');
+
+// Play to the first office evening.
+function toOffice(seed, party) {
+  const s = newGame({ seed, party });
+  for (let i = 0; i < 400; i++) {
+    const p = pacing.skip(s);
+    if (p.kind === 'office') return s;
+    if (p.kind === 'dissolved') break;
+    pacing.resolve(s, 'line');
+  }
+  throw new Error('never reached the office');
+}
+
+test('After a sitting day the game moves to the office, then on to the next morning', () => {
+  const s = toOffice('TEST-1');
+  const day = s.date.dayOfWeek;
+  const week = s.date.absWeek;
+  assert(s.flow.step === 'fallout' && s.evening, 'not in the office evening');
+  pacing.resolve(s);
+  pacing.advance(s);
+  assert(s.date.dayOfWeek !== day || s.date.absWeek !== week, 'did not move to the next day');
+  assert(!s.evening, 'evening still open');
+});
+
+test('A meeting with a scripted choice sequence produces the expected ledger entry', () => {
+  const s = toOffice('TEST-1');
+  const target = Object.values(s.mps).find((m) => m.party === s.mps[s.player.mpId].party && m.id !== s.player.mpId && m.caucusRole === 'backbencher');
+  ACTIONS.invite(s, { mpId: target.id });
+  assert(s.flow.pending.kind === 'meeting', 'meeting did not start');
+  const mt = s.meetings[s.meeting];
+  while (mt.phase === 'talk') ACTIONS.talk(s, { index: mt.talk.options.findIndex((o) => o.approach === 'listen') });
+  // Offer a riding mention, ask a favour: a fair trade for a friendly MP.
+  target.rapport = 40;
+  ACTIONS.propose(s, { offers: ['ridingMention'], asks: ['favor'] });
+  assert(mt.deal.result === 'accepted', `deal ${mt.deal.result}`);
+  const mine = s.ledger.find((e) => e.meeting === mt.id && e.from === s.player.mpId && e.what === 'ridingMention');
+  const theirs = s.ledger.find((e) => e.meeting === mt.id && e.from === target.id && e.kind === 'favor');
+  assert(mine && mine.to === target.id && mine.dueWeek != null, 'player promise missing');
+  assert(theirs && theirs.to === s.player.mpId, 'favour owed missing');
+  return `${mt.talk.turns.length} turns, ledger ${mine.id} and ${theirs.id}`;
+});
+
+test('Mood changes the available lines', () => {
+  const lines = data().dialogueLines.lines.filter((l) => l.speaker === 'mp' && l.situation === 'introduction' && l.turn === 1);
+  const byMood = Object.fromEntries(['cooperative', 'angry'].map((m) => [m, lines.filter((l) => l.mood.includes(m)).map((l) => l.id)]));
+  assert(byMood.cooperative.length && byMood.angry.length, 'missing lines');
+  assert(byMood.cooperative.every((id) => !byMood.angry.includes(id)), 'same lines for both moods');
+});
+
+test('Meetings reveal fields in the knowledge map', () => {
+  const s = toOffice('TEST-2');
+  const target = Object.values(s.mps).find((m) => m.id !== s.player.mpId && m.caucusRole === 'backbencher');
+  ACTIONS.invite(s, { mpId: target.id });
+  const mt = s.meetings[s.meeting];
+  assert(cardView(s, target.id).fields.mood.known, 'mood not revealed on sitting down');
+  target.mood = mt.mood = 'angry';
+  while (mt.phase === 'talk') ACTIONS.talk(s, { index: Math.max(0, mt.talk.options.findIndex((o) => o.approach === 'listen')) });
+  const known = HIDDEN_FIELDS.filter((f) => cardView(s, target.id).fields[f].known);
+  assert(known.length >= 3, `only ${known.join(', ')} known`);
+  return known.join(', ');
+});
+
+test("The whip's office calls the player in before a dilemma vote (the reversal)", () => {
+  for (const seed of ['TEST-1', 'TEST-2', 'REV-3', 'REV-4', 'REV-5', 'REV-6']) {
+    const s = newGame({ seed });
+    for (let i = 0; i < 600; i++) {
+      const p = pacing.skip(s);
+      if (p.kind === 'dissolved') break;
+      if (p.kind === 'office' && s.evening.whipCall) {
+        ACTIONS.meet(s, { whipCall: true });
+        const mt = s.meetings[s.meeting];
+        assert(mt.reversal && mt.mpId === s.parties[s.mps[s.player.mpId].party].chiefWhip, 'not the whip in the reversal');
+        assert(mt.deal.offers[0].startsWith(`vote:${mt.billId}`), 'whip is not asking for the vote');
+        return `${seed}: whip calls about ${s.bills[mt.billId].title}`;
+      }
+      if (p.kind === 'office') pacing.resolve(s);
+      else pacing.resolve(s, 'line');
+    }
+  }
+  throw new Error('no whip call found');
+});
+
+test("A broken promise lowers rapport across the MP's cohort and clique", () => {
+  const s = newGame({ seed: 'TEST-1' });
+  const m = Object.values(s.mps).find((x) => x.clique && x.id !== s.player.mpId && Object.values(s.mps).filter((y) => y.cohort === x.cohort && y.party === x.party).length > 2);
+  const mates = Object.values(s.mps).filter((y) => y.id !== m.id && y.id !== s.player.mpId && ((y.cohort === m.cohort && y.party === m.party) || (y.clique && y.clique === m.clique)));
+  const before = Object.fromEntries(mates.map((y) => [y.id, y.rapport]));
+  const own = m.rapport;
+  spreadBrokenPromise(s, m.id, 12);
+  assert(m.rapport < own, 'wronged MP unaffected');
+  assert(mates.every((y) => y.rapport < before[y.id]), 'some cohort or clique mates unaffected');
+  return `${mates.length} cohort and clique mates cooled`;
+});
+
+test('The bot plays a whole Parliament through meetings and the whip calls, no errors', () => {
+  const s = newGame({ seed: 'BOT-4' });
+  const seen = botPlayParliament(s, createRng('bot4'));
+  assert(s.flow.pending.kind === 'dissolved', 'did not finish');
+  assert(seen.meeting > 0 && seen.office > 0, 'no meetings');
+  return `${Object.keys(s.meetings).length} meetings kept, ${s.ledger.length} ledger entries, save ${Math.round(JSON.stringify(s).length / 1024)} KB`;
 });
 
 // ---------- runner ----------

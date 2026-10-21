@@ -99,3 +99,22 @@ export function addSoftLights(scene, { warm = '#fff1dc', ground = '#3a3326', int
   scene.add(hemi, key, fill);
   return [hemi, key, fill];
 }
+
+// A flat painted texture from a canvas drawing function (windows, boards, photos). No image files needed.
+export function paintedTexture(w, h, draw) {
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.userData.canvas = c;
+  return tex;
+}
+
+export function texturedPanel(w, h, tex, { x = 0, y = 0, z = 0, rotY = 0 } = {}) {
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
+  mesh.position.set(x, y, z);
+  mesh.rotation.y = rotY;
+  return mesh;
+}
