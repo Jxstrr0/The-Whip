@@ -68,7 +68,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
           .join('')
       : `<li class="muted">${t('office.none')}</li>`;
     sheet.innerHTML = `<div class="sheet-handle"></div>
-      <header class="card-head"><div class="who"><h2>${t('office.title')}</h2><p>${t('office.slots')}: <span class="slots">${slotDots(e)}</span></p></div></header>
+      <header class="card-head"><div class="who"><h2>${t(`office.title.${Math.max(1, Math.min(5, state.player.act))}`)}</h2><p>${t('office.slots')}: <span class="slots">${slotDots(e)}</span></p></div></header>
       ${firstWeekHint(state, 'tutorial.office')}
       ${whip}
       <h3>${t('office.walkIns')}</h3><ul class="book-list">${rows}</ul>

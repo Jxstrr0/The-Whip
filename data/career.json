@@ -162,5 +162,12 @@
     "canvass": "Five weeks of doors. Your feet hurt and the riding knows your face again.",
     "tour": "Five weeks on the leader's bus. You were in every photo and in none of the diners at home.",
     "rest": "The riding association ran it. They did fine. They know it."
+  },
+  "office": {
+    "1": "The room you share: two desks, one window, a filing cabinet with somebody else's name on the drawers, and the boxes from the last member who sat here. Your deskmate works late too.",
+    "2": "Your own door, with your name on it. One desk, one window, a bookcase with nothing on it yet. Visitors sit in the chair on the left.",
+    "3": "The annex off the whip's office. The files for your row came up in two steel cabinets, and there's a coffee machine that someone will tell you is yours to keep topped up.",
+    "4": "The deputy's room. Walnut, a rug, the party's flag in the corner and a board the size of a wall. Three cabinets of other people's secrets, and a chair for the ones who'd rather not sit across a desk.",
+    "5": "The corner office. Two windows, the whips' table under the board, and the chair at the head of it. The sofa is for the conversations that aren't meetings."
   }
 }
