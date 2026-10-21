@@ -963,3 +963,28 @@ I pitched three ways to handle each of the four judgment calls from the last rou
 - **Checked:**
   - Phone size, portrait and landscape: the front-bench lock at trust 60, expelling a minister (the confirm, then the headline), a second expulsion that turned the room, and the revolt-against-you buttons. No console errors.
   - `tests.html`: three new tests (the cost per expulsion, front-bench rules and the front page, when a restless room stops you), plus checks added to the backbench test.
+
+## Playtest fixes: members walking through the benches, flicker in the office
+
+Kelbo's notes: some artifacting in the one-on-one meeting room, and members walking through the chairs when they head down the aisle in the chamber.
+
+**What changed**
+
+- **Members leaving the chamber now take a real route.** They used to walk in a straight line from their seat to the aisle, through every desk in between, and then along the edge of the front bench. Now a member:
+  1. steps into the gap beside their chair,
+  2. walks the gangway behind their row to the nearer end of the bench,
+  3. comes down the steps,
+  4. walks up the aisle and round the end of the bar to the doors.
+  
+  Coming back is the same route in reverse.
+  - The rows moved 10 cm further apart (row pitch 1.3 m → 1.4 m, first row 1.0 m → 0.85 m from the aisle edge) so the gangway is wide enough to walk. The front desks still clear the aisle carpet and the back row still clears the wall.
+  - Only the second and third rows get up and leave. The front bench stays for the business, and the back row's gangway is the wall.
+  - The route lives in `walkerPath` in `src/chamber/layout.js`. A new test walks every route in 5 cm steps and fails if it touches a desk, a chair or a bar post. The old routes all fail that test; the new ones all pass.
+- **Office flicker.** In every office, the oak rail on top of the wainscot and the skirting board sat in exactly the same plane as the wainscot panel. On a phone's depth buffer the two surfaces fight over which one draws, so they shimmer in stripes. Both now stand a centimetre proud of the panel.
+  - The panel strips on the door wall also sat 5 mm in front of the door, so they could show through it. There are no strips behind the door now, and the door and its frame stand clear of the rails.
+  - The caucus room had the same coplanar rails and got the same fix.
+
+**Things to know**
+
+- I can't reproduce phone-GPU flicker in the headless browser (it has a deeper depth buffer). If you still see artifacting in the office, tell me where in the room it is and I'll chase it.
+- **Checked:** `tests.html` is 99 of 99. The offices (Acts 1 to 5, with and without a visitor) and the chamber render at phone size with no console errors.
