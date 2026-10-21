@@ -1,7 +1,7 @@
 // The constituency office: a storefront with a desk, a waiting area, a wall of local photos, and glass onto
 // the street (a prairie town, a suburb, a downtown block, a northern settlement). Props from the kits.
 import * as THREE from 'three';
-import { box, slab, panel, merge, vertexMaterial, worldUVs, disposeTree, roomLights, lamp, bakeAO, contactShadows, paintedTexture, texturedPanel } from '../kit3d.js';
+import { box, slab, panel, cylinder, merge, vertexMaterial, worldUVs, disposeTree, roomLights, lamp, bakeAO, contactShadows, paintedTexture, texturedPanel } from '../kit3d.js';
 import { surface } from '../textures.js';
 import { placeModel } from '../models.js';
 import { t } from '../ui/text.js';
@@ -10,6 +10,7 @@ import { createConstituent, createCrowd } from './constituents.js';
 import { wardrobe } from '../figures.js';
 import { createFigure, poseFigure } from '../office/visitor.js';
 import { drawBoard } from '../office/officeScene.js';
+import { createPrecipitation, DEFAULT_WEATHER, GREY_SKIES, mix } from '../weatherFx.js';
 
 const W = 3.5; // half of 7 m (x)
 const D = 2.5; // half of 5 m (z)
@@ -21,59 +22,106 @@ const VISITOR_SEAT = [0.15, -0.1];
 const VISITOR_FACING = Math.PI - 0.55;
 const PATH = [DOOR, [2.4, 1.4], [1.0, 0.7], [0.3, 0.35], VISITOR_SEAT];
 
-// The far layer of the street: sky and skyline by riding type. The near layer is real props outside the glass.
-function paintStreet(type) {
+// The far layer of the street: sky and skyline by riding type, and by season: snow on the roofs and the
+// ground, bare trees, a grey sky when the week is wet. The near layer is real props outside the glass.
+function paintStreet(type, wx = DEFAULT_WEATHER) {
   return (g, w, h) => {
+    const grey = GREY_SKIES.has(wx.kind) ? 0.7 : 0;
+    const winter = wx.season === 'winter' ? 0.5 : 0;
     const sky = g.createLinearGradient(0, 0, 0, h * 0.6);
-    sky.addColorStop(0, type === 'northern' ? '#8fa7bd' : '#7fa6d4');
-    sky.addColorStop(1, '#e8eef2');
+    sky.addColorStop(0, mix(mix(type === 'northern' ? '#8fa7bd' : '#7fa6d4', '#b9cbdd', winter), '#7d838c', grey));
+    sky.addColorStop(1, mix('#e8eef2', '#b8bcc2', grey));
     g.fillStyle = sky;
     g.fillRect(0, 0, w, h);
-    const ground = type === 'northern' ? '#e4eaec' : type === 'rural' ? '#b8a860' : '#7f9a66';
-    g.fillStyle = ground;
+    const bareGround = type === 'northern' ? '#e4eaec' : type === 'rural' ? (wx.season === 'autumn' ? '#9a8a4a' : '#b8a860') : '#7f9a66';
+    g.fillStyle = mix(mix(bareGround, '#4e5a44', wx.wet * 0.35), '#e9edf1', wx.snow);
     g.fillRect(0, h * 0.6, w, h * 0.4);
+    const snowy = wx.snow > 0.4;
+    const bare = wx.season === 'winter' || (wx.season === 'spring' && wx.snow > 0.3);
     const bld = (x, bw, bh, col, roof) => {
       g.fillStyle = col;
       g.fillRect(x, h * 0.6 - bh, bw, bh);
       if (roof) {
-        g.fillStyle = '#4e3a2c';
+        g.fillStyle = snowy ? '#e6eaef' : '#4e3a2c';
         g.beginPath();
         g.moveTo(x - 5, h * 0.6 - bh);
         g.lineTo(x + bw / 2, h * 0.6 - bh - bw * 0.4);
         g.lineTo(x + bw + 5, h * 0.6 - bh);
         g.fill();
+      } else if (snowy) {
+        g.fillStyle = '#e6eaef';
+        g.fillRect(x, h * 0.6 - bh - 3, bw, 4);
       }
-      g.fillStyle = '#f5ecc0';
+      g.fillStyle = grey || wx.dark > 0.7 ? '#f5ecc0' : '#d9d2b8';
       for (let r = 0; r < Math.floor(bh / 26); r++) for (let i = 0; i < Math.floor(bw / 22); i++) g.fillRect(x + 6 + i * 22, h * 0.6 - bh + 8 + r * 26, 9, 12);
+    };
+    // A round tree: green, turning, or bare twigs with snow on the boughs.
+    const tree = (cx, cy, r) => {
+      if (bare) {
+        g.strokeStyle = '#5a4a40';
+        g.lineWidth = 3;
+        g.beginPath();
+        g.moveTo(cx, cy + r * 1.1);
+        g.lineTo(cx, cy - r * 0.6);
+        for (let k = -2; k <= 2; k++) {
+          g.moveTo(cx, cy + r * (0.1 - Math.abs(k) * 0.2));
+          g.lineTo(cx + k * r * 0.4, cy - r * (0.7 + Math.abs(k) * 0.1));
+        }
+        g.stroke();
+        if (snowy) {
+          g.fillStyle = '#e6eaef';
+          for (let k = -2; k <= 2; k++) g.fillRect(cx + k * r * 0.4 - 4, cy - r * (0.7 + Math.abs(k) * 0.1) - 3, 8, 3);
+        }
+        return;
+      }
+      g.fillStyle = wx.season === 'autumn' ? ['#a0622a', '#b8742e', '#8a4a22'][Math.round(cx) % 3] : wx.season === 'summer' ? '#43702f' : '#4f6a3a';
+      g.beginPath();
+      g.arc(cx, cy, r, 0, Math.PI * 2);
+      g.fill();
     };
     if (type === 'urban') {
       for (let i = 0; i < 9; i++) bld(i * (w / 9), w / 9 - 8, h * (0.22 + ((i * 37) % 30) / 100), ['#8a8f98', '#a39a8a', '#6b6f76', '#b9b0a0', '#7a6f66'][i % 5], false);
     } else if (type === 'suburban') {
       for (let i = 0; i < 6; i++) bld(16 + i * (w / 6), w / 8, h * 0.1, ['#d9cfb8', '#c2b59a', '#e0d6c2'][i % 3], true);
-      g.fillStyle = '#4f6a3a';
-      for (let i = 0; i < 8; i++) {
-        g.beginPath();
-        g.arc(40 + i * (w / 8), h * 0.56, 22, 0, Math.PI * 2);
-        g.fill();
-      }
+      for (let i = 0; i < 8; i++) tree(40 + i * (w / 8), h * 0.56, 22);
     } else if (type === 'rural') {
       bld(w * 0.08, w * 0.14, h * 0.13, '#b23a2e', true);
       g.fillStyle = '#c7c2b5';
       g.fillRect(w * 0.72, h * 0.26, w * 0.06, h * 0.34);
       g.fillRect(w * 0.8, h * 0.32, w * 0.05, h * 0.28);
+      if (snowy) {
+        g.fillStyle = '#e6eaef';
+        g.fillRect(w * 0.72, h * 0.26 - 3, w * 0.06, 4);
+        g.fillRect(w * 0.8, h * 0.32 - 3, w * 0.05, 4);
+      }
       bld(w * 0.42, w * 0.1, h * 0.09, '#d9cfb8', true);
-      g.fillStyle = '#a89650';
+      tree(w * 0.3, h * 0.55, 18);
+      tree(w * 0.6, h * 0.56, 16);
+      g.fillStyle = mix(wx.season === 'autumn' ? '#8a7a40' : '#a89650', '#dfe4ea', wx.snow);
       for (let i = 0; i < 5; i++) g.fillRect(0, h * (0.66 + i * 0.06), w, h * 0.012);
     } else {
       for (let i = 0; i < 5; i++) bld(30 + i * (w / 5), w / 9, h * 0.08, ['#3d6a8a', '#a8322d', '#e0a526'][i % 3], true);
-      g.fillStyle = '#2f4a3a';
+      // Spruce: green all year, white along the top edge of every tree once the snow is down.
       for (let i = 0; i < 20; i++) {
+        g.fillStyle = '#2f4a3a';
         g.beginPath();
         g.moveTo(i * (w / 20), h * 0.6);
         g.lineTo(i * (w / 20) + 12, h * 0.4);
         g.lineTo(i * (w / 20) + 24, h * 0.6);
         g.fill();
+        if (snowy) {
+          g.strokeStyle = '#e6eaef';
+          g.lineWidth = 3;
+          g.beginPath();
+          g.moveTo(i * (w / 20) + 1, h * 0.6);
+          g.lineTo(i * (w / 20) + 12, h * 0.4);
+          g.stroke();
+        }
       }
+    }
+    if (wx.kind === 'fog') {
+      g.fillStyle = 'rgba(205,210,218,0.5)';
+      g.fillRect(0, 0, w, h);
     }
   };
 }
@@ -216,7 +264,7 @@ export function create(ctx) {
   scene.background = new THREE.Color('#9fb6c9');
   scene.environment = ctx.environment || null;
   // Daylight pours in through the storefront on the +z side.
-  roomLights(scene, { hemi: 0.6, key: 1.2, fill: 0.25, warm: '#eaf2f8', ground: '#6b5a48', keyPos: [2, 5, 8], fillPos: [-4, 3, -4] });
+  const rig = roomLights(scene, { hemi: 0.6, key: 1.2, fill: 0.25, warm: '#eaf2f8', ground: '#6b5a48', keyPos: [2, 5, 8], fillPos: [-4, 3, -4] });
   lamp(scene, { color: '#eaf2f8', intensity: 8, distance: 7, x: 0, y: 2.2, z: D - 0.4 });
   const bounds = { x0: -W, x1: W, z0: -D, z1: D };
   const kinds = { plaster: 'plaster', oak: 'oak', wool: 'wool' };
@@ -283,6 +331,34 @@ export function create(ctx) {
   // Its horizon sits at road level, so the painted ground hides below the real road.
   const backdrop = texturedPanel(36, 14, street, { x: 0, y: 1.4, z: D + 14, rotY: Math.PI });
   outside.add(backdrop);
+  // Winter: snow on the pavement, the bank the plough left along the kerb, packed grey on the road.
+  const snowKit = new THREE.Group();
+  snowKit.add(new THREE.Mesh(merge([
+    slab(-14, -0.012, D, 14, 0.004, D + 3.1, '#eef1f5'),
+    cylinder(0.24, 0.24, 28, 0, 0.06, D + 3.3, '#e3e8ee', 10, 'x'),
+    cylinder(0.16, 0.16, 28, 0, 0.14, D + 3.45, '#dde3ea', 8, 'x'),
+    slab(-14, -0.06, D + 3.5, 14, -0.03, D + 12, '#b4b8bf'),
+    box(0.9, 0.32, 0.7, -2.2, 0.1, D + 2.0, '#e6eaef'),
+    box(0.7, 0.26, 0.6, 4.6, 0.08, D + 1.9, '#e6eaef'),
+  ]), vertexMaterial({ roughness: 0.95 })));
+  snowKit.visible = false;
+  outside.add(snowKit);
+  // Spring and rain: the road and the pavement go dark and throw the sky back.
+  const wetMat = new THREE.MeshStandardMaterial({ color: '#15161a', roughness: 0.12, metalness: 0.05, envMapIntensity: 1.3, transparent: true, opacity: 0.5, depthWrite: false });
+  const wet = new THREE.Group();
+  for (const [z, len, y] of [[D + 1.6, 3.15, -0.004], [D + 3.35 + 4.4, 8.6, -0.04]]) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(28, len), wetMat);
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(0, y, z);
+    wet.add(m);
+  }
+  wet.visible = false;
+  outside.add(wet);
+  // What's falling in the street, from the glass out past the road.
+  const precipitation = createPrecipitation({ w: 18, h: 6.5, d: 10, size: 0.06 });
+  precipitation.group.position.set(0, 3.2, D + 5);
+  outside.add(precipitation.group);
+  let weatherKey = null;
   // The town hall: a lamp over the podium, the podium itself, and the crowd on the pavement.
   const hall = new THREE.Group();
   hall.add(new THREE.Mesh(merge([slab(-1.2, 0, D + 0.3, 1.2, 0.2, D + 1.2, '#6e4a2b'), box(0.6, 1.1, 0.4, 0, 0.75, D + 0.8, '#3b2a1c')]), vertexMaterial()));
@@ -337,9 +413,31 @@ export function create(ctx) {
       streetLamp.intensity = on ? 22 : 14;
       cam.shot(on ? 'townHall' : 'desk', true);
     },
+    // The time of year, from the sim's calendar: the view, the ground, what's falling, the light, the coats.
+    setWeather(wx) {
+      const key = `${wx.season}:${wx.kind}:${wx.snow}:${wx.wet}:${wx.temp}`;
+      if (key === weatherKey) return;
+      weatherKey = key;
+      const c = street.userData.canvas;
+      paintStreet(ctx.ridingType || 'suburban', wx)(c.getContext('2d'), c.width, c.height);
+      street.needsUpdate = true;
+      snowKit.visible = wx.snow > 0.35;
+      snowKit.scale.y = 0.4 + 0.6 * wx.snow;
+      wet.visible = wx.wet > 0.15;
+      wetMat.opacity = 0.2 + wx.wet * 0.4;
+      precipitation.setKind(wx.falling);
+      const grey = GREY_SKIES.has(wx.kind) ? 1 : 0;
+      const winter = wx.season === 'winter' ? 1 : 0;
+      rig.key.intensity = (wx.season === 'summer' ? 1.3 : 1.2) * (1 - grey * 0.4) * (1 - winter * 0.1);
+      rig.key.color.set(mix(mix('#fff6e8', '#e4ecf8', winter * 0.8), '#e9edf3', grey * 0.6));
+      rig.hemi.intensity = 0.6 + grey * 0.2;
+      scene.background.set(mix(mix('#9fb6c9', '#868c95', grey * 0.8), '#c4d2de', winter * 0.5));
+      crowd.setCoats(wx.temp < 2 || wx.snow > 0.3 ? 2 : wx.temp < 12 || wx.kind === 'rain' ? 1 : 0);
+    },
     update(dt) {
       visitor?.update(dt);
       if (townHall) crowd.update(dt);
+      precipitation.update(dt);
       cam.update(dt);
     },
     resize(w, h) {

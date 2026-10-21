@@ -1539,12 +1539,34 @@ html.large #ui {
 .front-page .ears {
   display: flex;
   justify-content: space-between;
+  gap: 8px;
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-2);
   border-bottom: 1px solid var(--ink-3);
   padding-bottom: 3px;
+  white-space: nowrap;
+}
+.front-page .ears > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.front-page .ears .ear-weather {
+  flex: none;
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+/* On a phone held upright the paper is too narrow for three ears: the edition gives way to the weather. */
+.front-page .masthead {
+  container-type: inline-size;
+}
+@container (max-width: 420px) {
+  .front-page .ears .ear-edition {
+    display: none;
+  }
 }
 .front-page .masthead h2 {
   margin: 6px 0 2px;
