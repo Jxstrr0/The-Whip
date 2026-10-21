@@ -27,6 +27,7 @@ import { createCaucusUI } from './ui/caucusUI.js';
 import { createRidingUI } from './ui/ridingUI.js';
 import { createStartMenu, createGameMenu } from './ui/menus.js';
 import { createLedger } from './ui/ledger.js';
+import { createCareerUI } from './ui/careerUI.js';
 import { canUse, nextVote } from './sim/tools.js';
 import { t, partyColor } from './ui/text.js';
 import { stageLabel } from './sim/vote.js';
@@ -230,6 +231,7 @@ function buildWorld() {
     onContinue: () => dispatch({ type: 'advance' }),
   });
   const officeUI = createOfficeUI(ui, { getState, dispatch, pickMp, onLedger: () => ledger.open() });
+  const careerUI = createCareerUI(ui, { getState, dispatch });
   const caucusUI = createCaucusUI(ui, { getState, dispatch, getRoom: () => (rooms.name === 'caucus' ? rooms.room : null) });
   const ridingUI = createRidingUI(ui, { getState, dispatch });
 
@@ -280,6 +282,7 @@ function buildWorld() {
     agenda.render(state);
     countBoard.render(state);
     officeUI.render(state);
+    careerUI.render(state);
     caucusUI.render(state);
     ridingUI.render(state);
     card.refresh();

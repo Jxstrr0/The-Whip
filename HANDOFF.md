@@ -499,19 +499,19 @@ Build one stage per session, in order. A stage is done only when every check und
 
 **Stage 5: Whip tools, the count and rival whips.** Write `tools.js`, `rivals.js` and `ui/ledger.js`. Add the chamber tools, pairing, the attendance chase during bells, act gating, the count board's firm/leaning/lost marks, and rival whip AI with weekly budgets.
 
-- [ ] Each tool can flip at least one MP in a set scenario
-- [ ] Tools are gated by act as in `DESIGN.md` section 8
-- [ ] Every favor, promise and threat shows in the ledger from both sides
-- [ ] The count board's prediction matches the division result within two votes when all marks are current
-- [ ] Rival whips act every week: at least one poach, one leak and one pair test are observable in a scenario
+- [x] Each tool can flip at least one MP in a set scenario
+- [x] Tools are gated by act as in `DESIGN.md` section 8
+- [x] Every favor, promise and threat shows in the ledger from both sides
+- [x] The count board's prediction matches the division result within two votes when all marks are current
+- [x] Rival whips act every week: at least one poach, one leak and one pair test are observable in a scenario
 
 **Stage 6: The career, Acts 1 and 2, and the riding.** Write `career.js` (acts, graduation checks, vacancies, rivals), `riding.js`, `riding/`, `ui/ridingUI.js`, `ui/careerUI.js`, `lifeEvents.js`, and the start-game menu (party, riding type, province, age, background). Add the whip's file, the mentor pick, the cohort, the player's skeleton, the private members' bill lottery, Friday riding visits with the whip's leave, town halls and the nomination.
 
-- [ ] A new player starts in Act 1 in any party, gets a mentor and a cohort, and is whipped on a real dilemma vote
-- [ ] Rebelling and toeing the line both change the whip's file, riding standing and standing with the whip
-- [ ] The riding room works: cases, a town hall, an announcement, and leave that must be granted while the House sits
-- [ ] A private member's bill can be drawn, run and voted on
-- [ ] Act 1 graduates to Act 2 by being noticed, and Act 2 ends with a vacancy contest against a rival
+- [x] A new player starts in Act 1 in any party, gets a mentor and a cohort, and is whipped on a real dilemma vote
+- [x] Rebelling and toeing the line both change the whip's file, riding standing and standing with the whip
+- [x] The riding room works: cases, a town hall, an announcement, and leave that must be granted while the House sits
+- [x] A private member's bill can be drawn, run and voted on
+- [x] Act 1 graduates to Act 2 by being noticed, and Act 2 ends with a vacancy contest against a rival
 
 **Stage 7: The career, Acts 3 to 5, and the caucus room.** Extend `career.js` (assistant and deputy whip duties, opposite numbers, cabinet offers, demotion, floor-crossing, retirement, endings), write `caucus.js`, `caucus/`, `ui/caucusUI.js` and `record.js`. Add the weekly caucus meeting, revolts, expulsions, leader personalities, the Act 3 friend set piece, the Act 4 pairing set piece, knowledge sharing from the whip's office at Act 3, and the whip's record screen.
 
