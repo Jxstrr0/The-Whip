@@ -1,6 +1,7 @@
 // UI text: strings from data/strings.en.json with {slot} filling, plus shared formatting for MPs and parties.
-import { data } from '../sim/config.js';
+import { data, tuning } from '../sim/config.js';
 import { getSettings } from '../settings.js';
+import { isGuidedWeek, actAim, sceneJob } from '../sim/goals.js';
 
 export function t(key, vars = {}) {
   const s = data().strings[key] ?? key;
@@ -33,9 +34,37 @@ export function scenarioVerdict(state) {
   return `<blockquote class="line scenario-verdict">${stamp(t('scenario.stamp.' + v.key), kind)} ${esc(v.text)}</blockquote>`;
 }
 
-// Week 0 is the guided first week: a hint on each room's first sheet, then never again.
+// Week 0 of the first Parliament is the guided first week: a hint on each room's first sheet, then never again.
 export function firstWeekHint(state, key) {
-  return state.date.absWeek === 0 && state.mode?.kind !== 'scenario' ? `<p class="tutorial">${t(key)}</p>` : '';
+  return isGuidedWeek(state) ? `<p class="tutorial">${t(key)}</p>` : '';
+}
+
+// "Your job here": one line under a scene's title saying what the player is there to do.
+export function jobLine(state, kind, ctx = {}) {
+  const j = sceneJob(state, kind, ctx);
+  return j ? `<p class="job"><span class="job-label">${t('job.label')}</span>${esc(t(j.key, j.vars))}</p>` : '';
+}
+
+// The act's aim, short: "Act 1 · Get noticed · 3 of 8" for the agenda bar.
+export function aimShort(state) {
+  const a = actAim(state);
+  const c = a.counters[0];
+  const tail = a.waiting || !c ? '' : ` · ${t('aim.s.' + c.key, c)}`;
+  return `${t('career.act', { n: a.act })} · ${t('aim.short.' + a.act)}${tail}`;
+}
+
+// The act's aim in full: the goal, every counter as a bar, and how it's won or lost.
+export function aimDetail(state) {
+  const a = actAim(state);
+  const vars = { floor: tuning().ranks.revoltBelowSupport, top: tuning().confidence.pressureReplaced };
+  const row = (c) => {
+    const pct = Math.max(0, Math.min(100, (c.have / Math.max(1, c.need)) * 100));
+    const ok = c.limit === 'above' ? c.have >= c.need : c.limit === 'below' ? c.have < c.need * 0.7 : c.have >= c.need;
+    return `<div class="aim-row${ok ? ' done' : ''}${c.limit ? ' limit' : ''}"><div class="aim-k"><span>${esc(t('aim.c.' + c.key, { need: c.need }))}</span><b>${esc(c.limit ? String(c.have) : t('aim.of', c))}</b></div><div class="aim-bar"><i style="width:${pct}%"></i></div></div>`;
+  };
+  const either = a.act === 4 ? `<p class="muted small">${t('aim.either')}</p>` : '';
+  const counters = a.act === 4 ? `${a.counters.slice(0, 2).map(row).join('')}${either}${a.counters.slice(2).map(row).join('')}` : a.counters.map(row).join('');
+  return `<p class="aim-goal">${esc(t('aim.' + a.act))}</p>${counters}${a.waiting ? `<p class="note">${esc(t('aim.wait.' + a.act))}</p>` : ''}<p class="aim-how">${esc(t('aim.how.' + a.act, vars))}</p>`;
 }
 
 export function esc(s) {

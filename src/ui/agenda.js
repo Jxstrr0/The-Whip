@@ -1,5 +1,5 @@
 // The agenda: the date, Continue and Skip, the day's feed, the morning order paper and the weekly review.
-import { t, esc, scenarioBrief } from './text.js';
+import { t, esc, scenarioBrief, jobLine, aimShort, aimDetail } from './text.js';
 import { tuning } from '../sim/config.js';
 import { stageLabel } from '../sim/vote.js';
 import { prediction } from '../sim/count.js';
@@ -14,7 +14,12 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
   const sheet = document.createElement('section');
   sheet.className = 'sheet agenda-sheet hidden';
   root.appendChild(sheet);
+  // The act's aim, opened from the strip on the bar; it lies over whatever else is open.
+  const aim = document.createElement('section');
+  aim.className = 'sheet aim-sheet hidden';
+  root.appendChild(aim);
   let expanded = false;
+  let aimOpen = false;
 
   // Sheets sit on top of the bar, so the bar's real height (a long date, larger text, the safe area) sets
   // where they end. The expanded feed is left out: it is meant to lie over whatever is open.
@@ -45,11 +50,17 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
     const last = state.log.slice(-1)[0]?.text || '';
     const feed = expanded ? `<p class="feed-head">${esc(dateText(state))}</p><ol class="feed">${state.log.slice(-25).reverse().map((l) => `<li class="${l.kind}">${esc(l.text)}</li>`).join('')}</ol>` : '';
     bar.innerHTML = `
+      <button class="agenda-aim" data-act="aim" aria-expanded="${aimOpen}" aria-label="${esc(t('aim.open', { text: aimShort(state) }))}"><span class="k">${t('aim.label')}</span><span class="v">${esc(aimShort(state))}</span></button>
       <div class="agenda-row">
         <button class="agenda-date" data-act="expand" aria-expanded="${expanded}" aria-label="${esc(dateText(state))}"><span class="day">${dayText(state)}</span><small>${esc(last)}</small></button>
         ${blocked ? '' : `<button class="btn primary" data-act="continue">${t('agenda.continue')}</button>
         <button class="btn" data-act="skip" title="${t('agenda.skipHint')}" aria-label="${t('agenda.skipHint')}"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5l5 5-5 5M10 5l5 5-5 5"/></svg></button>`}
       </div>${feed}`;
+    bar.querySelector('[data-act="aim"]').onclick = () => {
+      aimOpen = !aimOpen;
+      renderBar();
+      renderAim();
+    };
     bar.querySelector('[data-act="expand"]').onclick = () => {
       expanded = !expanded;
       renderBar();
@@ -59,6 +70,20 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
       bar.querySelector('[data-act="skip"]').onclick = onSkip;
     }
     fit();
+  }
+
+  function renderAim() {
+    aim.classList.toggle('hidden', !aimOpen);
+    if (!aimOpen) return;
+    const state = getState();
+    const n = Math.max(1, Math.min(5, state.player.act));
+    aim.innerHTML = `<div class="sheet-handle"></div><p class="kicker">${t('aim.label')}</p><h2>${esc(t('aim.title', { n, rank: t('aim.rank.' + n) }))}</h2>${aimDetail(state)}
+      <div class="card-actions"><button class="btn primary" data-act="close">${t('aim.close')}</button></div>`;
+    aim.querySelector('[data-act="close"]').onclick = () => {
+      aimOpen = false;
+      renderBar();
+      renderAim();
+    };
   }
 
   function showMorning(p) {
@@ -73,7 +98,7 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
           })
           .join('')
       : `<li>${t('agenda.noVotes')}</li>`;
-    sheet.innerHTML = `<div class="sheet-handle"></div><h2>${esc(dateText(state))}</h2>${scenarioBrief(state)}${p.note ? `<p class="tutorial">${t(p.note)}</p>` : ''}<h3>${t('agenda.orderPaper')}</h3><ul class="order-paper">${rows}</ul>
+    sheet.innerHTML = `<div class="sheet-handle"></div><h2>${esc(dateText(state))}</h2>${jobLine(state, 'morning', { items: p.items })}${scenarioBrief(state)}${p.note ? `<p class="tutorial">${t(p.note)}</p>` : ''}<h3>${t('agenda.orderPaper')}</h3><ul class="order-paper">${rows}</ul>
       <div class="card-actions"><button class="btn primary" data-act="go">${t('agenda.toHouse')}</button></div>`;
     sheet.querySelector('[data-act="go"]').onclick = onContinue;
     sheet.classList.remove('hidden');
@@ -92,6 +117,7 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
   return {
     render(state) {
       renderBar();
+      renderAim();
       const p = state.flow.pending;
       if (p?.kind === 'morning') showMorning(p);
       else if (p?.kind === 'weekSummary') showWeek(p);

@@ -1257,6 +1257,114 @@ input::placeholder {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.agenda-aim {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: rgba(184, 146, 58, 0.12);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+}
+.agenda-aim .k,
+.job-label,
+.aim-week .k,
+.aim-sheet .kicker {
+  flex: none;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--brass-ink);
+}
+.agenda-aim .v {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.agenda-aim[aria-expanded="true"] {
+  background: rgba(184, 146, 58, 0.22);
+}
+
+/* "Your job here": one line under a scene's title saying what the player is there to do. */
+.job {
+  margin: 6px 0 10px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--brass);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  background: rgba(184, 146, 58, 0.08);
+  font-size: 15px;
+  line-height: 1.4;
+}
+.job-label {
+  display: block;
+  margin-bottom: 1px;
+}
+
+/* The act's aim: the goal, a bar per counter, and how it's won or lost. */
+.aim-sheet {
+  z-index: 6; /* above whichever room sheet is open */
+}
+.aim-sheet .kicker {
+  margin: 0;
+}
+.aim-sheet h2 {
+  margin-top: 0;
+}
+.aim-goal {
+  font-size: 18px;
+  font-weight: 600;
+}
+.aim-row {
+  margin: 10px 0;
+}
+.aim-k {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.aim-k b {
+  color: var(--ink);
+  white-space: nowrap;
+}
+.aim-bar {
+  height: 6px;
+  margin-top: 4px;
+  border-radius: 3px;
+  background: var(--ink-4);
+  overflow: hidden;
+}
+.aim-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--brass);
+}
+.aim-row.done .aim-bar i {
+  background: var(--bench);
+}
+.aim-row.limit:not(.done) .aim-bar i {
+  background: var(--red);
+}
+.aim-how {
+  margin-top: 12px;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.aim-week {
+  margin: 8px 0 2px;
+  font-size: 14px;
+}
+.aim-week .k {
+  display: block;
+}
 .feed {
   font-size: 14px;
   color: var(--ink-2);
