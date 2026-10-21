@@ -1,6 +1,10 @@
 // The whip's book: all 120 MPs in a searchable, filterable list, built for one thumb.
 import { cardView, HIDDEN_FIELDS } from '../sim/knowledge.js';
 import { t, esc, mpName, partyColor, partyShort, partyName, roleName, ordinal } from './text.js';
+import { pickerHtml, wirePickers } from './picker.js';
+
+// The riding types are written for mid-sentence use; as a field's value they take a capital.
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const FILTERS = ['party', 'clique', 'cohort', 'type'];
 
@@ -26,13 +30,14 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
       if (v.fields.clique.known && m.clique) cliques.set(m.clique, state.cliques[m.clique].name);
       if (v.fields.cohort.known) cohorts.add(m.cohort);
     }
-    const opt = (val, label, cur) => `<option value="${esc(val)}"${String(cur) === String(val) ? ' selected' : ''}>${esc(label)}</option>`;
+    const opt = (value, label) => ({ value, label });
     return {
-      party: opt('', t('book.allParties'), ui.party) + parties.map(([id, n]) => opt(id, n, ui.party)).join(''),
-      clique: opt('', t('book.allCliques'), ui.clique) + opt('?', t('book.unknown'), ui.clique) + [...cliques].map(([id, n]) => opt(id, n, ui.clique)).join(''),
-      cohort: opt('', t('book.allCohorts'), ui.cohort) + opt('?', t('book.unknown'), ui.cohort) + [...cohorts].sort((a, b) => b - a).map((c) => opt(c, `${ordinal(c)} Parliament`, ui.cohort)).join(''),
-      type: opt('', t('book.allTypes'), ui.type) + ['urban', 'suburban', 'rural', 'northern'].map((x) => opt(x, t('type.' + x), ui.type)).join(''),
-      sort: ['seat', 'name', 'party', 'known', ...(riskOf ? ['risk'] : [])].map((s) => opt(s, t('book.sort.' + s), ui.sort)).join(''),
+      party: [opt('', t('book.allParties')), ...parties.map(([id, n]) => opt(id, n))],
+      clique: [opt('', t('book.allCliques')), opt('?', t('book.unknown')), ...[...cliques].map(([id, n]) => opt(id, n))],
+      cohort: [opt('', t('book.allCohorts')), opt('?', t('book.unknown')), ...[...cohorts].sort((a, b) => b - a).map((c) => opt(c, `${ordinal(c)} Parliament`))],
+      type: [opt('', t('book.allTypes')), ...['urban', 'suburban', 'rural', 'northern'].map((x) => opt(x, cap(t('type.' + x))))],
+      // The field reads "Sort: seat"; inside the list the prefix would repeat on every row, so rows drop it.
+      sort: ['seat', 'name', 'party', 'known', ...(riskOf ? ['risk'] : [])].map((s) => ({ ...opt(s, t('book.sort.' + s)), pick: t('book.sort.' + s).split(': ').pop() })),
     };
   }
 
@@ -71,8 +76,7 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
       </header>
       <input class="search" type="search" placeholder="${t('book.search')}" value="${esc(ui.q)}" autocomplete="off">
       <div class="filters">
-        ${FILTERS.map((f) => `<select data-f="${f}">${o[f]}</select>`).join('')}
-        <select data-f="sort">${o.sort}</select>
+        ${[...FILTERS, 'sort'].map((f) => pickerHtml({ name: f, options: o[f], value: ui[f], title: t('book.pick.' + f), compact: true })).join('')}
       </div>
       <p class="count">${t('book.count', { n: list.length, total })}</p>
       <ul class="book-list">
@@ -99,9 +103,10 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
       s2.focus();
       s2.setSelectionRange(pos, pos);
     };
-    el.querySelectorAll('select').forEach((s) => {
+    wirePickers(el, o);
+    el.querySelectorAll('.filters input[type="hidden"]').forEach((s) => {
       s.onchange = () => {
-        ui[s.dataset.f] = s.value;
+        ui[s.name] = s.value;
         render();
       };
     });

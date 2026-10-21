@@ -649,3 +649,18 @@ Kelbo's once-over picked twelve things. This is the first: the two rooms where a
 
 - The caucus used to recolour every suit to the party colour in `read`; now it dresses each seat with the wardrobe for that party, so the room is varied suits with party ties, and the mood marks and glow are unchanged.
 - Staff keep plain suits with no tie or pin: the Speaker, clerks, and the gallery. Two more instanced parts per crowd (tie, pin), so a full House is eight draw calls instead of six.
+
+## 2026-10-21 · Round two, 5 of 12: paper pickers
+
+**What was built**
+
+- The four dropdowns on the new-career form (party, background, riding, province) and the five filters in the whip's book (party, clique, cohort, riding type, sort) no longer open the phone's own picker wheel. They open an Order Paper list: a sheet that slides up from the bottom in portrait, or sits centred in landscape, with the current choice in bold and ticked in bench green, one tap to choose, the ✕, a tap outside or Escape to leave it as it was.
+- The field itself still looks like the underlined field it replaces (same type, same chevron), so the form is unchanged at a glance; what changed is what happens when you tap.
+- Where it helps, a row carries a second line: each background shows its strength under its name ("Lawyer · Reads a room and a bill").
+- In the book, the sort rows drop the "Sort:" prefix inside the list, since the sheet's heading already says what it is.
+
+**Things to know / decisions I made**
+
+- One small module, `src/ui/picker.js`, does it for both screens. It renders a button over a hidden input that carries the value under the field's name and fires `change` on a pick, so the form code that read `.value` and listened to `onchange` (the party blurb, for one) didn't have to change.
+- The list sits above every other sheet, the title page's settings included, and it tears itself down on close, so nothing lingers in the page between opens.
+- The guided first week, the saves list and the mode buttons still use the custom controls they had; nothing native remains on the title page but the two name fields and the shared-seed box, which are text and should be.
