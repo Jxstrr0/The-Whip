@@ -24,7 +24,7 @@
 // Browser-run sim checks. Each stage adds a section; everything here runs without the 3D renderer.
 import { loadData } from './src/loadData.js';
 import { setData, tuning } from './src/sim/config.js';
-import { newGame } from './src/sim/modes.js';
+import { newGame, scenarioGame, dailyGame, sharedGame, scenarioList, dailySeed } from './src/sim/modes.js';
 import { parliamentHash } from './src/sim/generate.js';
 import { cardView, HIDDEN_FIELDS, reveal, decayKnowledge } from './src/sim/knowledge.js';
 import { buildSeats } from './src/chamber/layout.js';
@@ -1324,6 +1324,60 @@ test('A minority government signs confidence and supply, the partner is whipped 
   confidence.breakAgreement(s, a, 'partner');
   assert(a.broken && !confidence.activeAgreement(s) && /walks away/.test(s.log.at(-1).text), 'broken and reported');
   return `${s.parties[partner].name} for ${a.category}, then walked`;
+});
+
+section('Stage 9 · Modes and polish');
+
+test('Three scenarios start correctly: the right act, role, week, bill and count', () => {
+  const notes = [];
+  for (const sc of scenarioList()) {
+    const s = scenarioGame(sc.id);
+    const me = s.mps[s.player.mpId];
+    assert(s.mode.kind === 'scenario' && s.mode.id === sc.id && s.mode.brief, `${sc.id} has a brief`);
+    assert(s.date.absWeek === sc.week && s.date.dayOfWeek === (sc.day || 1), `${sc.id} opens on its day`);
+    assert(s.player.act === sc.act && (!sc.role || me.caucusRole === sc.role), `${sc.id} rank`);
+    const bill = s.bills[s.mode.billId];
+    assert(bill && bill.nextVote === sc.week * 5 + 3, `${sc.id} bill is Thursday`);
+    assert(s.flow.forceWatch, `${sc.id} stops every morning`);
+    if (sc.minority) assert(s.house.minority, `${sc.id} is a minority`);
+    if (sc.short) assert(count.prediction(s, bill.id).short === sc.short, `${sc.id} is ${sc.short} short`);
+    if (sc.setup === 'revolt') assert(s.forceRevolt, `${sc.id} revolt is loaded`);
+    const p = pacing.advance(s);
+    assert(p?.kind === 'morning' && s.date.dayOfWeek === (sc.day || 1), `${sc.id} first stop is the morning`);
+    notes.push(`${sc.id}: ${bill.title}`);
+  }
+  let threw = false;
+  try { scenarioGame('nope'); } catch (e) { threw = /Unknown scenario/.test(e.message); }
+  assert(threw, 'unknown id throws');
+  return notes.join(' · ');
+});
+
+test('A scenario week ends in a verdict (the revolt scenario, played by the bot)', () => {
+  const s = scenarioGame('roomTurns');
+  const rng = createRng('bot:s9');
+  pacing.advance(s);
+  for (let i = 0; i < 400 && !s.mode.verdict && !s.ending; i++) {
+    const p = s.flow.pending;
+    if (!p) pacing.advance(s);
+    else if (p.needsChoice) botAct(s, rng);
+    else pacing.advance(s);
+  }
+  assert(s.mode.verdict && ['held', 'ousted'].includes(s.mode.verdict.key), 'verdict is held or ousted');
+  assert(s.player.lastRevolt?.week === s.mode.startWeek, 'the revolt happened in the scenario week');
+  return `${s.mode.verdict.key}: ${s.mode.verdict.text}`;
+});
+
+test('A shared seed gives two players the same Parliament; the daily seed is one Parliament per calendar day', () => {
+  const a = sharedGame({ seed: 'FRIEND-7', party: 'p1' });
+  const b = newGame({ seed: 'FRIEND-7', party: 'p1' });
+  assert(a.mode.kind === 'shared' && parliamentHash(a) === parliamentHash(b), 'shared equals the same seed');
+  const d1 = dailyGame({ date: new Date('2026-10-21T12:00:00Z') });
+  const d2 = dailyGame({ date: new Date('2026-10-21T23:30:00Z') });
+  const d3 = dailyGame({ date: new Date('2026-10-22T01:00:00Z') });
+  assert(d1.mode.kind === 'daily' && d1.mode.id === '2026-10-21' && d1.seed === dailySeed(new Date('2026-10-21T12:00:00Z')), 'daily seed from the date');
+  assert(parliamentHash(d1) === parliamentHash(d2) && d1.player.background === d2.player.background, 'same day, same game');
+  assert(parliamentHash(d1) !== parliamentHash(d3), 'next day differs');
+  return `${d1.seed} · ${d1.parties[d1.mps[d1.player.mpId].party].short} ${d1.player.background}`;
 });
 
 async function run() {

@@ -821,6 +821,14 @@ input::placeholder {
   color: var(--red);
 }
 
+.tutorial.brief {
+  border-left: 3px solid var(--brass);
+  padding-left: 12px;
+}
+.scenario-verdict .stamp {
+  margin-right: 8px;
+}
+
 /* ---- Toast: a paper slip from under the top bar ------------------------------------------------------- */
 
 .toast {

@@ -219,6 +219,7 @@ export function resolveRevolt(state, rng) {
   }
   r.won = won;
   r.outcome = text;
+  p.lastRevolt = { week: state.date.absWeek, target: r.target, won, choice: r.choice };
   log(state, text, 'caucus');
   return { won, text };
 }

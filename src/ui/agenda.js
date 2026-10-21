@@ -1,5 +1,5 @@
 // The agenda: the date, Continue and Skip, the day's feed, the morning order paper and the weekly review.
-import { t, esc } from './text.js';
+import { t, esc, scenarioBrief, scenarioVerdict } from './text.js';
 import { tuning } from '../sim/config.js';
 import { stageLabel } from '../sim/vote.js';
 import { prediction } from '../sim/count.js';
@@ -52,7 +52,7 @@ export function createAgenda(root, { getState, onContinue, onSkip }) {
           })
           .join('')
       : `<li>${t('agenda.noVotes')}</li>`;
-    sheet.innerHTML = `<div class="sheet-handle"></div><h2>${esc(dateText(state))}</h2>${p.note ? `<p class="tutorial">${t(p.note)}</p>` : ''}<h3>${t('agenda.orderPaper')}</h3><ul class="order-paper">${rows}</ul>
+    sheet.innerHTML = `<div class="sheet-handle"></div><h2>${esc(dateText(state))}</h2>${scenarioBrief(state)}${p.note ? `<p class="tutorial">${t(p.note)}</p>` : ''}<h3>${t('agenda.orderPaper')}</h3><ul class="order-paper">${rows}</ul>
       <div class="card-actions"><button class="btn primary" data-act="go">${t('agenda.toHouse')}</button></div>`;
     sheet.querySelector('[data-act="go"]').onclick = onContinue;
     sheet.classList.remove('hidden');
@@ -63,7 +63,7 @@ export function createAgenda(root, { getState, onContinue, onSkip }) {
     const s = p.summary;
     const delta = ([a, b]) => `${a} → <b>${b}</b>${b > a ? ' ▲' : b < a ? ' ▼' : ''}`;
     sheet.innerHTML = `<div class="sheet-handle"></div><h2>${p.firstWeek ? t('week.firstTitle') : t('week.title', { week: s.week })}</h2>
-      ${p.firstWeek ? `<p class="tutorial">${t('week.firstNote')}</p>` : ''}
+      ${scenarioVerdict(state)}${p.firstWeek ? `<p class="tutorial">${t('week.firstNote')}</p>` : ''}
       <p class="muted budget">${esc(t('week.act', { n: state.player.act, n2: state.player.whipFile.length, noticed: Math.round(state.player.actProgress.noticed) }))}</p>
       <div class="kvs">
         <div class="kv"><span class="k">${t('week.riding')}</span><span class="v">${delta(s.ridingStanding)}</span></div>
