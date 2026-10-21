@@ -36,7 +36,7 @@ import { newGame, scenarioGame, dailyGame, sharedGame, scenarioList, dailySeed }
 import { parliamentHash } from './src/sim/generate.js';
 import { cardView, HIDDEN_FIELDS, reveal, decayKnowledge, touch, familiarity } from './src/sim/knowledge.js';
 import { faceFor, faceOf, partsFor } from './src/faces.js';
-import { buildSeats } from './src/chamber/layout.js';
+import { buildSeats, deskPairOffset, walkerPath, GEOMETRY } from './src/chamber/layout.js';
 import { introduceBill, makeBill, setLines } from './src/sim/bills.js';
 import { intentions } from './src/sim/mp.js';
 import { putQuestion, runDivision, recordResult, speakerCastingVote } from './src/sim/vote.js';
@@ -201,6 +201,38 @@ test('A majority Parliament overflows onto the opposition back rows at the bar (
   assert(over.length === s.parties[gov].seats - 1 - 60, `overflow ${over.length}`);
   for (const m of over) assert(seatOf(s, m.id).index === 15 || seatOf(s, m.id).index === 14, 'overflow not at the bar end');
   return `${over.length} government members across the aisle`;
+});
+
+test('Members leaving their seats never walk through a desk, a chair or the bar posts', () => {
+  // Footprints as seats.js builds them, in each seat's own frame: +a toward the aisle, z along the row.
+  const seats = buildSeats();
+  const boxes = [];
+  for (const s of seats) {
+    const f = s.side === 'gov' ? 1 : -1;
+    boxes.push({ x0: s.x + f * 0.3, x1: s.x - f * 0.34, z0: s.z - 0.34, z1: s.z + 0.34 });
+    const dz = s.z + deskPairOffset(s.index);
+    boxes.push({ x0: s.x + f * 0.81, x1: s.x + f * 0.29, z0: dz - 0.51, z1: dz + 0.51 });
+  }
+  for (const x of [-GEOMETRY.aisleWidth / 2, GEOMETRY.aisleWidth / 2]) boxes.push({ x0: x - 0.07, x1: x + 0.07, z0: GEOMETRY.barZ - 0.07, z1: GEOMETRY.barZ + 0.07 });
+  const r = 0.1;
+  const hits = (x, z) => boxes.some((b) => x > Math.min(b.x0, b.x1) - r && x < Math.max(b.x0, b.x1) + r && z > b.z0 - r && z < b.z1 + r);
+  let walked = 0;
+  for (const s of seats) {
+    const pts = walkerPath(s);
+    if (!pts) continue;
+    walked++;
+    for (let i = 1; i < pts.length; i++) {
+      const [a, b] = [pts[i - 1], pts[i]];
+      const n = Math.ceil(Math.hypot(b[0] - a[0], b[2] - a[2]) / 0.05);
+      for (let k = 0; k <= n; k++) {
+        const x = a[0] + ((b[0] - a[0]) * k) / n;
+        const z = a[2] + ((b[2] - a[2]) * k) / n;
+        assert(!hits(x, z), `${s.seatId} walks into furniture at (${x.toFixed(2)}, ${z.toFixed(2)})`);
+      }
+    }
+  }
+  assert(walked >= 60, `only ${walked} seats have a way out`);
+  return `${walked} ways out, all clear`;
 });
 
 test("A fresh game's card shows only name, party, riding and seat", () => {
