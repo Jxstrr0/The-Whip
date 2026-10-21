@@ -1,5 +1,6 @@
 // Instanced seated MPs around the caucus table, tinted by mood in the whip's read (when you know it).
 import * as THREE from 'three';
+import { figureMaterial } from '../kit3d.js';
 
 export const MOOD_TINT = { cooperative: '#2E9E5B', guarded: '#8A8F98', angry: '#C8423B', anxious: '#E0A526' };
 const SKIN = ['#f1c8a5', '#e0ac85', '#c68d63', '#a26b45', '#7c4f31', '#5b3a24', '#efd2b8', '#d6a07a'];
@@ -12,8 +13,8 @@ function hashIndex(id, n) {
 
 export function createCaucusFigures(seats) {
   const n = seats.length;
-  const torsos = new THREE.InstancedMesh(new THREE.CapsuleGeometry(0.18, 0.34, 4, 10), new THREE.MeshStandardMaterial({ roughness: 0.75 }), n);
-  const heads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.12, 14, 10), new THREE.MeshStandardMaterial({ roughness: 0.6 }), n);
+  const torsos = new THREE.InstancedMesh(new THREE.CapsuleGeometry(0.18, 0.34, 4, 10), figureMaterial({ roughness: 0.75 }), n);
+  const heads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.12, 14, 10), figureMaterial({ roughness: 0.6 }), n);
   const group = new THREE.Group();
   group.add(torsos, heads);
   const m = new THREE.Matrix4();

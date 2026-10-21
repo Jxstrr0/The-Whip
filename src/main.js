@@ -1,6 +1,7 @@
 // Boot: load data, show the start menu (or start straight from ?seed=), build the rooms and UI, run the loop.
 import * as THREE from 'three';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
+import { setupRenderer, sharedEnvironment } from './look.js';
 import { loadData } from './loadData.js';
 import { setData, tuning } from './sim/config.js';
 import { newGame } from './sim/modes.js';
@@ -69,6 +70,8 @@ function buildWorld() {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  setupRenderer(renderer, tuning().look);
+  const environment = sharedEnvironment(renderer);
   const labels = new CSS2DRenderer();
   labels.domElement.className = 'labels';
   document.body.appendChild(labels.domElement);
@@ -80,6 +83,7 @@ function buildWorld() {
     factories: { chamber, office, caucus, riding },
     ctx: {
       renderer,
+      environment,
       onSeatTap(seat, mpId) {
         if (mpId) card.show(mpId);
         else card.hide();

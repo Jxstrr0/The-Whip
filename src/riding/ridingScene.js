@@ -1,7 +1,7 @@
 // The constituency office: a storefront with a desk, a waiting area, a wall of local photos, and a front
 // window onto the riding (a prairie town, a suburb, a downtown block, a northern settlement).
 import * as THREE from 'three';
-import { box, slab, panel, merge, vertexMaterial, disposeTree, addSoftLights, paintedTexture, texturedPanel } from '../kit3d.js';
+import { box, slab, panel, merge, vertexMaterial, disposeTree, roomLights, bakeAO, contactShadows, paintedTexture, texturedPanel } from '../kit3d.js';
 import { createRidingCamera } from './ridingCamera.js';
 import { createConstituent, createCrowd } from './constituents.js';
 import { createFigure, poseFigure } from '../office/visitor.js';
@@ -79,11 +79,11 @@ function paintPhotos(g, w, h) {
 function buildRoom() {
   const parts = [];
   const walls = [];
-  parts.push(slab(-W, -0.05, -D, W, 0, D, '#6b5a48'));
-  walls.push(panel(2 * D, H, -W, H / 2, 0, '#d9d2c0', '+x'));
-  walls.push(panel(2 * D, H, W, H / 2, 0, '#d9d2c0', '-x'));
-  walls.push(panel(2 * W, H, 0, H / 2, -D, '#c9c2b2', '+z'));
-  walls.push(panel(2 * W, 2 * D, 0, H, 0, '#ece8de', 'down'));
+  parts.push(slab(-W, -0.05, -D, W, 0, D, '#6b5a48', 1));
+  walls.push(panel(2 * D, H, -W, H / 2, 0, '#d9d2c0', '+x', 1));
+  walls.push(panel(2 * D, H, W, H / 2, 0, '#d9d2c0', '-x', 1));
+  walls.push(panel(2 * W, H, 0, H / 2, -D, '#c9c2b2', '+z', 1));
+  walls.push(panel(2 * W, 2 * D, 0, H, 0, '#ece8de', 'down', 1));
   // The storefront: glass from waist height, a door at one end.
   walls.push(panel(2 * W, 0.8, 0, 0.4, D, '#6e4a2b', '-z'));
   walls.push(panel(2 * W, 0.3, 0, H - 0.15, D - 0.01, '#6e4a2b', '-z'));
@@ -108,9 +108,19 @@ function buildRoom() {
 export function create(ctx) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#9fb6c9');
-  addSoftLights(scene, { intensity: 1 });
+  scene.environment = ctx.environment || null;
+  // Daylight pours in through the storefront on the +z side.
+  roomLights(scene, { hemi: 0.6, key: 1.2, fill: 0.25, warm: '#eaf2f8', ground: '#6b5a48', keyPos: [2, 5, 8], fillPos: [-4, 3, -4] });
   const { parts, walls } = buildRoom();
-  scene.add(new THREE.Mesh(merge(parts), vertexMaterial()), new THREE.Mesh(merge(walls), vertexMaterial()));
+  const bounds = { x0: -W, x1: W, z0: -D, z1: D };
+  scene.add(new THREE.Mesh(bakeAO(merge(parts), { bounds, reach: 0.6 }), vertexMaterial()), new THREE.Mesh(bakeAO(merge(walls), { bounds, ceilY: H, reach: 1.0 }), vertexMaterial()));
+  scene.add(contactShadows([
+    { x: 0, z: -1.0, sx: 2.2, sz: 1.3 },
+    { x: 0, z: -1.75, sx: 0.9, sz: 0.9 },
+    { x: VISITOR_SEAT[0], z: VISITOR_SEAT[1], sx: 0.9, sz: 0.9 },
+    ...[0, 1, 2, 3].map((i) => ({ x: W - 0.45, z: -1.6 + i * 0.7, sx: 0.8, sz: 0.8 })),
+    { x: -W + 0.4, z: -2.0, sx: 0.9, sz: 0.7 },
+  ], { radius: 0.55 }));
   const street = paintedTexture(1024, 400, paintStreet(ctx.ridingType || 'suburban'));
   const window = texturedPanel(2 * W, H - 1.1, street, { x: 0, y: 0.8 + (H - 1.1) / 2, z: D - 0.02, rotY: Math.PI });
   scene.add(window);
