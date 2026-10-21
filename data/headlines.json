@@ -105,6 +105,112 @@
     { "id": "h073", "event": "qpLob", "text": "{name} asks the question the minister wanted asked" },
     { "id": "h074", "event": "qpRiding", "text": "Sixty seconds for {issue} in the House, courtesy of {name}" },
     { "id": "h075", "event": "qpRiding", "text": "Member for {riding} takes {issue} to the minister's face" },
-    { "id": "h076", "event": "qpRiding", "text": "'Has the minister heard of it?' {name} brings {riding} to Ostrava" }
+    { "id": "h076", "event": "qpRiding", "text": "'Has the minister heard of it?' {name} brings {riding} to Ostrava" },
+
+    { "id": "q001", "event": "quiet", "text": "House rises for the weekend with the order paper intact" },
+    { "id": "q002", "event": "quiet", "text": "Slow week on the Hill, and the whips will take it" },
+    { "id": "q003", "event": "quiet", "text": "Government survives another week; so does the opposition" },
+    { "id": "q004", "event": "quiet", "text": "Parliament sits, talks, adjourns" },
+    { "id": "q005", "event": "quiet", "text": "A week of committee rooms and corridor talk in Ostrava" },
+    { "id": "q006", "event": "quiet", "text": "Nothing to see here, say the whips, which is what they wanted" },
+    { "id": "q007", "event": "quiet", "text": "Members home by Thursday as the House finds little to divide on" }
+  ],
+
+  "decks": {
+    "billPassed": [
+      "Government business moved on schedule. Both whips' offices had the numbers by lunchtime, and the {yeas} to {nays} division surprised nobody who was counting.",
+      "{party} carried {bill} with room to spare. Members were seen leaving the lobby before the Clerk had finished reading the result.",
+      "A tidy vote on {bill}, {yeas} to {nays}. The opposition's objections were noted, for the record, by the people who keep the record."
+    ],
+    "billDefeated": [
+      "A government bill fell on the floor of the House, {nays} to {yeas}. The whip's office is understood to have known by the morning. The minister, it appears, was not told.",
+      "{leader}'s office called the defeat of {bill} a procedural setback. Nobody else in the building called it that."
+    ],
+    "closeVote": [
+      "The division on {bill} came down to the last names read. Members who had been paired were seen in the lobby; members who had not were seen running.",
+      "{yeas} to {nays}, and the Speaker reaching for the standing orders. Both whips' offices spent the evening finding out who had been where."
+    ],
+    "confidenceLost": [
+      "{party} lost the confidence of the House on {bill}, {nays} to {yeas}. The Governor General is to be consulted in the morning, and the country after that.",
+      "The benches emptied in silence. {leader} left by the members' door without stopping for the cameras, which had been waiting since Tuesday."
+    ],
+    "confidenceLostHandover": [
+      "{party} fell on {bill}, {nays} to {yeas}, and the Governor General has asked {opposition} whether it can command the House. It says it can. The arithmetic says it is close.",
+      "No election, for now: {opposition} takes the Treasury benches on the strength of a vote it did not expect to win and the government did not expect to lose."
+    ],
+    "confidenceSurvived": [
+      "{party} survived on {bill}, {yeas} to {nays}. The whips are taking the credit. The backbench is taking the weekend.",
+      "A confidence vote the government won and the opposition will not regret forcing: every member's name is now on the record, and the record is being read."
+    ],
+    "rebellion": [
+      "{count} {party} members voted against their own whip on {bill}. The whip's office says the dissent was expected. The dissenters say it was not discussed.",
+      "A revolt of {count} is not a crisis, the {party} whip told reporters, in the tone of someone who had counted on fewer."
+    ],
+    "playerRebelled": [
+      "{name}, the member for {riding}, voted against the line on {bill}. The whip's office declined to comment, which in that office is a comment.",
+      "The vote will play well in {riding}, where {bill} was never popular, and less well in the corridor outside the whip's door."
+    ],
+    "playerToedLine": [
+      "{name} voted with the party on {bill}, against loud opposition at home. {riding} will have questions at the next town hall, and the member will have an evening to prepare answers.",
+      "Loyal, and seen to be loyal: the whip's office noted the vote. So did the local paper in {riding}."
+    ],
+    "routine": [
+      "A day on {bill} that went the way the order paper said it would. Members were home for dinner, or said they were.",
+      "Nothing moved on {bill} that was not meant to move. The gallery filed early."
+    ],
+    "absence": [
+      "The member for {riding} was not in the chamber when {bill} came to a vote. A spokesperson cited constituency business. The whip's office cited nothing.",
+      "An empty seat is noticed in a close House, and the House is close. {name}'s office says the absence was cleared. The whip's office has not said with whom."
+    ],
+    "walkout": [
+      "{count} members left the chamber together before the vote on {bill}, which carried in their absence. The Speaker noted the empty benches and the time.",
+      "A walkout is a message to the cameras, and the cameras were there. What it does to the count on {bill} is a question for the whips."
+    ],
+    "leak": [
+      "Notes from a closed caucus on {bill} reached this paper within the hour. {leader}'s office has begun the usual search for the usual suspects.",
+      "Someone in the room wanted this read. The party line on {bill} is that there is no division in the party, which is what parties say."
+    ],
+    "townHall": [
+      "A full hall in {riding}, and most of it had come to talk about {bill}. {name} took every question. Not every answer landed.",
+      "{name} went home to face the riding on {bill} and found the riding had prepared. Two placards were about something else entirely."
+    ],
+    "qpHit": [
+      "{minister} did not have the answer on {issue} and said so, which was the honest option and the worst one. {name}'s question will be clipped by the evening.",
+      "A backbench question from {riding} did what the opposition front bench had not managed all week: it left {minister} looking at the Speaker for help."
+    ],
+    "qpParried": [
+      "{name} pressed {minister} on {issue}. {minister} answered a different question with some fluency, and the Speaker moved on.",
+      "A sharp question from {riding} met a soft answer. The gallery scored it a draw, which in Question Period means the minister won."
+    ],
+    "qpLob": [
+      "The question from {name} was the one the minister's office had written, and {minister} read the answer it had written to go with it.",
+      "A planted question grew into a planted answer. Government members thumped their desks on cue."
+    ],
+    "qpRiding": [
+      "{name} used the riding's sixty seconds to put {issue} to {minister}, who promised to look into it. {riding} has heard that before and wrote it down anyway.",
+      "Not on the party's list and not on the minister's: {issue} got its hearing because the member for {riding} would not use the question for anything else."
+    ],
+    "quiet": [
+      "The House sat, the House rose, and the parking lot was empty by four. The whips call that a good week; the gallery calls it a long one.",
+      "Committee rooms, corridor talk, and nothing on the order paper anyone would cross the street to vote on. Members went home early and the lobby correspondents went home earlier.",
+      "No rebellion, no close call, no leak worth the name. Somewhere in the building someone is counting that as a victory."
+    ]
+  },
+
+  "bylines": [
+    "From the press gallery",
+    "Parliamentary bureau",
+    "By our political correspondent",
+    "From the lobby",
+    "Special to the weekend edition",
+    "By the Hill staff"
+  ],
+
+  "captions": [
+    "{name}, the member for {riding}, on the Hill this week.",
+    "{name} leaving the chamber after the vote.",
+    "{name} outside the whip's office. File photo.",
+    "{name} in the lobby, declining to comment.",
+    "The member for {riding}, photographed before the division."
   ]
 }
