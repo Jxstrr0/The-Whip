@@ -116,5 +116,11 @@
       "The whip has stopped taking notes and started counting heads.",
       "Someone says “with respect,” which in this room means the opposite."
     ]
-  }
+  },
+  "restlessNotes": [
+    "Caucus was restless this morning, but nothing at the table needed the whip. You let the leader take it.",
+    "A restless caucus: sharp words about the schedule, nothing that needed your chair. You took notes and left them to it.",
+    "The room grumbled through caucus. No line worth freeing and nobody worth putting out, so you kept your seat and your counsel.",
+    "Restless in caucus today, but restless isn't a revolt. You let it pass."
+  ]
 }

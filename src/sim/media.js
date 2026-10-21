@@ -12,9 +12,9 @@ const fullName = (m) => `${m.name.first} ${m.name.last}`;
 const PRIORITY = ['confidenceLost', 'confidenceLostHandover', 'confidenceSurvived', 'billDefeated', 'playerRebelled', 'rebellion', 'closeVote', 'playerToedLine', 'billPassed'];
 // Which story leads the weekend front page when a week has several (the day's lead list, plus what the week
 // turned up outside the division lobby).
-export const FRONT_PRIORITY = ['confidenceLost', 'confidenceLostHandover', 'confidenceSurvived', 'billDefeated', 'playerRebelled', 'walkout', 'rebellion', 'qpHit', 'leak', 'townHall', 'closeVote', 'absence', 'playerToedLine', 'qpRiding', 'qpParried', 'billPassed', 'qpLob', 'routine'];
+export const FRONT_PRIORITY = ['confidenceLost', 'confidenceLostHandover', 'confidenceSurvived', 'billDefeated', 'playerRebelled', 'expelled', 'walkout', 'rebellion', 'qpHit', 'leak', 'townHall', 'closeVote', 'absence', 'playerToedLine', 'qpRiding', 'qpParried', 'billPassed', 'qpLob', 'routine'];
 // Stories the player is in: the front page runs their photograph beside these.
-const PLAYER_EVENTS = new Set(['playerRebelled', 'playerToedLine', 'townHall', 'absence', 'qpHit', 'qpParried', 'qpLob', 'qpRiding']);
+const PLAYER_EVENTS = new Set(['playerRebelled', 'expelled', 'playerToedLine', 'townHall', 'absence', 'qpHit', 'qpParried', 'qpLob', 'qpRiding']);
 
 function fill(text, ctx) {
   return text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
