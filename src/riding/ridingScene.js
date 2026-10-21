@@ -320,7 +320,7 @@ export function create(ctx) {
       visitor.setMood(v.mood || 'cooperative');
     },
     // Cut outside to face the crowd on the pavement; the glass goes so the camera can stand in the street.
-    setTownHall(on, crowdMood = 50) {
+    setTownHall(on, crowdMood = 50, placards = []) {
       townHall = on;
       hall.visible = on;
       glass.visible = !on;
@@ -331,6 +331,7 @@ export function create(ctx) {
         visitor = null;
         visitorKey = null;
       }
+      if (on) crowd.setPlacards(placards);
       crowd.setMood(crowdMood);
       streetLamp.intensity = on ? 22 : 14;
       cam.shot(on ? 'townHall' : 'desk', true);

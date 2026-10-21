@@ -40,7 +40,7 @@ import { ACTIONS } from './src/sim/actions.js';
 import { spreadBrokenPromise } from './src/sim/relationships.js';
 import * as caucusSim from './src/sim/caucus.js';
 window.__caucus = caucusSim;
-import './src/sim/riding.js';
+import * as ridingSim from './src/sim/riding.js';
 import { botAct } from './src/sim/bot.js';
 import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo } from './src/save.js';
 import { getSettings, setSetting } from './src/settings.js';
@@ -803,6 +803,25 @@ test('A new player starts in Act 1 in any party with a mentor, a cohort and a re
     out.push(`${party}: mentor ${s.mps[s.player.mentor].name.last}, ${cohort.length} cohort-mates, rival ${s.mps[career.pickRival(s)].name.last}`);
   }
   return out.join(' · ');
+});
+
+test('The town hall placards carry the week\'s bill and local issue, filled in, one slogan per board', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2', guided: true });
+  assert(ridingSim.townHallPlacards(s).length === 0, 'no boards without a visit');
+  const rng = createRng('placards');
+  ridingSim.startVisit(s, rng);
+  const th = ridingSim.startTownHall(s, rng);
+  const lines = ridingSim.townHallPlacards(s);
+  assert(lines.length === 4, 'four boards, got ' + lines.length);
+  assert(lines.every((l) => l && !/[{}]/.test(l)), 'every slogan filled in: ' + lines.join(' | '));
+  assert(new Set(lines).size === 4, 'no two boards say the same thing');
+  const P = data().constituents.townHall.placards;
+  // The first boards belong to the week's topics; the bill's title is on the board when the bill is.
+  const first = P[th.topics[0]][0];
+  assert(lines[0] === ridingSim.fillRiding(s, first), 'first board is the first topic\'s slogan');
+  if (s.ridingVisit.billId && first.includes('{bill}')) assert(lines[0].includes(s.bills[s.ridingVisit.billId].title), 'bill title on the board');
+  // Every slogan in the data fills with no placeholder left over.
+  for (const list of Object.values(P)) for (const l of list) assert(!/[{}]/.test(ridingSim.fillRiding(s, l)), 'unfilled: ' + l);
 });
 
 test('Rebelling and toeing the line both change the whip\'s file, riding standing and standing with the whip', () => {
