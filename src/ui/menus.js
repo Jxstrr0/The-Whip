@@ -203,7 +203,7 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
   return el;
 }
 
-export function createGameMenu(root, { getState, onQuit, onLedger, onRetire, onCross, onSettings }) {
+export function createGameMenu(root, { getState, onQuit, onLedger, onMemoir, onRetire, onCross, onSettings }) {
   const el = document.createElement('section');
   el.className = 'sheet game-menu hidden';
   root.appendChild(el);
@@ -213,7 +213,7 @@ export function createGameMenu(root, { getState, onQuit, onLedger, onRetire, onC
       const career = s.player.act >= tuning().ranks.retireFromAct && !s.ending && s.flow.pending?.kind !== 'ending';
       el.innerHTML = `<div class="sheet-handle"></div><h2>${t('menu.menu')}</h2>
         <p class="muted">Seed ${esc(s.seed)} · ${t('menu.save')}</p>
-        <div class="choices"><button class="btn" data-act="ledger">${t('menu.ledger')}</button>${career ? `<button class="btn" data-act="cross">${t('menu.cross')}</button><button class="btn" data-act="retire">${t('menu.retire')}</button>` : ''}<button class="btn" data-act="settings">${t('menu.settings')}</button><button class="btn" data-act="close">${t('menu.close')}</button><button class="btn" data-act="quit">${t('menu.quit')}</button></div>`;
+        <div class="choices"><button class="btn" data-act="memoir">${t('menu.memoir')}</button><button class="btn" data-act="ledger">${t('menu.ledger')}</button>${career ? `<button class="btn" data-act="cross">${t('menu.cross')}</button><button class="btn" data-act="retire">${t('menu.retire')}</button>` : ''}<button class="btn" data-act="settings">${t('menu.settings')}</button><button class="btn" data-act="close">${t('menu.close')}</button><button class="btn" data-act="quit">${t('menu.quit')}</button></div>`;
       // Crossing the floor asks which bench, then asks again; it isn't a thing to do by accident.
       el.querySelector('[data-act="cross"]')?.addEventListener('click', () => {
         const mine = s.mps[s.player.mpId].party;
@@ -230,6 +230,10 @@ export function createGameMenu(root, { getState, onQuit, onLedger, onRetire, onC
         el.querySelector('[data-act="confirm"]').onclick = () => { el.classList.add('hidden'); onRetire?.(); };
       });
       el.querySelector('[data-act="close"]').onclick = () => el.classList.add('hidden');
+      el.querySelector('[data-act="memoir"]').onclick = () => {
+        el.classList.add('hidden');
+        onMemoir?.();
+      };
       el.querySelector('[data-act="ledger"]').onclick = () => {
         el.classList.add('hidden');
         onLedger?.();

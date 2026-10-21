@@ -7,6 +7,7 @@ import { baseScore, scoreToVote } from './mp.js';
 import { adjustRapport } from './relationships.js';
 import { reveal } from './knowledge.js';
 import { ledgerAdd, budget } from './tools.js';
+import { remember, rememberPmb } from './memoir.js';
 
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
 const fill = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
@@ -43,6 +44,7 @@ export function chooseBill(state, rng, title) {
   bill.scheduled = true;
   state.player.pmb = { billId: bill.id, asked: [], whipAsked: false, crossAisleDone: false };
   log(state, `You introduced ${bill.title}. It comes to a vote in ${C.pmbVoteWeeks} weeks.`, 'career');
+  remember(state, 'pmb', { sub: 'introduced', ctx: { bill: bill.title } });
   return bill;
 }
 
@@ -150,6 +152,7 @@ hooks.fallout.push((state) => {
     log(state, `${bill.title} was defeated. You know who voted for it, and so does the whip.`, 'career');
   }
   for (const e of state.ledger) if (e.what === `crossAisle:${bill.id}` && !e.settled) { e.settled = true; e.kept = res.yeas?.includes(e.to) ?? null; e.processed = true; }
+  rememberPmb(state, bill, res);
 });
 
 // The career resolver hands these events here.

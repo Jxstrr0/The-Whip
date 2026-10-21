@@ -13,6 +13,7 @@ import { dilemmaFor } from './career.js';
 import { prediction } from './count.js';
 import { nextVote, likelyAbsentees } from './tools.js';
 import { endCareer } from './record.js';
+import { remember, person } from './memoir.js';
 
 const SIGN = { yea: 1, nay: -1 };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -21,6 +22,7 @@ const fill = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k
 const me = (state) => state.mps[state.player.mpId];
 const partyOf = (state) => state.parties[me(state).party];
 const leaderName = (state) => (partyOf(state)?.leader ? fullName(state.mps[partyOf(state).leader]) : 'The leader');
+const NOTE = () => data().memoir.notes;
 const SEATS = new Map(buildSeats().map((s) => [s.seatId, s]));
 
 // Your row: the members of your party seated in your row on your side, your friends among them.
@@ -64,8 +66,12 @@ export function assignRank(state, act, role) {
   p.slots = tuning().meetings.slotsByAct?.[act] ?? p.slots;
 }
 
-function setRank(state, act, role, stopEvent, text) {
+function setRank(state, act, role, stopEvent, text, why = null) {
   assignRank(state, act, role);
+  if (stopEvent === 'demoted') {
+    const leader = partyOf(state)?.leader;
+    remember(state, 'demoted', { sub: why || 'replaced', ctx: { leader: leader ? fullName(state.mps[leader]) : 'The leader' }, people: [person(state, leader, NOTE().leader)] });
+  }
   return { kind: 'career', event: stopEvent, important: true, needsChoice: true, text };
 }
 
@@ -127,6 +133,8 @@ function leanOn(state, p, choice) {
   const R = tuning().ranks;
   const bill = state.bills[p.billId];
   const m = state.mps[p.mpId];
+  const way = ['hard', 'gentle', 'go'].includes(choice) ? choice : 'go';
+  if (!(state.memoir || []).some((e) => e.key === `leanOn.${way}`)) remember(state, 'leanOn', { sub: way, ctx: { friend: fullName(m), bill: bill.title }, people: [person(state, m.id, NOTE().friend)] });
   const s = SIGN[lineFor(bill, me(state).party).position];
   state.nudges ||= {};
   state.nudges[m.id] ||= {};
@@ -212,10 +220,12 @@ function act3Weekend(state) {
     const soft = rep === 'fixer' || rep === 'conscience' || rep === 'loyalist';
     p.reputation = soft ? 'soft' : 'bully';
     p.rowStats = null;
-    return setRank(state, 2, 'backbencher', 'demoted', data().career.demoted[soft ? 'soft' : 'bully']);
+    return setRank(state, 2, 'backbencher', 'demoted', data().career.demoted[soft ? 'soft' : 'bully'], soft ? 'soft' : 'bully');
   }
   if (p.actProgress.rowVotesCarried >= R.rowCarriesForAct4 && weeks >= R.act3MinWeeks) {
     log(state, 'The deputy whip put your name forward. You run the count now.', 'career');
+    const chief = partyOf(state)?.chiefWhip;
+    remember(state, 'act4', { ctx: { whip: chief ? fullName(state.mps[chief]) : 'The Chief Whip' }, people: [person(state, chief, NOTE().whip)] });
     return setRank(state, 4, 'deputyWhip', 'act4', data().career.act4);
   }
   return null;
@@ -227,7 +237,7 @@ function act4Weekend(state, rng) {
   const weeks = state.date.absWeek - (p.actStart ?? 0);
   if ((p.wrongCounts || 0) >= R.wrongCountsForFailure) {
     p.wrongCounts = 0;
-    return setRank(state, 3, 'assistantWhip', 'demoted', data().career.demoted.wrongCount);
+    return setRank(state, 3, 'assistantWhip', 'demoted', data().career.demoted.wrongCount, 'wrongCount');
   }
   if (!p.tempted && weeks >= R.temptationWeek) {
     p.tempted = true;
@@ -245,12 +255,14 @@ function act4Weekend(state, rng) {
       const support = p.caucusSupport >= R.caucusSupportForChief ? 'The caucus wanted you.' : 'The caucus had other ideas; the leader overruled them, and will pay for it.';
       if (p.caucusSupport < R.caucusSupportForChief) p.leaderTrust = clamp(p.leaderTrust - 5, 0, 100);
       log(state, `${ctx.chief} is going to cabinet. ${ctx.leader} appointed you Chief Whip.`, 'career');
+      remember(state, 'act5', { ctx, people: [person(state, party.leader, NOTE().appointedYou), person(state, chief?.id, NOTE().wentToCabinet)] });
       return setRank(state, 5, 'chiefWhip', 'act5', fill(V.intro, ctx) + ' ' + fill(V.appointed, { ...ctx, support }) + ' ' + data().career.act5);
     }
     const other = party.assistantWhips[0] ? state.mps[party.assistantWhips[0]] : null;
     if (chief) chief.caucusRole = 'cabinet';
     if (other) { other.caucusRole = 'chiefWhip'; party.chiefWhip = other.id; party.assistantWhips = party.assistantWhips.filter((id) => id !== other.id); }
     log(state, `${ctx.chief} went to cabinet and ${other ? fullName(other) : 'someone else'} got the chair.`, 'career');
+    remember(state, 'passedOver', { ctx: { ...ctx, other: other ? fullName(other) : 'someone else' }, people: [person(state, other?.id, NOTE().gotChair), person(state, chief?.id, NOTE().wentToCabinet)] });
     return { kind: 'career', event: 'chiefVacancy', important: true, needsChoice: true, text: fill(V.intro, ctx) + ' ' + fill(V.kept, { ...ctx, other: other ? fullName(other) : 'someone else' }) };
   }
   return null;
@@ -344,7 +356,7 @@ hooks.fallout.push((state) => {
 export function demoteToBackbench(state, reputationLabel = null) {
   const p = state.player;
   if (reputationLabel) p.reputation = reputationLabel;
-  return setRank(state, 2, 'backbencher', 'demoted', '');
+  return setRank(state, 2, 'backbencher', 'demoted', '', reputationLabel);
 }
 
 const prevExtra = resolvers.careerExtra;
@@ -356,12 +368,14 @@ resolvers.careerExtra = (state, p, choice) => {
     if (choice === 'accept') return endCareer(state, 'exit');
     state.player.leaderTrust = clamp(state.player.leaderTrust + R.temptationTrust, 0, 100);
     log(state, 'You told the leader no. They said they understood.', 'career');
+    remember(state, 'temptation', { ctx: { leader: leaderName(state) }, people: [person(state, partyOf(state)?.leader, NOTE().leader)] });
     return;
   }
   if (p.event === 'cabinetOffer') {
     if (choice === 'accept') return endCareer(state, 'cabinet', { portfolio: p.portfolio });
     state.player.cabinetOffers = (state.player.cabinetOffers || 0) + 1;
     log(state, `You declined cabinet. ${leaderName(state)} said the offer stands.`, 'career');
+    remember(state, 'cabinetDeclined', { ctx: { leader: leaderName(state), portfolio: p.portfolio }, people: [person(state, partyOf(state)?.leader, NOTE().leader)] });
     return;
   }
   if (p.event === 'setLine') return setLine(state, p, choice || 'whip');
