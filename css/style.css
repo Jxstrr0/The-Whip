@@ -367,6 +367,304 @@ blockquote.line {
   color: var(--red);
 }
 
+/* ---- The bells: the clock bar and the map of the Hill --------------------------------------------- */
+
+/* The clock stays in view while the sheet scrolls to the map. */
+.bells-head {
+  position: sticky;
+  top: -10px;
+  z-index: 2;
+  margin: 0 -18px;
+  padding: 2px 18px 0;
+  background-color: var(--paper);
+  background-image: var(--grain);
+}
+.bells-head .bells {
+  margin: 0;
+  padding-top: 6px;
+}
+.bells-bar {
+  height: 3px;
+  margin: 4px 0 10px;
+  background: var(--ink-4);
+  overflow: hidden;
+}
+.bells-bar i {
+  display: block;
+  height: 100%;
+  background: var(--brass);
+  transform-origin: left center;
+  will-change: transform;
+}
+.bells-late .bells-bar i {
+  background: var(--red);
+}
+.bells-late .bells {
+  color: var(--red);
+  animation-duration: 0.35s;
+}
+@media (orientation: portrait) {
+  .division-sheet:has(.hill) {
+    max-height: 70dvh;
+  }
+}
+.hill {
+  margin: 4px 0 6px;
+}
+.hill-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid var(--ink-3);
+  margin: 12px 0 4px;
+}
+.hill-head h3 {
+  margin: 0;
+  border: 0;
+}
+.hill-head .staff {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ink-2);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+}
+.hill-head .staff i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  transition: background-color 0.2s;
+}
+.hill-head .staff i.free {
+  background: var(--ink);
+}
+.hill-head .unknown {
+  display: block;
+  font-size: 12px;
+}
+.hill-help {
+  font-size: 13px;
+}
+.hill-map {
+  margin: 6px -4px 2px;
+  background: var(--paper-2);
+  border: 1px solid var(--ink-3);
+  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--ink-4);
+}
+.hill-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 46dvh;
+  font-family: var(--serif);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+@media (orientation: landscape) {
+  .hill-svg {
+    max-height: 60dvh;
+  }
+}
+.hill-note {
+  min-height: 2.6em;
+  margin-top: 6px !important;
+  font-style: italic;
+}
+.hill-svg .plan * {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.hill-svg .river {
+  fill: rgba(60, 90, 110, 0.14);
+  stroke: rgba(60, 90, 110, 0.5);
+}
+.hill-svg .lawn {
+  fill: rgba(47, 90, 60, 0.08);
+  stroke: none;
+}
+.hill-svg .road {
+  stroke: var(--ink-3);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.hill-svg .road-edge {
+  stroke: var(--ink-3);
+  stroke-dasharray: 3 3;
+}
+.hill-svg .bldg {
+  fill: var(--paper);
+  stroke-width: 1.4;
+}
+.hill-svg .lobby {
+  fill: rgba(184, 146, 58, 0.16);
+  stroke-dasharray: 2 2;
+}
+.hill-svg .chamber {
+  fill: rgba(47, 90, 60, 0.12);
+}
+.hill-svg .bench {
+  stroke: var(--bench);
+  stroke-width: 2;
+}
+.hill-svg .table,
+.hill-svg .chair {
+  fill: var(--brass);
+  stroke: none;
+}
+.hill-svg .win {
+  stroke: var(--ink-2);
+}
+.hill-svg .face {
+  fill: var(--paper);
+}
+.hill-svg .plane {
+  fill: var(--ink-2);
+  stroke: none;
+}
+.hill-svg .scale {
+  stroke: var(--ink-2);
+}
+.hill-svg text {
+  fill: var(--ink-2);
+  stroke: none;
+  font-size: 9px;
+  font-weight: 450;
+  text-anchor: middle;
+}
+.hill-svg .place {
+  font-size: 8px;
+  font-weight: 600;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.12em;
+  fill: var(--ink);
+}
+.hill-svg .chamber-label {
+  fill: var(--bench);
+}
+.hill-svg .note {
+  font-style: italic;
+  font-size: 8px;
+}
+.hill-svg .walker {
+  stroke: var(--paper);
+  stroke-width: 0.6;
+}
+.hill-svg .arrived {
+  stroke: var(--paper);
+  stroke-width: 1;
+}
+
+/* A member on the map: a party dot with a pulsing halo, the name, and the trip in seconds. */
+.hill-svg .pip {
+  cursor: pointer;
+  outline: none;
+  transition: opacity 0.6s;
+}
+.hill-svg .pip .halo {
+  fill: none;
+  stroke: var(--brass);
+  stroke-width: 1.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pip-halo 1.4s ease-out infinite;
+}
+.hill-svg .pip .dot {
+  stroke: var(--ink);
+  stroke-width: 1.4;
+  transition: transform 0.15s;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.hill-svg .pip .name {
+  fill: var(--ink);
+  font-size: 9.5px;
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: var(--paper-2);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.hill-svg .pip .trip {
+  fill: var(--ink-2);
+  font-weight: 400;
+  font-size: 8.5px;
+}
+.hill-svg .pip .hit {
+  fill: transparent;
+}
+.hill-svg .pip:active .dot,
+.hill-svg .pip:focus-visible .dot {
+  transform: scale(1.3);
+}
+.hill-svg .pip:focus-visible .halo {
+  stroke: var(--ink);
+}
+@keyframes pip-halo {
+  from {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+.hill-svg .pip.sent .halo {
+  stroke: var(--ink-2);
+  stroke-dasharray: 3 3;
+  animation: pip-wait 2.4s linear infinite;
+}
+@keyframes pip-wait {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.hill-svg .pip.far {
+  cursor: default;
+  opacity: 0.38;
+}
+.hill-svg .pip.far .halo,
+.hill-svg .pip.in .halo,
+.hill-svg .pip.missed .halo {
+  animation: none;
+  opacity: 0;
+}
+.hill-svg .pip.far .trip,
+.hill-svg .pip.missed .trip {
+  fill: var(--red);
+  font-style: italic;
+}
+.hill-svg .pip.in {
+  opacity: 0;
+}
+.hill-svg .pip.missed .dot {
+  fill: var(--paper-3) !important;
+  stroke-dasharray: 2 2;
+}
+.hill-svg .runner {
+  fill: var(--ink);
+  stroke: var(--paper);
+  stroke-width: 1.2;
+}
+.hill-svg .follower {
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hill-svg .pip .halo {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
 /* Key/value rows, ruled like a printed table. */
 .kvs {
   display: grid;

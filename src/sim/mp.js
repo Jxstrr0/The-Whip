@@ -79,6 +79,7 @@ export function intentions(state, bill, rng, overrides = {}) {
   const first = new Map();
   for (const m of mps) first.set(m.id, baseScore(state, m, bill));
   const lean = (id) => Math.sign(first.get(id)?.score ?? 0);
+  const bells = state.bells?.billId === bill.id ? state.bells : null;
   const out = {};
   for (const m of mps) {
     const b = first.get(m.id);
@@ -106,6 +107,9 @@ export function intentions(state, bill, rng, overrides = {}) {
     if (state.chased?.[bill.id]?.[m.id]) present = true;
     else if (leave === 'granted') present = false;
     else if (leave === 'blocked' && rng.next() < tuning().tools.blockedNoShow) present = false;
+    // During the bells on our whipped vote, the whip's list of who's away is the attendance for our side.
+    // (Every roll above still happens, so the RNG stream is the same either way.)
+    if (bells && m.party === bells.party) present = state.chased?.[bill.id]?.[m.id] ? true : bells.away[m.id] ? false : vote !== 'abstain';
     if (overrides[m.id]) {
       vote = overrides[m.id] === 'absent' ? 'abstain' : overrides[m.id];
       present = overrides[m.id] !== 'absent';
