@@ -1,0 +1,25 @@
+{
+  "generate": {
+    "bigPartySwapChance": 0.2,
+    "cohortWeights": [0.27, 0.2, 0.17, 0.13, 0.1, 0.07, 0.06],
+    "yearsPerParliament": 3.4,
+    "loyaltyMean": 66,
+    "loyaltySd": 15,
+    "ambitionMean": 45,
+    "ambitionSd": 20,
+    "ideologySpread": 18,
+    "ridingPull": 0.2,
+    "attendanceMean": 84,
+    "attendanceSd": 9,
+    "marginMean": 12,
+    "marginSd": 9,
+    "secretOdds": [0.5, 0.35, 0.12, 0.03],
+    "cliqueThreshold": 0.35,
+    "mentorShare": 0.6,
+    "rivalTime": 45,
+    "rivalFavors": 2
+  },
+  "knowledge": {
+    "staleWeeks": 26
+  }
+}

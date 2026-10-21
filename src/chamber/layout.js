@@ -71,3 +71,103 @@ export function deskPairOffset(index) {
   if (index === GEOMETRY.seatsPerRow && index % 2 === 1) return 0;
   return index % 2 === 1 ? 0.05 : -0.05;
 }
+
+// Fill order on a side: seat column by seat column from the Speaker's end, front row to back in each,
+// so every party sits as one block along the chamber and the smaller parties end up toward the bar.
+function sideOrder(seats, side) {
+  return seats.filter((s) => s.side === side).sort((a, b) => a.index - b.index || a.row - b.row);
+}
+
+// The far end first: back rows nearest the bar. Overflow members (and independents) sit here.
+function barEndOrder(seats) {
+  return [...seats].sort((a, b) => b.index - a.index || b.row - a.row);
+}
+
+const ROLE_ORDER = { cabinet: 0, shadowCabinet: 0, parliamentarySecretary: 1 };
+
+// Place one party in its seats: role holders in their fixed seats, everyone else grouped by clique.
+// `primary` is the party's main block (role seats come from it); `extra` is overflow on the far side.
+function placeParty(party, members, primary, extra, cliques) {
+  const out = new Map();
+  const used = new Set();
+  const byRow = (r) => primary.filter((s) => s.row === r).sort((a, b) => a.index - b.index);
+  const put = (seat, mpId) => {
+    if (!seat || !mpId || used.has(seat.seatId) || [...out.values()].includes(mpId)) return false;
+    out.set(seat.seatId, mpId);
+    used.add(seat.seatId);
+    return true;
+  };
+  const aw = party.assistantWhips || [];
+  const front = [];
+  if (party.houseLeader) front.push(party.houseLeader);
+  if (aw.length >= 3) front.push(aw[0]);
+  if (party.leader) front.push(party.leader);
+  members
+    .filter((m) => m.caucusRole in ROLE_ORDER)
+    .sort((a, b) => ROLE_ORDER[a.caucusRole] - ROLE_ORDER[b.caucusRole] || b.tenure - a.tenure)
+    .forEach((m) => front.push(m.id));
+  const r1 = byRow(1);
+  const r2 = byRow(2);
+  put(r2[0], party.chiefWhip);
+  put(r2[1], party.deputyWhip);
+  const backAw = aw.length >= 3 ? [aw[1], aw[2]] : aw.slice(0, 1);
+  put(byRow(3)[0], backAw[0]);
+  put(byRow(4)[0], backAw[1]);
+  const spill = [];
+  front.forEach((id, i) => {
+    if (!put(r1[i], id)) spill.push(id);
+  });
+  // Front-benchers who don't fit in row 1 take row 2 next, before the backbench fills in.
+  for (const id of spill) {
+    const seat = r2.find((s) => !used.has(s.seatId)) || primary.find((s) => !used.has(s.seatId));
+    put(seat, id);
+  }
+  const placed = new Set(out.values());
+  const cliqueSize = (q) => (q ? cliques[q]?.members.length ?? 0 : -1);
+  const rest = members
+    .filter((m) => !placed.has(m.id))
+    .sort((a, b) => cliqueSize(b.clique) - cliqueSize(a.clique) || String(a.clique).localeCompare(String(b.clique)) || b.tenure - a.tenure || a.id.localeCompare(b.id));
+  const free = [...primary, ...extra].filter((s) => !used.has(s.seatId));
+  rest.forEach((m, i) => free[i] && put(free[i], m.id));
+  return out;
+}
+
+// Seat the whole House (HANDOFF section 5 steps 2-5). Returns seatId -> mpId; the Speaker has no desk.
+export function assignSeats(state) {
+  const seats = buildSeats();
+  const gov = state.house.government;
+  const mps = Object.values(state.mps).filter((m) => m.caucusRole !== 'speaker');
+  const partyMembers = (pid) => mps.filter((m) => m.party === pid);
+  const govSide = sideOrder(seats, 'gov');
+  const oppSide = sideOrder(seats, 'opp');
+  const result = {};
+
+  // Government: front to back from the Speaker's end; more than 60 overflow to the opposition back rows at the bar.
+  const govMembers = partyMembers(gov);
+  const govPrimary = govSide.slice(0, Math.min(60, govMembers.length));
+  const govOverflow = barEndOrder(oppSide).slice(0, Math.max(0, govMembers.length - 60));
+  const taken = new Set([...govPrimary, ...govOverflow].map((s) => s.seatId));
+  for (const [seatId, mpId] of placeParty(state.parties[gov], govMembers, govPrimary, govOverflow, state.cliques)) result[seatId] = mpId;
+
+  // Opposition parties in order, each one contiguous block. When the opposition side is full,
+  // the rest sit in the government side's free back rows nearest the bar.
+  const ROLE_SEQ = ['opposition', 'third', 'regional', 'minor'];
+  const oppParties = Object.values(state.parties)
+    .filter((p) => p.id !== gov)
+    .sort((a, b) => ROLE_SEQ.indexOf(a.role) - ROLE_SEQ.indexOf(b.role));
+  // Reversed so the last in line (independents) get the seats nearest the bar.
+  const queue = [...oppSide.filter((s) => !taken.has(s.seatId)), ...barEndOrder(govSide.filter((s) => !taken.has(s.seatId))).reverse()];
+  let at = 0;
+  for (const p of oppParties) {
+    const members = partyMembers(p.id);
+    const block = queue.slice(at, at + members.length);
+    at += members.length;
+    // A party split across the aisle keeps its leader and whips in whichever part is bigger.
+    const sides = ['gov', 'opp'].map((side) => block.filter((s) => s.side === side));
+    const [primary, extra] = sides[0].length > sides[1].length ? sides : [sides[1], sides[0]];
+    for (const [seatId, mpId] of placeParty(p, members, primary, extra, state.cliques)) result[seatId] = mpId;
+  }
+  const inds = partyMembers('ind').sort((a, b) => a.id.localeCompare(b.id));
+  for (const m of inds) result[queue[at++].seatId] = m.id;
+  return result;
+}

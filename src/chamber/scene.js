@@ -5,6 +5,7 @@ import { box, slab, panel, cylinder, sphere, merge, vertexMaterial, disposeTree,
 import { createSeats } from './seats.js';
 import { createChamberCamera } from './camera.js';
 import { createPicker } from './picking.js';
+import { createMpFigures } from './mps3d.js';
 
 const C = {
   carpet: '#2f5a3c',
@@ -121,22 +122,45 @@ export function create(ctx) {
   chandelier.position.set(0, 8.5, 0);
   scene.add(chandelier);
 
-  const shell = buildShell();
-  scene.add(shell);
-
+  scene.add(buildShell());
   const seats = createSeats();
   scene.add(seats.group);
+  const figures = createMpFigures(seats.records);
+  scene.add(figures.group);
+  // The Speaker in the chair, in a black robe.
+  const speaker = new THREE.Group();
+  speaker.add(new THREE.Mesh(new THREE.CapsuleGeometry(0.21, 0.4, 4, 10), new THREE.MeshStandardMaterial({ color: '#15161a', roughness: 0.8 })));
+  const sHead = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), new THREE.MeshStandardMaterial({ color: '#e0ac85', roughness: 0.6 }));
+  sHead.position.y = 0.5;
+  speaker.add(sHead);
+  speaker.position.set(0, G.dais.height + 0.9, G.dais.z + 0.05);
+  scene.add(speaker);
 
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 120);
   const controls = createChamberCamera(camera, renderer.domElement);
   const picker = createPicker(camera, seats.pickMesh, seats.records);
+  let state = null;
 
   const room = {
     name: 'chamber',
     scene,
     camera,
     seats,
+    figures,
     controls,
+    // Redraw who sits where and in what colour; call after a new game, load or reseating.
+    sync(next, colorOf) {
+      state = next;
+      figures.sync(state, colorOf);
+    },
+    select(seatId) {
+      seats.select(seatId);
+      figures.select(seatId);
+    },
+    focusSeat(seatId) {
+      const s = seats.byId.get(seatId);
+      if (s) controls.frame(blockFor(s));
+    },
     update(dt) {
       controls.update(dt);
       seats.update(dt, camera);
@@ -152,16 +176,22 @@ export function create(ctx) {
     },
   };
 
+  // A party block is everyone of the tapped MP's party on that side of the aisle.
+  function blockFor(seat) {
+    const mpId = figures.mpAt(seat.seatId);
+    const party = mpId && state?.mps[mpId].party;
+    if (!party) return seats.records.filter((s) => s.side === seat.side && Math.abs(s.index - seat.index) <= 2);
+    return seats.records.filter((s) => s.side === seat.side && state.mps[figures.mpAt(s.seatId)]?.party === party);
+  }
+
   controls.onTap((ndc) => {
     const seat = picker.pick(ndc);
-    seats.select(seat ? seat.seatId : null);
-    ctx.onSeatTap?.(seat, room);
+    room.select(seat ? seat.seatId : null);
+    ctx.onSeatTap?.(seat, seat ? figures.mpAt(seat.seatId) : null);
   });
   controls.onDoubleTap((ndc) => {
     const seat = picker.pick(ndc);
-    if (!seat) return;
-    const block = ctx.blockFor ? ctx.blockFor(seat) : seats.records.filter((s) => s.side === seat.side && Math.abs(s.index - seat.index) <= 2);
-    controls.frame(block);
+    if (seat) controls.frame(blockFor(seat));
   });
 
   return room;

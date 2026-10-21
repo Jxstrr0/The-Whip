@@ -468,10 +468,10 @@ Build one stage per session, in order. A stage is done only when every check und
 
 **Stage 2: MPs, parties, cohorts and cliques.** Write `rng.js`, `generate.js` and `relationships.js`, add `data/` name pools, ridings and clique templates, build `mps3d.js` and `ui/mpCard.js`. Party blocks follow section 5, including overflow, whips' seats and clique grouping.
 
-- [ ] Seed `TEST-1` produces the same 120 MPs, cohorts and cliques on every load, with the four core parties present and a generated fifth party
-- [ ] A minority Parliament seats correctly; a majority seed shows overflow
-- [ ] The card shows only what the knowledge map says is known; a fresh game shows name, party, riding and seat
-- [ ] `ui/book.js` lists all 120 MPs with search, filters (party, clique, cohort, riding type) and sort, usable with one thumb
+- [x] Seed `TEST-1` produces the same 120 MPs, cohorts and cliques on every load, with the four core parties present and a generated fifth party
+- [x] A minority Parliament seats correctly; a majority seed shows overflow
+- [x] The card shows only what the knowledge map says is known; a fresh game shows name, party, riding and seat
+- [x] `ui/book.js` lists all 120 MPs with search, filters (party, clique, cohort, riding type) and sort, usable with one thumb
 
 **Stage 3: Votes, divisions and pacing.** Write `bills.js`, `mp.js` (the decision model from `DESIGN.md`), `vote.js`, `voteLights.js`, `pacing.js`, `ui/agenda.js` and `ui/countBoard.js`, plus `data/tuning.json`. A division runs the bells (shortened to real seconds), then the standing count animation. Routine days auto-resolve into a summary line. **By the end of this stage the sim must play a full Parliament headless from `tests.html`.**
 

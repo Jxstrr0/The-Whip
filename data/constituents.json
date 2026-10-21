@@ -1,0 +1,306 @@
+{
+  "roles": [
+    { "id": "mayor", "name": "Mayor" },
+    { "id": "farmer", "name": "Farmer" },
+    { "id": "plantManager", "name": "Plant manager" },
+    { "id": "unionSteward", "name": "Union steward" },
+    { "id": "schoolBoard", "name": "School board chair" },
+    { "id": "reporter", "name": "Local reporter" },
+    { "id": "associationPresident", "name": "Riding association president" }
+  ],
+  "cases": [
+    { "id": "rc001", "role": "mayor", "types": ["rural", "northern"], "interest": "roads", "what": "the {town} bridge", "text": "The bridge on the county road has been posted at five tonnes since spring. The school bus now takes a forty-minute detour, and the driver has started mailing me his odometer readings.", "weight": 3 },
+    { "id": "rc002", "role": "mayor", "types": ["urban", "suburban"], "interest": "housing", "what": "the rail lands rezoning", "text": "We have four hundred units approved on the old rail lands and not one shovel, because the federal housing fund wants a form nobody ever sent us. I'd like you to find the form.", "weight": 2 },
+    { "id": "rc003", "role": "mayor", "types": ["suburban"], "interest": "transit", "what": "the {town} interchange", "text": "Six thousand cars a morning try to fit through an interchange built for a town of nine thousand. I'm not asking for a miracle, just the traffic study the department promised last Parliament.", "weight": 2 },
+    { "id": "rc004", "role": "mayor", "types": ["rural"], "interest": "rural", "what": "the {town} post office", "text": "Crown Post wants to close our counter and put a parcel locker outside the gas bar. Half my residents don't drive, and the other half don't trust the locker.", "weight": 2 },
+    { "id": "rc005", "role": "mayor", "types": ["northern"], "interest": "northern", "what": "the winter road", "text": "The winter road opened eleven days late again. Every day it's shut, fuel comes in by air, and I get to explain the price to people who already know it.", "weight": 3 },
+    { "id": "rc006", "role": "mayor", "types": ["urban", "suburban"], "interest": "health", "what": "the walk-in clinic on Main", "text": "The walk-in clinic closes at four because nobody keeps a doctor past their second winter. The province says it's federal, Ostrava says it's provincial, and I'm the one with an office across the street.", "weight": 2 },
+    { "id": "rc007", "role": "mayor", "types": ["rural", "northern"], "interest": "environment", "what": "the water treatment plant", "text": "Our water plant is older than the last three mayors combined. We've been on a boil-water advisory so long it's printed on the welcome sign.", "weight": 3 },
+    { "id": "rc043", "role": "mayor", "types": ["rural"], "interest": "fisheries", "what": "the {town} wharf", "text": "The wharf has a section you can see the harbour through, and not in the scenic way. The small craft harbours office says we're on the list. I'd like to know what number.", "weight": 2 },
+
+    { "id": "rc008", "role": "farmer", "types": ["rural"], "interest": "agriculture", "what": "the drought relief program", "text": "The relief program pays out per acre seeded, and nobody seeded because of the drought. I've read the rules three times and I believe they were written by someone who has never met dirt.", "weight": 3 },
+    { "id": "rc009", "role": "farmer", "types": ["rural"], "interest": "trade", "what": "the canola tariff", "text": "Our biggest buyer put a tariff on everything I grow, and Ostrava answered with a strongly worded statement. I can't sell a statement.", "weight": 3 },
+    { "id": "rc010", "role": "farmer", "types": ["rural", "suburban"], "interest": "housing", "what": "the subdivision next door", "text": "A developer bought the quarter section beside mine, and the new neighbours have already complained about the smell of farming. I'd like it on the record that I was here first.", "weight": 1 },
+    { "id": "rc011", "role": "farmer", "types": ["rural", "suburban"], "interest": "immigration", "what": "the seasonal worker permits", "text": "My seasonal workers' permits are stuck in processing and the strawberries are not. I need six people by the first of June or I'm feeding the field to the birds.", "weight": 2 },
+    { "id": "rc012", "role": "farmer", "types": ["rural"], "interest": "agriculture", "what": "the grain car allocation", "text": "There's grain in my bins from two harvests ago because the railway sends cars to whoever shouts loudest. I'm told you're the one who shouts now.", "weight": 2 },
+    { "id": "rc013", "role": "farmer", "types": ["rural"], "interest": "environment", "what": "the wetland rules", "text": "The new wetland rules say the slough in my back forty is protected habitat. It's a puddle. It's been a puddle since my grandfather tried to drain it in a dry year.", "weight": 1 },
+    { "id": "rc014", "role": "farmer", "types": ["rural", "northern"], "interest": "rural", "what": "rural broadband", "text": "My combine has GPS that's smarter than I am, but the internet at the house drops every time it rains. I pay for up to twenty megabits. I have never once met up to.", "weight": 2 },
+    { "id": "rc044", "role": "farmer", "types": ["rural"], "interest": "seniors", "what": "the farm succession tax", "text": "I'm seventy-three and my daughter wants the farm. The way the tax rules read, it's cheaper for me to sell it to a stranger than give it to her. That can't be what anybody meant.", "weight": 2 },
+
+    { "id": "rc015", "role": "plantManager", "types": ["urban", "suburban"], "interest": "trade", "what": "the steel duties", "text": "We make brackets out of imported steel, and the new duties landed a week before our biggest contract renewed. I can raise the price or lay off a shift. I'd take a third option if Ostrava has one.", "weight": 3 },
+    { "id": "rc016", "role": "plantManager", "types": ["rural", "northern"], "interest": "energy", "what": "the mill's power rate", "text": "The mill uses more electricity than the rest of {town} combined, and the new grid levy is calculated on peak load. We would like to go on being the reason this town exists.", "weight": 3 },
+    { "id": "rc017", "role": "plantManager", "types": ["suburban", "urban"], "interest": "labour", "what": "the apprenticeship credit", "text": "I have twelve openings for machinists and four applicants, two of them my nephews. The apprenticeship credit ran out in March and nobody told the apprentices.", "weight": 2 },
+    { "id": "rc018", "role": "plantManager", "types": ["urban"], "interest": "environment", "what": "the emissions retrofit grant", "text": "I'm not here to fight the emissions standard. I'm here because the retrofit grant has a twelve-month wait and the compliance deadline is in eight.", "weight": 2 },
+    { "id": "rc019", "role": "plantManager", "types": ["rural"], "interest": "agriculture", "what": "the plant's meat inspector", "text": "The processing plant has had one federal inspector for two shifts since the other one retired. When she takes a holiday, we take a holiday, and so do two hundred hogs a day.", "weight": 2 },
+    { "id": "rc020", "role": "plantManager", "types": ["northern"], "interest": "roads", "what": "the highway passing lanes", "text": "Our ore trucks share the highway with everyone's grandparents. The mine will pay for half the passing lanes if someone federal will commit to the other half in writing.", "weight": 2 },
+    { "id": "rc021", "role": "plantManager", "types": ["urban", "suburban"], "interest": "defence", "what": "the navy supply contract", "text": "The navy's supply contract was due in the spring. I've kept forty welders on payroll waiting for it, and I can't carry them through the summer on optimism.", "weight": 3 },
+
+    { "id": "rc022", "role": "unionSteward", "types": ["urban"], "interest": "labour", "what": "the port lockout", "text": "The port's been locked out nine days and the minister says she's monitoring. My members would like to know what she's seen so far.", "weight": 3 },
+    { "id": "rc023", "role": "unionSteward", "types": ["rural", "northern"], "interest": "labour", "what": "the mill pension", "text": "The mill's pension is eighty-one percent funded and the parent company just paid a dividend. We want the pension law fixed before the company gets sold, not the week after.", "weight": 3 },
+    { "id": "rc024", "role": "unionSteward", "types": ["suburban", "urban"], "interest": "transit", "what": "the night bus routes", "text": "The transit agency is contracting out the night routes. My drivers have run them for twenty years. The contractor's drivers have run them since Tuesday.", "weight": 2 },
+    { "id": "rc025", "role": "unionSteward", "types": ["urban", "suburban"], "interest": "health", "what": "the hospital staffing", "text": "Nurses at {town} General are working sixteen-hour shifts and paying twenty dollars a day to park. Either one of those, I could live with.", "weight": 2 },
+    { "id": "rc026", "role": "unionSteward", "types": ["rural", "suburban"], "interest": "labour", "what": "the EI gap", "text": "Seasonal workers in {town} keep running out of employment insurance three weeks before the season opens. The formula was done in Ostrava, where the seasons are apparently longer.", "weight": 2 },
+    { "id": "rc027", "role": "unionSteward", "types": ["northern"], "interest": "northern", "what": "the camp bunkhouses", "text": "The fly-in camp has eighty beds and a hundred and ten workers. They hot-bunk, which is exactly what it sounds like.", "weight": 1 },
+    { "id": "rc028", "role": "unionSteward", "types": ["urban", "suburban", "rural"], "interest": "trade", "what": "the plant closure", "text": "The company announced the closure by press release on a Friday at four. Our members heard it on the radio. I'd like you to say the plant's name in the House at least once.", "weight": 3 },
+    { "id": "rc045", "role": "unionSteward", "types": ["urban", "rural"], "interest": "seniors", "what": "the retirees' drug plan", "text": "The company that bought us out has decided retirees' drug coverage was a historical curiosity. I represent six hundred people who'd like it to be current events again.", "weight": 2 },
+
+    { "id": "rc029", "role": "schoolBoard", "types": ["rural"], "interest": "education", "what": "{town} Elementary", "text": "Enrolment at {town} Elementary is down to sixty-one, and the province closes schools under sixty. Two families are moving here this summer. I'd like their immigration files treated warmly and quickly.", "weight": 3 },
+    { "id": "rc030", "role": "schoolBoard", "types": ["suburban"], "interest": "education", "what": "the portable classrooms", "text": "We have more portables than classrooms. The newest school has a portable in the gym. I'm told the federal infrastructure fund can't build schools, so I'm here to ask what it can build.", "weight": 2 },
+    { "id": "rc031", "role": "schoolBoard", "types": ["urban", "suburban"], "interest": "immigration", "what": "the newcomer language program", "text": "Three hundred newcomer children arrived this year and the federal language program funds one teacher per hundred and forty. I'd like the formula, and the name of whoever wrote it.", "weight": 2 },
+    { "id": "rc032", "role": "schoolBoard", "types": ["northern"], "interest": "housing", "what": "the teacher housing", "text": "We hired four teachers in June. Three have quit because there's nowhere to live. The fourth is sleeping in the library, which is admirable but not a plan.", "weight": 3 },
+    { "id": "rc033", "role": "schoolBoard", "types": ["rural", "northern"], "interest": "rural", "what": "the school broadband", "text": "Students do their homework in the school parking lot after hours because it's the only signal in {town}. The janitor leaves the router on as a kindness.", "weight": 2 },
+    { "id": "rc034", "role": "schoolBoard", "types": ["suburban", "urban"], "interest": "health", "what": "the school food program", "text": "The national school food program was announced three budgets ago. We've now had the announcement four times. We'd like to try the food.", "weight": 2 },
+    { "id": "rc035", "role": "schoolBoard", "types": ["rural", "suburban"], "interest": "arts", "what": "the arts education grant", "text": "The federal arts grant needs matching funds, and the match was the music program we cut to pay for buses. I'm here about the circle we're standing in.", "weight": 1 },
+
+    { "id": "rc036", "role": "reporter", "types": ["rural", "suburban", "urban", "northern"], "interest": "smallBusiness", "what": "federal advertising in local papers", "text": "Federal departments pulled every ad from local papers and moved it all online. I'm writing that story either way. I'd rather it had someone federal in it who'd noticed.", "weight": 2 },
+    { "id": "rc037", "role": "reporter", "types": ["urban"], "interest": "housing", "what": "the empty federal building", "text": "The federal building on Front Street has been empty six years and costs a quarter million a year to heat. I'd like to know who's warm in there.", "weight": 2 },
+    { "id": "rc038", "role": "reporter", "types": ["rural"], "interest": "fisheries", "what": "the harbour dredging", "text": "The harbour hasn't been dredged in a decade, so boats leave on the tide or not at all. Fisheries says it's on a list. I'd like to see the list, and I'd like you to ask for it.", "weight": 2 },
+    { "id": "rc039", "role": "reporter", "types": ["northern", "rural"], "interest": "environment", "what": "the old mine site", "text": "There's orange water coming off the old mine site, and three departments have told me it isn't theirs. The water's the only one being straight with me.", "weight": 3 },
+    { "id": "rc040", "role": "reporter", "types": ["suburban"], "interest": "transit", "what": "the commuter rail promise", "text": "{party} promised commuter rail to {town} in the last platform. I brought the page. I'd like to read it to you and write down what your face does.", "weight": 2 },
+    { "id": "rc041", "role": "reporter", "types": ["rural", "suburban"], "interest": "veterans", "what": "the Legion hall roof", "text": "The Legion's roof is failing and the veterans' facilities grant closed two days after it opened. There's a ninety-year-old on my front page next week, with or without your quote.", "weight": 2 },
+    { "id": "rc042", "role": "reporter", "types": ["urban", "northern"], "interest": "justice", "what": "the courthouse delays", "text": "Three cases in {town} were tossed this year for delay because the judge vacancies haven't been filled. Appointments are federal. So, now, is my story.", "weight": 3 }
+  ],
+  "townHall": {
+    "openers": [
+      "The {town} community hall smells of burnt coffee and floor wax. Every folding chair is taken, and three people are standing along the back wall with their arms crossed.",
+      "Someone has put out a plate of squares, which is a good sign, and a microphone on a stand, which is not. About sixty people have come out to see their MP for {playerRiding}.",
+      "The Legion has lent you its upstairs room and its least reliable speaker. The front row is retirees with notepads; the back row is people who came straight from work.",
+      "It's a school gym, so the chairs are too small and the acoustics are worse. A banner from last year's science fair still hangs over the stage.",
+      "The crowd is bigger than your staff predicted and smaller than the reporter will claim. A man near the door is handing out a leaflet with your voting record on it.",
+      "The church basement is warm, the urn is full, and the woman who runs the hall has already told you twice that you have until nine.",
+      "A hockey game ran late, so half the crowd is still in team jackets. They have opinions, and they have just watched their team lose.",
+      "Your riding association has packed the first two rows with friendly faces. Everyone behind them came on their own."
+    ],
+    "topics": [
+      {
+        "id": "th01",
+        "kind": "bill",
+        "prompt": "A man in a seed cap stands before the microphone reaches him. “What does {bill} actually do for {town}? And don't read me the press release.”",
+        "options": [
+          { "text": "It puts money where the country needs it most, and over time that includes {town}.", "stance": "line", "crowd": -6, "standing": -2 },
+          { "text": "Honestly? Not enough. I've told Ostrava that, and I'll keep telling them.", "stance": "riding", "crowd": 10, "standing": 3 },
+          { "text": "It's a big bill. The details are still being worked out at committee.", "stance": "dodge", "crowd": -4, "standing": -1 },
+          { "text": "Give me your number. I'll come back with what it means for your farm, line by line.", "stance": "promise", "crowd": 7, "standing": 2 }
+        ]
+      },
+      {
+        "id": "th02",
+        "kind": "bill",
+        "prompt": "A retired teacher in the third row has the whole of {bill} printed out and highlighted in three colours. “Clause fourteen. Explain clause fourteen.”",
+        "options": [
+          { "text": "Clause fourteen sets the national standard. It's there so every province plays by the same rules.", "stance": "line", "crowd": -3, "standing": -1 },
+          { "text": "Clause fourteen is the one I'd change. You've found the weak spot.", "stance": "riding", "crowd": 9, "standing": 3 },
+          { "text": "I'd hate to give you the wrong answer from memory. Let's talk after.", "stance": "dodge", "crowd": -7, "standing": -2 },
+          { "text": "I'll get you a written answer from the minister's office within two weeks.", "stance": "promise", "crowd": 5, "standing": 2 }
+        ]
+      },
+      {
+        "id": "th03",
+        "kind": "bill",
+        "prompt": "“Are you voting on {bill} for us, or for whatever {whip} tells you?” Applause from the back, some of it sarcastic.",
+        "options": [
+          { "text": "I'm part of a team. On this one, the team has it right.", "stance": "line", "crowd": -9, "standing": -3 },
+          { "text": "Nobody in Ostrava tells me how to vote for {playerRiding}. You do.", "stance": "riding", "crowd": 12, "standing": 4 },
+          { "text": "Every MP weighs the party and the riding. That's the job.", "stance": "dodge", "crowd": -5, "standing": -1 }
+        ]
+      },
+      {
+        "id": "th04",
+        "kind": "bill",
+        "prompt": "A young mother with a toddler on her hip: “My sister's riding gets new money from {bill}. When does ours?”",
+        "options": [
+          { "text": "The formula is fair across the country. Our turn comes in the second year.", "stance": "line", "crowd": -4, "standing": -1 },
+          { "text": "It doesn't, and that's why I'm not sold on this bill yet.", "stance": "riding", "crowd": 9, "standing": 3 },
+          { "text": "These programs roll out in stages. I'd watch for announcements.", "stance": "dodge", "crowd": -6, "standing": -2 },
+          { "text": "I'll fight for {town} to be in the first round. Hold me to it.", "stance": "promise", "crowd": 8, "standing": 2 }
+        ]
+      },
+      {
+        "id": "th05",
+        "kind": "bill",
+        "prompt": "A hardware store owner, still in his work apron: “Everyone I know is against {bill}. Who exactly is it for?”",
+        "options": [
+          { "text": "It's for the people who aren't in this room tonight. Somebody has to speak for them too.", "stance": "line", "crowd": -8, "standing": -2 },
+          { "text": "If it's not for {town}, it's not getting my vote. Simple as that.", "stance": "riding", "crowd": 11, "standing": 4 },
+          { "text": "That's a fair question, and it's one I've been asking too.", "stance": "dodge", "crowd": 1, "standing": 0 }
+        ]
+      },
+      {
+        "id": "th06",
+        "kind": "bill",
+        "prompt": "An older woman by the coffee urn: “You said you'd be our voice in Ostrava, not Ostrava's voice in {town}. Which is it on {bill}?”",
+        "options": [
+          { "text": "Sometimes being your voice means telling you what Ostrava sees that we don't.", "stance": "line", "crowd": -7, "standing": -2 },
+          { "text": "Yours. I said it on your doorstep and I'll say it in the House.", "stance": "riding", "crowd": 12, "standing": 4 },
+          { "text": "I'd like to think I can be both.", "stance": "dodge", "crowd": -5, "standing": -1 },
+          { "text": "I'll hold another of these before the vote, and you'll hear my decision here first.", "stance": "promise", "crowd": 6, "standing": 2 }
+        ]
+      },
+      {
+        "id": "th07",
+        "kind": "local",
+        "prompt": "A nurse, still in scrubs: “The clinic in {town} closes at four. My neighbour waited nine hours in emergency for stitches. What are you going to do?”",
+        "options": [
+          { "text": "Health is provincial, but the transfer we passed puts more money on the table than ever.", "stance": "line", "crowd": -5, "standing": -1 },
+          { "text": "I'll stand up in Question Period and say this clinic's name. Ostrava should hear it.", "stance": "riding", "crowd": 8, "standing": 3 },
+          { "text": "It's a complicated file with a lot of partners.", "stance": "dodge", "crowd": -8, "standing": -2 },
+          { "text": "I'll get the health minister's officials to {town} before Christmas. In person.", "stance": "promise", "crowd": 9, "standing": 2 }
+        ]
+      },
+      {
+        "id": "th08",
+        "kind": "local",
+        "prompt": "A trucker at the back: “The highway past {town} is more pothole than road. I've lost two tires this spring. Who fixes it?”",
+        "options": [
+          { "text": "Our infrastructure fund is open to the province. They need to apply.", "stance": "line", "crowd": -4, "standing": -1 },
+          { "text": "Nobody, so far, and that's on all of us. I'll make it my file.", "stance": "riding", "crowd": 9, "standing": 3 },
+          { "text": "Roads are shared jurisdiction. It depends which stretch.", "stance": "dodge", "crowd": -6, "standing": -2 },
+          { "text": "I'll drive it with the regional director this summer and send you the photos.", "stance": "promise", "crowd": 7, "standing": 2 }
+        ]
+      },
+      {
+        "id": "th09",
+        "kind": "local",
+        "prompt": "A machinist with forty years at the plant: “They're closing in the spring. Three hundred jobs. Did anyone in Ostrava even notice?”",
+        "options": [
+          { "text": "We noticed. The transition program is there for exactly this, and I'll help people apply.", "stance": "line", "crowd": -2, "standing": 0 },
+          { "text": "I noticed, and I'm going to make sure the whole House does.", "stance": "riding", "crowd": 10, "standing": 3 },
+          { "text": "It's a private company's decision. There's only so much government can do.", "stance": "dodge", "crowd": -12, "standing": -4 },
+          { "text": "I'll get a meeting with the company and the minister in the same room within a month.", "stance": "promise", "crowd": 8, "standing": 2 }
+        ]
+      },
+      {
+        "id": "th10",
+        "kind": "local",
+        "prompt": "A woman in her twenties: “My rent went up four hundred dollars. I work two jobs and I live with my parents. What's the plan?”",
+        "options": [
+          { "text": "The national housing strategy is the biggest in a generation. It takes time to build.", "stance": "line", "crowd": -6, "standing": -2 },
+          { "text": "The plan isn't working here. I've said that inside caucus and I'll say it out loud.", "stance": "riding", "crowd": 9, "standing": 3 },
+          { "text": "Housing is a challenge right across the country.", "stance": "dodge", "crowd": -9, "standing": -2 },
+          { "text": "I'll find out where the rail lands project is stuck and report back here.", "stance": "promise", "crowd": 6, "standing": 2 }
+        ]
+      },
+      {
+        "id": "th11",
+        "kind": "local",
+        "prompt": "A retired postmaster: “Crown Post wants to close our counter. Some of us don't do email. How are we supposed to get our cheques?”",
+        "options": [
+          { "text": "Crown Post is arm's length. The government can't run its day-to-day decisions.", "stance": "line", "crowd": -7, "standing": -2 },
+          { "text": "That counter stays open if I have anything to say about it.", "stance": "riding", "crowd": 10, "standing": 3 },
+          { "text": "I understand there's a consultation underway.", "stance": "dodge", "crowd": -5, "standing": -1 },
+          { "text": "I'll write the Crown Post president this week and read you the reply.", "stance": "promise", "crowd": 6, "standing": 2 }
+        ]
+      },
+      {
+        "id": "th12",
+        "kind": "local",
+        "prompt": "A man with his arms folded: “This is the first time we've seen you since the election. Where've you been?”",
+        "options": [
+          { "text": "In Ostrava, doing the work you sent me to do. It doesn't always make the paper.", "stance": "line", "crowd": -4, "standing": -1 },
+          { "text": "That's fair. I owe {town} more Fridays, and you'll get them.", "stance": "riding", "crowd": 7, "standing": 2 },
+          { "text": "My office is open five days a week. The door's always been open.", "stance": "dodge", "crowd": -8, "standing": -2 },
+          { "text": "One of these every month from now on. Put it on the calendar tonight.", "stance": "promise", "crowd": 9, "standing": 2 }
+        ]
+      },
+      {
+        "id": "th13",
+        "kind": "local",
+        "prompt": "The minor hockey coach: “The arena roof leaks onto the ice. We've applied for the community grant twice. What's wrong with us?”",
+        "options": [
+          { "text": "The program is oversubscribed. Apply again; the next intake has more money.", "stance": "line", "crowd": -3, "standing": -1 },
+          { "text": "Nothing's wrong with you. Something's wrong with the program, and I'll say so.", "stance": "riding", "crowd": 8, "standing": 2 },
+          { "text": "I can't comment on individual applications.", "stance": "dodge", "crowd": -9, "standing": -3 },
+          { "text": "Send me both applications. I'll walk them into the minister's office myself.", "stance": "promise", "crowd": 9, "standing": 3 }
+        ]
+      }
+    ]
+  },
+  "reporter": [
+    {
+      "id": "rp01",
+      "prompt": "The reporter flips to a clean page. “On {bill}: are you with the party or with {riding}?”",
+      "options": [
+        { "text": "I'm with the government on this one. It's the right bill.", "stance": "line", "standing": -2, "whip": 3 },
+        { "text": "With {riding}. The whip's office knows exactly where I stand.", "stance": "riding", "standing": 3, "whip": -4 },
+        { "text": "I'll tell you how I'm voting when I vote.", "stance": "dodge", "standing": -1, "whip": 0 }
+      ]
+    },
+    {
+      "id": "rp02",
+      "prompt": "“I hear the whip's office told new MPs not to give interviews without clearance. Did you clear this one?”",
+      "options": [
+        { "text": "I talk to my local paper whenever I like. Write that down.", "stance": "riding", "standing": 3, "whip": -3 },
+        { "text": "Every caucus coordinates its message. That's not news.", "stance": "line", "standing": -1, "whip": 2 },
+        { "text": "Let's keep this about {town}, shall we?", "stance": "dodge", "standing": 0, "whip": 0 }
+      ]
+    },
+    {
+      "id": "rp03",
+      "prompt": "“You announced the {town} project in the spring. The site's still a gravel lot. When does anything happen?”",
+      "options": [
+        { "text": "Shovels in the ground by fall. You can quote me and check.", "stance": "promise", "standing": 3, "whip": -1 },
+        { "text": "The funding is approved. The province controls the timeline now.", "stance": "line", "standing": -1, "whip": 1 },
+        { "text": "These things take the time they take.", "stance": "dodge", "standing": -3, "whip": 0 }
+      ]
+    },
+    {
+      "id": "rp04",
+      "prompt": "“People are saying you're unhappy with {leader}'s direction. Care to deny it?”",
+      "options": [
+        { "text": "I deny it. {leader} has my full support.", "stance": "line", "standing": -1, "whip": 3 },
+        { "text": "I'm happy with any direction that's good for {riding}. Not every one has been.", "stance": "riding", "standing": 2, "whip": -4 },
+        { "text": "I don't comment on what people are saying.", "stance": "dodge", "standing": 0, "whip": -1 }
+      ]
+    },
+    {
+      "id": "rp05",
+      "prompt": "“You missed the recorded division last Tuesday. Where were you?”",
+      "options": [
+        { "text": "At a funeral in {town}. I was paired, and I'd make the same choice again.", "stance": "riding", "standing": 3, "whip": -1 },
+        { "text": "The whip's office approved it in advance. That's how the House works.", "stance": "line", "standing": -1, "whip": 1 },
+        { "text": "I'm in the House far more often than not. Check the record.", "stance": "dodge", "standing": -2, "whip": 0 }
+      ]
+    },
+    {
+      "id": "rp06",
+      "prompt": "“The opposition says {party} has written off ridings like this one. Have they?”",
+      "options": [
+        { "text": "Not while I'm in caucus. I'll make sure they hear {riding} every week.", "stance": "promise", "standing": 3, "whip": -1 },
+        { "text": "Look at the investments in the last budget. The record speaks for itself.", "stance": "line", "standing": -1, "whip": 2 },
+        { "text": "The opposition says a lot of things.", "stance": "dodge", "standing": -1, "whip": 1 }
+      ]
+    },
+    {
+      "id": "rp07",
+      "prompt": "“Will you run again next election? Some in the riding association are asking.”",
+      "options": [
+        { "text": "Yes. And I'll earn the nomination, not assume it.", "stance": "riding", "standing": 2, "whip": 0 },
+        { "text": "That's a decision for me, my family and the party, in that order.", "stance": "dodge", "standing": 0, "whip": 0 },
+        { "text": "If {leader} wants me on the team, I'll be there.", "stance": "line", "standing": -2, "whip": 2 }
+      ]
+    },
+    {
+      "id": "rp08",
+      "prompt": "“A source says Wednesday's caucus nearly turned on the leadership. Were you one of the people standing up?”",
+      "options": [
+        { "text": "What's said in caucus stays in caucus. I'd tell you that either way.", "stance": "dodge", "standing": 0, "whip": 2 },
+        { "text": "I stood up for {riding}. I'll do it every Wednesday if I have to.", "stance": "riding", "standing": 3, "whip": -5 },
+        { "text": "Caucus is united. Your source is having a bad week.", "stance": "line", "standing": -1, "whip": 3 }
+      ]
+    }
+  ],
+  "president": [
+    { "id": "ap01", "mood": "cooperative", "text": "Fundraising dinner sold out, and nobody complained about the chicken. Keep this up and the nomination's a formality." },
+    { "id": "ap02", "mood": "cooperative", "text": "Twelve new volunteers since the town hall. Two of them are under fifty, which I've been told is a record." },
+    { "id": "ap03", "mood": "cooperative", "text": "The executive's happy. I'd like you at the summer barbecue, and I'd like you to stay past the speeches this time." },
+    { "id": "ap04", "mood": "guarded", "text": "The numbers are fine. The phone calls are less fine. People want to know whose side you're on." },
+    { "id": "ap05", "mood": "guarded", "text": "I'm not saying anyone's organizing against you. I'm saying a former councillor has started renewing memberships." },
+    { "id": "ap06", "mood": "guarded", "text": "The donors will stay if you visit them. They're very clear that they mean visit, not phone." },
+    { "id": "ap07", "mood": "angry", "text": "I spent three weekends knocking on doors for you, and I had to read about your vote on {bill} in the paper." },
+    { "id": "ap08", "mood": "angry", "text": "Half the executive quit after the last vote. The other half stayed to tell me about it. You can guess which half is louder." },
+    { "id": "ap09", "mood": "angry", "text": "If the nomination meeting were tonight, I couldn't promise you'd win it. I'm not sure I'd vote." },
+    { "id": "ap10", "mood": "anxious", "text": "The polls have us within four points. The last MP who was within four points is now a realtor." },
+    { "id": "ap11", "mood": "anxious", "text": "We have eleven thousand dollars in the bank and an election that could come any week. I've stopped sleeping." },
+    { "id": "ap12", "mood": "anxious", "text": "Headquarters called asking whether you were planning to run. They didn't say why, and I didn't like that they asked." }
+  ]
+}
