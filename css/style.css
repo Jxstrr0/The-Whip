@@ -31,20 +31,61 @@ html, body {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-.title {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(24px + env(safe-area-inset-bottom));
-  text-align: center;
-  font-size: 28px;
-  letter-spacing: 0.08em;
+
+
+.labels {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
 }
 
-.title small {
-  display: block;
+.topbar {
+  position: absolute;
+  top: calc(8px + env(safe-area-inset-top));
+  left: calc(8px + env(safe-area-inset-left));
+  right: calc(8px + env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.topbar > * {
+  pointer-events: auto;
+}
+
+.brand {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  margin-right: auto;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.btn {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(31, 36, 44, 0.88);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:active {
+  background: rgba(60, 68, 80, 0.95);
+}
+
+.seat-label {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(20, 23, 28, 0.9);
+  border: 1px solid rgba(242, 193, 78, 0.6);
   font-size: 13px;
-  color: var(--muted);
-  letter-spacing: 0.02em;
-  margin-top: 4px;
+  white-space: nowrap;
+  transform: translateY(-50%);
 }
