@@ -1,8 +1,8 @@
 // The articulated figure for the office and the riding: the crowds' silhouette with elbows, knees, hands and
 // shoes on pivots, so it can walk in, sit, and hold a pose that says how the meeting is going.
 import * as THREE from 'three';
-import { blobMaterial, figureMaterial, merge } from '../kit3d.js';
-import { lookFor, shade, HEAD_R, tieParts, pinPart } from '../figures.js';
+import { blobMaterial, merge, worldUVs } from '../kit3d.js';
+import { lookFor, shade, HEAD_R, CAP_TOP, tieParts, pinPart, partMaterial, capsule, egg, hairCap } from '../figures.js';
 
 const HIP = 0.86;
 const THIGH = 0.39;
@@ -15,8 +15,14 @@ const SEAT = 0.47;
 
 // A limb hanging from its pivot along -y.
 function hanging(r, len, mat) {
-  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 3, 8), mat);
+  const m = new THREE.Mesh(capsule(r, len), mat);
   m.position.y = -len / 2;
+  return m;
+}
+// A box with its UVs in metres, like the crowd's.
+function box(w, h, d, x, y, z, mat) {
+  const m = new THREE.Mesh(worldUVs(new THREE.BoxGeometry(w, h, d)), mat);
+  m.position.set(x, y, z);
   return m;
 }
 
@@ -25,44 +31,41 @@ function hanging(r, len, mat) {
 export function createFigure(color, mpId = 'x', outfit = null) {
   const look = lookFor(mpId);
   const mats = {
-    suit: figureMaterial({ color: outfit?.suit || shade(color, mpId), roughness: 0.82 }),
-    skin: figureMaterial({ color: look.skin, roughness: 0.6 }),
-    hair: figureMaterial({ color: look.hair, roughness: 0.95 }),
-    shirt: figureMaterial({ color: '#e9e3d8', roughness: 0.7 }),
-    dark: figureMaterial({ color: '#1d1a16', roughness: 0.8 }),
+    suit: partMaterial('suit', { color: outfit?.suit || shade(color, mpId), weave: outfit?.weave }),
+    skin: partMaterial('skin', { color: look.skin }),
+    hair: partMaterial('hair', { color: look.hair }),
+    shirt: partMaterial('shirt'),
+    dark: partMaterial('dark'),
   };
   const g = new THREE.Group();
   const body = new THREE.Group();
   body.position.y = HIP;
 
-  const torso = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), mats.suit);
-  torso.scale.set(0.2, 0.32, 0.14);
+  const torso = new THREE.Mesh(egg(1, 0, 0, 0, 0.2, 0.32, 0.14, 14), mats.suit);
   torso.position.y = 0.28;
-  const shoulders = new THREE.Mesh(new THREE.CapsuleGeometry(0.085, 0.38, 3, 10), mats.suit);
+  const shoulders = new THREE.Mesh(capsule(0.085, 0.38, 10), mats.suit);
   shoulders.rotation.z = Math.PI / 2;
   shoulders.position.y = SHOULDER_H;
-  const collar = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.09, 0.02), mats.shirt);
-  collar.position.set(0, SHOULDER_H - 0.05, 0.133);
-  const neck = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.1, 3, 8), mats.skin);
+  const collar = box(0.12, 0.09, 0.02, 0, SHOULDER_H - 0.05, 0.133, mats.shirt);
+  const neck = new THREE.Mesh(capsule(0.05, 0.1), mats.skin);
   neck.position.set(0, SHOULDER_H + 0.08, 0.01);
   // The head turns and nods about the neck.
   const head = new THREE.Group();
   head.position.set(0, HEAD_H - 0.12, 0);
-  const skull = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 14, 10), mats.skin);
-  skull.scale.set(1, 1.12, 1.02);
-  skull.position.y = 0.12;
-  const cap = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R + 0.012, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.64), mats.hair);
-  cap.scale.set(1, 1.1 * Math.max(look.hairStyle, 0.01), 1.02);
-  cap.position.set(0, 0.125, -0.012);
+  const skull = new THREE.Mesh(egg(HEAD_R, 0, 0.12, 0, 1, 1.12, 1.02, 14), mats.skin);
+  // The cap hangs from its crown, so its style squashes it toward the crown as the crowd's does.
+  const cap = new THREE.Mesh(hairCap(-CAP_TOP), mats.hair);
+  cap.scale.y = Math.max(look.hairStyle, 0.01);
+  cap.position.y = 0.12 + CAP_TOP;
   cap.visible = look.hairStyle > 0;
   head.add(skull, cap);
   body.add(torso, shoulders, collar, neck, head);
   if (outfit?.tie) {
-    mats.tie = figureMaterial({ color: outfit.tie, roughness: 0.55 });
+    mats.tie = partMaterial('tie', { color: outfit.tie, tieStyle: outfit.tieStyle });
     body.add(new THREE.Mesh(merge(tieParts(SHOULDER_H)), mats.tie));
   }
   if (outfit?.pin) {
-    mats.pin = figureMaterial({ color: outfit.pin, roughness: 0.3, metalness: 0.6 });
+    mats.pin = partMaterial('pin', { color: outfit.pin });
     body.add(new THREE.Mesh(pinPart(SHOULDER_H), mats.pin));
   }
 
@@ -73,8 +76,7 @@ export function createFigure(color, mpId = 'x', outfit = null) {
     el.position.y = -UPPER;
     // Fold first (x), then turn the folded forearm across the chest (y): needed for crossed arms.
     el.rotation.order = 'YXZ';
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), mats.skin);
-    hand.scale.set(1, 0.8, 1.2);
+    const hand = new THREE.Mesh(egg(0.045, 0, 0, 0, 1, 0.8, 1.2, 8), mats.skin);
     hand.position.y = -FORE;
     el.add(hanging(0.05, FORE, mats.suit), hand);
     sh.add(hanging(0.058, UPPER, mats.suit), el);
@@ -86,8 +88,7 @@ export function createFigure(color, mpId = 'x', outfit = null) {
     hip.position.set(0.1 * s, HIP, 0);
     const knee = new THREE.Group();
     knee.position.y = -THIGH;
-    const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.07, 0.25), mats.dark);
-    shoe.position.set(0, -SHIN - 0.04, 0.05);
+    const shoe = box(0.11, 0.07, 0.25, 0, -SHIN - 0.04, 0.05, mats.dark);
     knee.add(hanging(0.065, SHIN, mats.suit), shoe);
     hip.add(hanging(0.08, THIGH, mats.suit), knee);
     g.add(hip);
