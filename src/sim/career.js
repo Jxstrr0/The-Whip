@@ -176,10 +176,19 @@ export function slotsForAct(act, fallback) {
 }
 
 // Back on the backbench: the whip's office still knows your name, but the next contest weighs what you do
-// from here. Notice earned in the whip's office doesn't pile up into an easier climb each time you fall.
+// from here. Notice earned in the whip's office doesn't pile up into an easier climb each time you fall:
+// after a fall you keep part of Act 2's worth (a share from tuning), and the act remembers you fell.
 export function startBackbench(p) {
-  p.actProgress.noticed = Math.min(p.actProgress.noticed, tuning().career.noticedForAct2);
+  const C = tuning().career;
+  p.actProgress.noticed = Math.min(p.actProgress.noticed, C.noticedForAct2);
+  if ((p.highestAct || 1) > 2) {
+    p.actProgress.noticed *= C.backbenchNoticedKeep;
+    p.fellAt = p.actStart;
+  }
 }
+
+// In Act 2 after falling from the whip's office (not a first climb, nor a scenario that starts there).
+export const fellBack = (p) => p.act === 2 && p.fellAt != null && p.fellAt === p.actStart;
 
 // A fresh row for an assistant whip: the carries that earn Act 4 count from this stint, not an earlier one.
 export function startRow(p) {
