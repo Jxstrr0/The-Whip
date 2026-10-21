@@ -33,7 +33,12 @@
   --nay: var(--red);
   --grey: #6b6f76;
   --amber: #c98f2a;
-  --brand: #2f5a3c; /* Longlight's colours go here when Kelbo sends them */
+  /* Longlight's brand: purple, near-black, the terracotta sun and warm off-white (from the studio mark). */
+  --brand: #6c46b5;
+  --brand-2: #7b3fc4;
+  --brand-ink: #141413;
+  --brand-sun: #d97757;
+  --brand-paper: #e1ded5;
   --bg: #15130f;
   --serif: "Fraunces", Georgia, "Iowan Old Style", "Times New Roman", serif;
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.12 0 0 0 0 0.09 0 0 0 0 0.05 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -142,7 +147,7 @@ html, body {
   background-color: var(--paper);
   background-image: var(--grain);
   color: var(--ink);
-  border-left: 4px solid var(--bench);
+  border-left: 4px solid var(--brand);
   border-radius: 2px;
   font-weight: 600;
   font-variant-caps: all-small-caps;
@@ -1009,13 +1014,50 @@ input::placeholder {
   display: inline-block;
   width: 22px;
   height: 22px;
-  border-radius: 4px;
-  background: var(--brand);
-  color: var(--paper);
-  font: 700 15px/22px Georgia, serif;
-  text-align: center;
-  font-variant-caps: normal;
-  letter-spacing: 0;
+  vertical-align: middle;
+}
+
+/* ---- Loading: Longlight's sun comes up while the data and the library arrive ---------------------------- */
+
+#loading {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  background: var(--brand-ink);
+  color: var(--brand-paper);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.16em;
+  font-size: 15px;
+  transition: opacity 420ms ease;
+}
+#loading.off {
+  opacity: 0;
+  pointer-events: none;
+}
+#loading .mark {
+  width: 96px;
+  height: 96px;
+}
+#loading .sun {
+  animation: sunrise 2.4s ease-in-out infinite alternate;
+  transform-origin: 32px 40px;
+}
+@keyframes sunrise {
+  from {
+    transform: translateY(2px);
+  }
+  to {
+    transform: translateY(-3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #loading .sun {
+    animation: none;
+  }
 }
 
 /* ---- Debug tuning panel (?debug=1) ------------------------------------------------------------------- */

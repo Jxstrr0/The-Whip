@@ -575,3 +575,19 @@ The last HANDOFF stage. The game now has a title page worth landing on, three wa
 - **Larger text uses CSS `zoom` on the UI layer**, which every current phone browser supports. The rooms behind don't scale.
 - **The colour-blind palette** is the Okabe-Ito set: blue, vermilion, yellow, bluish green, reddish purple for a fifth party, grey for independents. The paper's own green stays as it is.
 - **Still owed by you:** the phone frame-rate check with `?debug=1`, a listen to the sound, and Longlight's colours for `--brand`.
+
+## 2026-10-21 · Longlight's colours
+
+Kelbo sent the studio mark: the sun on the horizon, in purple, near-black, terracotta and warm off-white.
+
+**What was built**
+
+- **Brand tokens** in `css/style.css`: `--brand` (purple #6c46b5), `--brand-2` (the brighter horizon purple #7b3fc4), `--brand-ink` (#141413), `--brand-sun` (#d97757) and `--brand-paper` (#e1ded5), sampled from the icons.
+- **The mark** replaces the placeholder "W": one SVG (`longlightMark` in `src/ui/text.js`) on the title page colophon, as the browser tab icon, and on the loading screen.
+- **A loading screen.** Until now the page was black until the data and Three.js arrived, which on a phone's first visit is a second or two. Now it is plain HTML in `index.html`, so it shows before any script runs: the studio's dark field, the sun easing up over its horizon, *Longlight Interactive* in small caps. It fades once the title page (or a `?seed=` game) is up, and on a fatal error it gets out of the way of the message.
+- **The masthead tag** ("THE WHIP" at the top left in play) carries a purple left rule in place of the green.
+
+**Things to know / decisions I made**
+
+- The brand stays at the studio's touchpoints: loading, the mark, the masthead rule, the tab icon. The Order Paper keeps its own green, brass and paper; purple across the sheets would fight the look the art pass set. If you'd like more of it (the title page's top rule, the primary buttons), it's one token each.
+- `tests.html`: 69 of 69. Title page, colophon, masthead and the loading screen checked at phone size with no console errors.
