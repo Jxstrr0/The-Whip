@@ -718,3 +718,24 @@ Kelbo's once-over picked twelve things. This is the first: the two rooms where a
 - Press entries now carry a `deck` and a `you` flag. Decks, bylines, captions and the quiet headlines live in `data/headlines.json`; the four new numbers (`pollHistoryWeeks`, `chartWeeks`, `townHallPress`, `leakPress`) in `data/tuning.json` under `media`.
 - Checked over a 48-week headless Parliament: every week has a lead, no placeholders left unfilled, a quarter of weeks quiet, the rest led by confidence votes, bills, revolts and leaks in a believable mix. Leaks were leading too often at first (one week in four), so they're rarer now and rank below a revolt.
 - One new test: the first week's page, the poll history, a quiet week's lead without a dice roll, every deck using only keys a headline can fill, and the photo flag following the player.
+
+## 2026-10-21 · Round two, 10 of 12: Seasons
+
+**What was built**
+
+- **A calendar.** A Parliament's year now runs September to June, ten months of four sitting weeks. The bar reads "Monday 1 September · Week 1, Year 1" instead of a bare week number, and the year turns through autumn, winter (from December), spring (from March) and summer (June).
+- **Weather, every week.** Each week has its own weather: clear, overcast, rain, fog, snow, and in deep winter the odd blizzard, with a temperature to match (about 18° in September, −10° in January, 22° in June). Snow arrives in late autumn, lies all winter and melts over four weeks in March.
+- **The office window** shows it. The painted view over the lawn changes with the year: a long gold dusk in September with the maples turning, first snow on the trees in November, bare boughs under snow and the lawn white with blue shadows by five o'clock in January, a brown wet thaw in March, a green lawn and a late bright evening in June. Snow or rain falls past the glass, rain runs down the pane, fog greys it out, and the room's light goes cold and weak in winter and warm in June. Every office, shared room to chief whip's corner, gets it.
+- **The riding** shows it. The street outside the constituency office is white in winter, with banks along the kerbs and a grey packed road, and the pavement shines when it's wet. Snow and rain fall over the street and the town hall.
+- **Coats on the town hall crowd.** In cool or wet weeks the crowd wears wool coats in dark, ordinary colours; in the cold, two in three wear a toque. In September and June it's shirtsleeves and suits.
+- **The chamber light.** On a clear day, shafts of sun fall from the high windows across the government benches: gold in autumn, thin and blue in January, strong and warm in June. On a grey day there are none and the panes go pale; in a blizzard the room is at its dimmest.
+- **The morning log** marks the turns: the first Monday of each season gets a line ("Winter. The light is gone by half past four and the office window shows nothing but your own reflection."), as do the first snow and a blizzard ("Snow all night and still falling. The buses are off, the galleries are empty, and Monday's count has a new column: stranded."). Three lines per season, rotating by year, so a four-year Parliament doesn't repeat itself back to back.
+- **The weekend paper** carries the weather in its ears ("BLIZZARD · −18°") and its date ("6 January · Year 1").
+
+**Things to know / decisions I made**
+
+- The weather is cosmetic by design: it changes nothing in the sim. It's worked out from the seed and the week number with its own hash, never the game's dice, so it's the same every time for a seed and drawing it never changes a vote or a deal. (Making a blizzard thin the House on a division day is a natural next step if you want weather to bite; I held off because it touches the count.)
+- The caucus room has no windows, so it doesn't change with the seasons.
+- On a phone held upright the paper's ears are too narrow for three items, so "Weekend edition" gives way and the ears show the weather and the date. The date dropped its "Weekend of" prefix for the same reason.
+- The calendar lives in `src/sim/calendar.js`; months, season starts, monthly highs, first snow, thaw length and each season's weather mix are in `data/tuning.json` under `calendar`; the season lines are in `data/seasons.json`. The falling snow and rain are one shared piece (`src/weatherFx.js`) used by the office and the riding.
+- Three new tests: the calendar's dates, weather that is deterministic and fits its season without touching the dice, and the winter line logged exactly once.

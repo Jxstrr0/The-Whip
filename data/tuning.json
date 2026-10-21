@@ -49,7 +49,20 @@
       "Friday"
     ],
     "caucusDay": 3,
-    "ridingDay": 5
+    "ridingDay": 5,
+    "months": ["September", "October", "November", "December", "January", "February", "March", "April", "May", "June"],
+    "weeksPerMonth": 4,
+    "seasons": { "autumn": 1, "winter": 13, "spring": 25, "summer": 37 },
+    "firstSnowWeek": 9,
+    "thawWeeks": 4,
+    "highs": [18, 11, 3, -5, -10, -8, -1, 8, 16, 22],
+    "weather": {
+      "autumn": ["clear", "clear", "overcast", "rain", "clear", "fog", "rain", "clear"],
+      "lateAutumn": ["snow", "overcast", "clear", "rain", "clear", "snow", "fog"],
+      "winter": ["snow", "clear", "snow", "overcast", "clear", "storm", "snow", "clear", "overcast"],
+      "spring": ["rain", "overcast", "clear", "rain", "clear", "fog", "clear", "rain"],
+      "summer": ["clear", "clear", "overcast", "clear", "rain", "clear"]
+    }
   },
   "bills": {
     "govBillsPerWeek": 0.9,
