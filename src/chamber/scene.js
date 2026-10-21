@@ -1,7 +1,7 @@
 // The chamber room: shell, Speaker's dais, Clerk's table and Mace, the bar and galleries, plus seats and camera.
 import * as THREE from 'three';
 import { GEOMETRY as G, seatX } from './layout.js';
-import { box, slab, panel, cylinder, sphere, merge, vertexMaterial, glowMaterial, disposeTree, roomLights, lamp, bakeAO, contactShadows, figureMaterial } from '../kit3d.js';
+import { box, slab, panel, cylinder, sphere, merge, vertexMaterial, glowMaterial, disposeTree, roomLights, lamp, bakeAO, contactShadows } from '../kit3d.js';
 import { PALETTE } from '../look.js';
 import { tuning } from '../sim/config.js';
 import { createSeats } from './seats.js';
@@ -9,6 +9,7 @@ import { createChamberCamera } from './camera.js';
 import { createPicker } from './picking.js';
 import { createMpFigures } from './mps3d.js';
 import { createVoteLights } from './voteLights.js';
+import { createFigureCrowd, lookFor } from '../figures.js';
 
 const C = {
   carpet: '#2f5a3c',
@@ -148,14 +149,12 @@ export function create(ctx) {
   const lights = createVoteLights(seats.records);
   scene.add(lights.group);
   let hidden = [];
-  // The Speaker in the chair, in a black robe.
-  const speaker = new THREE.Group();
-  speaker.add(new THREE.Mesh(new THREE.CapsuleGeometry(0.21, 0.4, 4, 10), figureMaterial({ color: '#15161a', roughness: 0.8 })));
-  const sHead = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), figureMaterial({ color: '#e0ac85', roughness: 0.6 }));
-  sHead.position.y = 0.5;
-  speaker.add(sHead);
-  speaker.position.set(0, G.dais.height + 0.9, G.dais.z + 0.05);
-  scene.add(speaker);
+  // The Speaker in the chair, in a black robe, facing down the chamber.
+  const speaker = createFigureCrowd(1, { pose: 'seated' });
+  speaker.place(0, { x: 0, y: G.dais.height, z: G.dais.z - 0.1, rotY: 0, scale: 1.04 });
+  speaker.dress(0, { ...lookFor('speaker'), suit: '#15161a' });
+  speaker.commit();
+  scene.add(speaker.group);
 
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 120);
   const controls = createChamberCamera(camera, renderer.domElement);
@@ -200,6 +199,8 @@ export function create(ctx) {
       controls.update(dt);
       seats.update(dt, camera);
       lights.update(dt, camera);
+      figures.update(dt);
+      speaker.update(dt);
     },
     resize(w, h) {
       camera.aspect = w / h;
