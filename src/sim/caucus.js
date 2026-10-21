@@ -8,8 +8,9 @@ import { hooks, resolvers, log, isSittingWeek, queueStop } from './pacing.js';
 import { revealMany, touch } from './knowledge.js';
 import { adjustRapport, addStyle } from './relationships.js';
 import { dilemmaFor } from './career.js';
-import { baseScore } from './mp.js';
+import { baseScore, scoreToVote } from './mp.js';
 import { remember, person } from './memoir.js';
+import { canUse, canRelease, expelCandidates } from './tools.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
@@ -246,6 +247,8 @@ export function resolveRevolt(state, rng) {
 export function caucusRevolt(state, choice) {
   const c = state.caucus;
   if (!c?.revolt || c.revolt.choice) return null;
+  // Nobody joins a revolt against themselves.
+  if (choice === 'join' && c.revolt.target === 'whip') return null;
   c.revolt.choice = choice;
   if (choice === 'join') addStyle(state, 'conscience');
   if (choice === 'back') addStyle(state, 'loyalist');
@@ -263,17 +266,38 @@ export function endCaucus(state) {
   state.caucus = null;
 }
 
+// Whether the Chief Whip has business at this table: a whipped line enough of the room means to break (so
+// worth freeing), or a member here who keeps breaking the line and did it again lately.
+export function chiefBusiness(state, c) {
+  if (state.player.act < 5) return false;
+  const T = tuning().tools;
+  const bill = c.billId && state.bills[c.billId];
+  if (bill && canRelease(state, bill.id) && canUse(state, 'freeVote').ok) {
+    const position = bill.positions[state.mps[state.player.mpId].party];
+    const breaking = c.seats.filter((id) => {
+      if (id === state.player.mpId) return false;
+      const { score, abstainLine } = baseScore(state, state.mps[id], bill);
+      return scoreToVote(score, abstainLine) !== position;
+    }).length;
+    if (breaking >= T.freeVoteBusinessRebels) return true;
+  }
+  return canUse(state, 'expel').ok && expelCandidates(state).some((x) => !x.locked && x.recent > 0 && x.rebellions >= T.expelBusinessRebellions && c.seats.includes(x.mpId));
+}
+
 // Wednesday of a sitting week. It stops the player in the first week, when their own dilemma is the week's
-// question, or when the room is angry (restless is enough once it's the Chief Whip's room); otherwise caucus
-// happens without them noticing.
+// question, or when the room is angry. Once it's the Chief Whip's room, restless is enough if there's
+// business for the whip at the table; a restless room with none leaves a line in the log instead.
 hooks.caucus.push((state, rng) => {
   if (!isSittingWeek(state)) return null;
   const c = startCaucus(state, rng);
   if (!c) return null;
   const me = state.mps[state.player.mpId];
   const own = c.billId && (state.player.forceDilemma === c.billId || dilemmaFor(state, state.bills[c.billId], baseScore, tuning().pacing));
-  const stop = state.date.absWeek === 0 || !!c.revolt || (own && state.player.pacing.stopFor.includes('ownVote')) || ((c.mood === 'angry' || (c.mood === 'restless' && state.player.act >= 5)) && state.player.pacing.stopFor.includes('caucusFight'));
+  const fights = state.player.pacing.stopFor.includes('caucusFight');
+  const restless = c.mood === 'restless' && state.player.act >= 5;
+  const stop = state.date.absWeek === 0 || !!c.revolt || (own && state.player.pacing.stopFor.includes('ownVote')) || (fights && (c.mood === 'angry' || (restless && chiefBusiness(state, c))));
   if (!stop || !me) {
+    if (restless && fights) log(state, rng.pick(data().caucus.restlessNotes), 'caucus');
     endCaucus(state);
     return null;
   }

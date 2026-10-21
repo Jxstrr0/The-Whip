@@ -83,6 +83,11 @@
     { "id": "h053", "event": "walkout", "text": "Walkout leaves Speaker facing half a chamber" },
     { "id": "h054", "event": "walkout", "text": "{party} members leave the chamber rather than vote" },
     { "id": "h055", "event": "walkout", "text": "{name} leads walkout; whips call it ‘theatre’" },
+    { "id": "h077", "event": "expelled", "text": "{member} expelled from {party} caucus" },
+    { "id": "h078", "event": "expelled", "text": "{member} shown the door as {name} clears the front bench" },
+    { "id": "h079", "event": "expelled", "text": "{member}, the {role}, to sit as an independent" },
+    { "id": "h080", "event": "expelled", "text": "Whip's office puts out {member}; front bench told to take note" },
+    { "id": "h081", "event": "expelled", "text": "{member} out, and {party} is a seat lighter" },
 
     { "id": "h056", "event": "leak", "text": "Leaked memo shows {party} split on {bill}" },
     { "id": "h057", "event": "leak", "text": "What was said in Wednesday's caucus, by people who were there" },
@@ -162,6 +167,10 @@
       "The member for {riding} was not in the chamber when {bill} came to a vote. A spokesperson cited constituency business. The whip's office cited nothing.",
       "An empty seat is noticed in a close House, and the House is close. {name}'s office says the absence was cleared. The whip's office has not said with whom."
     ],
+    "expelled": [
+      "{member} heard it at the caucus table and left before the business was done. {party} is a seat lighter, and its front bench a good deal quieter.",
+      "Expelling a {role} is not a thing a whip's office does lightly, and this one did it in front of the whole caucus. Nobody at the table would say who's next."
+    ],
     "walkout": [
       "{count} members left the chamber together before the vote on {bill}, which carried in their absence. The Speaker noted the empty benches and the time.",
       "A walkout is a message to the cameras, and the cameras were there. What it does to the count on {bill} is a question for the whips."
@@ -212,5 +221,6 @@
     "{name} outside the whip's office. File photo.",
     "{name} in the lobby, declining to comment.",
     "The member for {riding}, photographed before the division."
-  ]
+  ],
+  "roles": { "cabinet": "minister", "shadowCabinet": "shadow minister", "houseLeader": "House Leader", "deputyWhip": "deputy whip", "assistantWhip": "assistant whip" }
 }

@@ -1,6 +1,7 @@
 // Goals: what the player is working toward in this act, and what each scene is for. Pure reads of state;
 // the UI turns the keys into text. Thresholds come from tuning, so the aim always matches the rules.
 import { tuning } from './config.js';
+import { fellBack } from './career.js';
 
 const weeksInAct = (state) => state.date.absWeek - (state.player.actStart ?? 0);
 
@@ -10,7 +11,8 @@ export function isGuidedWeek(state) {
 }
 
 // The act's aim. Each counter is { key, have, need }; `limit` counters are ones to stay under or above,
-// not reach. `waiting` is set once the counters are done and the next step is up to the House.
+// not reach. `waiting` is set once the counters are done and the next step is up to the House; `fell` when
+// this Act 2 follows a fall from the whip's office.
 export function actAim(state) {
   const p = state.player;
   const C = tuning().career;
@@ -39,7 +41,7 @@ export function actAim(state) {
     default:
       counters.push({ key: 'caucusFloor', have: Math.round(p.caucusSupport), need: R.revoltBelowSupport, limit: 'above' }, { key: 'pressure', have: Math.round(state.pressure || 0), need: tuning().confidence.pressureReplaced, limit: 'below' });
   }
-  return { act: Math.max(1, Math.min(5, p.act)), counters, waiting };
+  return { act: Math.max(1, Math.min(5, p.act)), counters, waiting, fell: fellBack(p) };
 }
 
 // One short line for each scene: the key of what the player is there to do, and the values it fills in.
@@ -52,7 +54,7 @@ export function sceneJob(state, kind, ctx = {}) {
       if (ctx.items.some((i) => i.stop === 'ownVote')) return { key: 'job.morning.ownVote' };
       return { key: whip ? 'job.morning.whip' : 'job.morning' };
     case 'office':
-      return { key: whip ? 'job.office.whip' : ctx.whipCall ? 'job.office.called' : 'job.office', vars: { n: ctx.slots ?? p.slots } };
+      return { key: whip ? 'job.office.whip' : ctx.whipCall ? 'job.office.called' : fellBack(p) && weeksInAct(state) < 1 ? 'job.office.fell' : 'job.office', vars: { n: ctx.slots ?? p.slots } };
     case 'meeting':
       return { key: `job.meeting.${ctx.situation in MEETINGS ? ctx.situation : 'other'}`, vars: { pos: ctx.pos || '' } };
     case 'caucus':
