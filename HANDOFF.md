@@ -457,13 +457,13 @@ Build one stage per session, in order. A stage is done only when every check und
 **Stage 0: Repo and pipeline.** Follow section 3.
 
 - [ ] The live URL loads on a phone and shows the placeholder
-- [ ] `DESIGN.md`, `HANDOFF.md` and `PROGRESS.md` are in the repo
+- [x] `DESIGN.md`, `HANDOFF.md` and `PROGRESS.md` are in the repo
 
 **Stage 1: The chamber.** Write `layout.js` from section 5, then `scene.js`, `seats.js`, `camera.js` and `picking.js`. Simple primitives for the shell, dais, table, Mace, bar and galleries. Tapping a seat shows a label with its seat id, side, row and index.
 
-- [ ] 120 seats render as instanced meshes, 60 per side, four rows each
-- [ ] Orbit, pinch zoom and double-tap focus work by touch within the limits
-- [ ] Tapping any seat reports the right seat id
+- [x] 120 seats render as instanced meshes, 60 per side, four rows each
+- [x] Orbit, pinch zoom and double-tap focus work by touch within the limits
+- [x] Tapping any seat reports the right seat id
 - [ ] Smooth on Kelbo's phone; renderer pixel ratio capped at 2
 
 **Stage 2: MPs, parties, cohorts and cliques.** Write `rng.js`, `generate.js` and `relationships.js`, add `data/` name pools, ridings and clique templates, build `mps3d.js` and `ui/mpCard.js`. Party blocks follow section 5, including overflow, whips' seats and clique grouping.
