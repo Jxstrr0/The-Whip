@@ -2,6 +2,7 @@
 // frame a party block. Home: your own seat, a fixed viewpoint looking across the aisle; drag turns your head,
 // pinch narrows the lens. Acts 1 and 2 open at home, so the backbench feels like a seat, not a map.
 import * as THREE from 'three';
+import { sideAim } from '../framing.js';
 
 const DEG = Math.PI / 180;
 export const CAMERA_LIMITS = {
@@ -40,6 +41,7 @@ export function createChamberCamera(camera, el) {
   let baseFov = 60;
   let homeFov = 62;
   let aimDrop = 0;
+  let walkSide = 0; // in landscape the walk's caption sheet takes the right, so the gaze turns into the clear left
   let lastAspect = 1;
 
   const pointers = new Map();
@@ -285,7 +287,7 @@ export function createChamberCamera(camera, el) {
         const k = clamp((u - walk.turnU * 0.85) / (1 - walk.turnU * 0.85), 0, 1);
         // Eyes on the chair, tipped down so the benches sit above the caption sheet (more so in portrait).
         const c = walk.chair;
-        const yaw = Math.atan2(c.x - walk.pos.x, c.z - walk.pos.z);
+        const yaw = Math.atan2(c.x - walk.pos.x, c.z - walk.pos.z) + walkSide;
         const pitch = Math.atan2(c.y - walk.pos.y, Math.hypot(c.x - walk.pos.x, c.z - walk.pos.z)) - (aimDrop ? 0.34 : 0.06);
         const cp = Math.cos(pitch);
         walk.toChair.set(walk.pos.x + Math.sin(yaw) * cp * 6, walk.pos.y + Math.sin(pitch) * 6, walk.pos.z + Math.cos(yaw) * cp * 6);
@@ -316,11 +318,12 @@ export function createChamberCamera(camera, el) {
     // Portrait phones see a narrow slice, so widen the lens until about 36 degrees fit across.
     // (Backing the camera off instead would put it outside the walls.) At home, aim a little lower in
     // portrait so the people across the aisle sit above the bottom sheet.
-    fitAspect(aspect) {
+    fitAspect(aspect, cssWidth = 0) {
       lastAspect = aspect;
       baseFov = clamp(2 * Math.atan(Math.tan(18 * DEG) / aspect) / DEG, 50, 75);
       homeFov = clamp(2 * Math.atan(Math.tan(21 * DEG) / aspect) / DEG, 48, 80);
       aimDrop = aspect < 1 ? 0.2 : 0;
+      walkSide = sideAim(aspect, homeFov, cssWidth);
       apply();
     },
     reset() {

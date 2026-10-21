@@ -2244,8 +2244,4 @@ body.cold-open .topbar {
     bottom: 0;
     max-height: none;
   }
-  .coldopen-sheet.co-walking {
-    top: auto;
-    max-height: 70dvh;
-  }
 }
