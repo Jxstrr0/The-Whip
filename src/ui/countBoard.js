@@ -89,31 +89,55 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
       .join('');
   }
 
-  function renderBoard(result, counts, done) {
-    const state = getState();
-    const voting = result.yeas.length + result.nays.length;
-    const needed = Math.floor(voting / 2) + 1;
-    const max = Math.max(needed, result.yeas.length, result.nays.length, 1);
-    const me = state.player.mpId;
-    const mine = result.yeas.includes(me) ? 'yea' : result.nays.includes(me) ? 'nay' : 'absent';
-    board.innerHTML = `
-      <p class="muted">${esc(result.title)} · ${esc(stageLabel(result.stage))}</p>
-      <div class="tally">
-        <div class="bar-row"><span>✔ ${t('div.yeas')}</span><div class="bar"><i class="yea" style="width:${(100 * counts.yea) / max}%"></i><em style="left:${(100 * needed) / max}%"></em></div><b>${counts.yea}</b></div>
-        <div class="bar-row"><span>✖ ${t('div.nays')}</span><div class="bar"><i class="nay" style="width:${(100 * counts.nay) / max}%"></i><em style="left:${(100 * needed) / max}%"></em></div><b>${counts.nay}</b></div>
-      </div>
-      <p class="muted">${t('div.needed', { n: needed })} · ${partyRows(state, result, counts)}</p>
-      ${done ? `<p class="verdict ${result.carried ? 'yea' : 'nay'}">${t(result.carried ? 'div.carried' : 'div.defeated', { y: result.yeas.length, n: result.nays.length })}</p>
-        ${result.speakerVote ? `<p>${t('div.speaker', { v: t('vote.' + result.speakerVote) })}</p>` : ''}
-        <p class="muted">${t('div.you', { v: t('vote.' + mine) })}</p>` : `<p class="muted">${t('div.counting')}…</p>`}
-      <div class="card-actions">${done ? `<button class="btn primary" data-act="cont">${t('div.continue')}</button>` : `<button class="btn" data-act="fast">${t('div.skipAnim')}</button>`}</div>`;
-    board.querySelector('[data-act="cont"]')?.addEventListener('click', () => {
+  // One click handler for the board's lifetime, so a tap still lands while the count updates.
+  board.addEventListener('click', (e) => {
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (act === 'fast') getRoom()?.lights.finish();
+    else if (act === 'cont') {
       board.classList.add('hidden');
       getRoom()?.clearDivision();
       shownResult = null;
       onContinue();
-    });
-    board.querySelector('[data-act="fast"]')?.addEventListener('click', () => getRoom()?.lights.finish());
+    }
+  });
+
+  function boardScale(result) {
+    const voting = result.yeas.length + result.nays.length;
+    const needed = Math.floor(voting / 2) + 1;
+    return { needed, max: Math.max(needed, result.yeas.length, result.nays.length, 1) };
+  }
+
+  // Build the board once per division; ticks only touch the numbers, so the buttons are never replaced mid-tap.
+  function buildBoard(result) {
+    const { needed, max } = boardScale(result);
+    board.innerHTML = `
+      <p class="muted">${esc(result.title)} · ${esc(stageLabel(result.stage))}</p>
+      <div class="tally">
+        <div class="bar-row"><span>✔ ${t('div.yeas')}</span><div class="bar"><i class="yea" data-bar="yea"></i><em style="left:${(100 * needed) / max}%"></em></div><b data-n="yea">0</b></div>
+        <div class="bar-row"><span>✖ ${t('div.nays')}</span><div class="bar"><i class="nay" data-bar="nay"></i><em style="left:${(100 * needed) / max}%"></em></div><b data-n="nay">0</b></div>
+      </div>
+      <p class="muted">${t('div.needed', { n: needed })} · <span data-parties></span></p>
+      <div data-outcome><p class="muted">${t('div.counting')}…</p></div>
+      <div class="card-actions"><button class="btn" data-act="fast">${t('div.skipAnim')}</button></div>`;
+  }
+
+  function updateCounts(result, counts) {
+    const { max } = boardScale(result);
+    for (const k of ['yea', 'nay']) {
+      board.querySelector(`[data-bar="${k}"]`).style.width = `${(100 * counts[k]) / max}%`;
+      board.querySelector(`[data-n="${k}"]`).textContent = counts[k];
+    }
+    board.querySelector('[data-parties]').innerHTML = partyRows(getState(), result, counts);
+  }
+
+  function finishBoard(result) {
+    updateCounts(result, { yea: result.yeas.length, nay: result.nays.length });
+    const me = getState().player.mpId;
+    const mine = result.yeas.includes(me) ? 'yea' : result.nays.includes(me) ? 'nay' : 'absent';
+    board.querySelector('[data-outcome]').innerHTML = `<p class="verdict ${result.carried ? 'yea' : 'nay'}">${t(result.carried ? 'div.carried' : 'div.defeated', { y: result.yeas.length, n: result.nays.length })}</p>
+        ${result.speakerVote ? `<p>${t('div.speaker', { v: t('vote.' + result.speakerVote) })}</p>` : ''}
+        <p class="muted">${t('div.you', { v: t('vote.' + mine) })}</p>`;
+    board.querySelector('.card-actions').innerHTML = `<button class="btn primary" data-act="cont">${t('div.continue')}</button>`;
   }
 
   function showResult(p) {
@@ -123,28 +147,22 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
     const result = state.divisions[p.divisionId];
     sheet.classList.add('hidden');
     board.classList.remove('hidden');
-    let done = false;
-    let counts = { yea: 0, nay: 0 };
-    renderBoard(result, counts, false);
-    let last = 0;
+    buildBoard(result);
+    updateCounts(result, { yea: 0, nay: 0 });
     const room = getRoom();
-    if (!room) return renderBoard(result, { yea: result.yeas.length, nay: result.nays.length }, true);
+    if (!room) return finishBoard(result);
+    let last = 0;
     room.playDivision(result, {
       secondsPerSeat: tuning().vote.secondsPerSeat,
       tick(c) {
-        counts = { ...c };
-        // Re-render at most every few seats so phones stay smooth.
+        // Update at most every few seats so phones stay smooth.
         if (c.yea + c.nay - last >= 3) {
           last = c.yea + c.nay;
-          renderBoard(result, counts, false);
+          updateCounts(result, c);
         }
       },
-      done() {
-        done = true;
-        renderBoard(result, { yea: result.yeas.length, nay: result.nays.length }, true);
-      },
+      done: () => finishBoard(result),
     });
-    if (done) renderBoard(result, { yea: result.yeas.length, nay: result.nays.length }, true);
   }
 
   return {
