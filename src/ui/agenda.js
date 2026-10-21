@@ -2,6 +2,8 @@
 import { t, esc } from './text.js';
 import { tuning } from '../sim/config.js';
 import { stageLabel } from '../sim/vote.js';
+import { prediction } from '../sim/count.js';
+import { countLine } from './text.js';
 
 export function createAgenda(root, { getState, onContinue, onSkip, onNewGame }) {
   const bar = document.createElement('section');
@@ -45,7 +47,8 @@ export function createAgenda(root, { getState, onContinue, onSkip, onNewGame }) 
           .map(({ billId, stage, stop }) => {
             const b = state.bills[billId];
             const tags = [b.confidence ? `<span class="badge">${t('agenda.confidence')}</span>` : '', stop === 'ownVote' ? `<span class="badge you">${t('agenda.yourVote')}</span>` : ''].join(' ');
-            return `<li><b>${esc(b.title)}</b> <small>${esc(stageLabel(stage))}</small> ${tags}<p>${esc(b.summary || '')}</p></li>`;
+            const count = state.player.act >= tuning().tools.officeFilesFromAct && b.lines[state.mps[state.player.mpId].party] === 'whipped' ? countLine(prediction(state, billId)) : '';
+            return `<li><b>${esc(b.title)}</b> <small>${esc(stageLabel(stage))}</small> ${tags}<p>${esc(b.summary || '')}</p>${count}</li>`;
           })
           .join('')
       : `<li>${t('agenda.noVotes')}</li>`;
