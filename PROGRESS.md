@@ -190,3 +190,17 @@ The handoff asks for this slice to be played before stage 5, and for your verdic
 *What worked:* (your notes)
 
 *What didn't:* (your notes)
+
+---
+
+## 2026-10-21 · Deploying to GitHub Pages
+
+**What changed**
+
+- The game is live at **https://jxstrr0.github.io/The-Whip/**. You no longer need the Settings → Pages steps from the stage 0 entry.
+- `.github/workflows/pages.yml` publishes the repo root to Pages on every push to `main`. It switched Pages on by itself the first time it ran. There's still no build step: what's in the repo is what's served.
+- A small gold "W" tab icon, built into the page, so browsers stop asking for a missing `favicon.ico`.
+
+**Checks**
+
+- On the live site in a headless phone browser: the start menu loads, a guided game opens on Monday of week 1 with the chamber drawn, and `tests.html` passes 33 of 33.
