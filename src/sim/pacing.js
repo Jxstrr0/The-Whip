@@ -10,7 +10,7 @@ import { dilemmaFor, applyPlayerVote } from './career.js';
 import { decayKnowledge, reveal } from './knowledge.js';
 
 // Rooms and phases that later stages hook into (office, caucus, riding). Each returns a pending stop or null.
-export const hooks = { morning: [], caucus: [], house: [], office: [], riding: [], fallout: [], weekend: [] };
+export const hooks = { morning: [], caucus: [], questionPeriod: [], house: [], office: [], riding: [], fallout: [], weekend: [] };
 // Stage 8 hangs the early-Parliament handover here: a fallen government may be replaced without an election.
 // Registered by election.js: `canHandOver(state)` says whether a fallen government hands over to the opposition
 // instead of forcing an election; `beforeDissolve(state, rng)` performs it.
@@ -289,6 +289,12 @@ export function next(state) {
         flow.step = 'house';
         return runHooks(hooks.caucus, state, rng);
       case 'house': {
+        // Question Period comes before the day's votes, once; a stop here stands the player up.
+        if (!flow.day.qpDone) {
+          flow.day.qpDone = true;
+          const q = runHooks(hooks.questionPeriod, state, rng);
+          if (q) return q;
+        }
         const p = houseStep(state, rng);
         if (!p && flow.step === 'office') return runHooks(hooks.house, state, rng);
         return p;

@@ -40,6 +40,7 @@ export function createChamberLife({ scene, seats, figures, getState, colorOf }) 
   let walker = null;
   let timer = tuning().look.walkerEvery * 0.6;
   const away = new Map(); // seatId -> mpId, for members who are out of the chamber
+  let onFeet = null; // { seatId, f, t }: the member on their feet in Question Period
 
   function pathFor(s, out) {
     const aisleX = (s.side === 'gov' ? -1 : 1) * (G.aisleWidth / 2 + 0.7);
@@ -90,7 +91,7 @@ export function createChamberLife({ scene, seats, figures, getState, colorOf }) 
     if (!state) return;
     const candidates = seats.records.filter((s) => {
       const id = figures.mpAt(s.seatId);
-      return id && id !== state.player.mpId && s.seatId !== homeSeatId && !away.has(s.seatId) && s.row >= 2;
+      return id && id !== state.player.mpId && s.seatId !== homeSeatId && s.seatId !== onFeet?.seatId && !away.has(s.seatId) && s.row >= 2;
     });
     if (!candidates.length) return;
     const s = candidates[Math.floor(Math.random() * candidates.length)];
@@ -114,7 +115,39 @@ export function createChamberLife({ scene, seats, figures, getState, colorOf }) 
     });
   }
 
+  // Stand a member up at their seat (the seated instance steps aside) and sit them down again.
+  function sit() {
+    if (!onFeet) return;
+    scene.remove(onFeet.f.group);
+    onFeet.f.group.traverse((o) => o.geometry?.dispose());
+    onFeet.f.materials.forEach((m) => m.dispose());
+    if (!away.has(onFeet.seatId)) figures.setPresent(onFeet.seatId, true);
+    onFeet = null;
+  }
+
+  function stand(seatId, mpId) {
+    if (onFeet?.seatId === seatId) return;
+    sit();
+    const state = getState();
+    const s = seats.byId.get(seatId);
+    const mp = state?.mps[mpId];
+    if (!s || !mp) return;
+    const color = colorOf(mp);
+    const f = createFigure(color, mpId, wardrobe(mpId, color, { bench: true }));
+    poseFigure(f, 'standing', 1);
+    f.group.position.set(s.x, s.y, s.z);
+    f.group.rotation.y = s.rotationY;
+    scene.add(f.group);
+    figures.setPresent(seatId, false);
+    onFeet = { seatId, f, t: 0 };
+  }
+
   return {
+    stand,
+    sit,
+    get standingSeat() {
+      return onFeet?.seatId ?? null;
+    },
     clerksStand(on) {
       seated.group.visible = !on;
       standing.group.visible = on;
@@ -126,6 +159,7 @@ export function createChamberLife({ scene, seats, figures, getState, colorOf }) 
     reset() {
       walker?.dispose();
       walker = null;
+      sit();
       for (const seatId of away.keys()) figures.setPresent(seatId, true);
       away.clear();
       timer = tuning().look.walkerEvery * 0.6;
@@ -133,6 +167,17 @@ export function createChamberLife({ scene, seats, figures, getState, colorOf }) 
     update(dt, busy, homeSeatId) {
       walker?.update(dt);
       seated.update(dt);
+      if (onFeet) {
+        // On their feet and speaking: a little weight shift, the head turning to the chair and back, one hand
+        // making the point.
+        const st = (onFeet.t += dt);
+        const f = onFeet.f;
+        f.body.rotation.z = Math.sin(st * 0.9) * 0.025;
+        f.head.rotation.y = Math.sin(st * 0.6) * 0.3 - 0.15;
+        f.head.rotation.x = Math.sin(st * 1.7) * 0.04;
+        f.arms[0].sh.rotation.x = -0.75 + Math.sin(st * 2.2) * 0.2;
+        f.arms[0].el.rotation.x = -1.25 + Math.sin(st * 2.2 + 1) * 0.15;
+      }
       if (gavelT >= 0) {
         gavelT += dt;
         // Lift over 0.25 s, drop fast, a small bounce, rest.
@@ -150,6 +195,7 @@ export function createChamberLife({ scene, seats, figures, getState, colorOf }) 
     dispose() {
       walker?.dispose();
       walker = null;
+      sit();
       seated.dispose();
       standing.dispose();
     },
