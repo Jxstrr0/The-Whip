@@ -3,7 +3,7 @@ import { t, esc, mpName } from './text.js';
 import { data } from '../sim/config.js';
 import { neighbours, fillStance } from '../sim/caucus.js';
 
-export function createCaucusUI(root, { getState, dispatch }) {
+export function createCaucusUI(root, { getState, dispatch, getRoom }) {
   const sheet = document.createElement('section');
   sheet.className = 'sheet caucus-sheet hidden';
   root.appendChild(sheet);
@@ -42,12 +42,15 @@ export function createCaucusUI(root, { getState, dispatch }) {
       <p class="hint">${t('caucus.hint')}</p>`;
     const on = (sel, fn) => sheet.querySelector(sel)?.addEventListener('click', fn);
     on('[data-act="listen"]', () => {
-      lastNote = dispatch({ type: 'caucusListen' })?.note;
+      const r = dispatch({ type: 'caucusListen' });
+      lastNote = r?.note;
+      if (r?.pairs?.length) getRoom?.()?.showPairs(r.pairs);
       open = null;
       render(getState());
     });
     on('[data-act="speak"]', () => {
       open = open === 'speak' ? null : 'speak';
+      getRoom?.()?.focusHead(open === 'speak');
       render(getState());
     });
     on('[data-act="whisper"]', () => {
@@ -59,6 +62,7 @@ export function createCaucusUI(root, { getState, dispatch }) {
         const r = dispatch({ type: 'caucusSpeak', stance: b.dataset.stance });
         lastNote = r ? `You said it. ${r.kind === 'support' ? 'The front bench nods.' : r.kind === 'challenge' ? 'The leader writes something down.' : 'A few heads turn your way.'}` : null;
         open = null;
+        setTimeout(() => getRoom?.()?.focusHead(false), 2500);
         render(getState());
       })
     );

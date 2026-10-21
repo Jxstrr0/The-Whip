@@ -17,7 +17,6 @@ import * as chamber from './chamber/scene.js';
 import * as office from './office/officeScene.js';
 import * as caucus from './caucus/caucusScene.js';
 import * as riding from './riding/ridingScene.js';
-import { MOOD_TINT } from './caucus/caucusFigures.js';
 import { createHud, createTuningPanel, createToast } from './ui/hud.js';
 import { createMpCard } from './ui/mpCard.js';
 import { createBook } from './ui/book.js';
@@ -196,7 +195,7 @@ function buildWorld() {
     onContinue: () => dispatch({ type: 'advance' }),
   });
   const officeUI = createOfficeUI(ui, { getState, dispatch, pickMp });
-  const caucusUI = createCaucusUI(ui, { getState, dispatch });
+  const caucusUI = createCaucusUI(ui, { getState, dispatch, getRoom: () => (rooms.name === 'caucus' ? rooms.room : null) });
   const ridingUI = createRidingUI(ui, { getState, dispatch });
 
   // Keep each room in step with the sim: who's in the chair, moods, the board, the crowd.
@@ -214,11 +213,10 @@ function buildWorld() {
         room.pushIn(mt.phase === 'deal');
       } else room.setVisitor(null);
     } else if (name === 'caucus') {
-      // The whip's read: seats you can read show their mood; the rest show party colours.
-      room.tint((id) => {
+      // The whip's read: everyone in party colours; the seats you can read carry their mood as a mark.
+      room.read((id) => {
         const k = state.player.knowledge[id]?.mood;
-        if (id === state.player.mpId) return '#f2c14e';
-        return k?.known && !k.stale ? MOOD_TINT[state.mps[id].mood] : colorOf(state.mps[id]);
+        return { color: colorOf(state.mps[id]), mood: k?.known && !k.stale ? state.mps[id].mood : null, me: id === state.player.mpId };
       });
     } else if (name === 'riding') {
       const v = state.ridingVisit;
