@@ -396,12 +396,24 @@ function leverage(state, rng, { mpId, billId }) {
   return { ok: true, leaked, note };
 }
 
-function freeVote(state, rng, { billId }) {
-  const T = tuning().tools;
+// Releasing the room in caucus goes back on a whipped line: only an active, whipped bill that isn't a
+// matter of confidence, and the leader takes it by temper, as when the line is set free on Monday.
+export function canRelease(state, billId) {
   const bill = state.bills[billId];
   const party = me(state).party;
+  return !!bill && bill.status === 'active' && bill.lines[party] === 'whipped' && !bill.confidence;
+}
+
+function freeVote(state, rng, { billId }) {
+  const T = tuning().tools;
+  if (!canRelease(state, billId)) return { ok: false, reason: 'line' };
+  const bill = state.bills[billId];
+  const party = me(state).party;
+  const temper = state.parties[party].leaderPersonality;
   bill.lines[party] = 'free';
   for (const m of Object.values(state.mps)) if (m.party === party) m.loyalty = clamp(m.loyalty + T.freeVoteLoyalty, 0, 100);
+  state.player.leaderTrust = clamp(state.player.leaderTrust + (tuning().ranks.freeVoteTrust[temper] ?? -3), 0, 100);
+  if (state.caucus?.billId === billId) state.caucus.line = { line: 'free', position: bill.positions[party] };
   addStyle(state, 'loyalist');
   const note = `You released the caucus on ${bill.title}. A free vote; the result is theirs now.`;
   ledgerAdd(state, { from: state.player.mpId, to: party, kind: 'tool', what: `freeVote:${billId}`, note });
@@ -409,21 +421,59 @@ function freeVote(state, rng, { billId }) {
   return { ok: true, note };
 }
 
+// Who a Chief Whip can put out of caucus: a member of your own party below the front bench. The leader,
+// cabinet and the whip's office go by other means; the Speaker belongs to the House.
+const PROTECTED = ['leader', 'cabinet', 'shadowCabinet', 'houseLeader', 'chiefWhip', 'deputyWhip', 'assistantWhip', 'speaker'];
+export function canExpel(state, mpId) {
+  const m = state.mps[mpId];
+  return !!m && mpId !== state.player.mpId && m.party === me(state).party && !PROTECTED.includes(m.caucusRole) && state.parties[m.party]?.leader !== mpId;
+}
+
+// Members you could expel, the most rebellious first: how often each has voted against a whipped line in
+// this Parliament's recorded divisions, then loyalty.
+export function expelCandidates(state) {
+  const party = me(state).party;
+  const rebels = {};
+  for (const d of Object.values(state.divisions || {})) {
+    const bill = d.recorded && state.bills[d.billId];
+    if (!bill || bill.lines?.[party] !== 'whipped') continue;
+    const against = bill.positions[party] === 'yea' ? d.nays : bill.positions[party] === 'nay' ? d.yeas : null;
+    for (const id of against || []) rebels[id] = (rebels[id] || 0) + 1;
+  }
+  return Object.values(state.mps)
+    .filter((m) => canExpel(state, m.id))
+    .map((m) => ({ mpId: m.id, rebellions: rebels[m.id] || 0, loyalty: Math.round(m.loyalty) }))
+    .sort((a, b) => b.rebellions - a.rebellions || a.loyalty - b.loyalty || a.mpId.localeCompare(b.mpId));
+}
+
 function expel(state, rng, { mpId }) {
   const T = tuning().tools;
+  if (!canExpel(state, mpId)) return { ok: false, reason: 'protected' };
+  if (state.caucus?.expelled) return { ok: false, reason: 'once' };
   const m = state.mps[mpId];
   const party = state.parties[m.party];
-  if (!party) return { ok: false, reason: 'independent' };
   party.seats = Math.max(0, party.seats - 1);
   party.morale = clamp((party.morale ?? 60) + T.expelMorale, 0, 100);
   m.party = 'ind';
   m.caucusRole = 'backbencher';
+  if (m.clique && state.cliques?.[m.clique]) state.cliques[m.clique].members = state.cliques[m.clique].members.filter((id) => id !== mpId);
   m.clique = null;
   m.mood = 'angry';
   adjustRapport(state, mpId, -60);
   state.player.record.expelled++;
   addStyle(state, 'enforcer');
   reseat(state);
+  // In the room, the chair empties: one fewer voice at the table, and one fewer behind a revolt.
+  const c = state.caucus;
+  if (c) {
+    c.expelled = mpId;
+    c.seats = c.seats.filter((id) => id !== mpId);
+    c.grievances = c.grievances.filter((g) => g.mpId !== mpId);
+    if (c.revolt && !c.revolt.resolved) {
+      c.revolt.size = Math.max(1, c.revolt.size - 1);
+      c.revolt.support = Math.max(0, c.revolt.support - 1);
+    }
+  }
   const note = `${fullName(m)} has been expelled from caucus and sits as an independent.`;
   ledgerAdd(state, { from: state.player.mpId, to: mpId, kind: 'threat', what: 'expelled', note });
   log(state, note, 'tool');

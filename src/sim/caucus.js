@@ -1,5 +1,6 @@
 // The caucus meeting: Wednesday morning behind closed doors. The leader sets the week's line, grievances
-// get aired, and the player can listen, speak and whisper. (Revolts and expulsion arrive in stage 7.)
+// get aired, and the player can listen, speak and whisper. From Act 5 the Chief Whip can also free the line or
+// expel a member (both in tools.js).
 import { data, tuning } from './config.js';
 import { withRng } from './rng.js';
 import { registerActions } from './actions.js';
@@ -263,14 +264,15 @@ export function endCaucus(state) {
 }
 
 // Wednesday of a sitting week. It stops the player in the first week, when their own dilemma is the week's
-// question, or when the room is angry; otherwise caucus happens without them noticing.
+// question, or when the room is angry (restless is enough once it's the Chief Whip's room); otherwise caucus
+// happens without them noticing.
 hooks.caucus.push((state, rng) => {
   if (!isSittingWeek(state)) return null;
   const c = startCaucus(state, rng);
   if (!c) return null;
   const me = state.mps[state.player.mpId];
   const own = c.billId && (state.player.forceDilemma === c.billId || dilemmaFor(state, state.bills[c.billId], baseScore, tuning().pacing));
-  const stop = state.date.absWeek === 0 || !!c.revolt || (own && state.player.pacing.stopFor.includes('ownVote')) || (c.mood === 'angry' && state.player.pacing.stopFor.includes('caucusFight'));
+  const stop = state.date.absWeek === 0 || !!c.revolt || (own && state.player.pacing.stopFor.includes('ownVote')) || ((c.mood === 'angry' || (c.mood === 'restless' && state.player.act >= 5)) && state.player.pacing.stopFor.includes('caucusFight'));
   if (!stop || !me) {
     endCaucus(state);
     return null;
