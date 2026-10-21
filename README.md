@@ -55,6 +55,7 @@ Opening `index.html` straight from the file system won't work, because browsers 
 | `?debug=1` | FPS counter, the Parliament hash, tuning sliders for every number in `data/tuning.json`, and `window.whip` in the console (`state`, `dispatch`, the sim modules) |
 | `?v=<anything>` | Dodge a cached old version after a push |
 | `tests.html` | Run the sim test suite in the browser |
+| `tools/lineup.html` | Dev page: the figure in every pose, side by side, for checking the look |
 
 ## Code layout
 
