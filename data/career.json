@@ -60,5 +60,91 @@
     "sendNoteNote": "The decent minimum.",
     "ignore": "Let it pass",
     "ignoreNote": "You have your own week. They'll notice you didn't."
+  },
+  "act4": "You run the count now. Every division goes through your board, every pair through your hands, and every whip on the other side knows your name. Act 4 is about who you trust across the aisle.",
+  "act5": "The chair at the head of the whip's table is yours. You set the line with the leader, you hold the committee seats and the travel and the leave, and the caucus remembers everything you did to them on the way up. Act 5 is about what kind of whip you are.",
+  "leanOnFriend": {
+    "intro": "{name} came in with you. Their riding hates {bill}, and the line is {position}. The deputy whip wants them in their seat and voting it. It's your row.",
+    "gentle": "Ask them as a friend",
+    "gentleNote": "Make the case, and let them know you'll remember it. It may not be enough.",
+    "hard": "Lean on them",
+    "hardNote": "Remind them who decides their committee and their travel. They'll vote the line. They'll remember that too.",
+    "go": "Let them vote their riding",
+    "goNote": "Some votes aren't worth a friend. The deputy whip will notice the gap."
+  },
+  "demoted": {
+    "soft": "Your row went its own way on a vote that mattered, and the deputy whip has drawn the conclusion: you're soft. You're back on the backbench, with your friends and without the title.",
+    "bully": "Your row went its own way on a vote that mattered, and the deputy whip has drawn the conclusion: nobody follows a bully. You're back on the backbench, and the row isn't sorry to see you go.",
+    "wrongCount": "You said the count was safe. It wasn't, and the House knew it before the leader did. The Chief Whip has moved you sideways; you'll run a row again, if you can hold one."
+  },
+  "confidencePair": {
+    "intro": "{bill} is a confidence vote next week and {absent} can't be in the House for it. {opposite}, {party}'s whip, is offering a pair. If it holds, neither counts. If it doesn't, you find out when the bells stop.",
+    "accept": "Take the pair",
+    "acceptNote": "One fewer vote you need. One more thing that can go wrong.",
+    "decline": "Chase attendance instead",
+    "declineNote": "Nobody pairs with you; you get {absent} into the chamber or you don't."
+  },
+  "temptation": {
+    "intro": "{leader} asks to see you. There's a parliamentary secretary's job going, with a car and a staff and, said without being said, cabinet beyond it. It would mean leaving the whip's office.",
+    "accept": "Take it",
+    "acceptNote": "The whip's career ends here, with a record and an epilogue.",
+    "decline": "Stay in the whip's office",
+    "declineNote": "Leaders remember being told no."
+  },
+  "chiefVacancy": {
+    "intro": "{chief} is going to cabinet. The caucus has an opinion about who follows, and so does {leader}.",
+    "appointed": "{leader} appointed you. {support}",
+    "kept": "{leader} went with {other}. You're still the deputy; you run the count, and you wait."
+  },
+  "setLine": {
+    "intro": "{bill} is this week's question. With {leader}, you set the line.",
+    "whip": "Whip it {position}",
+    "whipNote": "The caucus votes the line. Anyone who doesn't is in your book.",
+    "free": "A free vote",
+    "freeNote": "Release the caucus. Loyalty rises; the result is theirs.",
+    "confidence": "Make it a matter of confidence",
+    "confidenceNote": "Everyone comes home for it. Lose, and the government falls."
+  },
+  "cabinetOffer": {
+    "intro": "{leader} offers you cabinet. {portfolio}. It would end the whip's career, with everything you've done on the record.",
+    "accept": "Accept",
+    "acceptNote": "The whip's career ends here.",
+    "decline": "Decline",
+    "declineNote": "No cost. They'll ask again."
+  },
+  "fall": {
+    "intro": "The government fell on {bill}, and it was your count. {leader} has asked for your resignation as Chief Whip.",
+    "retire": "Retire from the House",
+    "retireNote": "The record closes here.",
+    "stay": "Go back to the backbench",
+    "stayNote": "Start the climb again. The caucus remembers."
+  },
+  "revolted": {
+    "intro": "Caucus turned on you. The leader didn't stop them.",
+    "retire": "Retire from the House",
+    "retireNote": "The record closes here.",
+    "stay": "Go back to the backbench",
+    "stayNote": "You know where the knives are now."
+  },
+  "revolt": {
+    "leader": "{ringleader} stands up and says what half the room has been saying in the corridors: {leader} has lost the caucus. Hands go up. This is a revolt, and everyone is watching who sits still.",
+    "whip": "{ringleader} stands up and says it to your face: the caucus is done being counted by you. Hands go up. Everyone is watching the head of the table.",
+    "back": "Back the leader",
+    "backNote": "Stand up for them. If the revolt fails, they'll remember. If it wins, so will the room.",
+    "join": "Join the revolt",
+    "joinNote": "Put your hand up. If it wins, you helped; if it fails, you're marked.",
+    "quiet": "Sit still",
+    "quietNote": "Let it happen without you.",
+    "won": "The revolt carried. {leader} has stood down; {newLeader} leads the party now.",
+    "lost": "The revolt failed. {leader} looked round the room and wrote some names down.",
+    "whipWon": "The revolt carried. The room doesn't want you at the head of the table.",
+    "whipLost": "The revolt failed. You're still the whip, and now you know who stood up."
+  },
+  "ending": {
+    "retirement": "You chose your moment, which is more than most get. The House rose for a minute, and someone from your cohort said something kind and not quite true.",
+    "cabinet": "You took the oath on a grey morning and gave the whip's book to your successor, who will find your notes in the margins for years.",
+    "exit": "You took the car and the staff and the title. Cabinet was hinted at. It stayed hinted at.",
+    "fall": "The government fell on your count. You resigned before you were asked twice, and the paper spelled your name right.",
+    "revolt": "The caucus turned, and the leader let it. You left the whip's office with the book under your arm and nobody looking up."
   }
 }
