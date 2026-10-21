@@ -487,3 +487,34 @@ Next: HANDOFF stage 5, the whip's tools, the count board's marks, pairing and ri
 - **The committee chair isn't a dead end:** it adds to your next contest score and the next vacancy is queued ten weeks out.
 - **By-elections and retirements as departures** come with stage 8's elections; for now a retirement is a life event with text.
 - Files beyond the handoff's layout: `src/sim/pmb.js` (the lottery and the player's bill) and `data/career.json` (the career texts).
+
+---
+
+## 2026-10-21 · Stage 7: the career, Acts 3 to 5, and the caucus room
+
+**What was built**
+
+- **Act 3, the row** (`src/sim/ranks.js`). As assistant whip you answer for the fifteen members seated along your row. Every whipped division grades the row: held it when someone was at risk, and the deputy notices; lose three of them on a vote that mattered, and the deputy draws a conclusion. The whip's office opens its files on your own caucus the day you arrive (loyalty, attendance, clique, ideology all known). The set piece is a friend from your cohort whose riding hates the week's bill: ask them as a friend (a small nudge, a warmer friend, a fixer's reputation), lean on them (they vote the line, they don't forget, an enforcer's reputation), or let them vote their riding (a conscience, and the deputy sees the gap). Three carried votes over ten weeks make you deputy whip; a row that goes its own way sends you back to the backbench as *soft* or a *bully*, by your reputation.
+- **Act 4, the deputy.** Every Monday the count is recorded against you; a government or confidence vote you had as safe that is lost is a wrong count, and one is enough to move you sideways to assistant whip. Before a confidence vote your opposite number offers a pair for your likeliest absentee: take it (one fewer to chase, one more thing that can break) or chase attendance. In week six the leader offers a parliamentary secretary's car and staff: take it and the career ends (the *exit* ending), decline and the leader remembers. After twelve weeks the chief whip's chair can open; you get it if the caucus wants you (support 55) or the leader insists (trust 60, and pays for overruling the room); otherwise someone else does and you wait.
+- **Act 5, the Chief Whip.** Each Monday you set the line with the leader: whip it, a free vote (loyalty up, trust by the leader's temper), or a matter of confidence on a government bill (everyone comes home; lose and the government falls). The fall is yours: the leader asks for your resignation and you retire (the *fall* ending) or go back to the backbench and start the climb again.
+- **Cabinet offers** from Act 4, more often the more the leader trusts you, each with a portfolio. Decline at no cost and they keep coming; accept and the career ends with the *cabinet* epilogue and the record.
+- **Revolts in the caucus room** (`src/sim/caucus.js`). A hot room (grievances past a threshold) can turn on the leader, or on you if you hold the chair and the room doesn't want you. The ringleader stands up; you back the leader, join, or sit still, and it resolves when the room empties: the leader falls and a front-bencher takes over (the new leader remembers who stood up), or it fails and the leader writes names down. A revolt against the whip that carries puts you back on the backbench, or out (the *revolt* ending).
+- **The record and the endings** (`src/sim/record.js`, `src/ui/recordUI.js`). Retirement from the menu from Act 2, after a confirm. The record page is the last sheet of the Order Paper: name, riding, party, the ending stamped (RETIRED, CABINET, RESIGNED, OVERTHROWN, LEFT THE WHIP'S OFFICE), the epilogue, the highest rank and act, the reputation, weeks, Parliaments, votes won and lost, confidence votes survived, members promoted and expelled, promises kept and broken, rookies mentored. An ending is a stop nothing moves past, and it survives a save.
+- **Crossing the floor** from the menu (Act 2 on, pick a bench, confirm). You're reseated with the new caucus as a rookie in Act 1 with your reputation and highest rank remembered; every open promise with the old caucus is broken, their rapport collapses, their whip's trust is gone, and the riding takes it badly.
+
+**Checks** (HANDOFF stage 7, all five)
+
+- Act 3 → 4 by carrying the row, Act 4 → 5 by the chair; demotion from 3 (soft or bully) and from 4 (the wrong count); the exit, the fall, the revolt, cabinet and retirement endings all reachable in tests.
+- A revolt against the leader replaced the leader; a revolt against the whip put the player on the backbench.
+- Cabinet declined at no cost, offered again with another portfolio, accepted into the ending with a record.
+- Crossed from the government to the opposition: Act 1, reputation kept, ledger burned, rapport and standing hit, struck off the old whips' list.
+- Retirement refused in Act 1, allowed in Act 2, with the record and an epilogue.
+- `tests.html`: 57 of 57. The row set piece, a revolt in the caucus room, setting the line, a cabinet offer, the menu and the record page were walked through the real buttons at phone size with no console errors.
+
+**Things to know / decisions I made**
+
+- **The row is a seating fact:** your fifteen are the party members on your row of your side, so the chamber shows who you answer for. A party too small for a row uses its first fifteen seats.
+- **Failure is quick and recovery is slow,** on purpose: one wrong count or one lost row costs the job, graduation takes weeks. Both are in `data/tuning.json` under `ranks`.
+- **The fall and dissolution:** a lost confidence vote in Act 5 asks for your resignation first, then Parliament dissolves as before. Elections are stage 8.
+- **Revolts don't change the leader's party line mid-week;** the new leader's temper is rolled, and the next Monday's line comes from them.
+- Files beyond the handoff's layout: `src/sim/ranks.js` (Acts 3–5), `src/sim/record.js` (endings, retirement, floor-crossing), `src/ui/recordUI.js`.

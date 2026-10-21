@@ -1,7 +1,7 @@
 // Menus: the start screen (continue, or a new career: name, party, background, riding, age, seed) and the
 // in-game menu.
 import { t, esc } from './text.js';
-import { data } from '../sim/config.js';
+import { data, tuning } from '../sim/config.js';
 
 // A fresh seed for the form. The seed may come from anywhere (this is UI, not sim); everything after it is deterministic.
 function randomSeed() {
@@ -70,16 +70,32 @@ export function createStartMenu(root, { info, onContinue, onNew, onSeed }) {
   return el;
 }
 
-export function createGameMenu(root, { getState, onQuit, onLedger }) {
+export function createGameMenu(root, { getState, onQuit, onLedger, onRetire, onCross }) {
   const el = document.createElement('section');
   el.className = 'sheet game-menu hidden';
   root.appendChild(el);
   return {
     open() {
       const s = getState();
+      const career = s.player.act >= tuning().ranks.retireFromAct && !s.ending && s.flow.pending?.kind !== 'ending';
       el.innerHTML = `<div class="sheet-handle"></div><h2>${t('menu.menu')}</h2>
         <p class="muted">Seed ${esc(s.seed)} · ${t('menu.save')}</p>
-        <div class="choices"><button class="btn" data-act="ledger">${t('menu.ledger')}</button><button class="btn" data-act="close">${t('menu.close')}</button><button class="btn" data-act="quit">${t('menu.quit')}</button></div>`;
+        <div class="choices"><button class="btn" data-act="ledger">${t('menu.ledger')}</button>${career ? `<button class="btn" data-act="cross">${t('menu.cross')}</button><button class="btn" data-act="retire">${t('menu.retire')}</button>` : ''}<button class="btn" data-act="close">${t('menu.close')}</button><button class="btn" data-act="quit">${t('menu.quit')}</button></div>`;
+      // Crossing the floor asks which bench, then asks again; it isn't a thing to do by accident.
+      el.querySelector('[data-act="cross"]')?.addEventListener('click', () => {
+        const mine = s.mps[s.player.mpId].party;
+        const others = Object.values(s.parties).filter((q) => q.id !== mine && q.id !== 'ind');
+        el.innerHTML = `<div class="sheet-handle"></div><h2>${t('menu.cross')}</h2><p class="muted">${t('menu.crossNote')}</p>
+          <div class="choices">${others.map((q) => `<button class="btn" data-party="${esc(q.id)}">${esc(t('menu.crossTo', { party: q.name }))}</button>`).join('')}<button class="btn primary" data-act="close">${t('menu.crossCancel')}</button></div>`;
+        el.querySelector('[data-act="close"]').onclick = () => el.classList.add('hidden');
+        el.querySelectorAll('[data-party]').forEach((b) => (b.onclick = () => { el.classList.add('hidden'); onCross?.(b.dataset.party); }));
+      });
+      el.querySelector('[data-act="retire"]')?.addEventListener('click', () => {
+        el.innerHTML = `<div class="sheet-handle"></div><h2>${t('menu.retire')}</h2><p class="muted">${t('menu.retireNote')}</p>
+          <div class="choices"><button class="btn" data-act="confirm">${t('menu.retireConfirm')}</button><button class="btn primary" data-act="close">${t('menu.crossCancel')}</button></div>`;
+        el.querySelector('[data-act="close"]').onclick = () => el.classList.add('hidden');
+        el.querySelector('[data-act="confirm"]').onclick = () => { el.classList.add('hidden'); onRetire?.(); };
+      });
       el.querySelector('[data-act="close"]').onclick = () => el.classList.add('hidden');
       el.querySelector('[data-act="ledger"]').onclick = () => {
         el.classList.add('hidden');

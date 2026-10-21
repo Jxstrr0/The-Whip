@@ -49,6 +49,8 @@ import * as rivals from './src/sim/rivals.js';
 import * as career from './src/sim/career.js';
 import * as pmb from './src/sim/pmb.js';
 import * as lifeEvents from './src/sim/lifeEvents.js';
+import * as ranks from './src/sim/ranks.js';
+import * as record from './src/sim/record.js';
 
 const sections = [];
 let current = null;
@@ -934,6 +936,214 @@ test('A life event asks you to show up for someone, and showing up is remembered
   pacing.resolve(s, 'showUp');
   assert(e.resolvedBy === me.id && m.rapport > r0 && (m.relations[me.id] || 0) > 0, 'showing up resolves it and builds the bond');
   return `${m.name.first} ${m.name.last}: ${e.kind}; rapport ${r0} → ${m.rapport}`;
+});
+
+// ---------- Stage 7: the career, Acts 3 to 5, and the caucus room ----------
+section('Stage 7 · Acts 3 to 5, endings, the caucus room');
+
+// Every hook runs and every stop is queued, so look for the one the test is about.
+const hookEvent = (list, s, rng, event) => list.map((fn) => fn(s, rng)).find((p) => p && (p.event === event || p.kind === event)) || null;
+
+function atAct(act, seed = 'TEST-1') {
+  const s = newGame({ seed, party: 'p2', act });
+  s.player.actStart = 0;
+  s.player.filesShared = true;
+  if (act >= 3) s.parties.p2.assistantWhips.push(s.player.mpId), (s.mps[s.player.mpId].caucusRole = 'assistantWhip');
+  if (act >= 4) (s.parties.p2.deputyWhip = s.player.mpId), (s.mps[s.player.mpId].caucusRole = 'deputyWhip');
+  if (act >= 5) (s.parties.p2.chiefWhip = s.player.mpId), (s.mps[s.player.mpId].caucusRole = 'chiefWhip');
+  return s;
+}
+
+test('Act 3: the row you answer for, leaning on a friend, and both ways out (deputy whip or the backbench)', () => {
+  const R = tuning().ranks;
+  const { s, b, me } = whipScenario(3);
+  s.player.actStart = 0;
+  s.player.filesShared = true;
+  const row = ranks.rowOf(s);
+  assert(row.length >= 5 && row.every((m) => m.party === me.party), 'a row of your own party');
+  // A friend in the row whose riding hates the bill: the set piece fires on Monday.
+  const friend = row[0];
+  friend.cohort = me.cohort;
+  b.ridingEffects[friend.riding.type] = b.positions[me.party] === 'yea' ? -1 : 1;
+  s.date.dayOfWeek = 1;
+  const stop = hookEvent(pacing.hooks.morning, s, createRng('m'), 'leanOnFriend');
+  assert(stop?.event === 'leanOnFriend' && stop.mpId === friend.id && stop.options.length === 3, 'the lean-on-a-friend moment');
+  s.flow.pending = stop;
+  const r0 = friend.rapport;
+  pacing.resolve(s, 'hard');
+  assert((s.nudges[friend.id][b.id] || 0) !== 0 && friend.rapport === r0 + R.leanHardRapport, 'leaning hard moves the vote and costs the friendship');
+  // Graduation: enough carried votes over enough weeks.
+  s.date.absWeek = R.act3MinWeeks;
+  s.player.actProgress.rowVotesCarried = R.rowCarriesForAct4;
+  const up = hookEvent(pacing.hooks.weekend, s, createRng('w'), 'act4');
+  assert(up?.event === 'act4' && s.player.act === 4 && s.parties.p2.deputyWhip === s.player.mpId && me.caucusRole === 'deputyWhip', 'promoted to deputy whip');
+  // Failure: the row went its own way on a vote that mattered.
+  const { s: f } = whipScenario(3);
+  f.player.actStart = 0;
+  f.player.filesShared = true;
+  f.date.absWeek = 4;
+  f.player.rowStats = { carried: 0, rebels: 4, failures: 1 };
+  const down = hookEvent(pacing.hooks.weekend, f, createRng('w'), 'demoted');
+  assert(down?.event === 'demoted' && f.player.act === 2 && f.mps[f.player.mpId].caucusRole === 'backbencher' && ['soft', 'bully'].includes(f.player.reputation), 'demoted as soft or a bully');
+  return `row of ${row.length}; leaned on ${friend.name.last}; up to Act 4, or down as ${f.player.reputation}`;
+});
+
+test('Act 4: the count is yours (a wrong count costs the job), the pair before a confidence vote, the temptation, the chief whip\'s chair', () => {
+  const R = tuning().ranks;
+  const { s, b, me } = whipScenario(4);
+  s.parties.p2.deputyWhip = s.player.mpId;
+  me.caucusRole = 'deputyWhip';
+  s.player.actStart = 0;
+  s.player.filesShared = true;
+  b.confidence = true;
+  b.nextVote = s.date.absWeek * 5 + 3;
+  s.date.dayOfWeek = 1;
+  const stops = [];
+  for (const h of pacing.hooks.morning) { const p = h(s, createRng('m')); if (p) stops.push(p); }
+  const pair = stops.find((p) => p.event === 'confidencePair');
+  assert(pair && pair.options.length === 2, 'the opposite number offers a pair before the confidence vote');
+  s.flow.pending = pair;
+  const n0 = s.pairs.length;
+  pacing.resolve(s, 'accept');
+  assert(s.pairs.length === n0 + 1 && s.pairs.at(-1).a === pair.mpId && s.pairs.at(-1).bill === b.id, 'the pair is on the book');
+  assert(s.player.predicted?.[b.id] !== undefined, 'the Monday count is recorded against you');
+  // The temptation, declined at a cost; then the chair when the caucus wants you.
+  s.date.absWeek = R.temptationWeek;
+  const temp = hookEvent(pacing.hooks.weekend, s, createRng('w'), 'temptation');
+  assert(temp?.event === 'temptation', 'the parliamentary secretary offer');
+  s.flow.pending = temp;
+  const lt = s.player.leaderTrust;
+  pacing.resolve(s, 'decline');
+  assert(!s.ending && s.player.leaderTrust === Math.max(0, lt + R.temptationTrust), 'declining costs a little trust');
+  s.date.absWeek = R.act4MinWeeks;
+  s.player.caucusSupport = R.caucusSupportForChief;
+  s.player.forceChiefVacancy = true;
+  const chair = hookEvent(pacing.hooks.weekend, s, createRng('w'), 'act5');
+  assert(chair?.event === 'act5' && s.player.act === 5 && s.parties.p2.chiefWhip === s.player.mpId, 'appointed Chief Whip');
+  // Or the temptation taken: an ending with a record.
+  const e = atAct(4);
+  e.flow.pending = { kind: 'career', event: 'temptation', options: [] };
+  pacing.resolve(e, 'accept');
+  assert(e.ending?.endingKind === 'exit' && e.ending.record.weeks === e.date.absWeek && pacing.next(e)?.kind === 'ending', 'the exit ending');
+  // Or a wrong count: the deputy who called a lost confidence vote safe is moved sideways.
+  const w = atAct(4);
+  w.player.wrongCounts = R.wrongCountsForFailure;
+  w.date.absWeek = 3;
+  const down = hookEvent(pacing.hooks.weekend, w, createRng('w'), 'demoted');
+  assert(down?.event === 'demoted' && w.player.act === 3 && w.mps[w.player.mpId].caucusRole === 'assistantWhip', 'back to assistant whip');
+  return `paired ${s.mps[pair.mpId].name.last}; declined the car; Chief Whip at week ${R.act4MinWeeks}; exit and wrong-count both reachable`;
+});
+
+test('Act 5: setting the line with the leader (whip it, free vote, confidence), and the fall', () => {
+  const { s, b, me } = whipScenario(5);
+  s.parties.p2.chiefWhip = s.player.mpId;
+  me.caucusRole = 'chiefWhip';
+  s.player.filesShared = true;
+  s.house.government = me.party;
+  b.kind = 'government';
+  s.date.dayOfWeek = 1;
+  const stop = pacing.hooks.morning.map((h) => h(s, createRng('m'))).find((p) => p?.event === 'setLine');
+  assert(stop && stop.options.find((o) => o.id === 'confidence').enabled, 'Monday: set the line, confidence on the table');
+  s.flow.pending = stop;
+  pacing.resolve(s, 'free');
+  assert(b.lines[me.party] === 'free', 'a free vote');
+  s.flow.pending = { ...stop };
+  pacing.resolve(s, 'confidence');
+  assert(b.confidence && b.lines[me.party] === 'whipped', 'made a matter of confidence');
+  // The fall: the government loses on your count.
+  s.house.fallen = { billId: b.id };
+  s.flow.day = { results: [] };
+  const fall = hookEvent(pacing.hooks.fallout, s, createRng('f'), 'fall');
+  assert(fall?.event === 'fall' && fall.options.length === 2, 'the leader asks for your resignation');
+  s.flow.pending = fall;
+  pacing.resolve(s, 'retire');
+  assert(s.ending?.endingKind === 'fall' && s.ending.record.rank === 'Chief Whip', 'the fall ending keeps the rank you reached');
+  return `${b.title}: free, then confidence; fell, and the record says ${s.ending.record.rank}`;
+});
+
+test('Caucus: a revolt can be called, you pick a side, and it resolves when the room empties', () => {
+  const s = atAct(5);
+  s.player.caucusSupport = 60;
+  s.forceRevolt = true;
+  const rng = createRng('revolt');
+  const c = caucusSim.startCaucus(s, rng);
+  assert(c?.revolt && c.revolt.target === 'leader' && c.revolt.text.length > 40, 'a revolt against the leader');
+  const leader0 = s.parties.p2.leader;
+  c.revolt.support = c.revolt.size;
+  assert(ACTIONS.caucusRevolt(s, { choice: 'join' })?.ok && c.revolt.choice === 'join', 'joined');
+  caucusSim.endCaucus(s);
+  assert(s.parties.p2.leader !== leader0 && s.mps[s.parties.p2.leader].caucusRole === 'leader' && s.mps[leader0].caucusRole === 'backbencher', 'the leader fell and someone took over');
+  assert(s.player.leaderTrust === tuning().ranks.revoltLeaderTrustJoin, 'the new leader remembers who stood up');
+  // Against the whip, with the room against you: the caucus turns you out.
+  const w = atAct(5);
+  w.player.caucusSupport = 10;
+  w.forceRevolt = true;
+  const cw = caucusSim.startCaucus(w, createRng('r2'));
+  assert(cw.revolt.target === 'whip', 'a revolt against the whip');
+  cw.revolt.support = cw.revolt.size;
+  caucusSim.endCaucus(w);
+  const next = w.flow.queued[0];
+  assert(next?.event === 'revolted', 'turned out: the choice to stay or go');
+  w.flow.pending = next;
+  pacing.resolve(w, 'stay');
+  assert(w.player.act === 2 && w.mps[w.player.mpId].caucusRole === 'backbencher', 'back to the backbench');
+  return `${s.mps[leader0].name.last} out, ${s.mps[s.parties.p2.leader].name.last} in; and the whip's revolt lands you on the backbench`;
+});
+
+test('Cabinet offers can be declined at no cost and keep coming; accepting ends the career with a record', () => {
+  const s = atAct(5);
+  s.player.forceCabinetOffer = true;
+  s.date.absWeek = 20;
+  const offer = hookEvent(pacing.hooks.weekend, s, createRng('c'), 'cabinetOffer');
+  assert(offer?.event === 'cabinetOffer' && offer.portfolio, 'an offer with a portfolio');
+  s.flow.pending = offer;
+  const lt = s.player.leaderTrust;
+  pacing.resolve(s, 'decline');
+  assert(!s.ending && s.player.leaderTrust === lt && s.player.cabinetOffers === 1, 'declined, no cost');
+  s.player.forceCabinetOffer = true;
+  const again = hookEvent(pacing.hooks.weekend, s, createRng('c'), 'cabinetOffer');
+  assert(again?.event === 'cabinetOffer' && again.portfolio !== offer.portfolio, 'they ask again with another portfolio');
+  s.flow.pending = again;
+  pacing.resolve(s, 'accept');
+  assert(s.ending?.endingKind === 'cabinet' && s.ending.portfolio === again.portfolio && s.ending.epilogue.length > 20, 'the cabinet ending');
+  const p = pacing.next(s);
+  assert(p.kind === 'ending' && p.record.votesWon >= 0 && pacing.advance(s)?.kind === 'ending', 'the ending is a stop nothing moves past');
+  return `${offer.portfolio} declined, ${again.portfolio} accepted`;
+});
+
+test('Crossing the floor starts Act 1 again in the new caucus with your reputation, and burns the old ledger', () => {
+  const R = tuning().ranks;
+  const s = atAct(3);
+  const me = s.mps[s.player.mpId];
+  s.player.reputation = 'usefulTrouble';
+  const other = Object.values(s.mps).find((m) => m.party === me.party && m.id !== me.id);
+  s.ledger.push({ id: 'x1', kind: 'promise', from: me.id, to: other.id, what: 'favor', settled: false, week: 0 });
+  const r0 = other.rapport;
+  const standing0 = s.player.ridingStanding;
+  assert(!record.crossFloor(s, me.party).ok, 'cannot cross to your own party');
+  const to = Object.values(s.parties).find((q) => q.id !== me.party && q.id !== 'ind');
+  const seats0 = to.seats;
+  assert(record.crossFloor(s, to.id).ok, 'crossed');
+  assert(me.party === to.id && me.seatId && s.seats[me.seatId].mpId === me.id && to.seats === seats0 + 1, 'reseated with the new caucus');
+  assert(s.player.act === 1 && me.caucusRole === 'backbencher' && s.player.highestAct === 3 && s.player.reputation === 'usefulTrouble', 'Act 1 again, reputation in tow, the old rank remembered');
+  assert(s.ledger[0].settled && s.ledger[0].kept === false && other.rapport === Math.max(-100, r0 + R.crossFloorRapport) && s.player.ridingStanding === Math.max(0, standing0 + R.crossFloorStanding), 'the old caucus: ledger burned, rapport gone, standing hit');
+  assert(!s.parties.p2.assistantWhips.includes(me.id), 'struck off the old whips\' list');
+  return `${s.parties.p2.short} → ${to.short}: Act 1, ${s.player.reputation}, standing ${standing0} → ${s.player.ridingStanding}`;
+});
+
+test('Retirement is available from Act 2 and shows the whip\'s record', () => {
+  const one = newGame({ seed: 'TEST-1', party: 'p2' });
+  assert(!record.canRetire(one) && !ACTIONS.retire(one).ok, 'not in Act 1');
+  const s = atAct(2);
+  s.player.record.votesWon = 7;
+  s.player.record.promisesKept = 2;
+  assert(record.canRetire(s), 'from Act 2');
+  const p = ACTIONS.retire(s);
+  assert(p.kind === 'ending' && p.endingKind === 'retirement' && p.record.votesWon === 7 && p.record.promisesKept === 2 && p.record.name.includes(s.mps[s.player.mpId].name.last), 'the record');
+  assert(['Backbencher', 'Committee chair'].includes(p.record.rank) && p.record.act === 2 && p.epilogue.length > 20, 'rank, act and an epilogue');
+  const save = JSON.parse(decodeURIComponent(escape(atob(exportSave(s)))));
+  assert(save.ending?.endingKind === 'retirement', 'the ending survives a save');
+  return `${p.record.name}: ${p.record.rank}, ${p.record.votesWon} votes won`;
 });
 
 async function run() {
