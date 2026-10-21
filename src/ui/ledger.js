@@ -21,7 +21,7 @@ export function createLedger(root, { getState }) {
   function label(state, e) {
     if (e.note) return e.note;
     try {
-      return cardLabel(state, e.what);
+      return cardLabel(state, e.what, e.to === state.player.mpId);
     } catch {
       return e.what;
     }
