@@ -8,6 +8,7 @@ import { adjustRapport, addStyle, spreadBrokenPromise } from './relationships.js
 import { dilemmaFor } from './career.js';
 import { baseScore } from './mp.js';
 import { dayIndex, sittingDayAfter } from './bills.js';
+import { remember, person } from './memoir.js';
 
 const MOODS = ['cooperative', 'guarded', 'angry', 'anxious'];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -469,6 +470,12 @@ function promise(state, from, to, what, mt) {
   return e;
 }
 
+// The first time the whip's office calls you in goes in the memoir, however it went.
+function rememberWhipCall(state, whipId, billId, sub) {
+  const w = state.mps[whipId];
+  remember(state, 'whipCall', { sub, once: true, ctx: { whip: w ? `${w.name.first} ${w.name.last}` : 'The whip', bill: state.bills[billId]?.title || 'the bill' }, people: [person(state, whipId, data().memoir.notes.whip)] });
+}
+
 export function finishMeeting(state, result) {
   const T = tuning().meetings;
   const mt = state.meetings[state.meeting];
@@ -496,6 +503,7 @@ export function finishMeeting(state, result) {
     addStyle(state, 'conscience');
   }
   if (mt.reversal) state.player.whipCalls.push(mt.billId);
+  if (mt.situation === 'whipCall') rememberWhipCall(state, mt.mpId, mt.billId, result === 'accepted' ? 'accepted' : 'declined');
   log(state, meetingSummary(state, mt), 'meeting');
   // Keep saves small: finished meetings keep their record, not their screen text; old ones go.
   delete mt.talk.options;
@@ -563,6 +571,7 @@ hooks.fallout.push((state) => {
           spreadBrokenPromise(state, e.to, T.brokenPromiseHit * (e.to === whipOf(state) ? 1.5 : 1));
           state.player.record.promisesBroken++;
           const t = state.mps[e.to];
+          remember(state, 'brokenPromise', { once: true, ctx: { name: `${t.name.first} ${t.name.last}` }, people: [person(state, e.to, data().memoir.notes.brokenWord)] });
           log(state, `You broke your word to ${t.name.first} ${t.name.last}. Their friends heard about it.`, 'meeting');
         }
       } else if (e.to === pid && !e.kept) {
@@ -648,6 +657,7 @@ resolvers.office = (state) => {
     const w = state.mps[e.whipCall.mpId];
     adjustRapport(state, w.id, -6);
     state.player.whipCalls.push(e.whipCall.billId);
+    rememberWhipCall(state, w.id, e.whipCall.billId, 'missed');
     log(state, `You didn't go when the whip's office called. ${w.name.first} ${w.name.last} noticed.`, 'meeting');
   }
   endEvening(state);

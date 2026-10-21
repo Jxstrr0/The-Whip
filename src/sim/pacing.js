@@ -8,6 +8,7 @@ import { baseScore, intentions } from './mp.js';
 import { putQuestion, runDivision, voiceResult, recordResult, voteOf, stageLabel, tally } from './vote.js';
 import { dilemmaFor, applyPlayerVote } from './career.js';
 import { decayKnowledge, reveal } from './knowledge.js';
+import { rememberDivision } from './memoir.js';
 
 // Rooms and phases that later stages hook into (office, caucus, riding). Each returns a pending stop or null.
 // bells(state, item, bill, secs) runs when a division waits on the player; doorsClose(state, item) just before it's decided.
@@ -158,6 +159,7 @@ function afterResult(state, result) {
     state.polling[gov] = Math.max(1, Math.round((state.polling[gov] - tuning().pacing.defeatPollHit) * 10) / 10);
   }
   if (state.house.fallen) log(state, `The government has lost the confidence of the House.`, 'confidence');
+  rememberDivision(state, result);
 }
 
 function houseStep(state, rng) {

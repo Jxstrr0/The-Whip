@@ -60,6 +60,7 @@ import * as confidence from './src/sim/confidence.js';
 import * as media from './src/sim/media.js';
 import * as qp from './src/sim/questionPeriod.js';
 import * as coldOpen from './src/sim/coldOpen.js';
+import * as memoir from './src/sim/memoir.js';
 
 const sections = [];
 let current = null;
@@ -1848,6 +1849,82 @@ test('A new career opens on election night, walks into the chamber, then the fir
   pacing.advance(k);
   assert(k.flow.pending?.kind === 'morning' && k.date.dayOfWeek === 1, `skip went to ${k.flow.pending?.kind}`);
   return w.walk.lines[2];
+});
+
+section('The memoir');
+
+// A career played by the bot from election night to a given week.
+function memoirCareer(seed, weeks) {
+  const s = newGame({ seed, guided: true, coldOpen: true });
+  const rng = createRng('bot' + seed);
+  for (let i = 0; i < 400000; i++) {
+    const p = s.flow.pending;
+    if (p?.kind === 'dissolved' || p?.kind === 'ending' || s.date.absWeek >= weeks) break;
+    botAct(s, rng);
+  }
+  return s;
+}
+const withoutMemoir = (s) => {
+  const c = structuredClone(s);
+  delete c.memoir;
+  delete c.memoirSeq;
+  delete c.memoirFrom;
+  return JSON.stringify(c);
+};
+
+test('The memoir writes down the defining moments with the people in them, the same way every time, without moving the game', () => {
+  const s = memoirCareer('MEMO-1', 40);
+  const m = s.memoir;
+  const first = m[0];
+  assert(first?.kind === 'electionNight' && first.week === 0, `starts with ${first?.kind}`);
+  assert(first.people.length === 2 && first.people[0].id === null && first.people[1].id === s.player.mentor, 'election night is missing the rival or the mentor');
+  for (const kind of ['whipCall', 'confidence', 'firstRebellion']) assert(m.some((e) => e.kind === kind), `no ${kind}`);
+  const reb = m.find((e) => e.kind === 'firstRebellion');
+  assert(reb.people[0]?.note === data().memoir.notes.whip, 'the first rebellion leaves out the whip');
+  assert(m.filter((e) => e.kind === 'firstRebellion').length === 1, 'the first rebellion is written down twice');
+  assert(!m.some((e) => /\{\w+\}/.test(e.title + e.text)), 'a placeholder is left');
+  assert(m.every((e, i) => i === 0 || e.week > m[i - 1].week || (e.week === m[i - 1].week && e.day >= m[i - 1].day)), 'the memoir is out of order');
+  assert(m.every((e) => e.people.length <= tuning().memoir.peoplePerEntry && data().strings['memoir.kind.' + e.kind]), 'too many people, or a kind with no label');
+  const again = memoirCareer('MEMO-1', 40);
+  assert(JSON.stringify(again.memoir) === JSON.stringify(m), 'the same seed wrote a different memoir');
+  const kinds = data().memoir.kinds;
+  data().memoir.kinds = {};
+  let blank;
+  try {
+    blank = memoirCareer('MEMO-1', 40);
+  } finally {
+    data().memoir.kinds = kinds;
+  }
+  assert(blank.memoir.length === 0 && withoutMemoir(blank) === withoutMemoir(s), 'writing the memoir changed the game');
+  return `${m.length} moments by week 40: ${m.map((e) => e.key).slice(0, 6).join(', ')}…`;
+});
+
+test('A confidence vote goes in when it mattered, not every time the government held by thirty', () => {
+  const s = memoirCareer('MEMO-2', 60);
+  const votes = Object.values(s.divisions).filter((r) => r.recorded && s.bills[r.billId]?.confidence).length;
+  const conf = s.memoir.filter((e) => e.kind === 'confidence');
+  assert(conf.length >= 1, 'not even the first confidence vote');
+  assert(conf.length < votes, `${conf.length} of ${votes} confidence votes written down`);
+  return `${conf.length} of ${votes} confidence votes written down`;
+});
+
+test('An old save starts its memoir where it is and says so; a long career drops its small moments first', () => {
+  const s = newGame({ seed: 'MEMO-3', guided: true });
+  delete s.memoir;
+  s.date.absWeek = 12;
+  const e = memoir.remember(s, 'brokenPromise', { people: [] });
+  assert(e && s.memoir.length === 1 && s.memoirFrom === 12, 'an old save did not start a memoir');
+  const cap = tuning().memoir.cap;
+  tuning().memoir.cap = 4;
+  try {
+    const mp = Object.values(s.mps).find((m) => m.id !== s.player.mpId);
+    memoir.remember(s, 'lifeEvent', { sub: 'showUp', ctx: { name: 'A', what: 'x' }, people: [memoir.person(s, mp.id, 'x')] });
+    for (let i = 0; i < 3; i++) memoir.remember(s, 'act3', { ctx: { whip: 'W', rival: 'R' } });
+    assert(s.memoir.length === 4, `kept ${s.memoir.length}`);
+    assert(!s.memoir.some((x) => x.kind === 'lifeEvent') && s.memoir[0].kind === 'brokenPromise', 'the small moment was not the one dropped');
+  } finally {
+    tuning().memoir.cap = cap;
+  }
 });
 
 async function run() {

@@ -22,6 +22,7 @@ import './media.js';
 import './election.js';
 import './calendar.js';
 import { coldOpenStop } from './coldOpen.js';
+import { remember, person } from './memoir.js';
 
 export const SAVE_VERSION = 2;
 
@@ -66,8 +67,11 @@ export function newGame({ seed, party, first, last, age, background, ridingType,
   initFlow(state);
   // A career started from the menu gets the guided first week.
   if (guided) setupFirstWeek(state);
-  // A career from the menu opens on its own election night, before the first Monday.
+  // A career from the menu opens on its own election night, before the first Monday. Without one, the memoir
+  // opens on the oath (a scenario writes its own first page).
+  state.memoir = [];
   if (coldOpen) state.flow.pending = coldOpenStop(state);
+  else if (mode !== 'scenario') remember(state, 'sworn', { people: [person(state, state.player.mentor, data().memoir.notes.mentor)] });
   return state;
 }
 
@@ -245,6 +249,7 @@ export function scenarioGame(id, { seed = null, first, last, age } = {}) {
   state.mode.startWeek = state.date.absWeek;
   state.mode.startDay = state.date.dayOfWeek;
   withRng(state, (rng) => SETUPS[sc.setup](state, rng, sc));
+  remember(state, 'scenario', { ctx: { title: sc.title, blurb: sc.blurb } });
   // A scenario is one week, watched day by day: the brief on the first morning, the verdict at the weekend.
   state.flow.forceWatch = true;
   return state;

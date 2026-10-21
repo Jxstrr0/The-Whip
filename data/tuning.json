@@ -478,5 +478,10 @@
     "stepMinutes": [11, 23],
     "tickMs": 2800,
     "walkSeconds": 15
+  },
+  "memoir": {
+    "cap": 160,
+    "peoplePerEntry": 5,
+    "confidencePeople": 4
   }
 }

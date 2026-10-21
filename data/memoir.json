@@ -1,0 +1,466 @@
+{
+  "notes": {
+    "rival": "your rival",
+    "whip": "the whip",
+    "leader": "the leader",
+    "mentor": "your mentor",
+    "ranSecond": "ran second",
+    "rebel": "broke from the line",
+    "withYou": "voted with you",
+    "away": "wasn't in the House",
+    "chased": "fetched in on the bells",
+    "paired": "paired off",
+    "votedFor": "voted for it",
+    "votedAgainst": "voted against it",
+    "stayedAway": "stayed away",
+    "friend": "a friend",
+    "lostToYou": "lost the chair to you",
+    "gotChair": "got the chair",
+    "appointedYou": "gave you the chair",
+    "wentToCabinet": "went to cabinet",
+    "brokenWord": "you broke your word",
+    "minister": "the minister",
+    "ringleader": "led it",
+    "newLeader": "the new leader",
+    "oldLeader": "the leader they came for",
+    "tookYouIn": "took you in",
+    "lifeEvent": "you were asked to be there"
+  },
+  "fallback": { "whip": "The whip", "leader": "The leader", "rival": "your rival" },
+  "asides": {
+    "youRebelled": "You voted {vote}, against your own line, and the whole House saw you stand.",
+    "rebelOne": "{names} broke from the line.",
+    "rebels": "{n} of your own broke from the line: {names}.",
+    "awayOne": "{names} wasn't in the House.",
+    "away": "{n} of your own weren't in the House, {names} among them.",
+    "chasedOne": "{names} was fetched in on the bells.",
+    "chased": "{names} were fetched in on the bells.",
+    "withYouOne": "{names} stood with you.",
+    "withYou": "{names} stood with you.",
+    "alone": "Nobody else on your benches stood with you.",
+    "askedAll": "You asked {n} across the aisle, and every one of them came through.",
+    "askedSome": "You asked {n} across the aisle for their votes; {kept} came through.",
+    "askedNone": "You asked {n} across the aisle for their votes. None came through.",
+    "askedNobody": "You didn't ask anyone across the aisle.",
+    "rival": "{rival} wanted the same things you did, and said so to other people.",
+    "govChanged": "The country changed its mind: {gov} formed a {govKind} government.",
+    "govSame": "{gov} came back with a {govKind}.",
+    "revoltJoin": "Your name was on the list.",
+    "revoltBack": "You stood with {leader} in the room.",
+    "revoltStay": "You kept out of it, which everyone noticed."
+  },
+  "lifeWhat": {
+    "ambition": "made a run for a committee chair",
+    "crisis": "had the worst month of their life",
+    "ridingTrouble": "had trouble at home in {where}",
+    "retirement": "started saying 'one more Parliament' like a question"
+  },
+  "kinds": {
+    "electionNight": {
+      "tone": "brass",
+      "title": ["Elected in {riding}", "Election night in {riding}"],
+      "text": [
+        "{riding} came in by {votes} votes after a count that took most of the night. {rival} conceded before you'd thought of what to say, and {gov} formed a {govKind} government without needing to know your name.",
+        "You won {riding} by {votes} votes. The broadcaster had called a {govKind} {gov} government before your own race was settled, so your victory party watched someone else's on television first."
+      ]
+    },
+    "sworn": {
+      "tone": "brass",
+      "title": ["Sworn in for {riding}", "The member for {riding}"],
+      "text": [
+        "The Clerk read the oath, you read it back, and {riding} had a member in the {nth} Parliament. Nobody had learned your name yet.",
+        "You took the oath for {riding} on the first day of the {nth} Parliament, one of a class of new members the whip's office was already sorting into piles."
+      ]
+    },
+    "scenario": {
+      "tone": "brass",
+      "title": ["{title}"],
+      "text": ["{blurb}"]
+    },
+    "whipCall": {
+      "tone": "grey",
+      "accepted": {
+        "tone": "yea",
+        "title": ["The first call from the whip's office"],
+        "text": [
+          "{whip} wanted you on {bill}, and you gave your word before you'd finished your coffee. It was the first time the whip leaned on you. It would not be the last.",
+          "The whip's office called about {bill}. {whip} did the talking and you did the agreeing, and you walked out a reliable vote and felt it."
+        ]
+      },
+      "declined": {
+        "tone": "nay",
+        "title": ["You said no to the whip", "The first call from the whip's office"],
+        "text": [
+          "{whip} called you in about {bill} and you told them no. They wrote something down. It was the first time the whip leaned on you, and the first time you leaned back.",
+          "The whip's office wanted your vote on {bill}. You heard {whip} out and kept it. Nobody shouted, which was worse."
+        ]
+      },
+      "missed": {
+        "tone": "nay",
+        "title": ["The call you didn't take"],
+        "text": [
+          "The whip's office called about {bill} and you didn't go. {whip} noticed. In that building, not going is an answer."
+        ]
+      }
+    },
+    "firstRebellion": {
+      "tone": "nay",
+      "title": ["The first time you broke the line", "Against the line"],
+      "text": [
+        "{bill} was whipped {line}, and you stood with the {vote}s. The walk to your feet was longer than it looked from the gallery.",
+        "Your first rebellion: {bill}, whipped {line}, and you voted {vote}. The whip's office keeps a file on every member. Yours got its first page."
+      ]
+    },
+    "confidence": {
+      "govHeld": {
+        "tone": "yea",
+        "title": ["Carried {by}", "Confidence, carried {by}", "The government held, {by}"],
+        "text": [
+          "{bill} was a matter of confidence and it carried {by}, {yeas} to {nays}. Your benches thumped their desks as if it had never been in doubt.",
+          "The House divided {yeas} to {nays} on {bill}, and the government lived another week. It carried {by}, and you had counted every one of them.",
+          "Confidence, {yeas} to {nays}, on {bill}. It carried {by}, which on the Hill is a comfortable night and in the whip's office is a warning."
+        ]
+      },
+      "govFell": {
+        "tone": "nay",
+        "title": ["{short}", "The government fell, {short}", "Lost, {short}"],
+        "text": [
+          "{bill} was confidence, and the government lost it {yeas} to {nays}. {Short}. The Speaker read the numbers and the House went quiet, then loud.",
+          "The count on {bill} was {yeas} to {nays}: {short}. By evening the word election was being said out loud.",
+          "{bill} went down {yeas} to {nays}, {short}. You had the names in your notebook before the Clerk had finished reading them."
+        ]
+      },
+      "oppToppled": {
+        "tone": "yea",
+        "title": ["Brought them down {by}", "The government fell {by}"],
+        "text": [
+          "{bill} went against the government {yeas} to {nays}. They fell {by}, and your benches were on their feet before the Speaker had finished.",
+          "The government lost the confidence of the House on {bill}, {yeas} to {nays}. The margin was {margin}, and it was enough. Somebody on your side had a bottle in a desk."
+        ]
+      },
+      "oppFailed": {
+        "tone": "grey",
+        "title": ["{short} of bringing them down", "The government held, {by}"],
+        "text": [
+          "You went after the government on {bill} and lost, {yeas} to {nays}, {short}. The other side cheered as if they'd meant it all along.",
+          "{bill} was confidence and the government held, {yeas} to {nays}. {Short} of an election. You went back over the names on the walk home."
+        ]
+      },
+      "castingHeld": {
+        "tone": "brass",
+        "title": ["A tie, and the Speaker's vote"],
+        "text": [
+          "{bill} tied, {yeas} to {nays}. The Speaker cast the deciding vote the way Speakers do, to let the House decide another day, and the government lived on a technicality."
+        ]
+      },
+      "castingFell": {
+        "tone": "nay",
+        "title": ["A tie, and the Speaker's vote"],
+        "text": [
+          "{bill} tied, {yeas} to {nays}, and the Speaker's casting vote went against it. The government fell on a single vote that wasn't even a member's."
+        ]
+      }
+    },
+    "pmb": {
+      "introduced": {
+        "tone": "brass",
+        "title": ["Your name on a bill", "The private member's bill"],
+        "text": [
+          "Your name came up in the private members' lottery and you put it on {bill}. A backbencher's bill rarely passes. It gets you into rooms you weren't in before.",
+          "The lottery gave you a slot and you spent it on {bill}. The whip asked who had written it. You had."
+        ]
+      },
+      "passed": {
+        "tone": "yea",
+        "title": ["{bill} passed", "Your bill passed"],
+        "text": [
+          "{bill} passed second reading {by}. Your name is on something now, and it will be on it after you've gone.",
+          "Your bill, {bill}, carried {by} at second reading. You read the division list twice to be sure of it."
+        ]
+      },
+      "defeated": {
+        "tone": "nay",
+        "title": ["{bill} defeated", "Your bill went down"],
+        "text": [
+          "{bill} was defeated at second reading. You know who voted for it, and so does the whip.",
+          "Your bill, {bill}, died at second reading. The members who'd said 'of course' in the lobby said nothing in the division."
+        ]
+      }
+    },
+    "act2": {
+      "reliable": {
+        "tone": "brass",
+        "title": ["Noticed: reliable"],
+        "text": [
+          "The whip's office had you down as reliable. It is the nicest thing they say about anyone, and they mean it as a job description."
+        ]
+      },
+      "usefulTrouble": {
+        "tone": "brass",
+        "title": ["Noticed: useful trouble"],
+        "text": [
+          "The whip's office had you down as useful trouble: someone who rebels on the right things, and can be talked to about the rest."
+        ]
+      }
+    },
+    "act3": {
+      "tone": "brass",
+      "title": ["Assistant whip"],
+      "text": [
+        "{whip} had two names for the chair and picked yours. {rival} congratulated you in the lobby with the face of someone already counting to the next vacancy.",
+        "The chair in the whip's office was yours, and with it a row of members to answer for. {rival} took it well, in public."
+      ]
+    },
+    "vacancyLost": {
+      "tone": "nay",
+      "title": ["Passed over for the chair"],
+      "text": [
+        "The chair in the whip's office went to {rival}. 'Next time,' {whip} said, which is what whips say.",
+        "{whip} gave the chair to {rival}. You found out from the seating chart."
+      ]
+    },
+    "committeeChair": {
+      "tone": "grey",
+      "title": ["A committee of your own"],
+      "text": [
+        "You took a committee chair instead: a title, a staff, a gavel of your own, and your name still on the whip's list."
+      ]
+    },
+    "leanOn": {
+      "hard": {
+        "tone": "nay",
+        "title": ["Leaning on a friend"],
+        "text": [
+          "You needed {friend} on {bill} and you didn't ask nicely. They voted the line. They haven't forgotten how you asked."
+        ]
+      },
+      "gentle": {
+        "tone": "grey",
+        "title": ["Asking a friend"],
+        "text": [
+          "You asked {friend} to vote the line on {bill} as a friend, not as a whip. It is a different thing, and you both knew it."
+        ]
+      },
+      "go": {
+        "tone": "yea",
+        "title": ["Letting a friend go"],
+        "text": [
+          "{friend}'s riding hated {bill}, and you let them vote it. The deputy whip found the gap in your row and asked you about it."
+        ]
+      }
+    },
+    "act4": {
+      "tone": "brass",
+      "title": ["Deputy whip"],
+      "text": [
+        "Your row carried, week after week, and the deputy's desk was yours. The count was yours now, and so was being wrong about it.",
+        "{whip} put your name forward and the deputy's chair came with a key to the count. Your phone started ringing at eleven at night."
+      ]
+    },
+    "demoted": {
+      "soft": {
+        "tone": "nay",
+        "title": ["Back to the backbench"],
+        "text": [
+          "The whip's office decided you were too soft for a row. You went back to the backbench with a reputation for kindness, which in that building is a diagnosis."
+        ]
+      },
+      "bully": {
+        "tone": "nay",
+        "title": ["Back to the backbench"],
+        "text": [
+          "Your row stopped answering your calls. The whip's office decided that was your doing and sent you back to the backbench."
+        ]
+      },
+      "wrongCount": {
+        "tone": "nay",
+        "title": ["Off the deputy's desk"],
+        "text": [
+          "You called votes safe that weren't, more than once. The deputy's desk went to someone who counted better, and you went back to a row."
+        ]
+      },
+      "replaced": {
+        "tone": "nay",
+        "title": ["Out of the whip's office"],
+        "text": [
+          "The caucus had had enough, and {leader} agreed with the caucus. The whip's office went to someone else on a Friday afternoon."
+        ]
+      },
+      "fallen": {
+        "tone": "nay",
+        "title": ["Back to the backbench"],
+        "text": [
+          "The government fell on your count. You stayed in the House, on the backbench, which is where whips who lose confidence votes go."
+        ]
+      },
+      "overthrown": {
+        "tone": "nay",
+        "title": ["Back to the backbench"],
+        "text": [
+          "The caucus turned you out of the whip's office, and you stayed to sit among them on the backbench. Some of them still can't look at you."
+        ]
+      }
+    },
+    "temptation": {
+      "tone": "grey",
+      "title": ["You said no to the leader"],
+      "text": [
+        "{leader} offered you a way out of the whip's office and into something better paid. You said no. They said they understood, which is not the same thing as agreeing."
+      ]
+    },
+    "act5": {
+      "tone": "brass",
+      "title": ["Chief Whip"],
+      "text": [
+        "{chief} went to cabinet and {leader} gave you the chair. The whole caucus is your row now.",
+        "{leader} made you Chief Whip the week {chief} went to cabinet. The office has a better window and no door that stays shut."
+      ]
+    },
+    "passedOver": {
+      "tone": "nay",
+      "title": ["The chair went elsewhere"],
+      "text": [
+        "{chief} went to cabinet and {other} got the Chief Whip's chair. You were still the deputy, which is a job and not a consolation."
+      ]
+    },
+    "cabinetDeclined": {
+      "tone": "grey",
+      "title": ["You turned down {portfolio}"],
+      "text": [
+        "{leader} offered you {portfolio}. You turned it down to stay in the whip's office. The offer, they said, stands. Offers say that.",
+        "{leader} had {portfolio} for you, with a driver. You said the whip's office still needed you, and meant it, mostly."
+      ]
+    },
+    "lifeEvent": {
+      "minor": true,
+      "showUp": {
+        "tone": "yea",
+        "title": ["You showed up for {first}", "There for {first}"],
+        "text": [
+          "When {name} {what}, you went. It cost you an evening you didn't have, and {first} hasn't forgotten it.",
+          "{name} {what}, and you made the time. It is the kind of thing nobody puts in the record, which is why it's here.",
+          "You cleared an evening when {name} {what}. Nobody asked you to. {first} noticed that most of all."
+        ]
+      },
+      "ignore": {
+        "tone": "nay",
+        "title": ["You didn't go", "The evening you didn't spend"],
+        "text": [
+          "When {name} {what}, you had your own week. They noticed you didn't come by.",
+          "{name} {what}, and you let it pass. You meant to call. You didn't call."
+        ]
+      }
+    },
+    "brokenPromise": {
+      "tone": "nay",
+      "title": ["Your word, broken"],
+      "text": [
+        "You'd promised {name} your vote and you didn't give it. Their friends heard about it before you'd left the chamber. It was the first time, and it's the one you remember."
+      ]
+    },
+    "firstQuestion": {
+      "lob": {
+        "tone": "grey",
+        "title": ["Your first question"],
+        "text": ["Your first question in Question Period went to {minister}, on {topic}, and it was a soft one. Your benches thumped their desks anyway. It was a start."]
+      },
+      "parried": {
+        "tone": "grey",
+        "title": ["Your first question"],
+        "text": ["You put your first question to {minister} on {topic}. They had the answer ready, and the gallery moved on to someone else."]
+      },
+      "hit": {
+        "tone": "yea",
+        "title": ["Your first question landed"],
+        "text": ["Your first question in Question Period landed. {minister} had nothing ready on {topic}, and the press gallery wrote it down."]
+      },
+      "home": {
+        "tone": "yea",
+        "title": ["Your first question, for home"],
+        "text": ["You went off the script for your first question and asked {minister} about {topic}. {riding} heard about it by supper."]
+      }
+    },
+    "election": {
+      "held": {
+        "tone": "brass",
+        "title": ["Re-elected in {riding}", "Back for the {nth} Parliament", "{riding} again"],
+        "text": [
+          "{riding} sent you back to the {nth} Parliament.",
+          "The campaign was five weeks of church basements and the count was over by eleven. You held {riding} for the {nth} Parliament.",
+          "You held {riding}. The returning officer said your name for the {nth} Parliament like they'd got used to it."
+        ]
+      },
+      "lost": {
+        "tone": "nay",
+        "title": ["Lost {riding}"],
+        "text": [
+          "{riding} went the other way. You thanked the volunteers at midnight, and then you went home, and the House went on without you."
+        ]
+      },
+      "deselected": {
+        "tone": "nay",
+        "title": ["Deselected"],
+        "text": [
+          "The riding association in {riding} chose someone else before the writ dropped. You learned it from a phone call, which is how it is always learned."
+        ]
+      }
+    },
+    "crossed": {
+      "tone": "brass",
+      "title": ["Across the floor"],
+      "text": [
+        "You crossed the floor from {from} to {to}. It is a short walk. You start again as a rookie, with your name going ahead of you.",
+        "You left {from} for {to}, carrying your files across the aisle in a box. Your old benches watched you sit down."
+      ]
+    },
+    "revolt": {
+      "leaderWon": {
+        "tone": "brass",
+        "title": ["The room turned"],
+        "text": ["The caucus came for {leader} and got them. {newLeader} has the leader's office now."]
+      },
+      "leaderLost": {
+        "tone": "grey",
+        "title": ["The room held"],
+        "text": ["{ringleader}'s list came up short, and {leader} kept the party. For now, everyone said, though not in the room."]
+      },
+      "whipWon": {
+        "tone": "nay",
+        "title": ["The room turned on you"],
+        "text": ["{ringleader} had the names, and the caucus took the whip's office from you in a single morning."]
+      },
+      "whipLost": {
+        "tone": "yea",
+        "title": ["The room held for you"],
+        "text": ["{ringleader} came for the whip's office with a list, and the caucus wouldn't sign it. You kept your job and learned who'd been asked."]
+      }
+    },
+    "ending": {
+      "retirement": {
+        "tone": "brass",
+        "title": ["You stood down"],
+        "text": ["You stood down from {riding}. The whip's office sent a card, signed by people you had once threatened, and they meant every word."]
+      },
+      "cabinet": {
+        "tone": "yea",
+        "title": ["Cabinet: {portfolio}"],
+        "text": ["{leader} gave you {portfolio}, and you left the whip's office for a ministry. The new whip has your files. Some of them are about you."]
+      },
+      "exit": {
+        "tone": "grey",
+        "title": ["Out of the whip's office"],
+        "text": ["You took the leader's offer and left the whip's office: better hours, better pay, and nobody calling at eleven to ask where you are."]
+      },
+      "fall": {
+        "tone": "nay",
+        "title": ["Resigned"],
+        "text": ["The government fell on your count, and you resigned the whip's office the next morning. The letter was two lines. You wrote eleven drafts."]
+      },
+      "revolt": {
+        "tone": "nay",
+        "title": ["Overthrown"],
+        "text": ["The caucus turned on you, and you took the hint, and then the door."]
+      }
+    }
+  }
+}
