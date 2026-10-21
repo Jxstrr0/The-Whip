@@ -682,3 +682,20 @@ Kelbo's once-over picked twelve things. This is the first: the two rooms where a
 - An off-script question marks a carried riding case as raised in the House, so it isn't asked twice; when there's no case, a riding-type issue stands in ("the winter road season", "the rent"). The minister for an off-script question is whoever holds that interest in cabinet, not the bill's sponsor.
 - The question comes before any division, so the "Noticed" it earns counts toward Act 2 the same week. Saves from before this change load unchanged: a player without a `lastQp` is simply due.
 - Four new tests (the guided-week slot, each framing's effects for both sides, the promised slot, every line and headline filling).
+
+## 2026-10-21 · Round two, 8 of 12: An office that grows with rank
+
+**What was built**
+
+- The office is five rooms now, one per Act, and a promotion is something you walk into. **Act 1, the shared room:** cramped, two desks, a fluorescent tube, one window, a filing cabinet, the last member's boxes still in the corner, and your deskmate working late at the other desk (a real figure, the first-term member of your party the sim seats you with, glancing over now and then). **Act 2, your own office:** one door, one desk with your nameplate on it, a window, an empty bookcase, a coat rack. **Act 3, the whip's annex:** the same room with two steel cabinets of your row's files along the wall and a coffee machine on a side table. **Act 4, the deputy's office:** bigger, walnut desk, a rug, the party's flag in the corner, a wall-sized board, three cabinets, a lounge chair for the ones who'd rather not sit across a desk. **Act 5, the chief whip's corner office:** two windows, the whips' table under the board with four chairs, a sofa and coffee table, a floor lamp, the flag.
+- Each room has its own light (cold tube in the shared room, warm lamp pools and darker walls as you rise) and its own empty-room shot, framed from inside its door, so the five rooms look like five rooms and not one desk from the same angle.
+- The sheet's heading names the room ("The shared room · evening" … "The chief whip's office · evening"), and the first evening you spend at a new rank the log describes it, once ("Your own door, with your name on it. …").
+- The reversal in Act 1 still takes you to the whip's own office (blinds, walnut, the flag), whatever Act you've reached.
+
+**Things to know / decisions I made**
+
+- The room rebuilds when the Act changes (`rooms.show` now watches a `variant`), so a promotion mid-career swaps the set the next time you're in the office; nothing else is rebuilt. Draw calls stay under 80 in every set.
+- Old saves work: a save from before this change logs the room line once on its next office evening and carries on.
+- The deskmate is chosen deterministically (lowest id among your party's first-term members, you excepted), so the same seed always gives the same colleague. They're only in the Act 1 set.
+- The whip's office for the reversal is built lazily, the first time it's needed, so Acts 2–5 never pay for it.
+- The old `tier` extra went away; the office takes `act` now. One new test: the first evening at each rank logs the line once, and every Act has a room, a line and a title.
