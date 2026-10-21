@@ -276,3 +276,25 @@ The first step of `ART-PASS.md`. Nothing in the rooms was redesigned yet; this i
 **Things to know**
 
 - The office and riding framing is still the old framing (steps V4 and V5). The figures are better; the shots around them aren't yet.
+
+---
+
+## 2026-10-21 · Art pass V2: the chamber
+
+**What changed**
+
+- **Your own seat is the default view** in Acts 1 and 2, as the handoff asked. The camera sits just above your head, looking across the aisle and a little toward the Speaker. One finger turns your head (not past your shoulders), pinch narrows the lens, and a double-tap on a party block turns you toward it. The top bar's "Reset view" is now **Overview / My seat**: the overview from above the bar is one tap away and back. While the camera is in your seat, your own figure leaves the chair (you can't see yourself from your own eyes).
+- **The division is staged.** When the bells ring the room dims a touch, every unlit seat lamp pulses amber, and the camera eases to a three-quarter overview where the sweep of the count reads across both sides. Each seat that lights throws a short vertical flash in its colour. After the result and Continue, the camera comes back to your seat.
+- **Real surfaces.** The first CC0 textures from ambientCG are in `assets/textures/` (listed with their licence in `assets/LICENSES.md`): carpet, oak, walnut, stone, plaster, leather and wool, re-encoded to 512² and about 580 KB in total. The colour maps are converted to a greyscale grain so the game's own palette still sets the colour; the normal maps give relief. Texture coordinates are in metres, so grain density is consistent across every surface.
+- **The room is dressed.** Stone walls in courses, a dark oak wainscot with panel strips and rails, tall windows with mullions and a warm wash on the wall under each, a plaster ceiling with oak beams, three chandeliers on stems with brass rings, galleries with a railed front, posts, a brass top rail and fourteen people sitting in them, the Speaker's chair with side pillars, a canopy, a crest and a gold finial, a green cloth on the Clerk's table with brass brackets under the Mace. Desks are oak, chairs green leather.
+
+**Checks**
+
+- Guided week through the real buttons in a headless phone browser, portrait and landscape: no console errors. `tests.html`: 33 of 33.
+- Chamber: 30 draw calls at rest (budget 60).
+- Still for you: how your own seat feels on your phone, and whether the overview should stay one tap away or be the default after Act 2.
+
+**Things to know / decisions I made**
+
+- **The overview is kept for divisions.** The count is theatre and needs both sides in frame; from your seat you'd only see one. So the camera leaves your seat for the vote and comes back.
+- **Textures are grain, not colour.** Keeping the hue in the palette means the party colours, the leather and the oak stay exactly the shades the design doc names, and a texture can be swapped without recolouring the game.

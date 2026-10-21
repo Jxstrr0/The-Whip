@@ -79,6 +79,7 @@ function buildWorld() {
   const colorOf = (mp) => partyColor(getState(), mp);
 
   let card;
+  let hud = null;
   const rooms = createRooms({
     factories: { chamber, office, caucus, riding },
     ctx: {
@@ -91,8 +92,16 @@ function buildWorld() {
       onMpTap: (mpId) => card.show(mpId),
     },
     onChange(name, room) {
-      if (name === 'chamber') room.sync(getState(), colorOf);
+      if (name === 'chamber') {
+        const state = getState();
+        room.sync(state, colorOf);
+        // Acts 1 and 2 open from your own seat: the backbench is a seat, not a map.
+        const me = state.mps[state.player.mpId];
+        if (me.seatId) room.setHomeSeat(me.seatId);
+        room.setView(me.seatId && state.player.act <= 2 ? 'home' : 'overview');
+      }
       card?.hide();
+      hud?.render();
     },
   });
   const chamberRoom = () => (rooms.name === 'chamber' ? rooms.room : null);
@@ -145,15 +154,22 @@ function buildWorld() {
       location.href = location.pathname;
     },
   });
-  createHud(ui, {
+  hud = createHud(ui, {
     buttons: [
       { label: t('btn.book'), run: () => (book.isOpen ? book.close() : book.open()) },
       {
-        label: t('btn.reset'),
-        run: () => {
-          chamberRoom()?.controls.reset();
-          chamberRoom()?.select(null);
+        // Overview from above the bar, or back to your own seat. Tapping it also tidies the view.
+        get label() {
+          return chamberRoom()?.view === 'home' ? t('btn.overview') : t('btn.myseat');
+        },
+        run() {
+          const room = chamberRoom();
+          if (!room) return;
+          room.setView(room.view === 'home' ? 'overview' : 'home');
+          room.controls.reset();
+          room.select(null);
           card.hide();
+          hud.render();
         },
       },
       { label: '☰', run: () => gameMenu.open() },
