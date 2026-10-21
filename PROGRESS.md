@@ -808,3 +808,27 @@ Kelbo's once-over picked twelve things. This is the first: the two rooms where a
 - Three new tests: the memoir has the key moments with their people, is the same for the same seed and doesn't move the game; confidence votes are written down selectively; an old save starts a memoir and says where, and the cap drops small moments first.
 
 That's all twelve of Round two. What comes next is Kelbo's playtest notes; the phone frame-rate check with `?debug=1` is still owed.
+
+## 2026-10-21 · Round two, 11: Faces you earn
+
+Kelbo picked this one after the twelve were done. It ties "knowing people is the skill" into the art: you can see who you know.
+
+**What was built**
+
+- **Strangers are faceless.** Every MP you've never spoken to has a blank face in every room: hair, skin and suit, but no eyes, no nose. That's most of the House when you arrive.
+- **One conversation gives them a face.** The first time you talk to someone (an office meeting, a call, a word at caucus), they get eyes, a nose and brows.
+- **A second gives them the feature.** That's the thing you'd pick them out by across the floor: round glasses, square glasses, half-moon readers, heavy brows, earrings, a beard or a moustache.
+- **Knowing them well gives the keepsake.** After four talks, and once you know six things about them, they get something personal: a bow tie, a pocket square, a flower in the lapel, or a bold tie in their own colour.
+- **Each face is that member's own.** The same MP always gets the same feature, frame colour and keepsake, so once you've learned a face it stays theirs for the whole career.
+- **In the office, the face comes into focus.** A visitor walks in looking as you knew them before tonight. When they sit down and the conversation starts, the new parts grow in. Something you learn mid-meeting can bring the keepsake in the same way.
+- **By the later acts your side of the House looks different.** In the headless runs, after four years the bot's own caucus was about 14% faceless, 23% with a face, 32% with a feature and 30% with a keepsake. The opposition was 66% faceless and never got a keepsake. Your caucus is a room of people; the other side is still a crowd.
+
+**Things to know / decisions I made**
+
+- The face is drawn wherever MPs are: the chamber benches, the walkers and the member on their feet, the caucus table, the office visitor, the colleague at the other desk, the whip at the desk in the reversal, and your photo on the front page (always a full face; it's you).
+- Votes and the whip's office reveal a lot about many MPs at once, so what you know about someone can't be what gives them a face, or half the House would have one without a word spoken. Faces come from talking to people. Knowledge only matters for the last step.
+- Beards and moustaches only go on members whose first name is on a short list in `data/names.json` (`whiskers`). Everyone else draws from glasses, brows and earrings. That stops the game putting a beard on a figure at random.
+- The hair was drawn as a cap over the whole head, which would have covered a face. It's now a hairline that leaves the face open and covers the crown, sides and back. Seen from behind or across the chamber it reads the same as before.
+- The numbers are in `data/tuning.json` under `faces` (talks for the feature, talks and things known for the keepsake). How well you know someone is `familiarity()` in `src/sim/knowledge.js`, which counts your conversations in `player.talks`. A save from before this treats anyone you've had contact with as one talk.
+- The face parts are in `src/faces.js`. The crowds in `src/figures.js` draw each kind of part as one instanced mesh that's switched off when nobody in the room wears it, so a room of strangers costs no extra draw calls.
+- Counting talks changes nothing about how the game plays: same seed, same Parliament. Two new tests check the tiers, the old-save rule and that faces don't move the game; that a face is the same every time; and that each tier only adds parts.

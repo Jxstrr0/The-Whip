@@ -4,6 +4,8 @@
 import * as THREE from 'three';
 import { createFigure, poseFigure } from './office/visitor.js';
 import { wardrobe } from './figures.js';
+import { faceFor } from './faces.js';
+import { data } from './sim/config.js';
 
 const W = 300;
 const H = 380;
@@ -30,7 +32,8 @@ function renderFigure(renderer, environment, mp, color) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#cfc7b8');
   scene.environment = environment;
-  const f = createFigure(color, mp.id, wardrobe(mp.id, color));
+  // The member is the player, so it's a face they know in full.
+  const f = createFigure(color, mp.id, wardrobe(mp.id, color), faceFor(mp.id, 3, { whiskers: data().names.whiskers?.includes(mp.name.first) }));
   poseFigure(f, 'standing', 1);
   f.group.rotation.y = -0.35;
   f.head.rotation.y = 0.2;

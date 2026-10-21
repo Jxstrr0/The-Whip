@@ -1,5 +1,5 @@
 // The MP card: a bottom sheet showing public facts plus only what the knowledge map says the player knows.
-import { cardView, HIDDEN_FIELDS } from '../sim/knowledge.js';
+import { cardView, HIDDEN_FIELDS, familiarity } from '../sim/knowledge.js';
 import { t, esc, partyColor, partyName, roleName, interestName, ideologyText, loyaltyText, ambitionText, rapportText, ordinal } from './text.js';
 
 function seatText(state, seatId) {
@@ -70,6 +70,7 @@ export function createMpCard(root, { getState, onClose, actions = () => [] }) {
       </header>
       <p class="riding">${esc(mp.riding.name)} · ${esc(mp.riding.province)} · ${t('type.' + mp.riding.type)}</p>
       <p class="seat">${esc(seatText(state, mp.seatId))}</p>
+      ${v.isPlayer ? '' : `<p class="seat familiar">${t('card.face' + familiarity(state, mp.id))}</p>`}
       <h3>${t('card.known')}</h3>
       <div class="kvs">${rows}</div>
       ${Object.values(v.fields).some((f) => !f.known) ? `<p class="hint">${t('card.hint')}</p>` : ''}

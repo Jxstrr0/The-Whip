@@ -2,7 +2,8 @@
 // shoes on pivots, so it can walk in, sit, and hold a pose that says how the meeting is going.
 import * as THREE from 'three';
 import { blobMaterial, figureMaterial, merge } from '../kit3d.js';
-import { lookFor, shade, HEAD_R, tieParts, pinPart } from '../figures.js';
+import { lookFor, shade, tieParts, pinPart } from '../figures.js';
+import { headGeometries, bodyGeometries, hairCap, partsFor, partColour, tieColour, growScale, HEAD_PARTS } from '../faces.js';
 
 const HIP = 0.86;
 const THIGH = 0.39;
@@ -21,8 +22,9 @@ function hanging(r, len, mat) {
 }
 
 // `outfit` is a wardrobe() result: its suit replaces `color`, and its tie and pin are worn; without one the
-// figure is a plain suit (the player seen from behind, a constituent).
-export function createFigure(color, mpId = 'x', outfit = null) {
+// figure is a plain suit (the player seen from behind, a constituent). `face` is a faces.js result: how much
+// of a face the player has earned on them (none for a stranger); setFace() changes it later, growing new parts.
+export function createFigure(color, mpId = 'x', outfit = null, face = null) {
   const look = lookFor(mpId);
   const mats = {
     suit: figureMaterial({ color: outfit?.suit || shade(color, mpId), roughness: 0.82 }),
@@ -48,18 +50,20 @@ export function createFigure(color, mpId = 'x', outfit = null) {
   // The head turns and nods about the neck.
   const head = new THREE.Group();
   head.position.set(0, HEAD_H - 0.12, 0);
-  const skull = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 14, 10), mats.skin);
+  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.115, 14, 10), mats.skin);
   skull.scale.set(1, 1.12, 1.02);
   skull.position.y = 0.12;
-  const cap = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R + 0.012, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.64), mats.hair);
-  cap.scale.set(1, 1.1 * Math.max(look.hairStyle, 0.01), 1.02);
-  cap.position.set(0, 0.125, -0.012);
+  const cap = new THREE.Mesh(hairCap(), mats.hair);
+  cap.scale.set(1, Math.max(look.hairStyle, 0.01), 1);
+  cap.position.y = 0.12;
   cap.visible = look.hairStyle > 0;
   head.add(skull, cap);
   body.add(torso, shoulders, collar, neck, head);
+  let tieMesh = null;
   if (outfit?.tie) {
     mats.tie = figureMaterial({ color: outfit.tie, roughness: 0.55 });
-    body.add(new THREE.Mesh(merge(tieParts(SHOULDER_H)), mats.tie));
+    tieMesh = new THREE.Mesh(merge(tieParts(SHOULDER_H)), mats.tie);
+    body.add(tieMesh);
   }
   if (outfit?.pin) {
     mats.pin = figureMaterial({ color: outfit.pin, roughness: 0.3, metalness: 0.6 });
@@ -94,6 +98,70 @@ export function createFigure(color, mpId = 'x', outfit = null) {
     return { hip, knee };
   });
 
+  // The face: every part this person could earn is built once and shown as the tier allows. Head parts sit
+  // on a pivot at the head's centre, keepsakes at their spot on the jacket, so each can grow in place.
+  const faceParts = {};
+  let tier = 0;
+  let growFrom = 9;
+  let growT = 1;
+  if (face) {
+    const full = partsFor({ ...face, tier: 3 });
+    const heads = headGeometries();
+    const bodies = bodyGeometries(SHOULDER_H);
+    const lookC = { skin: look.skin, hair: look.hair, hairStyle: look.hairStyle };
+    for (const [k] of full) {
+      const fixed = k === 'eyes' ? '#1b1714' : k === 'earrings' ? '#d4b25a' : null;
+      const mat = figureMaterial({ color: fixed || partColour(k, face, lookC), roughness: k === 'eyes' ? 0.35 : 0.7, metalness: k === 'earrings' ? 0.7 : ['round', 'square', 'halfMoons'].includes(k) ? 0.3 : 0, side: k === 'beard' ? THREE.DoubleSide : THREE.FrontSide });
+      mats[`face_${k}`] = mat;
+      const pivot = new THREE.Group();
+      if (HEAD_PARTS.includes(k)) {
+        pivot.position.y = 0.12;
+        pivot.add(new THREE.Mesh(heads[k], mat));
+        head.add(pivot);
+      } else {
+        pivot.position.set(...bodies.anchors[k]);
+        pivot.add(new THREE.Mesh(bodies.geos[k], mat));
+        body.add(pivot);
+      }
+      faceParts[k] = { pivot, level: 0 };
+    }
+    // The heavy brows replace the plain ones, so both are built for a brows person.
+    if (face.feature === 'brows' && !faceParts.brows) {
+      const mat = figureMaterial({ color: partColour('brows', face, lookC), roughness: 0.7 });
+      mats.face_brows = mat;
+      const pivot = new THREE.Group();
+      pivot.position.y = 0.12;
+      pivot.add(new THREE.Mesh(heads.brows, mat));
+      head.add(pivot);
+      faceParts.brows = { pivot, level: 0 };
+    }
+    for (const [k, g] of Object.entries(heads)) if (!faceParts[k]) g.dispose();
+    for (const [k, g] of Object.entries(bodies.geos)) if (!faceParts[k]) g.dispose();
+  }
+  function showFace() {
+    const on = new Map(partsFor(face && { ...face, tier }));
+    for (const [k, p] of Object.entries(faceParts)) {
+      const level = on.get(k);
+      p.pivot.visible = level != null;
+      p.pivot.scale.setScalar(level != null && level > growFrom ? growScale(growT) : 1);
+    }
+    if (tieMesh) {
+      tieMesh.visible = !(tier >= 3 && face.signature === 'bowtie');
+      mats.tie.color.set(tieColour(face && { ...face, tier }, outfit.tie));
+    }
+  }
+  function setFace(next, { grow = false } = {}) {
+    if (!face || !next) return;
+    const t = Math.min(3, next.tier || 0);
+    if (grow && t > tier) {
+      growFrom = tier;
+      growT = 0;
+    }
+    tier = t;
+    showFace();
+  }
+  setFace(face);
+
   // A soft shadow that travels with the figure.
   const shadow = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9).rotateX(-Math.PI / 2), blobMaterial());
   shadow.position.y = 0.012;
@@ -110,6 +178,16 @@ export function createFigure(color, mpId = 'x', outfit = null) {
     // The player's own head is hidden in over-the-shoulder shots: the shoulder at the frame edge is the point.
     setHeadVisible(v) {
       head.visible = v;
+    },
+    get faceTier() {
+      return tier;
+    },
+    setFace,
+    // Advance any parts growing in.
+    tick(dt) {
+      if (growT >= 1) return;
+      growT = Math.min(1, growT + dt / 0.7);
+      showFace();
     },
   };
 }
@@ -163,8 +241,16 @@ export function stride(f, t) {
 }
 
 // A visitor that follows waypoints from the door to a chair. update(dt) animates; `seated` tells the camera.
-export function createVisitor(scene, { color, mpId, path, seat, facing, outfit = null }) {
-  const f = createFigure(color, mpId, outfit);
+// `face` is how well the player knows them now; `faceFrom` the tier they walk in with, so the rest of the face
+// comes into focus once they've sat down and the conversation starts.
+export function createVisitor(scene, { color, mpId, path, seat, facing, outfit = null, face = null, faceFrom = null }) {
+  const f = createFigure(color, mpId, outfit, face);
+  let faceNext = null;
+  if (face && faceFrom != null && faceFrom < face.tier) {
+    f.setFace({ ...face, tier: faceFrom });
+    faceNext = face;
+  }
+  let focusIn = 0.6;
   scene.add(f.group);
   let phase = 'entering';
   let mood = 'cooperative';
@@ -201,6 +287,12 @@ export function createVisitor(scene, { color, mpId, path, seat, facing, outfit =
     setMood(m) {
       mood = m;
     },
+    // Learning more mid-meeting: the new parts grow in (after the walk-in, if they haven't sat yet).
+    setFace(next) {
+      if (!next) return;
+      if (phase === 'seated') f.setFace(next, { grow: true });
+      else faceNext = next;
+    },
     onSeated(cb) {
       onSeated = cb;
     },
@@ -217,9 +309,19 @@ export function createVisitor(scene, { color, mpId, path, seat, facing, outfit =
       f.group.rotation.y = facing;
       phase = 'seated';
       poseFigure(f, mood, 1);
+      if (faceNext) f.setFace(faceNext);
+      faceNext = null;
     },
     update(dt) {
       t += dt;
+      f.tick(dt);
+      if (phase === 'seated' && faceNext) {
+        focusIn -= dt;
+        if (focusIn <= 0) {
+          f.setFace(faceNext, { grow: true });
+          faceNext = null;
+        }
+      }
       if (phase === 'entering') {
         poseFigure(f, 'walking', 1);
         stride(f, t);
