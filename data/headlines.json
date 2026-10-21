@@ -94,6 +94,17 @@
     { "id": "h062", "event": "routine", "text": "Quiet week in Ostrava, and nobody's complaining" },
     { "id": "h063", "event": "routine", "text": "Committee hears from witnesses on {bill}; few minds changed" },
     { "id": "h064", "event": "routine", "text": "{party} talks up {bill} ahead of next week's vote" },
-    { "id": "h065", "event": "routine", "text": "Question Period produces heat, little light" }
+    { "id": "h065", "event": "routine", "text": "Question Period produces heat, little light" },
+    { "id": "h066", "event": "qpHit", "text": "{minister} stumbles in the House over a question from {name}" },
+    { "id": "h067", "event": "qpHit", "text": "Backbencher from {riding} lands the question the minister couldn't answer" },
+    { "id": "h068", "event": "qpHit", "text": "'I'll have to check': {minister} caught short on {issue}" },
+    { "id": "h069", "event": "qpHit", "text": "Who is {name}? The member for {riding} has the gallery asking" },
+    { "id": "h070", "event": "qpParried", "text": "{minister} bats away a sharp one from {riding}" },
+    { "id": "h071", "event": "qpParried", "text": "{name} presses the minister on {issue}; the minister declines to be pressed" },
+    { "id": "h072", "event": "qpLob", "text": "Question Period: {party} serves up a soft one for {minister}" },
+    { "id": "h073", "event": "qpLob", "text": "{name} asks the question the minister wanted asked" },
+    { "id": "h074", "event": "qpRiding", "text": "Sixty seconds for {issue} in the House, courtesy of {name}" },
+    { "id": "h075", "event": "qpRiding", "text": "Member for {riding} takes {issue} to the minister's face" },
+    { "id": "h076", "event": "qpRiding", "text": "'Has the minister heard of it?' {name} brings {riding} to Ostrava" }
   ]
 }

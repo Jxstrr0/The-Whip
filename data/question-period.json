@@ -1,0 +1,240 @@
+{
+  "call": [
+    "Order. The honourable member for {riding}.",
+    "Order, please. The member for {riding} has the floor.",
+    "The honourable member for {riding}, on a question.",
+    "Order. I will hear the member for {riding}."
+  ],
+  "issues": {
+    "rural": [
+      { "issue": "the price of diesel", "interest": "agriculture" },
+      { "issue": "rural broadband", "interest": "rural" },
+      { "issue": "the grain elevator closing", "interest": "agriculture" },
+      { "issue": "the doctor shortage", "interest": "health" }
+    ],
+    "northern": [
+      { "issue": "the winter road season", "interest": "northern" },
+      { "issue": "the cost of flying groceries in", "interest": "northern" },
+      { "issue": "the mine's water licence", "interest": "environment" },
+      { "issue": "the nursing station's hours", "interest": "health" }
+    ],
+    "suburban": [
+      { "issue": "the commuter line", "interest": "transit" },
+      { "issue": "daycare waiting lists", "interest": "education" },
+      { "issue": "the price of a first home", "interest": "housing" },
+      { "issue": "the highway widening", "interest": "roads" }
+    ],
+    "urban": [
+      { "issue": "the rent", "interest": "housing" },
+      { "issue": "the emergency room's wait times", "interest": "health" },
+      { "issue": "the transit fare hike", "interest": "transit" },
+      { "issue": "the shelter beds", "interest": "housing" }
+    ]
+  },
+  "questions": {
+    "government": {
+      "soft": {
+        "bill": [
+          "Could the minister tell the House what {bill} will mean for communities like {riding}?",
+          "The people of {riding} have been waiting for {bill} for a long time. Can the minister tell the House when they'll see it working?",
+          "Would the minister explain to the House how {bill} delivers on what we promised in the election?"
+        ],
+        "issue": [
+          "Can the minister update the House on what the government is doing about {issue}?",
+          "People in {riding} ask me about {issue} every weekend. Could the minister tell them what's coming?",
+          "Would the minister tell the House how this government's plan on {issue} compares with the record of the party opposite?"
+        ]
+      },
+      "pointed": {
+        "bill": [
+          "The minister has told this House twice that {bill} is ready. The people of {riding} have read it. When will the minister?",
+          "I want to support {bill}. So does my riding. Can the minister explain why the clause everyone back home asked about isn't in it?",
+          "Will the minister confirm that {bill} does for {riding} what the department's own briefing note says it won't?"
+        ],
+        "issue": [
+          "My constituents have heard the government's words on {issue}. What they haven't seen is a date. Does the minister have one?",
+          "The minister's department wrote to me about {issue} in the spring. It's autumn. Is the letter the plan?",
+          "I ask as a member of this caucus: on {issue}, is the minister speaking for the government or for the department?"
+        ]
+      },
+      "offScript": [
+        "I want to ask the minister about {issue}. Not the file. The thing itself. Has anyone in the department actually been to {riding} to look at it?",
+        "The minister won't find {issue} in the briefing book, because it's in {riding}. Will the minister come and see it with me?",
+        "Mr. Speaker, {issue}. The people who sent me here want to know whether this government has heard of it. Has the minister?"
+      ]
+    },
+    "opposition": {
+      "soft": {
+        "bill": [
+          "Will the minister admit that {bill} does nothing for anyone who lives more than an hour from Ostrava?",
+          "Can the minister tell the House who was consulted on {bill}, and why none of them live in {riding}?",
+          "Why is the government rushing {bill} through this House when the people it affects haven't been asked?"
+        ],
+        "issue": [
+          "When will this government finally act on {issue}?",
+          "The minister has had years to deal with {issue}. Why are the people of {riding} still waiting?",
+          "Will the minister stand in this House and tell my constituents why {issue} isn't a priority for this government?"
+        ]
+      },
+      "pointed": {
+        "bill": [
+          "On page nine of {bill} the minister's own officials wrote a number. It isn't the number the minister gave this House on Tuesday. Which one is true?",
+          "I have the minister's letter on {bill} from last spring, and I have the bill. They disagree. Which one should the people of {riding} believe?",
+          "The minister says {bill} was costed. Will the minister table the costing today, or tell the House why it can't be?"
+        ],
+        "issue": [
+          "The minister has said {issue} is being studied. I have the study. It was finished a year ago. What's the minister been doing since?",
+          "On {issue}, the minister's department has a plan it won't publish and a date it won't give. Which is the minister more embarrassed by?",
+          "Yesterday the minister said {issue} was a provincial matter. The minister's own website says otherwise. Would the minister like to correct one of them?"
+        ]
+      },
+      "offScript": [
+        "I'm going to ask the minister about {issue}, which is in {riding}, and which I'd wager the minister has never heard of. Have you?",
+        "Forget the talking points. {issue}. Does the minister know what it is, and what the government intends to do about it?",
+        "The minister's department has a file on {issue}. I know because I've read it, and it's two pages. Is that the government's answer to {riding}?"
+      ]
+    }
+  },
+  "answers": {
+    "lob": {
+      "cooperative": [
+        "I thank the member for {riding}, who has been tireless on this. The answer is yes, and soon, and I'd be happy to say more about it in the member's riding.",
+        "I'm glad the member asked. This government made a promise and this government is keeping it, and the member's constituents will see the difference."
+      ],
+      "guarded": [
+        "I thank the member. The government's position is well known and well documented, and I refer the member to the department's statement of last month.",
+        "The member raises an important point. The government is seized of it. I have nothing to add to what has already been said."
+      ],
+      "angry": [
+        "I thank the member, and I'd remind the party opposite, who are laughing, that they had years to deal with this and did nothing. Nothing.",
+        "The member's constituents deserve better than the heckling from across the aisle. This government is acting. The record speaks for itself."
+      ],
+      "anxious": [
+        "I, ah, I thank the member for the question. The government takes this very seriously, and I will be making an announcement in due course.",
+        "The member is right to raise it. There is a process, the process is under way, and I'm advised that it's proceeding."
+      ]
+    },
+    "parried": {
+      "cooperative": [
+        "I'd be happy to sit down with the member after Question Period and go through the file line by line. The short answer is: we're on it.",
+        "The member asks a fair question and deserves a full answer, which I'll give in writing. I don't want to mislead the House with a number from memory."
+      ],
+      "guarded": [
+        "The member knows the matter is under review, and the member knows I can't say more than that from this chair.",
+        "I've answered that question before in this House. I'll refer the member to the record."
+      ],
+      "angry": [
+        "The member should check with the member's own whip before asking a question like that in this House.",
+        "I'm not going to take lessons from the member on a file the member learned about from a newspaper."
+      ],
+      "anxious": [
+        "The, ah, the matter is being looked at. I'll have more to say when the department has completed its work.",
+        "I'll take that under advisement and come back to the member."
+      ]
+    },
+    "hit": {
+      "cooperative": [
+        "The member is right. The number was wrong. I'll correct the record this afternoon, and I'll apologise to the House for the confusion.",
+        "I don't have an answer to that today. I should. The member will have one by Friday."
+      ],
+      "guarded": [
+        "I will take that under advisement.",
+        "I'm not in a position to answer that. I'll come back to the House."
+      ],
+      "angry": [
+        "That is a cheap shot, and the member knows it, and I'm not going to dignify it with... I'll answer it in writing.",
+        "If the member had done the member's homework... No. No, I'll take the question. I'll take it. I don't have the figure in front of me."
+      ],
+      "anxious": [
+        "I, ah. I'd have to check. I believe the figure the member has is, ah, it may be an earlier draft. I'll check.",
+        "That's, that's a question for... I'll have to get back to the member on that."
+      ]
+    },
+    "home": {
+      "cooperative": [
+        "I have heard of it, and I'd like to see it. If the member will have me, I'll come to {riding} before the House rises.",
+        "I'll look at {issue} myself. The member has my word, and the member knows what that's worth in this place."
+      ],
+      "guarded": [
+        "{issue} is a matter the department is aware of. I'd caution the member against raising expectations in the member's riding that the government cannot meet.",
+        "I'm advised that {issue} falls largely to the province. The member may wish to take it up there."
+      ],
+      "angry": [
+        "The member's riding is not the only riding in this country, and the member might remember that the next time the member stands up to grandstand.",
+        "The member wants a headline. Fine. Here it is: the government has a process, and {riding} will go through it like everyone else."
+      ],
+      "anxious": [
+        "I, ah, I'm told the department has a file on it. I'll ask for it. I'll ask for it today.",
+        "I confess I don't know the particulars of {issue}. I'll find out. I'll write to the member."
+      ]
+    }
+  },
+  "benches": {
+    "government": {
+      "lob": [
+        "Your side thumps the desks on cue. Across the aisle, somebody says \"softball\" loud enough for Hansard.",
+        "A ripple of applause from your bench. The opposition doesn't look up from its phones.",
+        "The minister's parliamentary secretary gives you a thumbs-up. The gallery yawns."
+      ],
+      "parried": [
+        "A few of your own side thump the desk, then stop when the whip turns around.",
+        "The opposition cheers a government member asking a real question. Your front bench does not.",
+        "Someone behind you mutters \"brave.\" It doesn't sound like a compliment."
+      ],
+      "hit": [
+        "A beat of silence on your own bench, then the opposition benches roar. The whip is looking at you.",
+        "The opposition thumps its desks for a government member. The minister's parliamentary secretary is writing something down.",
+        "The House goes very quiet, then very loud. Your own side stays quiet."
+      ],
+      "home": [
+        "A couple of members from the rural caucus thump the desk. The minister's staff in the gallery flip through a binder.",
+        "Mild applause from behind you, louder from across the aisle. Somebody says the name of your riding like it's a punchline.",
+        "The whip's deputy makes a note. The member beside you says, \"Well, that's on the record now.\""
+      ]
+    },
+    "opposition": {
+      "lob": [
+        "The scripted roar from your benches. The government side has heard it before and goes back to its correspondence.",
+        "Your side thumps on cue. The minister's answer gets the same from theirs.",
+        "The House leader nods once. You have done the job that was written for you."
+      ],
+      "parried": [
+        "Your benches cheer the question and groan at the answer, in that order, as they always do.",
+        "A few of your side thump the desks. The minister's side laughs, which isn't the same as winning.",
+        "The critic beside you says, \"Good try,\" and means it."
+      ],
+      "hit": [
+        "Your whole side is on its feet, thumping the desks. The minister's front bench is looking at its shoes.",
+        "The roar from your benches drowns the Speaker. The minister sits down a beat too early.",
+        "Desks thumped, papers waved. The leader turns around to find out who you are."
+      ],
+      "home": [
+        "Your benches cheer dutifully; it isn't the attack line they were promised. The government side looks up at the name of your riding.",
+        "A pause, then applause, from both sides of the House, which never happens.",
+        "The House leader frowns at the departure from the script. Two members from the rural caucus thump the desk anyway."
+      ]
+    }
+  },
+  "gallery": {
+    "lob": [
+      "The press gallery has moved on to the next question before the minister sits down.",
+      "A reporter in the gallery writes the word \"planted\" and underlines it.",
+      "Hansard records it. Nobody else does."
+    ],
+    "parried": [
+      "A fair question, fairly deflected. The gallery notes the exchange and keeps it for a slow day.",
+      "One reporter looks up. The minister's answer gives them nothing to hang a story on.",
+      "A pointed question, and the minister took the point. The gallery writes down your name, at least."
+    ],
+    "hit": [
+      "The press gallery, as one, reaches for its phones.",
+      "The minister's answer is already on three reporters' feeds before the Speaker calls the next question.",
+      "The clip is cut before the Speaker says \"Order.\" It's your name on it."
+    ],
+    "home": [
+      "The national press shrugs. The riding paper has already called your office for a comment.",
+      "A reporter from your end of the country asks a colleague how to spell the riding.",
+      "Nothing in the capital's papers. Everything in yours."
+    ]
+  }
+}

@@ -138,7 +138,7 @@ export function createAudio({ sound = true, volume = 0.7 } = {}) {
         voices.gain.gain.setTargetAtTime(L.voices * 2.4, t0, 0.6);
         voices.gain.gain.setTargetAtTime(L.voices, t0 + 1.8, 1.2);
       });
-      return { nodes: [...body.nodes, ...voices.nodes], timers };
+      return { nodes: [...body.nodes, ...voices.nodes], timers, voices };
     },
     caucus(out) {
       const L = LEVELS.caucus;
@@ -257,6 +257,27 @@ export function createAudio({ sound = true, volume = 0.7 } = {}) {
     }
   }
 
+  // The benches react to a question: desks thumped in a ragged volley, and the voices swell with it. A hit
+  // gets the whole side on its feet; a lob a dutiful few.
+  function benches(kind = 'lob') {
+    if (!ensure()) return;
+    const t0 = ctx.currentTime;
+    const big = kind === 'hit';
+    const thumps = big ? 11 : kind === 'home' ? 6 : 4;
+    for (let i = 0; i < thumps; i++) {
+      const at = t0 + 0.1 + i * (big ? 0.13 : 0.17) + Math.random() * 0.05;
+      burst(master, { freq: 190, q: 1.4, level: LEVELS.gavel * (big ? 0.42 : 0.3), decay: 0.07, at });
+      tone(master, { freq: 95, to: 55, level: LEVELS.gavel * 0.2, attack: 0.003, decay: 0.08, at });
+    }
+    const v = bed?.voices?.gain.gain;
+    if (v) {
+      const L = LEVELS.chamber.voices;
+      v.cancelScheduledValues(t0);
+      v.setTargetAtTime(L * (big ? 4.5 : 2.4), t0, 0.3);
+      v.setTargetAtTime(L, t0 + (big ? 2.4 : 1.4), 1.0);
+    }
+  }
+
   function setBells(on) {
     if (on === !!bellTimer) return;
     if (!on) {
@@ -285,6 +306,9 @@ export function createAudio({ sound = true, volume = 0.7 } = {}) {
       if (ctx) startBed(name);
     },
     bells: setBells,
+    benches(kind) {
+      if (ctx && wanted.sound) benches(kind);
+    },
     gavel() {
       if (ctx && wanted.sound) gavel();
     },
