@@ -4,6 +4,10 @@ import { createRng } from './rng.js';
 import { createPlayer, setupFirstWeek } from './career.js';
 import { assignSeats } from '../chamber/layout.js';
 import { initFlow } from './pacing.js';
+// Stage 5 modules register their actions and hooks on import.
+import './tools.js';
+import './count.js';
+import './rivals.js';
 
 export const SAVE_VERSION = 1;
 
@@ -17,7 +21,7 @@ export function reseat(state) {
   }
 }
 
-export function newGame({ seed, party, first, last, age, background, ridingType, province, mode = 'career', guided = false } = {}) {
+export function newGame({ seed, party, first, last, age, background, ridingType, province, mode = 'career', guided = false, act = null } = {}) {
   const parl = generateParliament(seed);
   const state = {
     version: SAVE_VERSION,
@@ -41,6 +45,8 @@ export function newGame({ seed, party, first, last, age, background, ridingType,
   };
   reseat(state);
   createPlayer(state, { party, first, last, age, background, ridingType, province });
+  // Debug and scenario starts can begin in a later act (?act=4), which unlocks that act's tools.
+  if (act) state.player.act = Math.max(1, Math.min(5, Number(act) || 1));
   state.divisions = {};
   initFlow(state);
   // A career started from the menu gets the guided first week.

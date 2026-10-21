@@ -1,7 +1,9 @@
 // The count board: the bells and your choice during a division, then the standing count ticking up by party.
-import { t, esc, stamp, partyShort } from './text.js';
+import { t, esc, stamp, partyShort, partyColor, mpName, countLine } from './text.js';
 import { tuning } from '../sim/config.js';
 import { stageLabel, questionText } from '../sim/vote.js';
+import { prediction } from '../sim/count.js';
+import { canUse, likelyAbsentees, budget } from '../sim/tools.js';
 
 function feeling(v) {
   const a = Math.abs(v);
@@ -11,7 +13,7 @@ function feeling(v) {
   return `leaning ${v > 0 ? 'for' : 'against'}`;
 }
 
-export function createCountBoard(root, { getState, onChoose, onContinue, getRoom }) {
+export function createCountBoard(root, { getState, onChoose, onContinue, getRoom, dispatch }) {
   const sheet = document.createElement('section');
   sheet.className = 'sheet division-sheet hidden';
   root.appendChild(sheet);
@@ -36,6 +38,17 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
     const lineText = p.line === 'whipped' ? t('div.lineWhipped', { pos: t('vote.' + pos).toUpperCase() }) : t('div.lineFree');
     const d = p.dilemma;
     let secs = p.bells;
+    // From act 3 the bells are the whip's window: the count, and the members who aren't in the building yet.
+    const T = tuning().tools;
+    const count = state.player.act >= T.officeFilesFromAct && p.line === 'whipped' ? countLine(prediction(state, p.billId)) : '';
+    const canChase = canUse(state, 'chase').ok;
+    const absentees = canChase ? likelyAbsentees(state, p.billId).filter((m) => !state.chased?.[p.billId]?.[m.id]).slice(0, 3) : [];
+    const b = budget(state);
+    const chase = absentees.length
+      ? `<h3>${t('tool.chaseTitle')}</h3><p class="muted budget">${esc(t('tool.budget', { min: b.time, fav: b.favors }))}</p><ul class="book-list" data-chase-list>${absentees
+          .map((m) => `<li data-row="${m.id}"><span class="bar" style="background:${partyColor(state, m)}"></span><span class="main"><b>${esc(mpName(m))}</b><small>${esc(t('tool.attendance', { n: m.attendance }))}</small></span><button class="btn" data-chase="${m.id}">${t('tool.chase')}</button></li>`)
+          .join('')}</ul><p class="note" data-chase-note></p>`
+      : '';
     sheet.innerHTML = `
       <div class="sheet-handle"></div>
       <p class="bells">🔔 ${t('div.bells')} · <span data-bells>${t('div.doorsClose', { s: secs })}</span></p>
@@ -43,6 +56,7 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
       <p class="muted">${esc(questionText(bill, p.stage))} · ${esc(stageLabel(p.stage))}</p>
       <p>${esc(bill.summary || '')}</p>
       ${bill.confidence ? `<p class="warn">${t('div.confidence')}</p>` : ''}
+      ${count}
       <div class="kvs">
         <div class="kv"><span class="k">${t('div.line', { line: '' }).replace(': ', '')}</span><span class="v">${esc(lineText)}</span></div>
         ${d ? `<div class="kv"><span class="k">${esc(me.riding.name)}</span><span class="v">${esc(feeling(d.ridingPull))}</span></div>
@@ -52,9 +66,31 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
         <button class="btn primary" data-c="line">${t('div.choose.line', { pos: t('vote.' + pos) })}</button>
         ${p.line === 'whipped' && pos !== 'abstain' ? `<button class="btn" data-c="rebel">${t('div.choose.rebel', { pos: t('vote.' + other) })}</button>` : ''}
         <button class="btn" data-c="absent">${t('div.choose.absent')}</button>
-      </div>`;
+      </div>
+      ${chase}`;
     sheet.classList.remove('hidden');
     getRoom()?.setBells?.(true);
+    // A chase: found, and they're in their seat; not found, and the bells have run out on you.
+    sheet.querySelectorAll('[data-chase]').forEach((btn) => {
+      btn.onclick = () => {
+        const r = dispatch?.({ type: 'useTool', tool: 'chase', mpId: btn.dataset.chase, billId: p.billId });
+        const note = sheet.querySelector('[data-chase-note]');
+        if (note) {
+          note.textContent = r?.note || '';
+          note.className = `note ${r?.found ? 'good' : 'bad'}`;
+        }
+        sheet.querySelector(`[data-row="${btn.dataset.chase}"]`)?.remove();
+        if (r?.ok && !r.found) {
+          stopBells();
+          const el = sheet.querySelector('[data-bells]');
+          if (el) el.textContent = t('div.doorsClose', { s: 0 });
+          setTimeout(() => {
+            getRoom()?.setBells?.(false);
+            onChoose('line');
+          }, 1400);
+        }
+      };
+    });
     sheet.querySelectorAll('[data-c]').forEach((b) => {
       b.onclick = () => {
         stopBells();

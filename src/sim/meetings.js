@@ -108,6 +108,15 @@ function valueOf(state, m, card, meeting) {
       return 3 + (m.margin < 10 ? 3 : 0);
     case 'info':
       return 2;
+    // The whip's own cards, offered from act 4 and 5.
+    case 'leave':
+      return 4 + (100 - m.attendance) / 20;
+    case 'qpSlot':
+      return 5 + m.ambition / 20;
+    case 'committeeSeat':
+      return 6 + m.ambition / 25;
+    case 'ridingProject':
+      return 7 + (m.margin < 10 ? 3 : 0);
     default:
       return 1;
   }
@@ -158,6 +167,17 @@ export function cardPalette(state, meeting) {
     if (!meeting.reversal) asks.unshift(`vote:${bill}:yea`, `vote:${bill}:nay`);
   }
   if (Object.values(state.bills).some((b) => b.sponsor === m.id && b.status === 'active')) offers.push('cosponsor');
+  // Once you hold the whip's cards (DESIGN section 8), you can put them on the table yourself.
+  const act = state.player.act;
+  if (!meeting.reversal && m.party === me(state).party) {
+    if (act >= 4) offers.push('leave');
+    if (act >= 5) {
+      offers.push('qpSlot');
+      const c = Object.values(state.committees).find((x) => x.interests.some((i) => m.interests.includes(i)));
+      if (c) offers.push(`committeeSeat:${c.id}`);
+      if (state.house.government === m.party) offers.push('ridingProject');
+    }
+  }
   if (meeting.reversal) {
     asks.length = 0;
     asks.push('qpSlot', 'ridingMention', 'leave');

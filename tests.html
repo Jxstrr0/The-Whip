@@ -43,6 +43,9 @@ window.__caucus = caucusSim;
 import './src/sim/riding.js';
 import { botAct } from './src/sim/bot.js';
 import { exportSave, importSave } from './src/save.js';
+import * as tools from './src/sim/tools.js';
+import * as count from './src/sim/count.js';
+import * as rivals from './src/sim/rivals.js';
 
 const sections = [];
 let current = null;
@@ -540,6 +543,224 @@ test('A save round-trips through export and import unchanged', () => {
 });
 
 // ---------- runner ----------
+
+// ---------- Stage 5: whip tools, the count and rival whips ----------
+section('Stage 5 · Whip tools, the count and rival whips');
+
+const SIGN5 = { yea: 1, nay: -1 };
+// A game at a given act with a whipped government bill scheduled, and the decision noise off so results are exact.
+function whipScenario(act, seed = 'TEST-1') {
+  const s = newGame({ seed, party: 'p2', act });
+  const rng = createRng('s5:' + seed);
+  const b = introduceBill(s, rng, 'government', 'Rural Roads Fund Act');
+  const me = s.mps[s.player.mpId];
+  b.lines[me.party] = 'whipped';
+  if (!SIGN5[b.positions[me.party]]) b.positions[me.party] = 'yea';
+  return { s, b, me, rng };
+}
+function quiet(fn) {
+  const V = tuning().vote;
+  const noise = V.noise;
+  V.noise = 0;
+  try {
+    return fn();
+  } finally {
+    V.noise = noise;
+  }
+}
+// Put an MP's score just below (or well below) the yes threshold for the party's side, so a tool can flip them.
+function setScoreAt(s, m, b, target) {
+  const want = tools.wantedSide(s, b);
+  const sgn = SIGN5[want];
+  const base = baseScore5(s, m, b);
+  s.nudges ||= {};
+  s.nudges[m.id] = { [b.id]: sgn * target - base + (s.nudges[m.id]?.[b.id] || 0) };
+  return want;
+}
+function baseScore5(s, m, b) {
+  // Score without the current nudge, via the public model.
+  const saved = s.nudges?.[m.id]?.[b.id] || 0;
+  if (s.nudges?.[m.id]) s.nudges[m.id][b.id] = 0;
+  const v = intentions(s, b, { normal: () => 0, next: () => 0 })[m.id].score;
+  if (s.nudges?.[m.id]) s.nudges[m.id][b.id] = saved;
+  return v;
+}
+const caucusOf = (s, me) => Object.values(s.mps).filter((m) => m.party === me.party && m.id !== me.id && m.caucusRole !== 'speaker');
+
+test('Tools are gated by act as in DESIGN section 8', () => {
+  const at = (act) => whipScenario(act).s;
+  assert(tools.canUse(at(1), 'persuade').ok, 'persuade should be open in act 1');
+  assert(!tools.canUse(at(1), 'chase').ok && tools.canUse(at(1), 'chase').reason === 'act', 'chase should wait for act 3');
+  assert(tools.canUse(at(3), 'chase').ok, 'chase should open in act 3');
+  assert(!tools.canUse(at(3), 'pair').ok && tools.canUse(at(4), 'pair').ok, 'pair opens in act 4');
+  assert(!tools.canUse(at(4), 'qpSlot').ok && tools.canUse(at(5), 'qpSlot').ok, 'QP slots open in act 5');
+  const five = at(5);
+  assert(tools.canUse(five, 'expel').reason === 'leader', 'expulsion needs the leader');
+  five.player.leaderTrust = 80;
+  assert(tools.canUse(five, 'expel').ok, 'expulsion with the leader behind you');
+  const { s, me } = whipScenario(1);
+  const m = caucusOf(s, me)[0];
+  assert(tools.canUse(s, 'leverage', m.id).reason === 'secret', 'leverage needs a known secret');
+  return 'persuade 1 · chase 3 · pair/leave 4 · QP/committee/nomination/free vote/expel 5 · leverage once a secret is known';
+});
+
+test('Persuade flips a member who already half agrees', () =>
+  quiet(() => {
+    const { s, b, me } = whipScenario(1);
+    const m = caucusOf(s, me)[3];
+    const want = setScoreAt(s, m, b, tuning().vote.upper - 0.1);
+    const before = intentions(s, b, { normal: () => 0, next: () => 0 })[m.id].vote;
+    assert(before !== want, `should start off the line, got ${before}`);
+    const r = ACTIONS.useTool(s, { tool: 'persuade', mpId: m.id, billId: b.id });
+    assert(r.ok && r.moved, 'persuade should report a flip: ' + JSON.stringify(r));
+    const after = intentions(s, b, { normal: () => 0, next: () => 0 })[m.id].vote;
+    assert(after === want, `expected ${want}, got ${after}`);
+    assert(s.player.toolTime === tuning().tools.timePerWeek - tuning().tools.cost.persuade, 'persuade should cost House time');
+    return `${m.name.first} ${m.name.last}: ${before} → ${after}`;
+  }));
+
+test('A chase during the bells puts an absent member in their seat', () =>
+  quiet(() => {
+    const { s, b, me } = whipScenario(3);
+    const m = caucusOf(s, me)[1];
+    m.attendance = 0;
+    setScoreAt(s, m, b, 1.5);
+    const before = intentions(s, b, createRng('att'))[m.id];
+    assert(!before.present, 'should be absent before the chase');
+    const odds = { ...tuning().tools.chaseOdds };
+    Object.assign(tuning().tools.chaseOdds, { lobby: 1, office: 1, airport: 1 });
+    const r = ACTIONS.useTool(s, { tool: 'chase', mpId: m.id, billId: b.id });
+    Object.assign(tuning().tools.chaseOdds, odds);
+    assert(r.ok && r.found, 'chase should find them');
+    const after = intentions(s, b, createRng('att'))[m.id];
+    assert(after.present && after.vote === tools.wantedSide(s, b), 'chased member should be present and voting the line');
+    return `found ${r.where}; present ${before.present} → ${after.present}`;
+  }));
+
+test('A pair keeps both members out of the count; granted leave keeps yours away', () =>
+  quiet(() => {
+    const { s, b, me, rng } = whipScenario(4);
+    const other = Object.keys(s.parties).find((id) => id !== me.party && s.parties[id].chiefWhip);
+    const m = caucusOf(s, me)[2];
+    s.player.whipTrust[other] = 50;
+    const r = ACTIONS.useTool(s, { tool: 'pair', mpId: m.id, billId: b.id, withParty: other });
+    assert(r.ok, 'pair should be made: ' + JSON.stringify(r));
+    const q = putQuestion(s, { billId: b.id, stage: 'second' }, rng);
+    const d = runDivision(s, q);
+    assert(!d.yeas.includes(m.id) && !d.nays.includes(m.id) && !d.yeas.includes(r.pair.b) && !d.nays.includes(r.pair.b), 'paired members counted');
+    const l = caucusOf(s, me)[5];
+    l.attendance = 100;
+    ACTIONS.useTool(s, { tool: 'leave', mpId: l.id, billId: b.id, grant: true });
+    assert(!intentions(s, b, createRng('x'))[l.id].present, 'member on leave should be away');
+    return `${m.name.last} paired with ${s.mps[r.pair.b].name.last}; ${l.name.last} on leave`;
+  }));
+
+test('Leverage and a nomination threat each flip a lost member; a riding project and a QP slot move a leaner', () =>
+  quiet(() => {
+    const { s, b, me } = whipScenario(5);
+    const [a, c, d, e] = caucusOf(s, me);
+    const want = tools.wantedSide(s, b);
+    const vote = (m) => intentions(s, b, { normal: () => 0, next: () => 0 })[m.id].vote;
+    setScoreAt(s, a, b, -0.6);
+    a.secrets = [{ id: 'x1', severity: 2, known: false }];
+    reveal(s, a.id, 'secrets', 'dig');
+    assert(vote(a) !== want, 'a should start lost');
+    assert(ACTIONS.useTool(s, { tool: 'leverage', mpId: a.id, billId: b.id }).ok, 'leverage');
+    assert(vote(a) === want, 'leverage should flip a');
+    setScoreAt(s, c, b, -0.5);
+    assert(ACTIONS.useTool(s, { tool: 'threatenNomination', mpId: c.id, billId: b.id }).ok, 'threat');
+    assert(vote(c) === want, 'the threat should flip c');
+    assert(c.floorCrossRisk >= tuning().tools.nominationCrossRisk, 'threat raises floor-cross risk');
+    setScoreAt(s, d, b, tuning().vote.upper - 0.3);
+    // Riding projects are a government whip's tool; make this the government's caucus for the check.
+    s.house.government = me.party;
+    assert(ACTIONS.useTool(s, { tool: 'ridingProject', mpId: d.id }).ok, 'project');
+    assert(vote(d) === want, 'a project should carry d');
+    setScoreAt(s, e, b, tuning().vote.upper - 0.1);
+    assert(ACTIONS.useTool(s, { tool: 'qpSlot', mpId: e.id, give: true }).ok, 'qp');
+    assert(vote(e) === want, 'a QP slot should carry e');
+    return `${a.name.last} (leverage), ${c.name.last} (nomination), ${d.name.last} (project), ${e.name.last} (QP) all vote ${want}`;
+  }));
+
+test('Every favour, promise, pair and threat is in the ledger, from both sides', () =>
+  quiet(() => {
+    const { s, b, me, rng } = whipScenario(4);
+    const other = Object.keys(s.parties).find((id) => id !== me.party && s.parties[id].chiefWhip);
+    s.player.whipTrust[other] = 50;
+    const [a, c] = caucusOf(s, me);
+    ACTIONS.useTool(s, { tool: 'persuade', mpId: a.id, billId: b.id });
+    ACTIONS.useTool(s, { tool: 'pair', mpId: c.id, billId: b.id, withParty: other });
+    ACTIONS.useTool(s, { tool: 'leave', mpId: a.id, billId: b.id, grant: false });
+    s.player.whipFile.push({ bill: b.id, vote: 'nay', line: 'yea', day: 1 });
+    for (let i = 0; i < 6; i++) rivals.rivalsWeek(s, rng);
+    const mine = s.ledger.filter((e) => e.from === me.id);
+    const theirs = s.ledger.filter((e) => Object.values(s.parties).some((p) => p.chiefWhip === e.from && p.id !== me.party));
+    const kinds = new Set(s.ledger.map((e) => e.kind));
+    assert(mine.length >= 3, 'player entries missing');
+    assert(theirs.length >= 1, 'rival entries missing');
+    assert(kinds.has('tool') && kinds.has('pair') && kinds.has('rival'), 'kinds: ' + [...kinds]);
+    assert(s.ledger.every((e) => e.note && e.created != null), 'every entry has a note and a date');
+    return `${mine.length} entries from you, ${theirs.length} from rival whips; kinds ${[...kinds].join(', ')}`;
+  }));
+
+test("The count board's prediction matches the division within two votes when every mark is current", () =>
+  quiet(() => {
+    const { s, b, rng } = whipScenario(3);
+    for (const m of Object.values(s.mps)) m.attendance = 100;
+    count.refreshMarks(s, b.id, { all: true });
+    const pred = count.prediction(s, b.id);
+    const q = putQuestion(s, { billId: b.id, stage: 'second' }, rng);
+    const d = runDivision(s, q);
+    const dy = Math.abs(pred.yeas - d.yeas.length);
+    const dn = Math.abs(pred.nays - d.nays.length);
+    assert(dy <= 2 && dn <= 2, `predicted ${pred.yeas}-${pred.nays}, division ${d.yeas.length}-${d.nays.length}`);
+    assert(pred.firm + pred.leaning + pred.lost + pred.absent === pred.marked && pred.marked > 0, 'marks should cover the caucus');
+    return `predicted ${pred.yeas}–${pred.nays} (need ${pred.needed}), division ${d.yeas.length}–${d.nays.length}; firm ${pred.firm} leaning ${pred.leaning} lost ${pred.lost} absent ${pred.absent}`;
+  }));
+
+test('Marks go stale, and a stale caucus falls out of the marked count', () => {
+  const { s, b, me } = whipScenario(3);
+  count.refreshMarks(s, b.id);
+  const fresh = count.prediction(s, b.id).marked;
+  s.date.absWeek += 4;
+  const stale = count.markOf(s, caucusOf(s, me)[0].id, b.id);
+  assert(fresh > 0 && stale?.stale, 'marks should be stale after four weeks');
+  assert(count.prediction(s, b.id).marked === 0, 'stale marks still counted');
+  return `${fresh} marked, then all stale after four weeks`;
+});
+
+test('Rival whips act every week: a poach, a leak and a pair test are all observable in a scenario', () =>
+  quiet(() => {
+    const { s, b, me, rng } = whipScenario(4, 'TEST-1');
+    const other = Object.keys(s.parties).find((id) => id !== me.party && s.parties[id].chiefWhip);
+    s.player.whipTrust[other] = 20;
+    const m = caucusOf(s, me)[0];
+    ACTIONS.useTool(s, { tool: 'pair', mpId: m.id, billId: b.id, withParty: other });
+    s.player.whipFile.push({ bill: b.id, vote: 'nay', line: 'yea', day: 1 });
+    const seen = new Set();
+    for (let i = 0; i < 10; i++) for (const mv of rivals.rivalsWeek(s, rng)) seen.add(mv.kind);
+    const kinds = s.ledger.filter((e) => e.kind === 'rival').map((e) => e.what.split(':')[0]);
+    assert(kinds.some((k) => k === 'poach'), 'no poach');
+    assert(kinds.some((k) => k === 'leak'), 'no leak');
+    assert(kinds.some((k) => k === 'pairHonoured' || k === 'pairBroken'), 'no pair test');
+    const styles = Object.values(s.parties).filter((p) => p.whipAI).map((p) => `${p.short}:${p.whipAI.style}`);
+    assert(s.log.some((l) => l.kind === 'rival'), 'rival moves should reach the feed');
+    return `moves ${[...seen].join(', ')} · whips ${styles.join(' ')}`;
+  }));
+
+test('A free vote releases the caucus; expulsion makes an independent and reseats the House', () => {
+  const { s, b, me } = whipScenario(5);
+  ACTIONS.useTool(s, { tool: 'freeVote', billId: b.id });
+  assert(b.lines[me.party] === 'free', 'line should be free');
+  s.player.leaderTrust = 80;
+  const m = caucusOf(s, me)[4];
+  const seatsBefore = s.parties[me.party].seats;
+  const r = ACTIONS.useTool(s, { tool: 'expel', mpId: m.id });
+  assert(r.ok && m.party === 'ind' && s.parties[me.party].seats === seatsBefore - 1, 'expel: ' + JSON.stringify(r));
+  assert(m.seatId && s.seats[m.seatId]?.mpId === m.id, 'expelled member should still have a seat');
+  return `${m.name.first} ${m.name.last} now sits as an independent; ${me.party} down to ${s.parties[me.party].seats}`;
+});
+
 async function run() {
   setData(await loadData());
   const out = document.getElementById('out');
