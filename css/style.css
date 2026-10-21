@@ -472,6 +472,46 @@ blockquote.line {
   letter-spacing: 3px;
 }
 
+/* The whip's count, one ruled line under an order-paper item or at the top of the bells sheet. */
+.count-line {
+  margin: 6px 0 2px;
+  padding: 6px 10px;
+  border-left: 3px solid var(--brass);
+  background: var(--paper-2);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.count-line small {
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.budget {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+}
+.book-list li .btn {
+  min-height: 40px;
+  padding: 0 10px;
+  font-size: 14px;
+  flex: none;
+}
+.ledger-sheet,
+.book {
+  top: calc(64px + env(safe-area-inset-top));
+  max-height: none;
+  z-index: 6; /* above whichever room sheet is open */
+}
+.ledger-sheet .book-list .main small {
+  white-space: normal;
+}
+.ledger-sheet .when {
+  font-size: 12px;
+  color: var(--ink-2);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+  flex: none;
+}
+
 /* ---- Stamps: outcomes are rubber-stamped in ink -------------------------------------------------------- */
 
 .stamp {

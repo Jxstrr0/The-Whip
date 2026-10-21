@@ -70,7 +70,7 @@ export function createStartMenu(root, { info, onContinue, onNew, onSeed }) {
   return el;
 }
 
-export function createGameMenu(root, { getState, onQuit }) {
+export function createGameMenu(root, { getState, onQuit, onLedger }) {
   const el = document.createElement('section');
   el.className = 'sheet game-menu hidden';
   root.appendChild(el);
@@ -79,8 +79,12 @@ export function createGameMenu(root, { getState, onQuit }) {
       const s = getState();
       el.innerHTML = `<div class="sheet-handle"></div><h2>${t('menu.menu')}</h2>
         <p class="muted">Seed ${esc(s.seed)} · ${t('menu.save')}</p>
-        <div class="choices"><button class="btn" data-act="close">${t('menu.close')}</button><button class="btn" data-act="quit">${t('menu.quit')}</button></div>`;
+        <div class="choices"><button class="btn" data-act="ledger">${t('menu.ledger')}</button><button class="btn" data-act="close">${t('menu.close')}</button><button class="btn" data-act="quit">${t('menu.quit')}</button></div>`;
       el.querySelector('[data-act="close"]').onclick = () => el.classList.add('hidden');
+      el.querySelector('[data-act="ledger"]').onclick = () => {
+        el.classList.add('hidden');
+        onLedger?.();
+      };
       el.querySelector('[data-act="quit"]').onclick = onQuit;
       el.classList.remove('hidden');
     },

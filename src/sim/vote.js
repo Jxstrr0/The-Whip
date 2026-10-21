@@ -32,7 +32,7 @@ export function putQuestion(state, item, rng, overrides = {}) {
   const intents = intentions(state, bill, rng, overrides);
   const paired = new Set();
   for (const p of state.pairs) {
-    if (p.bill && p.bill !== bill.id) continue;
+    if (p.broken || (p.bill && p.bill !== bill.id)) continue;
     paired.add(p.a);
     paired.add(p.b);
   }
@@ -78,7 +78,7 @@ export function runDivision(state, q) {
     carried = speakerVote === 'yea';
   }
   state.divisionSeq = (state.divisionSeq || 0) + 1;
-  const pairs = state.pairs.filter((p) => !p.bill || p.bill === bill.id).map((p) => [p.a, p.b]);
+  const pairs = state.pairs.filter((p) => !p.broken && (!p.bill || p.bill === bill.id)).map((p) => [p.a, p.b]);
   return {
     id: 'd' + pad(state.divisionSeq),
     billId: bill.id,

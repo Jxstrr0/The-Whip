@@ -6,6 +6,13 @@ export function t(key, vars = {}) {
   return s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? `{${k}}`));
 }
 
+// The whip's count for a vote, as one ruled line: where we stand against the number needed, and the marks.
+export function countLine(pr) {
+  if (!pr || !pr.needed) return '';
+  const stand = pr.short > 0 ? t('count.line', { ours: pr.ours, needed: pr.needed, short: pr.short }) : `${pr.ours} of ${pr.needed} · ${t('count.safe')}`;
+  return `<p class="count-line"><b>${t('count.title')}</b> · ${esc(stand)}<br><small>${esc(t('count.marks', { firm: pr.firm, leaning: pr.leaning, lost: pr.lost, absent: pr.absent, unmarked: pr.unmarked }))}</small></p>`;
+}
+
 // A rubber stamp for an outcome: CARRIED, DEFEATED, DEAL, LEAVE GRANTED. kind: yea | nay | grey | brass.
 export function stamp(text, kind = '', big = false) {
   return `<span class="stamp ${kind}${big ? ' big' : ''}">${esc(text)}</span>`;
