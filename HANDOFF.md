@@ -529,10 +529,10 @@ Build one stage per session, in order. A stage is done only when every check und
 
 **Stage 9: Modes and polish.** Write `modes.js` (scenarios, shared seeds, daily seed), `save.js` with slots and export, a guided first-week tutorial that is Act 1's first week, audio (chamber murmur, division bells, Speaker's gavel, office and riding ambience, caucus room murmur), a settings menu with a color-blind option, and a performance pass across all four rooms.
 
-- [ ] A save survives closing and reopening the browser
-- [ ] A new player finishes the first week without help
-- [ ] Cold load under 10 MB; switching rooms frees the previous scene
-- [ ] Three scenarios, shared-seed entry and the daily seed all start correctly
+- [x] A save survives closing and reopening the browser
+- [x] A new player finishes the first week without help
+- [x] Cold load under 10 MB; switching rooms frees the previous scene
+- [x] Three scenarios, shared-seed entry and the daily seed all start correctly
 
 ---
 

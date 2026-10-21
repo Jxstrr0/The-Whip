@@ -126,7 +126,7 @@ export function applyPlayerVote(state, bill, choice, dilemma, T) {
 
 // Act 1, week one: a mentor, the first dilemma (a bill your riding hates, whipped the other way,
 // voted Thursday), the whip calling you in, a Wednesday caucus, a Friday at home.
-export function setupFirstWeek(state) {
+export function setupFirstWeek(state, { week = 0, guided = true } = {}) {
   const p = state.player;
   const me = state.mps[p.mpId];
   if (!p.mentor) {
@@ -155,11 +155,12 @@ export function setupFirstWeek(state) {
     }
     b.visibility = Math.max(b.visibility, 65);
     b.stage = 'second';
-    b.nextVote = 3; // Thursday of week one
+    b.nextVote = week * 5 + 3; // Thursday
     b.scheduled = true;
     p.forceDilemma = b.id;
     break;
   }
+  if (!guided) return p.forceDilemma;
   // Who drops by which evening, so the first week shows every kind of meeting.
   p.script = { 2: ['mentorAdvice', 'rebelRecruit'], 3: ['introduction'], 4: ['gossip'] };
   state.flow.forceWatch = true;

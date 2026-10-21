@@ -171,7 +171,7 @@ export function endVisit(state) {
   state.ridingVisit = null;
 }
 
-// Leaving Ottawa while the House sits needs the whip's sign-off.
+// Leaving Ostrava while the House sits needs the whip's sign-off.
 function leaveGranted(state, rng) {
   const p = state.player;
   if (p.leaveGranted || state.date.absWeek === 0) return true;
@@ -188,7 +188,7 @@ hooks.riding.push((state, rng) => {
   if (!sitting && state.date.dayOfWeek !== 1) return null;
   if (sitting && state.date.dayOfWeek !== tuning().calendar.ridingDay) return null;
   if (sitting && !leaveGranted(state, rng)) {
-    log(state, "The whip's office wants you in Ottawa this Friday. The riding will have to wait.", 'riding');
+    log(state, "The whip's office wants you in Ostrava this Friday. The riding will have to wait.", 'riding');
     p.ridingStanding = clamp(p.ridingStanding - 1, 0, 100);
     return null;
   }

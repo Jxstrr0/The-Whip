@@ -4,14 +4,14 @@ import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { setupRenderer, sharedEnvironment } from './look.js';
 import { loadData } from './loadData.js';
 import { setData, tuning } from './sim/config.js';
-import { newGame } from './sim/modes.js';
+import { newGame, scenarioGame, dailyGame, sharedGame, scenarioList } from './sim/modes.js';
 import { parliamentHash } from './sim/generate.js';
 import { getState, setState, dispatch, subscribe } from './state.js';
 import './sim/pacing.js';
 import './sim/meetings.js';
 import { caucusSeating } from './sim/caucus.js';
 import './sim/riding.js';
-import { saveGame, loadGame, saveInfo } from './save.js';
+import { saveGame, loadGame, deleteSave, exportSave, importSave, allSaves, latestSave } from './save.js';
 import { createRooms } from './rooms.js';
 import * as chamber from './chamber/scene.js';
 import * as office from './office/officeScene.js';
@@ -25,7 +25,9 @@ import { createCountBoard } from './ui/countBoard.js';
 import { createOfficeUI } from './ui/talk.js';
 import { createCaucusUI } from './ui/caucusUI.js';
 import { createRidingUI } from './ui/ridingUI.js';
-import { createStartMenu, createGameMenu } from './ui/menus.js';
+import { createStartMenu, createGameMenu, createSettingsSheet } from './ui/menus.js';
+import { createAudio } from './audio.js';
+import { getSettings, setSetting, onSettings, applySettings } from './settings.js';
 import { createLedger } from './ui/ledger.js';
 import { createCareerUI } from './ui/careerUI.js';
 import { createRecordUI } from './ui/recordUI.js';
@@ -36,6 +38,20 @@ import { stageLabel } from './sim/vote.js';
 
 const params = new URLSearchParams(location.search);
 const DEBUG = params.get('debug') === '1';
+
+// Sound and settings exist before any game does: the title page has a room tone and a settings sheet too.
+applySettings();
+const audio = createAudio(getSettings());
+let settingsSheet = null;
+function openSettings() {
+  settingsSheet ||= createSettingsSheet(document.getElementById('ui'), { get: getSettings, set: setSetting });
+  settingsSheet.open();
+}
+onSettings((s, key) => {
+  if (key === 'sound' || key === 'volume') audio.configure(s);
+  // New party colours mean every room redraws; the menu's preview Parliament too.
+  if (key === 'colourBlind') world?.recolor();
+});
 
 // "At risk" in the book: how likely an MP is to stray on the next whipped vote, from what you can see.
 // Riding effects are public; loyalty only counts once you've learned it.
@@ -94,8 +110,11 @@ function buildWorld() {
         else card.hide();
       },
       onMpTap: (mpId) => card.show(mpId),
+      onBells: (on) => audio.bells(on),
+      onGavel: () => audio.gavel(),
     },
     onChange(name, room) {
+      audio.room(name);
       // Cut through black: cover the swap at once, then fade back in once the new room has drawn a frame.
       const fade = document.getElementById('fade');
       if (fade) {
@@ -197,6 +216,11 @@ function buildWorld() {
     onLedger: () => ledger.open(),
     onRetire: () => dispatch({ type: 'retire' }),
     onCross: (party) => dispatch({ type: 'crossFloor', party }),
+    onSettings: openSettings,
+  });
+  // A soft paper tick on every button, once sound is open.
+  ui.addEventListener('click', (e) => {
+    if (e.target.closest('.btn, .switch')) audio.tap();
   });
   hud = createHud(ui, {
     buttons: [
@@ -301,7 +325,7 @@ function buildWorld() {
     if (fresh.length) toast.show(fresh.map((l) => l.text).join(' '));
   }
 
-  // Autosave a moment after things settle, to slot 1.
+  // Autosave a moment after things settle, to the game's own slot.
   let saveTimer = null;
   subscribe(() => {
     renderAll();
@@ -319,6 +343,7 @@ function buildWorld() {
   window.addEventListener('resize', resize);
 
   let stats = null;
+  let onRecolor = null;
   let last = performance.now();
   renderer.setAnimationLoop((now) => {
     const dt = Math.min(0.1, (now - last) / 1000);
@@ -342,12 +367,23 @@ function buildWorld() {
     setStats(s) {
       stats = s;
     },
+    // Rebuild the current room so new party colours land everywhere (seats, chips, caucus table).
+    recolor() {
+      const state = getState();
+      rooms.reset();
+      if (state) renderAll(state);
+      else onRecolor?.();
+    },
+    set onRecolor(fn) {
+      onRecolor = fn;
+    },
   };
 }
 
-async function startGame(state) {
+async function startGame(state, slot = state.slot || 1) {
   // The menu's preview room, if any, goes; the game builds its own.
   world?.rooms.reset();
+  state.slot = slot;
   setState(state);
   if (!world) {
     world = buildWorld();
@@ -384,6 +420,8 @@ async function debugTools(w) {
     THREE,
     card: w.card,
     book: w.book,
+    audio,
+    settings: { get: getSettings, set: setSetting },
   };
 }
 
@@ -391,18 +429,40 @@ async function boot() {
   setData(await loadData());
   document.title = t('title');
   const seed = params.get('seed');
+  // Debug starts skip the menu: ?scenario=<id>, ?daily=1, or a seed (with ?guided=1 for the first-week walkthrough).
+  if (params.get('scenario')) return startGame(scenarioGame(params.get('scenario'), { seed: seed || undefined }));
+  if (params.get('daily') === '1') return startGame(dailyGame({}));
   if (seed) {
     // Debug and shared-seed starts skip the menu; ?guided=1 adds the first-week walkthrough.
     return startGame(newGame({ seed, party: params.get('party') || undefined, guided: params.get('guided') === '1', act: params.get('act') }));
   }
   const menu = createStartMenu(document.getElementById('ui'), {
-    info: saveInfo(1),
-    onContinue: () => startGame(loadGame(1)),
-    onNew: (opts) => startGame(newGame({ ...opts, guided: true })),
+    saves: allSaves(),
+    latest: latestSave(),
+    scenarios: scenarioList(),
+    onContinue: (slot) => startGame(loadGame(slot), slot),
+    onNew: (opts, slot) => startGame(newGame({ ...opts, guided: true }), slot),
+    onScenario: (id, person, slot) => startGame(scenarioGame(id, person), slot),
+    onDaily: (person, slot) => startGame(dailyGame(person), slot),
+    onShared: (opts, slot) => startGame(sharedGame(opts), slot),
+    onImport: (text, slot) => {
+      try {
+        startGame(importSave(text), slot);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    onDelete: (slot) => deleteSave(slot),
+    onExport: (slot) => {
+      const s = loadGame(slot);
+      return s ? exportSave(s) : null;
+    },
     onSeed: (seed) => {
       clearTimeout(previewTimer);
       previewTimer = setTimeout(() => showPreview(seed), 600);
     },
+    onSettings: openSettings,
   });
   // The seed's own Parliament sits in the chamber behind the title page, the camera drifting slowly.
   let previewTimer = null;
@@ -421,6 +481,7 @@ async function boot() {
       console.warn('menu preview', e);
     }
   }
+  world.onRecolor = () => showPreview(menu.querySelector('[name="seed"]')?.value.trim());
   showPreview(menu.querySelector('[name="seed"]').value.trim());
 }
 

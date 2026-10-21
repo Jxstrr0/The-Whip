@@ -1,5 +1,6 @@
 // UI text: strings from data/strings.en.json with {slot} filling, plus shared formatting for MPs and parties.
 import { data } from '../sim/config.js';
+import { getSettings } from '../settings.js';
 
 export function t(key, vars = {}) {
   const s = data().strings[key] ?? key;
@@ -18,6 +19,25 @@ export function stamp(text, kind = '', big = false) {
   return `<span class="stamp ${kind}${big ? ' big' : ''}">${esc(text)}</span>`;
 }
 
+// A scenario's brief, shown on the morning it opens, and its verdict once the week has settled.
+export function scenarioBrief(state) {
+  const m = state.mode;
+  if (m?.kind !== 'scenario' || !m.brief || state.date.absWeek !== m.startWeek || state.date.dayOfWeek !== m.startDay) return '';
+  return `<p class="tutorial brief"><b>${esc(m.title)}.</b> ${esc(m.brief)}</p>`;
+}
+
+export function scenarioVerdict(state) {
+  const v = state.mode?.verdict;
+  if (!v) return '';
+  const kind = ['won', 'held'].includes(v.key) ? 'yea' : ['lost', 'fell', 'ousted'].includes(v.key) ? 'nay' : ['riding', 'party'].includes(v.key) ? 'brass' : 'grey';
+  return `<blockquote class="line scenario-verdict">${stamp(t('scenario.stamp.' + v.key), kind)} ${esc(v.text)}</blockquote>`;
+}
+
+// Week 0 is the guided first week: a hint on each room's first sheet, then never again.
+export function firstWeekHint(state, key) {
+  return state.date.absWeek === 0 && state.mode?.kind !== 'scenario' ? `<p class="tutorial">${t(key)}</p>` : '';
+}
+
 export function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
@@ -30,8 +50,14 @@ export function partyOf(state, mp) {
   return mp.party === 'ind' ? null : state.parties[mp.party];
 }
 
+// Party colours; the colour-blind setting swaps in the Okabe-Ito palette from data/parties.json.
 export function partyColor(state, mp) {
-  return mp.party === 'ind' ? data().parties.independentColor : state.parties[mp.party].color;
+  const P = data().parties;
+  if (getSettings().colourBlind) {
+    if (mp.party === 'ind') return P.independentCbColor;
+    return P.core.find((q) => q.id === mp.party)?.cbColor ?? P.fifthCbColor;
+  }
+  return mp.party === 'ind' ? P.independentColor : state.parties[mp.party].color;
 }
 
 export function partyShort(state, mp) {

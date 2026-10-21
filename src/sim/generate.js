@@ -62,7 +62,7 @@ function buildParties(rng) {
 }
 
 // Decide who governs and how many seats each party won, within the role ranges in data/parties.json.
-function electionResult(rng, parties) {
+function electionResult(rng, parties, { minority = false } = {}) {
   const R = data().parties.roles;
   const T = tuning().generate;
   const [nu, cp, ld, ec, fifth] = parties;
@@ -78,8 +78,9 @@ function electionResult(rng, parties) {
   seats[third.id] = rng.int(...R.third);
   const rest = 120 - independents - seats[fifth.id] - seats[ec.id] - seats[third.id];
   const lo = Math.max(R.government[0], rest - R.opposition[1], Math.floor(rest / 2) + 1);
-  const hi = Math.min(R.government[1], rest - R.opposition[0]);
-  seats[gov.id] = rng.int(lo, hi);
+  // A scenario can ask for a minority: the government stays the largest party but short of the majority.
+  const hi = Math.min(R.government[1], rest - R.opposition[0], minority ? data().world.majority - 1 : 999);
+  seats[gov.id] = rng.int(Math.min(lo, hi), hi);
   seats[opp.id] = rest - seats[gov.id];
   const roles = { [gov.id]: 'government', [opp.id]: 'opposition', [third.id]: 'third', [ec.id]: 'regional', [fifth.id]: 'minor' };
   return { seats, roles, independents, gov: gov.id };
@@ -249,13 +250,13 @@ export function assignCommittees(rng, mps, committees, govId) {
   return chairs;
 }
 
-export function generateParliament(seed) {
+export function generateParliament(seed, { minority = false } = {}) {
   const D = data();
   const T = tuning().generate;
   const rng = createRng('parliament:' + seed);
   const parliamentNo = D.world.firstParliament;
   const partyDefs = buildParties(rng);
-  const result = electionResult(rng, partyDefs);
+  const result = electionResult(rng, partyDefs, { minority });
   const ridings = pickRidings(rng);
   const owner = allocateRidings(rng, ridings, partyDefs, result);
   const names = uniqueNames(rng, ridings.length);
