@@ -620,3 +620,17 @@ Kelbo's once-over picked twelve things. This is the first: the two rooms where a
 - Surnames only, with no honorifics: the sim doesn't carry a form of address, and the Clerk's roll in the real House is names, not titles. The strip appends one span and drops the oldest rather than redrawing, so the names already read stay still.
 - At the tuned 0.08 s a seat the strip runs quickly; that's the point, the count moving under you. "Show result" still jumps to the end.
 - `tests.html`: 69 of 69. Checked at phone size in portrait and landscape through a real division; no console errors.
+
+## 2026-10-21 · Round two, 3 of 12: slogans on the town hall placards
+
+**What was built**
+
+- The four blank boards at the back of the town hall crowd now say something. Each is painted on its own canvas in marker lettering on cardboard (black, red and blue markers, four paper tones, a strip of tape at the top, each board tilted a little differently in the holder's hand), wrapped and sized to fit the board.
+- What they say comes from the week: the bill topic's slogan and the local issue's slogan go up first, then their second lines, then the standing grievances ("WE VOTED FOR YOU", "{town} FIRST", "LISTEN TO {riding}"…) if there are boards left. Every town hall topic has two slogans in `data/constituents.json` under `townHall.placards`, with the bill's title, the town, the whip's name and so on filled in the same way the questions are.
+- The boards go up with the mood: the two topic boards once the crowd cools (below 45), all four once the room has turned (below 35), none while they're with you.
+- The sign-holders moved to the back rows and are spread so all four read from the podium in portrait as well as landscape.
+
+**Things to know / decisions I made**
+
+- Choosing the slogans is sim logic (`townHallPlacards` in `src/sim/riding.js`, deterministic, no DOM), so the main loop just hands the filled strings to the room. A new test checks four boards, no `{placeholder}` left over, no two boards alike, and that the bill's title lands on the board.
+- The lettering is a heavy system sans rather than a loaded font, so the boards paint instantly and need no new resource.

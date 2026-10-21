@@ -131,6 +131,21 @@ export function startTownHall(state, rng) {
   return v.townHall;
 }
 
+// What the four placards at the back say this week: the bill's and the local issue's slogans
+// first, then the standing grievances, so the boards change with the topics rather than repeat.
+export function townHallPlacards(state) {
+  const v = state.ridingVisit;
+  const th = v?.townHall;
+  if (!th) return [];
+  const P = data().constituents.townHall.placards || {};
+  const lines = [];
+  const perTopic = th.topics.map((id) => P[id] || []);
+  for (let round = 0; round < 2; round++) for (const l of perTopic) if (l[round]) lines.push(l[round]);
+  const generic = P.generic || [];
+  for (let i = 0; lines.length < 4 && i < generic.length; i++) lines.push(generic[(v.week + i) % generic.length]);
+  return lines.slice(0, 4).map((l) => fillRiding(state, l));
+}
+
 export function answerTownHall(state, index) {
   const v = state.ridingVisit;
   const th = v?.townHall;
