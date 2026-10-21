@@ -5,6 +5,7 @@ import { stageLabel } from '../sim/vote.js';
 import { prediction } from '../sim/count.js';
 import { countLine } from './text.js';
 import { renderFrontPage } from './frontPage.js';
+import { calendarOf } from '../sim/calendar.js';
 
 export function createAgenda(root, { getState, onContinue, onSkip, photo = null }) {
   const bar = document.createElement('section');
@@ -18,7 +19,8 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
   function dateText(state) {
     const d = state.date;
     const day = tuning().calendar.days[d.dayOfWeek - 1];
-    return t('agenda.date', { day, week: d.week ?? (d.absWeek % tuning().calendar.weeksPerYear) + 1, year: d.year ?? 1 }) + (d.constituencyWeek ? ` · ${t('agenda.constituency')}` : '');
+    const c = calendarOf(d);
+    return t('agenda.date', { day, date: c.dayOfMonth, month: c.month, week: c.week, year: c.year }) + (d.constituencyWeek ? ` · ${t('agenda.constituency')}` : '');
   }
 
   function renderBar() {

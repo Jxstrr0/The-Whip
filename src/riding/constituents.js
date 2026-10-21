@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { createVisitor } from '../office/visitor.js';
 import { contactShadows, vertexMaterial, box, merge, paintedTexture, texturedPanel } from '../kit3d.js';
-import { createFigureCrowd, lookFor, shade } from '../figures.js';
+import { createFigureCrowd, lookFor, shade, hashOf } from '../figures.js';
 
 export const ROLE_COLORS = {
   mayor: '#1f3a5f',
@@ -40,6 +40,7 @@ export function createCrowd(count, colorFor) {
   const crowd = createFigureCrowd(count, { pose: 'standing' });
   const feet = [];
   const spots = [];
+  const suits = [];
   for (let i = 0; i < count; i++) {
     const id = `crowd-${i}`;
     const look = lookFor(id);
@@ -48,7 +49,8 @@ export function createCrowd(count, colorFor) {
     const x = (col - 3) * 0.78 + (row % 2) * 0.38 + look.yaw;
     const z = 4.6 + row * 0.95 + look.lean * 2;
     spots.push({ x, z, look });
-    crowd.dress(i, { ...look, suit: shade(colorFor(i), id, 0.1) });
+    suits.push(shade(colorFor(i), id, 0.1));
+    crowd.dress(i, { ...look, suit: suits[i] });
     feet.push({ x, z, sx: 0.9, sz: 0.9 });
   }
   const g = crowd.group;
@@ -75,6 +77,18 @@ export function createCrowd(count, colorFor) {
       placards.forEach((p, k) => (p.group.visible = k < up));
       place(v);
     },
+    // What the weather calls for: 0 shirtsleeves and jackets, 1 coats, 2 winter coats and, for most, a toque.
+    setCoats(level) {
+      for (let i = 0; i < count; i++) {
+        const id = `crowd-${i}`;
+        const h = hashOf(id);
+        const look = spots[i].look;
+        const coat = level >= 1 ? shade(COATS[(h >>> 2) % COATS.length], id, 0.08) : suits[i];
+        const hat = level >= 2 && (h >>> 5) % 3 !== 0;
+        crowd.dress(i, { ...look, suit: coat, hair: hat ? TOQUES[(h >>> 9) % TOQUES.length] : look.hair, hairStyle: hat ? 1.3 : look.hairStyle });
+      }
+      crowd.commit();
+    },
     // The week's slogans, already filled in, one per board; a board with nothing to say stays blank.
     setPlacards(lines) {
       placards.forEach((p, k) => p.paint(lines[k] || ''));
@@ -84,6 +98,10 @@ export function createCrowd(count, colorFor) {
     },
   };
 }
+
+// Wool coats for a cold street, and the toques that go with the coldest weeks.
+const COATS = ['#2b2a2e', '#4a3b2e', '#1f2a44', '#3a3d45', '#5c4a3a', '#6b1f2a', '#8a8f98', '#2f3b36', '#7a4a22'];
+const TOQUES = ['#a8322d', '#24406b', '#b8862a', '#8a8f98', '#2f4a3a', '#6a4c93', '#d8cdb8'];
 
 // Which crowd spots hold a sign (and in which hand), spread so all four read from the podium in
 // portrait; then how each board sits: paper tone, marker colour, a tilt of its own.

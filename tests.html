@@ -41,6 +41,7 @@ import { spreadBrokenPromise } from './src/sim/relationships.js';
 import * as caucusSim from './src/sim/caucus.js';
 window.__caucus = caucusSim;
 import * as ridingSim from './src/sim/riding.js';
+import { calendarOf, weatherOf } from './src/sim/calendar.js';
 import { botAct } from './src/sim/bot.js';
 import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo } from './src/save.js';
 import { getSettings, setSetting } from './src/settings.js';
@@ -1661,6 +1662,71 @@ test('The weekend paper: a lead with a deck, the polls on the record, a quiet we
   assert(th.you === true && bp.you === false, 'the photo flag follows the player');
   assert(th.deck && !/[{}]/.test(th.deck), 'a deck comes with the headline');
   return `${lead.paper}: ${lead.text} · ${decks} decks`;
+});
+
+section('Round two · Seasons');
+
+test('The year runs September to June: forty weeks, ten months of four, four seasons on the tuned weeks', () => {
+  const C = tuning().calendar;
+  assert(C.months.length * C.weeksPerMonth === C.weeksPerYear, 'months do not fill the year');
+  const at = (week, dayOfWeek = 1) => calendarOf({ week, year: 1, dayOfWeek });
+  const checks = [[1, 'September', 1, 'autumn'], [12, 'November', 26, 'autumn', 5], [13, 'December', 1, 'winter'], [24, 'February', 26, 'winter', 5], [25, 'March', 1, 'spring'], [36, 'May', 22, 'spring'], [37, 'June', 1, 'summer'], [40, 'June', 26, 'summer', 5]];
+  for (const [week, month, day, season, dow = 1] of checks) {
+    const c = at(week, dow);
+    assert(c.month === month && c.dayOfMonth === day && c.season === season, `week ${week} day ${dow}: ${c.dayOfMonth} ${c.month}, ${c.season}`);
+  }
+  // From an absolute week alone (the agenda's date), and the weekend paper's Saturday.
+  const c = calendarOf({ absWeek: 53, dayOfWeek: 6 });
+  assert(c.year === 2 && c.week === 14 && c.month === 'December' && c.dayOfMonth === 13, `absWeek 53 Saturday: ${c.dayOfMonth} ${c.month}, year ${c.year}`);
+  return checks.map(([w]) => `${w}: ${at(w).dayOfMonth} ${at(w).month}`).join(' · ');
+});
+
+test('Weather is settled by the seed and the week, fits the season, and never touches the RNG', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p1' });
+  const rngBefore = JSON.stringify(s.rng);
+  const kinds = {};
+  let snowWeeks = 0;
+  let janTemp = 0;
+  let juneTemp = 0;
+  for (let w = 0; w < 160; w++) {
+    const a = weatherOf(s, w);
+    const b = weatherOf(s, w);
+    assert(JSON.stringify(a) === JSON.stringify(b), `week ${w}: not deterministic`);
+    assert(data().strings[`weather.${a.kind}`], `week ${w}: no name for ${a.kind}`);
+    assert(a.temp > -30 && a.temp < 36, `week ${w}: ${a.temp}°`);
+    if (a.season === 'summer') assert(a.kind !== 'snow' && a.kind !== 'storm' && a.snow === 0, `week ${w}: snow in June`);
+    if (a.season === 'winter') assert(a.snow === 1 && a.kind !== 'rain', `week ${w}: ${a.kind}, cover ${a.snow} in winter`);
+    if (a.kind === 'snow' || a.kind === 'storm') assert(a.snow > 0, `week ${w}: snow falling on bare ground`);
+    if (a.falling === 'rain') assert(a.wet === 1, `week ${w}: rain but dry`);
+    if (a.month === 'January') janTemp += a.temp;
+    if (a.month === 'June') juneTemp += a.temp;
+    if (a.snow > 0) snowWeeks++;
+    kinds[a.kind] = (kinds[a.kind] || 0) + 1;
+  }
+  assert(juneTemp > janTemp, 'June is not warmer than January');
+  assert(snowWeeks >= 48 && snowWeeks <= 80, `${snowWeeks} weeks with snow on the ground`);
+  assert(Object.keys(kinds).length >= 5, `only ${Object.keys(kinds).join(', ')}`);
+  const other = newGame({ seed: 'TEST-2', party: 'p1' });
+  assert([0, 1, 2, 3, 4, 5].some((w) => weatherOf(other, w).kind !== weatherOf(s, w).kind), 'two seeds have the same weather');
+  assert(JSON.stringify(s.rng) === rngBefore, 'the weather moved the RNG');
+  return Object.entries(kinds).map(([k, n]) => `${k} ${n}`).join(', ') + ` · ${snowWeeks} snow weeks`;
+});
+
+test('The first Monday of winter logs the turn of the season once, and the first week of all logs none', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p1' });
+  const turns = Object.values(data().seasons.turns).flat();
+  const turned = () => s.log.filter((l) => turns.includes(l.text));
+  const winterStart = tuning().calendar.seasons.winter;
+  for (let i = 0; i < 2000 && s.date.week < winterStart + 1; i++) {
+    const p = pacing.skip(s);
+    if (p?.kind === 'dissolved') throw new Error('dissolved');
+    pacing.resolve(s, p?.kind === 'division' ? 'line' : null);
+  }
+  assert(s.date.week >= winterStart + 1, `only reached week ${s.date.week}`);
+  const lines = turned();
+  assert(lines.length === 1 && data().seasons.turns.winter.includes(lines[0].text), `${lines.length} season lines: ${lines.map((l) => l.text).join(' | ')}`);
+  assert(lines[0].week === winterStart - 1, `logged in week ${lines[0].week + 1}, not ${winterStart}`);
+  return lines[0].text;
 });
 
 async function run() {

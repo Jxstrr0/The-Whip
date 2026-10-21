@@ -12,6 +12,7 @@ import './sim/meetings.js';
 import './sim/questionPeriod.js';
 import { caucusSeating } from './sim/caucus.js';
 import { townHallPlacards } from './sim/riding.js';
+import { weatherOf } from './sim/calendar.js';
 import { saveGame, loadGame, deleteSave, exportSave, importSave, allSaves, latestSave } from './save.js';
 import { createRooms } from './rooms.js';
 import * as chamber from './chamber/scene.js';
@@ -279,6 +280,7 @@ function buildWorld() {
   // Keep each room in step with the sim: who's in the chair, moods, the board, the crowd.
   function syncRoom(name, state) {
     const room = rooms.room;
+    room.setWeather?.(weatherOf(state));
     if (name === 'chamber') room.nudge?.();
     if (name === 'office') {
       const me = state.mps[state.player.mpId];
@@ -420,7 +422,7 @@ async function debugTools(w) {
   document.body.appendChild(stats.dom);
   w.setStats(stats);
   createTuningPanel(w.ui, tuning());
-  const names = ['generate', 'knowledge', 'relationships', 'rng', 'bills', 'mp', 'vote', 'pacing', 'meetings', 'caucus', 'riding', 'career', 'tools', 'ranks', 'record', 'election', 'confidence', 'media'];
+  const names = ['generate', 'knowledge', 'relationships', 'rng', 'bills', 'mp', 'vote', 'pacing', 'meetings', 'caucus', 'riding', 'career', 'tools', 'ranks', 'record', 'election', 'confidence', 'media', 'calendar'];
   const sim = {};
   for (const n of names) sim[n] = await import(`./sim/${n}.js`);
   window.whip = {
