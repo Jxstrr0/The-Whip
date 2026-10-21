@@ -92,6 +92,12 @@ function buildWorld() {
       onMpTap: (mpId) => card.show(mpId),
     },
     onChange(name, room) {
+      // Cut through black: cover the swap at once, then fade back in once the new room has drawn a frame.
+      const fade = document.getElementById('fade');
+      if (fade) {
+        fade.classList.add('on');
+        requestAnimationFrame(() => requestAnimationFrame(() => fade.classList.remove('on')));
+      }
       if (name === 'chamber') {
         const state = getState();
         room.sync(state, colorOf);
