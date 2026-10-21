@@ -298,3 +298,27 @@ The first step of `ART-PASS.md`. Nothing in the rooms was redesigned yet; this i
 
 - **The overview is kept for divisions.** The count is theatre and needs both sides in frame; from your seat you'd only see one. So the camera leaves your seat for the vote and comes back.
 - **Textures are grain, not colour.** Keeping the hue in the palette means the party colours, the leather and the oak stay exactly the shades the design doc names, and a texture can be swapped without recolouring the game.
+
+---
+
+## 2026-10-21 · Art pass V3: the Order Paper
+
+**What changed**
+
+- **The whole UI is now printed paper.** Every sheet, the count board, the agenda strip, toasts, the Book and the start menu are cream paper with ink text, thin ruled lines, letterspaced small caps for section labels, a bench-green rule with a brass hairline along the top, and a soft shadow so the paper sits on the room instead of in it. The grey glass panels and the gold-on-charcoal buttons are gone.
+- **One typeface: Fraunces**, a warm newspaper serif with an optical-size axis, so it reads at 13 px labels and 46 px mastheads alike. It's committed under `assets/fonts/` (OFL, 110 KB for regular and italic) and preloaded, so there's no flash of a fallback font. Nothing is fetched from Google at runtime.
+- **Colour has a job now.** Bench green is the single primary action on any sheet. Brass is for rules, the bells and the "needed" marker. Party colours appear only as ink bars beside names. Red is for DEFEATED and a broken promise. Moods are an ink bar on a paper tag, not a coloured pill.
+- **Rubber stamps.** Outcomes are stamped: CARRIED in green, DEFEATED in red, with a slightly ragged edge and a thump as they land. The count board uses them; the `stamp()` helper is there for the riding, the ledger and the record in later steps.
+- **Motion.** Sheets are set down (a short slide up), toasts slide in as paper slips under the top bar, buttons press down by two pixels, and switching rooms cuts through ink-black and fades back in over a third of a second instead of popping.
+- **Controls** are drawn as ruled fields: inputs and selects are an underline with the label in small caps above, with an ink chevron on selects. The dropdown list itself is still the phone's own (a paper list sheet is a later refinement).
+- **The start menu** is a title page: the masthead, a rule, the subtitle in small caps, the tagline in italic, the form as ruled fields, and the studio colophon at the foot with a placeholder mark. Longlight's colours go on the mark and masthead when you send them (`--brand` in `css/style.css`).
+
+**Checks**
+
+- Guided week through the real buttons in a headless phone browser, portrait and landscape: no console errors. `tests.html`: 33 of 33.
+- Body text is ink on cream (contrast well above 7:1). Every tappable thing is at least 44 px tall.
+
+**Things to know**
+
+- I kept the native dropdown list under the styled select. A fully custom paper list sheet is a small follow-up; the native one works on every phone today.
+- The menu's live chamber behind the title page (from the plan) is deferred to V7, when the figures and the room are final.

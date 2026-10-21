@@ -39,6 +39,7 @@ export function createStartMenu(root, { info, onContinue, onNew }) {
         <label>${t('menu.seed')}<input name="seed" value="${esc(randomSeed())}" autocomplete="off"></label>
       </div>
       <button class="btn primary wide" data-act="new">${t('menu.begin')}</button>
+      <footer class="colophon"><span class="mark">W</span>${t('menu.studio')}</footer>
     </div>`;
   const blurb = () => {
     const p = parties.find((x) => x.id === el.querySelector('[name="party"]').value);
