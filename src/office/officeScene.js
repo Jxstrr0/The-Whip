@@ -323,7 +323,7 @@ export function create(ctx) {
     },
     resize(w, h) {
       camera.aspect = w / h;
-      cam.fitAspect(camera.aspect);
+      cam.fitAspect(camera.aspect, w);
       camera.updateProjectionMatrix();
     },
     dispose() {

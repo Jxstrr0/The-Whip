@@ -178,11 +178,12 @@ function paintGlassName(name) {
     g.translate(w, 0);
     g.scale(-1, 1);
     g.fillStyle = 'rgba(243,234,216,0.92)';
-    g.font = '600 56px Fraunces, Georgia, serif';
     g.textAlign = 'center';
-    g.fillText(name.toUpperCase(), w / 2, 70);
-    g.font = '28px Fraunces, Georgia, serif';
-    g.fillText(t('riding.glass'), w / 2, 112);
+    // Long names drop to a smaller face rather than running off the pane.
+    g.font = `600 ${name.length > 16 ? 56 : 68}px Fraunces, Georgia, serif`;
+    g.fillText(name.toUpperCase(), w / 2, 112, w - 40);
+    g.font = '34px Fraunces, Georgia, serif';
+    g.fillText(t('riding.glass'), w / 2, 176, w - 40);
     g.restore();
   };
 }
@@ -232,9 +233,10 @@ export function create(ctx) {
   const glass = new THREE.Mesh(new THREE.PlaneGeometry(2 * W, H - 1.12), new THREE.MeshPhysicalMaterial({ color: '#cfe3ea', transparent: true, opacity: 0.14, roughness: 0.05, metalness: 0, side: THREE.DoubleSide, depthWrite: false }));
   glass.position.set(0, 0.8 + (H - 1.12) / 2, D - 0.02);
   scene.add(glass);
-  const nameTex = paintedTexture(1024, 160, paintGlassName(ctx.ridingName || ''));
-  const nameSign = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 0.56), new THREE.MeshBasicMaterial({ map: nameTex, transparent: true, toneMapped: false, side: THREE.DoubleSide }));
-  nameSign.position.set(-0.9, 1.62, D - 0.03);
+  // The name sits beside the visitor's head (screen right, since you face +z), low enough to clear the masthead.
+  const nameTex = paintedTexture(1024, 256, paintGlassName(ctx.ridingName || ''));
+  const nameSign = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.375), new THREE.MeshBasicMaterial({ map: nameTex, transparent: true, toneMapped: false, side: THREE.DoubleSide }));
+  nameSign.position.set(-1.3, 1.2, D - 0.03);
   scene.add(nameSign);
   const photos = paintedTexture(512, 256, paintPhotos);
   scene.add(texturedPanel(3.2, 1.6, photos, { x: -W + 0.02, y: 1.7, z: -0.2, rotY: Math.PI / 2 }));
@@ -340,7 +342,7 @@ export function create(ctx) {
     },
     resize(w, h) {
       camera.aspect = w / h;
-      cam.fitAspect(camera.aspect);
+      cam.fitAspect(camera.aspect, w);
     },
     dispose() {
       visitor?.dispose();
