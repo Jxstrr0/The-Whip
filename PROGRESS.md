@@ -699,3 +699,49 @@ Kelbo's once-over picked twelve things. This is the first: the two rooms where a
 - The deskmate is chosen deterministically (lowest id among your party's first-term members, you excepted), so the same seed always gives the same colleague. They're only in the Act 1 set.
 - The whip's office for the reversal is built lazily, the first time it's needed, so Acts 2–5 never pay for it.
 - The old `tier` extra went away; the office takes `act` now. One new test: the first evening at each rank logs the line once, and every Act has a room, a line and a title.
+
+## 2026-10-21 · Figures: cloth, hair, skin and silk
+
+**What was built**
+
+- The figures are no longer smooth plastic next to grained wood and stone. Every part is now made of something: suits in a fine worsted twill, hair in strands that run down from the crown, a faint grain on skin and on polished shoes, silk ribs on the ties. All of it is painted once on small canvases at load (`src/figureTextures.js`), so there are no new files under `assets/` and nothing new to license; the maps are greyscale and the party or suit colour still comes through the instance colour, the same trick the rooms use.
+- The cloth and hair maps are sized in metres, like the rooms' textures, so a weave reads at the same density on a sleeve as on a lapel. Three's own capsule gives the straight part of a limb one step of texture however long it is, which stretched the weave along every sleeve; the figure kit now builds its own capsules with the texture following the arc.
+- Up close, suits come in three cloths: plain, pinstripe, chalk stripe (decided by who you are, like the suit colour), and half the ties are rep stripes rather than solid. The crowds share one plain weave and one silk: the office visitor, the whip in the reversal, the chamber walkers, the player seen from behind and the riding's callers wear the full wardrobe.
+- The hair cap is new: a shell that stands a little proud of the skull, with a hairline above the brow at the front and down to the nape at the back. The old cap sat on the skull's surface and came down over where the eyes are. "Receding" now squashes the cap toward the crown, so the forehead gets higher rather than the hair shrinking all over.
+
+**Things to know / decisions I made**
+
+- No new draw calls: the parts are the same eight instanced meshes per crowd and the same jointed meshes per visitor, with maps on their materials. Nine small canvases in all (256² and below), shared by every room for the life of the page and never disposed with a room.
+- Cloth patterns are per figure, not per instance, so the benches and the caucus table are all plain weave; stripes would not read at that distance anyway.
+- `tools/lineup.html` now dresses its figures with `wardrobe()` and takes `?zoom=1` (the articulated figures) or `?zoom=2` (two crowd figures) for judging the cloth and hair up close.
+- `tests.html`: 74 of 74. Chamber, office (all four moods), caucus, riding and the town hall checked at phone size in portrait and landscape; no console errors.
+
+## 2026-10-21 · Faces (an exploration, for Kelbo to keep or drop)
+
+**What was built**
+
+- Kelbo asked to see faces. The art pass had ruled them out for fear of the uncanny valley, so this is kept to the register of a boardroom chess piece: two dark almond eyes, a brow stroke over each, a faint mouth line. No whites of the eyes, no nose, no shading. The face is one greyscale map multiplied over the skin, so it reads on every complexion and costs nothing extra to draw.
+- In the office and the riding, the face follows the mood. Cooperative: brows level, a slight smile. Guarded: brows a touch lower, mouth flat and short. Angry: brows down and in, mouth turned down. Anxious: inner brows lifted, a small mouth. The crowds wear the neutral face. The mood was already in the pose and the pill; now it is on the face too, which is where a player looks first.
+- This is its own commit, so it can be reverted on its own if the faces are a mistake.
+
+**Things to know / decisions I made**
+
+- At bench distance the face is two dark dots, which is how it should be. The near shots (office visitor, the riding's callers, the caucus table from the whip's seat) are where it shows.
+- Five face maps, 512×256 each, drawn once and shared.
+- `tests.html`: 74 of 74 after the faces; same rooms checked again, no console errors.
+
+## 2026-10-21 · Bodies: a jacket, not a peanut
+
+**What was built**
+
+- Kelbo's note on the first renders: the bodies look janky. They did, and the cloth made it plainer: an egg for a torso with a separate bar across the top for shoulders, a white square on the chest that read as a name badge, spindly arms against a bulbous middle, hands the size of peas, and a box for a lap when seated.
+- The torso is now one turned jacket (`jacket()` in `src/figures.js`): sloped shoulders, a chest, a waist, a hem over the hips, elliptical in section. The shirt is a V of white between the lapels, built as a small grid that lies on the chest (the chest is convex, so a flat triangle sank into it), and the tie's knot and blade lie along the chest the same way, with the pin on the lapel.
+- Arms and legs are thicker (sleeves and trousers rather than sticks), the shoulder joints tuck under the jacket's shoulder, hands are flattened mitts rather than balls, and seated figures have thighs instead of a lap box, with the jacket's hem over them.
+- The articulated figure is built from the same jacket and shirt, so the office visitor, the whip in the reversal, the chamber walkers and the player seen from behind all match the crowds.
+
+**Things to know / decisions I made**
+
+- The shirt takes a colour per person now (`dress({ shirt })`): white for everyone in a suit, and for the town hall crowd a sweater or an open collar in a muted tone, so a street of people without ties doesn't look like a street of bibs.
+- No lapels as geometry: on the dark suits a raised edge in the same colour would not read, and the V of shirt already says "open jacket".
+- The jacket's cut is shared by the seated and standing poses (chest and shoulders are set from the shoulder line, hem and waist from the hips), so both crowds and the jointed figure wear the same suit.
+- `tests.html`: 74 of 74. Same rooms checked again at phone size, portrait and landscape; no console errors.
