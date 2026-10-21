@@ -227,3 +227,29 @@ The handoff asks for this slice to be played before stage 5, and for your verdic
 **The art pass plan**
 
 `ART-PASS.md` is new. It says what's wrong with the look today (flat colours, no shading, peg figures, a map-view chamber, a riding shot blocked by a chair back, hard cuts), what the rooms are going for (oak, green leather and stone under baked light; faceless figures with real silhouettes; your seat as the default view; serif display type; small constant motion), the rules (no shadows, no post-processing, budgets per room, procedural first), and nine steps in order with a done-when check for each. It also lists the five decisions I made that you can overturn: no faces, no real models, a serif for headings, your own seat as the default view, and window light that follows the time of day.
+
+---
+
+## 2026-10-21 · Art pass V0: light and shading
+
+The first step of `ART-PASS.md`. Nothing in the rooms was redesigned yet; this is the foundation the next steps build on.
+
+**What changed**
+
+- **Tone mapping.** The renderer now uses filmic tone mapping (ACES) with an exposure you can tune. Bright things roll off instead of clipping, so the lit windows and lamps no longer flatten to white.
+- **An environment map** (a neutral studio, generated at start, no image files) gives every surface soft reflected light. That's most of what "baked lighting" looks like on a phone.
+- **Baked occlusion.** Big surfaces are now subdivided, and vertices near the floor, the walls and the ceiling are darkened, with the undersides of desks and tables darker still. The rooms stop floating.
+- **Contact shadows.** A soft dark blob under every desk and chair pair in the chamber, under the office and riding furniture, under every caucus chair and the table, under every figure in the town hall crowd, and under walking visitors (it travels with them). One draw call per room.
+- **Lights.** Physically based point lights (decay 2) through a shared `roomLights` / `lamp` helper. The chamber's single ceiling hotspot is gone; it now has three chandeliers (a lit dish on a stem with a brass ring and a warm light each), lit window panes with dark mullions, and daylight from high on one side. The office desk lamp has a lit shade; the caucus room has three lit pendants over the table. Figure materials take the environment light at the same strength as the rooms (the first try left them pastel).
+- `src/look.js` holds the palette tokens, the renderer setup and the shared environment. Every look number is in `data/tuning.json` under `look` (exposure, environment strength, occlusion strength, shadow opacity, lamp intensities), so the `?debug=1` sliders can tune them live.
+
+**Checks**
+
+- Guided week played through the real buttons in a headless phone browser: no console errors. `tests.html`: 33 of 33.
+- Chamber draw calls: about 18 (budget 60). Office, caucus and riding: under 20 each (budget 40). `window.whip.renderer.info` (already there in `?debug=1`) gives the exact numbers for later steps.
+- Still for you: the frame rate on your phone with `?debug=1`. The headless browser can't measure it.
+
+**Things to know**
+
+- The office and riding camera framing is unchanged and still wrong (the chair back in the riding, the window-and-chairs shot in the office). Those are steps V4 and V5.
+- The figures are still the capsule-and-sphere placeholders. That's V1, next.
