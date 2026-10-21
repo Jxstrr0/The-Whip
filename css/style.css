@@ -322,6 +322,9 @@ html, body {
   color: var(--ink-2);
   font-size: 14px;
 }
+.seat.familiar {
+  font-style: italic;
+}
 .unknown {
   color: var(--grey);
   font-style: italic;

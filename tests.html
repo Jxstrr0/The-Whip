@@ -20,13 +20,22 @@
 <h1>The Whip · sim tests</h1>
 <div id="summary">Running…</div>
 <div id="out"></div>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
 <script type="module">
 // Browser-run sim checks. Each stage adds a section; everything here runs without the 3D renderer.
 import { loadData } from './src/loadData.js';
 import { setData, tuning } from './src/sim/config.js';
 import { newGame, scenarioGame, dailyGame, sharedGame, scenarioList, dailySeed } from './src/sim/modes.js';
 import { parliamentHash } from './src/sim/generate.js';
-import { cardView, HIDDEN_FIELDS, reveal, decayKnowledge } from './src/sim/knowledge.js';
+import { cardView, HIDDEN_FIELDS, reveal, decayKnowledge, touch, familiarity } from './src/sim/knowledge.js';
+import { faceFor, faceOf, partsFor } from './src/faces.js';
 import { buildSeats } from './src/chamber/layout.js';
 import { introduceBill, makeBill, setLines } from './src/sim/bills.js';
 import { intentions } from './src/sim/mp.js';
@@ -1925,6 +1934,51 @@ test('An old save starts its memoir where it is and says so; a long career drops
   } finally {
     tuning().memoir.cap = cap;
   }
+});
+
+test('Faces are earned: a stranger is faceless, a talk gives a face, a second the feature, and time plus what you know the keepsake', () => {
+  const s = newGame({ seed: 'FACE-1' });
+  const before = parliamentHash(s);
+  const mp = Object.values(s.mps).find((m) => m.party === s.mps[s.player.mpId].party && m.id !== s.player.mpId);
+  const T = tuning().faces;
+  assert(familiarity(s, s.player.mpId) === 3, 'the player does not know their own face');
+  assert(familiarity(s, mp.id) === 0, 'a stranger already has a face');
+  touch(s, mp.id);
+  assert(familiarity(s, mp.id) === 1, `one talk gave tier ${familiarity(s, mp.id)}`);
+  for (let i = 1; i < T.featureTalks; i++) touch(s, mp.id);
+  assert(familiarity(s, mp.id) === 2, 'more talks did not give the feature');
+  for (let i = T.featureTalks; i < T.signatureTalks; i++) touch(s, mp.id);
+  assert(familiarity(s, mp.id) === 2, 'talking alone gave the keepsake');
+  for (const f of HIDDEN_FIELDS.slice(0, T.signatureFields)) reveal(s, mp.id, f, 'meeting');
+  assert(familiarity(s, mp.id) === 3, 'talks and knowledge did not give the keepsake');
+  assert(familiarity(s, mp.id, T.signatureTalks) === 0, 'talksAgo does not look back');
+  // A save from before talks were counted: any contact is one talk.
+  delete s.player.talks;
+  assert(familiarity(s, mp.id) === 1, 'an old save with contact is not tier 1');
+  assert(parliamentHash(s) === before, 'knowing a face moved the Parliament');
+});
+
+test('A face is the same for the same member every time, and each tier only adds parts', () => {
+  const s = newGame({ seed: 'FACE-2' });
+  const ids = Object.keys(s.mps).slice(0, 40);
+  for (const id of ids) {
+    const a = JSON.stringify(faceFor(id, 3, { whiskers: true }));
+    assert(a === JSON.stringify(faceFor(id, 3, { whiskers: true })), `${id}'s face changed`);
+    const f = JSON.parse(a);
+    assert(partsFor({ ...f, tier: 0 }).length === 0, `${id} has parts as a stranger`);
+    let prev = [];
+    for (let t = 1; t <= 3; t++) {
+      const now = partsFor({ ...f, tier: t }).map(([k]) => k);
+      assert(prev.every((k) => now.includes(k) || (k === 'brows' && now.includes('heavyBrows'))), `${id} lost a part at tier ${t}`);
+      prev = now;
+    }
+    assert(!['beard', 'moustache'].includes(faceFor(id, 3, { whiskers: false }).feature), `${id} has whiskers off the list`);
+  }
+  const kinds = new Set(ids.map((id) => faceFor(id, 3, { whiskers: true }).feature));
+  assert(kinds.size >= 5, `only ${kinds.size} features across forty members`);
+  const m = s.mps[ids[3]];
+  assert(faceOf(s, m.id).tier === 0 && faceOf(s, s.player.mpId).tier === 3, 'faceOf does not read familiarity');
+  return `${kinds.size} features`;
 });
 
 async function run() {

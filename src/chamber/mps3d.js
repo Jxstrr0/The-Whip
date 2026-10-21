@@ -1,6 +1,7 @@
 // The 120 MPs in their seats, drawn from the shared figure kit as one instanced crowd, plus the selection outline.
 import * as THREE from 'three';
 import { createFigureCrowd, lookFor, wardrobe } from '../figures.js';
+import { faceOf } from '../faces.js';
 
 export function createMpFigures(records) {
   const n = records.length;
@@ -33,7 +34,7 @@ export function createMpFigures(records) {
         }
         const look = lookFor(mpId);
         seatOf(i, s, look);
-        crowd.dress(i, { ...look, ...wardrobe(mpId, colorOf(state.mps[mpId]), { bench: true }) });
+        crowd.dress(i, { ...look, ...wardrobe(mpId, colorOf(state.mps[mpId]), { bench: true }), face: faceOf(state, mpId) });
       });
       crowd.commit();
     },

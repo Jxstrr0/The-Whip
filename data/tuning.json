@@ -37,6 +37,11 @@
     "votesForLoyalty": 8,
     "votesForIdeology": 12
   },
+  "faces": {
+    "featureTalks": 2,
+    "signatureTalks": 4,
+    "signatureFields": 6
+  },
   "calendar": {
     "weeksPerYear": 40,
     "years": 4,

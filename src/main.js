@@ -24,6 +24,7 @@ import { createMpCard } from './ui/mpCard.js';
 import { createBook } from './ui/book.js';
 import { createAgenda } from './ui/agenda.js';
 import { pressPhoto } from './pressPhoto.js';
+import { faceOf } from './faces.js';
 import { createCountBoard } from './ui/countBoard.js';
 import { createOfficeUI } from './ui/talk.js';
 import { createCaucusUI } from './ui/caucusUI.js';
@@ -296,14 +297,15 @@ function buildWorld() {
       );
       const mt = state.meeting && state.meetings[state.meeting];
       if (mt) {
-        room.setVisitor({ mpId: mt.mpId, mood: mt.mood, color: colorOf(state.mps[mt.mpId]), reversal: mt.reversal });
+        // Their face as you knew it walking in, and as you know them now: the difference comes into focus.
+        room.setVisitor({ mpId: mt.mpId, mood: mt.mood, color: colorOf(state.mps[mt.mpId]), reversal: mt.reversal, face: faceOf(state, mt.mpId), faceFrom: faceOf(state, mt.mpId, 1).tier });
         room.pushIn(mt.phase === 'deal');
       } else room.setVisitor(null);
     } else if (name === 'caucus') {
       // The whip's read: everyone in party colours; the seats you can read carry their mood as a mark.
       room.read((id) => {
         const k = state.player.knowledge[id]?.mood;
-        return { color: colorOf(state.mps[id]), mood: k?.known && !k.stale ? state.mps[id].mood : null, me: id === state.player.mpId };
+        return { color: colorOf(state.mps[id]), mood: k?.known && !k.stale ? state.mps[id].mood : null, me: id === state.player.mpId, face: faceOf(state, id) };
       });
     } else if (name === 'riding') {
       // Election night is staged by the cold open's own sheet as the count comes in; any other visit puts it away.
@@ -328,7 +330,7 @@ function buildWorld() {
       act: state.player.act,
       variant: state.player.act,
       playerName: `${me.name.first} ${me.name.last}`,
-      colleague: colleague && { id: colleague.id, color: colorOf(colleague) },
+      colleague: colleague && { id: colleague.id, color: colorOf(colleague), face: faceOf(state, colleague.id) },
       ridingType: me.riding.type,
       ridingName: me.riding.name,
       partyShort: state.parties[me.party]?.short || '',
