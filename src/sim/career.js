@@ -55,6 +55,7 @@ export function createPlayer(state, opts = {}) {
     p.skeleton = { id: 'x000', kind: bg.skeletons[0].kind, severity: bg.skeletons[0].severity, foundBy: null, dealtWith: false };
     p.ridingStanding += bg.effects.ridingStanding || 0;
     if (bg.effects.ruralStanding && m.riding.type === 'rural') p.ridingStanding += bg.effects.ruralStanding;
+    p.ridingBase = p.ridingStanding;
     for (const pid of Object.keys(state.parties)) if (pid !== partyId) p.whipTrust[pid] = 0;
     state.player = p;
     // Everyone starts roughly neutral toward a rookie; the cohort a little warmer.
@@ -66,4 +67,50 @@ export function createPlayer(state, opts = {}) {
     if (whip && bg.effects.whipRapport) state.mps[whip].rapport += bg.effects.whipRapport;
     return p;
   });
+}
+
+// How the player's own riding and conscience pull on a bill, ignoring the party line.
+// A dilemma is a whipped vote where that pull points the other way, hard enough to hurt.
+export function dilemmaFor(state, bill, baseScore, tuningPacing) {
+  const me = state.mps[state.player.mpId];
+  const line = bill.lines[me.party];
+  const position = bill.positions[me.party];
+  if (line !== 'whipped' || !['yea', 'nay'].includes(position)) return null;
+  const { parts } = baseScore(state, me, bill);
+  const lineSign = position === 'yea' ? 1 : -1;
+  const ridingPull = 0.6 * parts.R - 0.9 * parts.C;
+  const conscience = 0.8 * parts.I;
+  const pull = ridingPull + conscience;
+  if (Math.sign(pull) === lineSign || Math.abs(pull) < tuningPacing.dilemmaThreshold) return null;
+  return { line: position, against: position === 'yea' ? 'nay' : 'yea', ridingPull, conscience, strength: Math.abs(pull), ridingSide: Math.abs(ridingPull) >= Math.abs(conscience) };
+}
+
+// The player's vote lands: the whip's office keeps score, the riding notices, and the House notices you.
+export function applyPlayerVote(state, bill, choice, dilemma, T) {
+  const p = state.player;
+  const me = state.mps[p.mpId];
+  const whip = state.parties[me.party]?.chiefWhip;
+  const position = bill.positions[me.party];
+  const adjust = (id, d) => {
+    if (id && state.mps[id]) state.mps[id].rapport = Math.max(-100, Math.min(100, state.mps[id].rapport + d));
+  };
+  const clampP = (v) => Math.max(0, Math.min(100, Math.round(v)));
+  if (choice === 'rebel') {
+    p.whipFile.push({ bill: bill.id, vote: position === 'yea' ? 'nay' : 'yea', line: position, day: state.date.absWeek * 5 + state.date.dayOfWeek - 1 });
+    p.actProgress.rebellions++;
+    p.actProgress.noticed += T.noticedPerRebellion;
+    adjust(whip, T.rebelWhipRapport * (bill.confidence ? 2 : 1));
+    if (dilemma) p.ridingStanding = clampP(p.ridingStanding + T.rebelRiding * (dilemma.ridingSide ? 1 : 0.5) + dilemma.strength * 2);
+    p.style.conscience++;
+  } else if (choice === 'absent') {
+    adjust(whip, T.absentWhipRapport);
+    if (dilemma) p.ridingStanding = clampP(p.ridingStanding - 1);
+  } else {
+    adjust(whip, T.toeLineWhipRapport);
+    p.actProgress.noticed += T.noticedPerLoyalVote;
+    if (dilemma) {
+      p.ridingStanding = clampP(p.ridingStanding + T.toeLineRiding - (dilemma.ridingSide ? dilemma.strength * T.dilemmaRidingScale : 0));
+      p.style.loyalist++;
+    }
+  }
 }

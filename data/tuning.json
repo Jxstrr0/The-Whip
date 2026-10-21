@@ -1,7 +1,15 @@
 {
   "generate": {
     "bigPartySwapChance": 0.2,
-    "cohortWeights": [0.27, 0.2, 0.17, 0.13, 0.1, 0.07, 0.06],
+    "cohortWeights": [
+      0.27,
+      0.2,
+      0.17,
+      0.13,
+      0.1,
+      0.07,
+      0.06
+    ],
     "yearsPerParliament": 3.4,
     "loyaltyMean": 66,
     "loyaltySd": 15,
@@ -13,13 +21,114 @@
     "attendanceSd": 9,
     "marginMean": 12,
     "marginSd": 9,
-    "secretOdds": [0.5, 0.35, 0.12, 0.03],
+    "secretOdds": [
+      0.5,
+      0.35,
+      0.12,
+      0.03
+    ],
     "cliqueThreshold": 0.35,
     "mentorShare": 0.6,
     "rivalTime": 45,
     "rivalFavors": 2
   },
   "knowledge": {
-    "staleWeeks": 26
+    "staleWeeks": 26,
+    "votesForLoyalty": 8,
+    "votesForIdeology": 12
+  },
+  "calendar": {
+    "weeksPerYear": 40,
+    "years": 4,
+    "weekPattern": "SSSSCSSSSCSSSSCSSSCSSSSCSSSSCSSSCSSSSCSC",
+    "days": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday"
+    ],
+    "caucusDay": 3,
+    "ridingDay": 5
+  },
+  "bills": {
+    "govBillsPerWeek": 0.9,
+    "pmbPerWeek": 0.35,
+    "oppositionDayEvery": 2,
+    "votesPerDayMax": 3,
+    "scheduleDelayDays": [
+      1,
+      4
+    ],
+    "committeeWeeks": [
+      1,
+      3
+    ],
+    "amendmentOdds": [
+      0.35,
+      0.4,
+      0.2,
+      0.05
+    ],
+    "reportAmendmentOdds": 0.45,
+    "supplySchedule": {
+      "2": "Address in Reply to the Speech from the Throne",
+      "9": "Budget Implementation Act",
+      "11": "Ways and Means motion on the budget",
+      "14": "Main Estimates",
+      "22": "Supplementary Estimates (A)",
+      "30": "Supplementary Estimates (B)",
+      "38": "Supplementary Estimates (C)"
+    },
+    "freeVoteSocialOdds": 0.25,
+    "partySupportThreshold": 0.12,
+    "oppositionReflex": 0.28,
+    "confidenceAppetiteMargin": 4,
+    "confidenceAppetiteFromYear": 2,
+    "ordinaryDealOdds": 0.75
+  },
+  "vote": {
+    "wLine": 1.45,
+    "wIdeo": 0.8,
+    "wRiding": 0.6,
+    "wLedger": 1.0,
+    "wPeer": 0.35,
+    "wClique": 0.4,
+    "wPressure": 1.0,
+    "wCost": 0.9,
+    "noise": 0.22,
+    "confidenceLineBoost": 1.6,
+    "upper": 0.15,
+    "lower": -0.15,
+    "abstainBand": 0.6,
+    "ideoScale": 60,
+    "promiseWeight": 2,
+    "whipRelationWeight": 0.5,
+    "attendanceWhippedBoost": 10,
+    "attendanceConfidenceBoost": 15,
+    "attendanceScheduledBoost": 5,
+    "divisionMinRising": 5,
+    "bellsUnscheduled": 30,
+    "bellsScheduled": 15,
+    "secondsPerSeat": 0.08,
+    "riseConviction": 0.8
+  },
+  "pacing": {
+    "dilemmaThreshold": 0.55,
+    "closeVoteMargin": 4,
+    "pollDriftSd": 0.35,
+    "defeatPollHit": 1.0,
+    "moodChangeOdds": 0.35,
+    "ridingRegression": 0.04
+  },
+  "player": {
+    "rebelWhipRapport": -8,
+    "rebelRiding": 3,
+    "toeLineRiding": -2,
+    "toeLineWhipRapport": 2,
+    "dilemmaRidingScale": 4,
+    "absentWhipRapport": -3,
+    "noticedPerRebellion": 1,
+    "noticedPerLoyalVote": 0.25
   }
 }
