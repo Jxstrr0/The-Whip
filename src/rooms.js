@@ -23,5 +23,11 @@ export function createRooms({ factories, ctx, onChange }) {
       size = [w, h];
       room?.resize(w, h);
     },
+    // Throw the current room away, so the next show() builds it fresh (used when the menu's preview ends).
+    reset() {
+      room?.dispose();
+      room = null;
+      name = null;
+    },
   };
 }

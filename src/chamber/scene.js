@@ -11,6 +11,7 @@ import { createPicker } from './picking.js';
 import { createMpFigures } from './mps3d.js';
 import { createVoteLights } from './voteLights.js';
 import { createFigureCrowd, lookFor } from '../figures.js';
+import { createChamberLife } from './life.js';
 
 const C = {
   carpet: '#2f5a3c',
@@ -128,7 +129,11 @@ function buildShell() {
   g.leather.push(slab(-t.width / 2 - 0.03, t.height - 0.05, t.zFrom - 0.03, t.width / 2 + 0.03, t.height, t.zTo + 0.03, C.leather));
   const mz = (t.zFrom + t.zTo) / 2;
   for (const z of [mz - 0.5, mz + 0.5]) g.metal.push(box(0.16, 0.08, 0.06, 0, t.height + 0.02, z, C.brass));
-  for (const x of [-0.45, 0.45]) g.leather.push(box(0.5, 0.9, 0.5, x, 0.45, t.zFrom - 0.5, C.leather));
+  for (const x of [-0.45, 0.45]) {
+    g.leather.push(box(0.5, 0.1, 0.5, x, 0.45, t.zFrom - 0.5, C.leather));
+    g.leather.push(box(0.5, 0.6, 0.08, x, 0.78, t.zFrom - 0.26, C.leather));
+    g.oak.push(box(0.46, 0.4, 0.46, x, 0.2, t.zFrom - 0.5, C.oak));
+  }
 
   // Brass and gold: the bar and its posts, the Mace.
   g.metal.push(cylinder(0.035, 0.035, G.aisleWidth, 0, 0.9, G.barZ, C.brass, 10, 'x'));
@@ -209,8 +214,11 @@ export function create(ctx) {
   const controls = createChamberCamera(camera, renderer.domElement);
   const picker = createPicker(camera, seats.pickMesh, seats.records);
   let state = null;
+  let colorOfMp = () => '#555';
   let homeSeatId = null;
   let returnHome = false;
+  let bells = false;
+  const life = createChamberLife({ scene, seats, figures, getState: () => state, colorOf: (mp) => colorOfMp(mp) });
 
   // The three-quarter shot for a division, remembering to come back to your seat afterwards.
   function takeDivisionShot() {
@@ -240,10 +248,14 @@ export function create(ctx) {
     // The bells: the room dims a touch, every seat lamp pulses amber, and the camera goes to the three-quarter
     // shot where the count reads (coming back to your seat when the result is dismissed).
     setBells(on) {
+      bells = on;
       lights.bells(on);
       hemiGoal = on ? hemiBase * 0.8 : hemiBase;
       if (on) takeDivisionShot();
     },
+    gavel: () => life.gavel(),
+    nudge: () => controls.nudge(),
+    autoOrbit: (on) => controls.autoOrbit(on),
     get view() {
       return controls.mode;
     },
@@ -263,6 +275,7 @@ export function create(ctx) {
       hidden = [];
       lights.reset();
       takeDivisionShot();
+      life.clerksStand(true);
       const seatOf = (id) => state.mps[id]?.seatId;
       hidden = result.absent.map(seatOf).filter(Boolean);
       for (const sid of hidden) figures.setPresent(sid, false);
@@ -273,6 +286,8 @@ export function create(ctx) {
       hidden = [];
       lights.reset();
       lights.bells(false);
+      bells = false;
+      life.clerksStand(false);
       hemiGoal = hemiBase;
       controls.divisionShot(false);
       if (returnHome) {
@@ -284,7 +299,9 @@ export function create(ctx) {
     // Redraw who sits where and in what colour; call after a new game, load or reseating.
     sync(next, colorOf) {
       state = next;
+      colorOfMp = colorOf;
       figures.sync(state, colorOf);
+      life.reset();
       applyHomeHiding();
     },
     select(seatId) {
@@ -307,6 +324,7 @@ export function create(ctx) {
       figures.update(dt);
       speaker.update(dt);
       spectators.update(dt);
+      life.update(dt, bells || lights.playing, homeSeatId);
     },
     resize(w, h) {
       camera.aspect = w / h;
@@ -315,6 +333,7 @@ export function create(ctx) {
     },
     dispose() {
       controls.dispose();
+      life.dispose();
       disposeTree(scene);
     },
   };

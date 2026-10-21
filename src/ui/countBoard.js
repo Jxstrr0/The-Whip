@@ -134,6 +134,7 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
   }
 
   function finishBoard(result) {
+    getRoom()?.gavel?.();
     updateCounts(result, { yea: result.yeas.length, nay: result.nays.length });
     const me = getState().player.mpId;
     const mine = result.yeas.includes(me) ? 'yea' : result.nays.includes(me) ? 'nay' : 'absent';
