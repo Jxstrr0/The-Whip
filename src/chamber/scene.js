@@ -464,7 +464,7 @@ export function create(ctx) {
     resize(w, h) {
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      controls.fitAspect(camera.aspect);
+      controls.fitAspect(camera.aspect, w);
     },
     dispose() {
       controls.dispose();
