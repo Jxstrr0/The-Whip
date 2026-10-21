@@ -881,3 +881,28 @@ Kelbo asked if we could stop the player spending time on themselves by accident.
 ## 2026-10-21 · "Your riding" when the whip pays you
 
 Kelbo noticed that in a deal with your own whip, the card the whip offers you read "A mention of their riding", as if the mention were for the whip's riding and not yours. A card's wording now depends on which way it goes. When it comes to you, it says **your** riding ("A mention of your riding", "A project for your riding"). When you give it away, it says **their** riding. This holds on the deal table, on a counter-offer, in the line that sums up a meeting, and in the ledger. It also fixed the reverse case: once you hold the whip's cards, a riding project you offered another MP used to read "A project for your riding". A new test checks both directions. `tests.html`: 90 passed, 0 failed.
+
+## 2026-10-21 · Your aim, and your job in each room
+
+Kelbo asked for the game to be easier to "read": make it clear what your job is in each place, and what you should be trying to do overall. The rules were all there, but you had to discover them. Now the game says them out loud.
+
+**What changed**
+
+- **"Your aim" sits above the date bar all the time.** It reads like "Act 1 · Get noticed · 3 of 8", or "Act 5 · Hold the caucus · support 52, floor 40". Tap it for the full aim sheet: what this act is about, a bar for each thing that counts, and how the act ends. It also tells you when you've done your part and the next step is up to the House ("A seat in the whip's office can open any weekend now"). In Act 4, where caucus support *or* the leader's trust will do, it says so. The weekend front page repeats the aim at the bottom.
+- **"Your job here" opens every scene.** A short brass-edged note under the heading says what you're there to do. The wording changes with the room and with your rank:
+  - the morning order paper, including when one of today's votes is yours, and the whip's version once you hold the count
+  - the evening office, telling you how many blocks of time you have and whether the whip has called you in
+  - each kind of meeting (a whip's call, a favour, a recruit to a rebellion, gossip and so on)
+  - caucus, including a revolt, and one against you
+  - Question Period, where the three ways to ask are spelled out
+  - the division: on the line, a free vote, a confidence vote, a dilemma, the bells chase, and your own bill
+  - the riding and the campaign
+- **The numbers come from the rules.** Every threshold the aim shows is read from `data/tuning.json`, so retuning the game keeps the aim honest. The Act 5 revolt floor (40) was a bare number in the caucus code; it now lives in tuning as `ranks.revoltBelowSupport`.
+- **Fixes found on the way.**
+  - Once you're Chief Whip, the office could have "the whip's office wants to see you" with **you** as the whip. That can't happen now.
+  - The first-week hints are now tied to your first Parliament. They no longer come back in week one after an election.
+
+**Things to know**
+
+- I wrote all the job lines fresh. None repeats a line already on the same screen (the confidence-vote note no longer echoes the red warning beneath it).
+- Checked at phone size in portrait and landscape at Acts 1, 3 and 5: the morning, the office, a meeting, caucus, the division, the riding and the weekend paper, plus opening and closing the aim sheet. No console errors. Four new tests cover the aim thresholds, that every job line has its words in every act, that the first week happens once, and that the whip never calls themselves in.
