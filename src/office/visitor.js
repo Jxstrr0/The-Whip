@@ -2,7 +2,7 @@
 // shoes on pivots, so it can walk in, sit, and hold a pose that says how the meeting is going.
 import * as THREE from 'three';
 import { blobMaterial, merge, worldUVs } from '../kit3d.js';
-import { lookFor, shade, HEAD_R, CAP_TOP, tieParts, pinPart, partMaterial, capsule, egg, hairCap } from '../figures.js';
+import { lookFor, shade, HEAD_R, CAP_TOP, tieParts, pinPart, partMaterial, capsule, egg, hairCap, jacket, shirtFront } from '../figures.js';
 import { faceTexture } from '../figureTextures.js';
 
 const HIP = 0.86;
@@ -43,13 +43,9 @@ export function createFigure(color, mpId = 'x', outfit = null) {
   const body = new THREE.Group();
   body.position.y = HIP;
 
-  const torso = new THREE.Mesh(egg(1, 0, 0, 0, 0.2, 0.32, 0.14, 14), mats.suit);
-  torso.position.y = 0.28;
-  const shoulders = new THREE.Mesh(capsule(0.085, 0.38, 10), mats.suit);
-  shoulders.rotation.z = Math.PI / 2;
-  shoulders.position.y = SHOULDER_H;
-  const collar = box(0.12, 0.09, 0.02, 0, SHOULDER_H - 0.05, 0.133, mats.shirt);
-  const neck = new THREE.Mesh(capsule(0.05, 0.1), mats.skin);
+  const torso = new THREE.Mesh(jacket(0, SHOULDER_H), mats.suit);
+  const collar = new THREE.Mesh(shirtFront(SHOULDER_H), mats.shirt);
+  const neck = new THREE.Mesh(capsule(0.052, 0.1), mats.skin);
   neck.position.set(0, SHOULDER_H + 0.08, 0.01);
   // The head turns and nods about the neck.
   const head = new THREE.Group();
@@ -61,7 +57,7 @@ export function createFigure(color, mpId = 'x', outfit = null) {
   cap.position.y = 0.12 + CAP_TOP;
   cap.visible = look.hairStyle > 0;
   head.add(skull, cap);
-  body.add(torso, shoulders, collar, neck, head);
+  body.add(torso, collar, neck, head);
   if (outfit?.tie) {
     mats.tie = partMaterial('tie', { color: outfit.tie, tieStyle: outfit.tieStyle });
     body.add(new THREE.Mesh(merge(tieParts(SHOULDER_H)), mats.tie));
@@ -73,15 +69,15 @@ export function createFigure(color, mpId = 'x', outfit = null) {
 
   const arms = [-1, 1].map((s) => {
     const sh = new THREE.Group();
-    sh.position.set(0.22 * s, SHOULDER_H, 0);
+    sh.position.set(0.21 * s, SHOULDER_H - 0.04, 0);
     const el = new THREE.Group();
     el.position.y = -UPPER;
     // Fold first (x), then turn the folded forearm across the chest (y): needed for crossed arms.
     el.rotation.order = 'YXZ';
-    const hand = new THREE.Mesh(egg(0.045, 0, 0, 0, 1, 0.8, 1.2, 8), mats.skin);
+    const hand = new THREE.Mesh(egg(0.05, 0, 0, 0, 0.75, 1.3, 1, 8), mats.skin);
     hand.position.y = -FORE;
-    el.add(hanging(0.05, FORE, mats.suit), hand);
-    sh.add(hanging(0.058, UPPER, mats.suit), el);
+    el.add(hanging(0.056, FORE, mats.suit), hand);
+    sh.add(hanging(0.064, UPPER, mats.suit), el);
     body.add(sh);
     return { sh, el };
   });
@@ -91,8 +87,8 @@ export function createFigure(color, mpId = 'x', outfit = null) {
     const knee = new THREE.Group();
     knee.position.y = -THIGH;
     const shoe = box(0.11, 0.07, 0.25, 0, -SHIN - 0.04, 0.05, mats.dark);
-    knee.add(hanging(0.065, SHIN, mats.suit), shoe);
-    hip.add(hanging(0.08, THIGH, mats.suit), knee);
+    knee.add(hanging(0.07, SHIN, mats.suit), shoe);
+    hip.add(hanging(0.085, THIGH, mats.suit), knee);
     g.add(hip);
     return { hip, knee };
   });

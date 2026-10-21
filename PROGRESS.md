@@ -712,3 +712,19 @@ Kelbo's once-over picked twelve things. This is the first: the two rooms where a
 - At bench distance the face is two dark dots, which is how it should be. The near shots (office visitor, the riding's callers, the caucus table from the whip's seat) are where it shows.
 - Five face maps, 512×256 each, drawn once and shared.
 - `tests.html`: 74 of 74 after the faces; same rooms checked again, no console errors.
+
+## 2026-10-21 · Bodies: a jacket, not a peanut
+
+**What was built**
+
+- Kelbo's note on the first renders: the bodies look janky. They did, and the cloth made it plainer: an egg for a torso with a separate bar across the top for shoulders, a white square on the chest that read as a name badge, spindly arms against a bulbous middle, hands the size of peas, and a box for a lap when seated.
+- The torso is now one turned jacket (`jacket()` in `src/figures.js`): sloped shoulders, a chest, a waist, a hem over the hips, elliptical in section. The shirt is a V of white between the lapels, built as a small grid that lies on the chest (the chest is convex, so a flat triangle sank into it), and the tie's knot and blade lie along the chest the same way, with the pin on the lapel.
+- Arms and legs are thicker (sleeves and trousers rather than sticks), the shoulder joints tuck under the jacket's shoulder, hands are flattened mitts rather than balls, and seated figures have thighs instead of a lap box, with the jacket's hem over them.
+- The articulated figure is built from the same jacket and shirt, so the office visitor, the whip in the reversal, the chamber walkers and the player seen from behind all match the crowds.
+
+**Things to know / decisions I made**
+
+- The shirt takes a colour per person now (`dress({ shirt })`): white for everyone in a suit, and for the town hall crowd a sweater or an open collar in a muted tone, so a street of people without ties doesn't look like a street of bibs.
+- No lapels as geometry: on the dark suits a raised edge in the same colour would not read, and the V of shirt already says "open jacket".
+- The jacket's cut is shared by the seated and standing poses (chest and shoulders are set from the shoulder line, hem and waist from the hips), so both crowds and the jointed figure wear the same suit.
+- `tests.html`: 74 of 74. Same rooms checked again at phone size, portrait and landscape; no console errors.

@@ -1,5 +1,5 @@
-// The shared figure kit: a stylised, faceless silhouette (shoulders, neck, an egg of a head under a hair cap,
-// a white collar, a lap when seated) built once per body part and drawn as instanced crowds, so a full House
+// The shared figure kit: a stylised silhouette (a turned jacket with sloped shoulders, a neck, an egg of a
+// head under a hair cap, a V of shirt and a tie, trousers) built once per body part and drawn as instanced crowds, so a full House
 // costs eight draw calls. Expression lives in pose, in the brows of a painted face, and in the UI's mood pill. What the parts are
 // made of (worsted, hair, skin, silk) is painted by figureTextures.js and worn through partMaterial().
 import * as THREE from 'three';
@@ -48,6 +48,9 @@ export function shade(color, id, amount = 0.06) {
 // them to read; the instanced crowds share one plain weave and one silk.
 export const WEAVES = ['plain', 'plain', 'plain', 'plain', 'pinstripe', 'pinstripe', 'pinstripe', 'chalk'];
 export const SUIT_COLOURS = ['#2b2d33', '#1f2a44', '#3a3d45', '#4a3a2e', '#15161a', '#2f3b36', '#55575e', '#3b2b3a'];
+export const SHIRT_WHITE = '#e9e3d8';
+// What shows at the neck of someone not in a suit and tie: a sweater, a polo, an open collar.
+export const CASUAL_NECKS = ['#d8d0c0', '#9fb0c7', '#c9b8a0', '#8a9a8a', '#b4a7c7', '#e9e3d8', '#c77f6a', '#6f7f99'];
 export const TIE_NEUTRALS = ['#1f2a44', '#6b1f2a', '#2b2d33', '#8a8f98', '#2f4a3a', '#4a3a2e'];
 export function wardrobe(id, partyColor, { bench = false } = {}) {
   const h = hashOf(id || 'x');
@@ -147,17 +150,98 @@ function block(w, h, d, x, y, z) {
   g.translate(x, y, z);
   return worldUVs(g);
 }
-// A tie: the knot under the collar and a blade that narrows toward it.
+// The jacket: one turned silhouette from the hem to the collar (sloped shoulders, a chest, a waist, a hem
+// over the hips), elliptical in section. Half-widths at heights; the chest and shoulders are set from the
+// shoulder line and the hem and waist from the hips, so the seated and standing jackets share a cut.
+const JACKET_DEPTH = 0.62;
+function jacketProfile(hip, shoulder) {
+  return [
+    [0, hip - 0.045],
+    [0.16, hip - 0.04],
+    [0.17, hip + 0.04],
+    [0.155, hip + 0.2],
+    [0.185, shoulder - 0.15],
+    [0.215, shoulder - 0.05],
+    [0.235, shoulder - 0.005],
+    [0.195, shoulder + 0.05],
+    [0.1, shoulder + 0.085],
+    [0, shoulder + 0.09],
+  ];
+}
+// The jacket's half-width at a height, from the profile.
+function jacketR(y, hip, shoulder) {
+  const pts = jacketProfile(hip, shoulder);
+  for (let i = 1; i < pts.length; i++) {
+    const [r0, y0] = pts[i - 1];
+    const [r1, y1] = pts[i];
+    if (y <= y1) return y1 === y0 ? r1 : r0 + ((r1 - r0) * (y - y0)) / (y1 - y0);
+  }
+  return 0;
+}
+// How far forward the jacket's front is at a height and an offset across the chest.
+export function jacketFront(y, shoulder, x = 0, hip = shoulder - 0.54) {
+  const r = jacketR(y, hip, shoulder);
+  return JACKET_DEPTH * Math.sqrt(Math.max(0, r * r - x * x));
+}
+export function jacket(hip, shoulder) {
+  const g = new THREE.LatheGeometry(jacketProfile(hip, shoulder).map(([r, y]) => new THREE.Vector2(r, y)), 18);
+  g.scale(1, 1, JACKET_DEPTH);
+  // Lathe UVs count points, not metres: u once round the chest, v up from the hem.
+  const pos = g.attributes.position;
+  const uv = g.attributes.uv;
+  for (let i = 0; i < pos.count; i++) uv.setXY(i, uv.getX(i) * 1.0, pos.getY(i) - (hip - 0.045));
+  return g;
+}
+// The shirt: a V of white between the lapels, from the collar to behind the tie's knot. The chest is
+// convex, so the V is a small grid with every vertex lying on the jacket, a few millimetres proud of it.
+export function shirtFront(shoulder) {
+  const top = shoulder + 0.035;
+  const bottom = shoulder - 0.19;
+  const w = 0.062;
+  const rows = 6;
+  const cols = 4;
+  const pos = [];
+  const uv = [];
+  const idx = [];
+  for (let j = 0; j <= rows; j++) {
+    const t = j / rows;
+    const y = top - t * (top - bottom);
+    const half = w * (1 - t);
+    for (let i = 0; i <= cols; i++) {
+      const x = -half + (2 * half * i) / cols;
+      pos.push(x, y, jacketFront(y, shoulder, x) + 0.004);
+      uv.push(x, y);
+      if (i < cols && j < rows) {
+        const a = j * (cols + 1) + i;
+        const b = a + cols + 1;
+        idx.push(a, b, a + 1, b, b + 1, a + 1);
+      }
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+// A tie: the knot under the collar and a blade that narrows toward it, lying along the chest.
 export function tieParts(shoulderY) {
-  const blade = new THREE.BoxGeometry(0.046, 0.2, 0.014);
+  const blade = new THREE.BoxGeometry(0.046, 0.2, 0.012);
   const p = blade.attributes.position;
-  for (let i = 0; i < p.count; i++) if (p.getY(i) > 0) p.setX(i, p.getX(i) * 0.7);
-  blade.translate(0, shoulderY - 0.215, 0.138);
-  return [block(0.05, 0.045, 0.022, 0, shoulderY - 0.1, 0.134), worldUVs(blade)];
+  const mid = shoulderY - 0.215;
+  for (let i = 0; i < p.count; i++) {
+    if (p.getY(i) > 0) p.setX(i, p.getX(i) * 0.7);
+    p.setZ(i, jacketFront(mid + p.getY(i), shoulderY, p.getX(i)) + 0.004 + (p.getZ(i) > 0 ? 0.012 : 0));
+  }
+  blade.translate(0, mid, 0);
+  const knot = block(0.05, 0.045, 0.022, 0, shoulderY - 0.1, 0);
+  knot.translate(0, 0, jacketFront(shoulderY - 0.1, shoulderY) + 0.012);
+  return [knot, worldUVs(blade)];
 }
 // The lapel pin: a small flattened disc on the left lapel.
 export function pinPart(shoulderY) {
-  return egg(0.017, 0.082, shoulderY - 0.075, 0.121, 1, 1, 0.35, 8);
+  return egg(0.017, 0.082, shoulderY - 0.075, jacketFront(shoulderY - 0.075, shoulderY, 0.082) + 0.004, 1, 1, 0.35, 8);
 }
 
 // Proportions in metres, facing +z, origin on the floor between the feet.
@@ -167,7 +251,7 @@ export const POSES = {
     hip: 0.47,
     shoulderY: 1.02,
     headY: 1.25,
-    arms: [[0.22, 1.0, 0.0], [0.25, 0.77, 0.1], [0.13, 0.6, 0.3]],
+    arms: [[0.21, 0.98, 0.0], [0.25, 0.75, 0.1], [0.13, 0.58, 0.3]],
     legs: [[0.1, 0.5, 0.0], [0.1, 0.5, 0.36], [0.1, 0.08, 0.34]],
     lap: true,
   },
@@ -175,7 +259,7 @@ export const POSES = {
     hip: 0.86,
     shoulderY: 1.4,
     headY: 1.63,
-    arms: [[0.22, 1.38, 0.0], [0.25, 1.1, 0.03], [0.26, 0.85, 0.08]],
+    arms: [[0.21, 1.36, 0.0], [0.25, 1.08, 0.03], [0.26, 0.83, 0.08]],
     legs: [[0.1, 0.86, 0.0], [0.1, 0.47, 0.02], [0.1, 0.08, 0.0]],
     lap: false,
   },
@@ -236,24 +320,21 @@ export function figureParts(pose = 'seated') {
   const dark = [];
   const tie = tieParts(P.shoulderY);
   const pin = [pinPart(P.shoulderY)];
-  const torsoH = P.shoulderY - P.hip + 0.1;
-  suit.push(egg(1, 0, P.hip + torsoH * 0.48, 0, 0.2, torsoH / 2, 0.14, 14));
-  suit.push(limb([-0.19, P.shoulderY, 0], [0.19, P.shoulderY, 0], 0.085, 10));
+  suit.push(jacket(P.hip, P.shoulderY));
   for (const s of [-1, 1]) {
     const [sh, el, ha] = P.arms.map(([x, y, z]) => [x * s, y, z]);
-    suit.push(limb(sh, el, 0.058));
-    suit.push(limb(el, ha, 0.05));
-    hands.push(egg(0.045, ...ha, 1, 0.8, 1.2, 8));
+    suit.push(limb(sh, el, 0.064));
+    suit.push(limb(el, ha, 0.056));
+    hands.push(egg(0.05, ...ha, 0.75, 1.3, 1, 8));
     const [hp, kn, an] = P.legs.map(([x, y, z]) => [x * s, y, z]);
-    if (!P.lap) suit.push(limb(hp, kn, 0.08));
-    suit.push(limb(kn, an, 0.065));
+    suit.push(limb(hp, kn, 0.085));
+    suit.push(limb(kn, an, 0.07));
     dark.push(block(0.11, 0.07, 0.25, an[0], 0.035, an[2] + 0.05));
   }
-  if (P.lap) suit.push(block(0.36, 0.13, 0.42, 0, P.hip + 0.03, 0.17));
-  hands.push(limb([0, P.shoulderY - 0.02, 0.01], [0, P.headY - 0.09, 0.01], 0.05, 8));
+  hands.push(limb([0, P.shoulderY - 0.02, 0.01], [0, P.headY - 0.09, 0.01], 0.052, 8));
   head.push(egg(HEAD_R, 0, P.headY, 0, 1, 1.12, 1.02, 14));
   hair.push(hairCap(P.headY));
-  shirt.push(block(0.12, 0.09, 0.02, 0, P.shoulderY - 0.05, 0.133));
+  shirt.push(shirtFront(P.shoulderY));
   return { suit: merge(suit), hands: merge(hands), head: merge(head), hair: merge(hair), shirt: merge(shirt), dark: merge(dark), tie: merge(tie), pin: merge(pin), pose: P };
 }
 
@@ -262,7 +343,7 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
   const parts = figureParts(pose);
   const P = parts.pose;
   const mats = {};
-  for (const k of ['suit', 'hands', 'head', 'hair', 'shirt', 'dark', 'tie', 'pin']) mats[k] = partMaterial(k);
+  for (const k of ['suit', 'hands', 'head', 'hair', 'shirt', 'dark', 'tie', 'pin']) mats[k] = partMaterial(k, k === 'shirt' ? { color: '#ffffff' } : {});
   const meshes = {};
   for (const k of Object.keys(mats)) {
     meshes[k] = new THREE.InstancedMesh(parts[k], mats[k], n);
@@ -330,9 +411,11 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
       write(i);
     },
     // Colours and hair for one person. `look` comes from lookFor(id); `suit`, `tie` and `pin` from
-    // wardrobe() (or a plain suit colour with no tie or pin, for staff and the gallery).
-    dress(i, { suit, skin, hair, hairStyle: style = 1, tie = null, pin = null }) {
+    // wardrobe() (or a plain suit colour with no tie or pin, for staff and the gallery). The shirt is
+    // white unless told otherwise (a town hall crowd wears sweaters and open collars).
+    dress(i, { suit, skin, hair, hairStyle: style = 1, tie = null, pin = null, shirt = SHIRT_WHITE }) {
       meshes.suit.setColorAt(i, color.set(suit));
+      meshes.shirt.setColorAt(i, color.set(shirt));
       meshes.hands.setColorAt(i, color.set(skin));
       meshes.head.setColorAt(i, color.set(skin));
       meshes.hair.setColorAt(i, color.set(hair));
