@@ -1,0 +1,336 @@
+// The day loop: morning, caucus, House, office, fallout. Routine days auto-resolve to a summary line;
+// the game only stops (state.flow.pending) for days that matter.
+import { tuning } from './config.js';
+import { withRng } from './rng.js';
+import { registerActions } from './actions.js';
+import { weeklyBusiness, committeeTick, todaysItems, reportStageAmendments, shoreUpConfidence, dayIndex } from './bills.js';
+import { baseScore, intentions } from './mp.js';
+import { putQuestion, runDivision, voiceResult, recordResult, voteOf, stageLabel, tally } from './vote.js';
+import { dilemmaFor, applyPlayerVote } from './career.js';
+import { decayKnowledge, reveal } from './knowledge.js';
+
+// Rooms and phases that later stages hook into (office, caucus, riding). Each returns a pending stop or null.
+export const hooks = { morning: [], caucus: [], house: [], office: [], riding: [], fallout: [], weekend: [] };
+
+const MOODS = ['cooperative', 'guarded', 'angry', 'anxious'];
+
+export function initFlow(state) {
+  state.flow = { step: 'morning', pending: null, queue: [], day: null, week: { log: [], stops: 0, start: snapshot(state) }, choices: {} };
+  state.divisions ||= {};
+  return state.flow;
+}
+
+function snapshot(state) {
+  const p = state.player;
+  const me = state.mps[p.mpId];
+  const whip = state.parties[me.party]?.chiefWhip;
+  return { ridingStanding: p.ridingStanding, whipRapport: whip ? state.mps[whip].rapport : 0, rebellions: p.actProgress.rebellions, noticed: p.actProgress.noticed, votes: 0 };
+}
+
+export function log(state, text, kind = 'info') {
+  state.log.push({ day: dayIndex(state.date), week: state.date.absWeek, text, kind });
+  if (state.log.length > 300) state.log.splice(0, state.log.length - 300);
+  state.flow?.week.log.push(text);
+}
+
+export function isSittingWeek(state) {
+  const pattern = tuning().calendar.weekPattern;
+  return pattern[state.date.absWeek % pattern.length] === 'S';
+}
+
+export function dayName(state) {
+  return tuning().calendar.days[state.date.dayOfWeek - 1];
+}
+
+function parliamentOver(state) {
+  const C = tuning().calendar;
+  return state.house.fallen || state.date.absWeek >= C.years * C.weeksPerYear;
+}
+
+// Does this vote need the player? (Their own dilemma, or a confidence vote.)
+function stopForItem(state, item) {
+  const bill = state.bills[item.billId];
+  const stopFor = state.player.pacing.stopFor;
+  const dilemma = dilemmaFor(state, bill, baseScore, tuning().pacing);
+  if (dilemma && stopFor.includes('ownVote')) return { reason: 'ownVote', dilemma };
+  if (bill.confidence && stopFor.includes('ownVote')) return { reason: 'confidence', dilemma: null };
+  return null;
+}
+
+function startDay(state, rng) {
+  const d = state.date;
+  const sitting = isSittingWeek(state);
+  d.constituencyWeek = !sitting;
+  if (d.dayOfWeek === 1) {
+    if (sitting) {
+      const bills = weeklyBusiness(state, rng);
+      for (const b of bills) log(state, `First reading: ${b.title}.`, 'bill');
+      committeeTick(state, rng);
+    }
+  }
+  // Moods drift a little every day.
+  for (const m of Object.values(state.mps)) if (rng.chance(tuning().pacing.moodChangeOdds / 5)) m.mood = rng.pick(MOODS);
+  const items = sitting && d.dayOfWeek <= 4 ? todaysItems(state) : [];
+  const stops = items.map((it) => stopForItem(state, it));
+  state.flow.queue = items.map((it, i) => ({ ...it, stop: stops[i] }));
+  state.flow.day = { matters: stops.some(Boolean) || !!state.flow.forceWatch, results: [] };
+  for (const fn of hooks.morning) fn(state, rng);
+  state.orderPaper = items.map((it) => it.billId);
+  if (state.flow.day.matters) return { kind: 'morning', items: state.flow.queue.map(({ billId, stage, stop }) => ({ billId, stage, stop: stop?.reason || null })) };
+  return null;
+}
+
+// The player's vote when nothing stops them: with the line, or their own way on a free vote.
+function autoChoice(state, bill) {
+  const me = state.mps[state.player.mpId];
+  return bill.lines[me.party] === 'whipped' && bill.positions[me.party] !== 'abstain' ? 'line' : 'free';
+}
+
+function playerOverride(state, bill, choice) {
+  const me = state.mps[state.player.mpId];
+  const pos = bill.positions[me.party];
+  if (choice === 'absent') return 'absent';
+  if (choice === 'line') return pos === 'abstain' ? 'absent' : pos;
+  if (choice === 'rebel') return pos === 'yea' ? 'nay' : 'yea';
+  if (choice === 'yea' || choice === 'nay') return choice;
+  return null; // free: decide like any MP
+}
+
+// Put one item to the House, with the player's choice already made.
+function decide(state, rng, item, choice, dilemma) {
+  const bill = state.bills[item.billId];
+  if (item.stage === 'report') {
+    const a = reportStageAmendments(state, bill, rng);
+    if (a) log(state, `Report stage amendment on ${bill.title} ${a.adopted ? 'carried' : 'defeated'}: ${a.text}.`, 'bill');
+  }
+  const me = state.player.mpId;
+  const ov = playerOverride(state, bill, choice);
+  for (const note of shoreUpConfidence(state, bill, (r) => intentions(state, bill, r, ov ? { [me]: ov } : {}))) log(state, note, 'confidence');
+  const q = putQuestion(state, item, rng, ov ? { [me]: ov } : {});
+  const result = q.division ? runDivision(state, q) : voiceResult(state, q);
+  recordResult(state, result, rng);
+  if (choice !== 'free') applyPlayerVote(state, bill, choice === 'yea' || choice === 'nay' ? 'line' : choice, dilemma, tuning().player);
+  afterResult(state, result);
+  state.flow.day.results.push(result.id);
+  return result;
+}
+
+function afterResult(state, result) {
+  const p = state.player;
+  const bill = state.bills[result.billId];
+  const me = state.mps[p.mpId];
+  const verb = result.carried ? 'carried' : 'defeated';
+  const label = result.stage === 'motion' ? '' : ` at ${stageLabel(result.stage)}`;
+  log(state, `${bill.title}${label}: ${verb}, ${tally(result)}.`, result.recorded ? 'division' : 'voice');
+  if (!result.recorded) return;
+  state.flow.week.start.votes++;
+  // Party line side won or lost (the whip's record counts these).
+  const pos = result.positions[me.party];
+  if (pos === 'yea' || pos === 'nay') {
+    if ((pos === 'yea') === result.carried) p.record.votesWon++;
+    else p.record.votesLost++;
+  }
+  if (bill.confidence && result.carried && state.house.government === me.party) p.record.confidenceSurvived++;
+  // Watching votes teaches you who's loyal and where they stand.
+  const K = tuning().knowledge;
+  p.observed ||= {};
+  for (const id of [...result.yeas, ...result.nays]) {
+    p.observed[id] = (p.observed[id] || 0) + 1;
+    if (p.observed[id] === K.votesForLoyalty) reveal(state, id, 'loyalty', 'votes');
+    if (p.observed[id] === K.votesForIdeology) reveal(state, id, 'ideology', 'votes');
+  }
+  if (!result.carried && bill.kind === 'government') {
+    const gov = state.house.government;
+    state.polling[gov] = Math.max(1, Math.round((state.polling[gov] - tuning().pacing.defeatPollHit) * 10) / 10);
+  }
+  if (state.house.fallen) log(state, `The government has lost the confidence of the House.`, 'confidence');
+}
+
+function houseStep(state, rng) {
+  const flow = state.flow;
+  if (!flow.queue.length) {
+    flow.step = 'office';
+    return null;
+  }
+  const item = flow.queue[0];
+  const bill = state.bills[item.billId];
+  if (bill.status !== 'active') {
+    flow.queue.shift();
+    return null;
+  }
+  if (item.stop && !flow.choices[keyOf(item)]) {
+    const me = state.mps[state.player.mpId];
+    const T = tuning().vote;
+    return {
+      kind: 'division',
+      needsChoice: true,
+      important: true,
+      billId: bill.id,
+      stage: item.stage,
+      reason: item.stop.reason,
+      dilemma: item.stop.dilemma,
+      line: bill.lines[me.party],
+      position: bill.positions[me.party],
+      bells: bill.scheduled ? T.bellsScheduled : T.bellsUnscheduled,
+    };
+  }
+  flow.queue.shift();
+  const choice = flow.choices[keyOf(item)] || autoChoice(state, bill);
+  const result = decide(state, rng, item, choice, item.stop?.dilemma || null);
+  delete flow.choices[keyOf(item)];
+  if (flow.day.matters && result.recorded) return { kind: 'result', divisionId: result.id, playerVote: voteOf(result, state.player.mpId) };
+  return null;
+}
+
+const keyOf = (item) => `${item.billId}:${item.stage}`;
+
+function endDay(state, rng) {
+  for (const fn of hooks.fallout) fn(state, rng);
+  const d = state.date;
+  if (d.dayOfWeek >= 5) {
+    state.flow.step = 'weekend';
+    return null;
+  }
+  d.dayOfWeek++;
+  state.flow.step = 'morning';
+  return null;
+}
+
+function weekend(state, rng) {
+  const P = tuning().pacing;
+  decayKnowledge(state);
+  // Riding standing drifts back toward its usual level: voters forget, slowly.
+  const p = state.player;
+  p.ridingStanding = Math.round(p.ridingStanding + ((p.ridingBase ?? 55) - p.ridingStanding) * P.ridingRegression);
+  // Polls drift; nobody knows why.
+  for (const id of Object.keys(state.polling)) state.polling[id] = Math.max(0.5, Math.round((state.polling[id] + rng.normal(0, P.pollDriftSd)) * 10) / 10);
+  for (const fn of hooks.weekend) fn(state, rng);
+  const w = state.flow.week;
+  const summary = weekSummary(state);
+  const pending = w.stops > 0 ? { kind: 'weekSummary', important: false, summary } : null;
+  state.date.absWeek++;
+  state.date.dayOfWeek = 1;
+  const C = tuning().calendar;
+  state.date.year = Math.floor(state.date.absWeek / C.weeksPerYear) + 1;
+  state.date.week = (state.date.absWeek % C.weeksPerYear) + 1;
+  state.flow.week = { log: [], stops: 0, start: snapshot(state) };
+  state.flow.step = 'morning';
+  return pending;
+}
+
+export function weekSummary(state) {
+  const w = state.flow.week;
+  const now = snapshot(state);
+  return {
+    week: state.date.week,
+    year: state.date.year,
+    lines: w.log.slice(-40),
+    ridingStanding: [w.start.ridingStanding, now.ridingStanding],
+    whipRapport: [w.start.whipRapport, now.whipRapport],
+    rebellions: now.rebellions - w.start.rebellions,
+    divisions: w.start.votes,
+  };
+}
+
+// One step of the day. Returns the new pending stop, if any.
+export function next(state) {
+  const flow = state.flow;
+  if (flow.pending) return flow.pending;
+  if (flow.step === 'dissolved') return flow.pending;
+  if (parliamentOver(state) && flow.step === 'morning') {
+    flow.step = 'dissolved';
+    const why = state.house.fallen ? 'The government fell on a confidence vote.' : 'Parliament reached its fixed election date.';
+    log(state, `Parliament is dissolved. ${why}`, 'confidence');
+    flow.pending = { kind: 'dissolved', important: true, needsChoice: true, reason: state.house.fallen ? 'fallen' : 'fixedDate' };
+    return flow.pending;
+  }
+  const pending = withRng(state, (rng) => {
+    switch (flow.step) {
+      case 'morning': {
+        const p = startDay(state, rng);
+        flow.step = state.date.dayOfWeek === tuning().calendar.caucusDay && isSittingWeek(state) ? 'caucus' : state.date.dayOfWeek === tuning().calendar.ridingDay || !isSittingWeek(state) ? 'riding' : 'house';
+        return p;
+      }
+      case 'caucus':
+        flow.step = 'house';
+        return runHooks(hooks.caucus, state, rng);
+      case 'house': {
+        const p = houseStep(state, rng);
+        if (!p && flow.step === 'office') return runHooks(hooks.house, state, rng);
+        return p;
+      }
+      case 'riding':
+        flow.step = 'office';
+        return runHooks(hooks.riding, state, rng);
+      case 'office':
+        flow.step = 'fallout';
+        return runHooks(hooks.office, state, rng);
+      case 'fallout':
+        return endDay(state, rng);
+      case 'weekend':
+        return weekend(state, rng);
+      default:
+        throw new Error('Unknown step ' + flow.step);
+    }
+  });
+  if (pending) {
+    flow.pending = pending;
+    flow.week.stops++;
+  }
+  return flow.pending;
+}
+
+function runHooks(list, state, rng) {
+  for (const fn of list) {
+    const p = fn(state, rng);
+    if (p) return p;
+  }
+  return null;
+}
+
+// Resolve the current stop with the player's choice and carry on.
+export function resolve(state, choice = null) {
+  const p = state.flow.pending;
+  if (!p) return null;
+  if (p.kind === 'dissolved') return p;
+  if (p.kind === 'division') {
+    state.flow.choices[`${p.billId}:${p.stage}`] = choice || 'line';
+  }
+  if (resolvers[p.kind]) resolvers[p.kind](state, p, choice);
+  state.flow.pending = null;
+  return null;
+}
+
+// Later stages register how their own stops resolve (meetings, riding, caucus).
+export const resolvers = {};
+
+// "Skip to the next thing that matters": pass informational stops until one needs the player.
+export function skip(state, limit = 5000) {
+  for (let i = 0; i < limit; i++) {
+    const p = state.flow.pending;
+    if (p && (p.needsChoice || p.important) && i > 0) return p;
+    if (p && p.kind === 'dissolved') return p;
+    if (p) {
+      if (p.needsChoice) return p;
+      resolve(state);
+    }
+    next(state);
+  }
+  return state.flow.pending;
+}
+
+// "Continue": finish the current informational stop and run to the next stop of any kind.
+export function advance(state, limit = 5000) {
+  if (state.flow.pending && !state.flow.pending.needsChoice) resolve(state);
+  for (let i = 0; i < limit && !state.flow.pending; i++) next(state);
+  return state.flow.pending;
+}
+
+registerActions({
+  advance: (state) => advance(state),
+  skip: (state) => skip(state),
+  resolve: (state, a) => {
+    resolve(state, a.choice);
+    return advance(state);
+  },
+});

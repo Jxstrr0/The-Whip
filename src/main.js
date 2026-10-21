@@ -2,18 +2,40 @@
 import * as THREE from 'three';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { loadData } from './loadData.js';
-import { setData } from './sim/config.js';
+import { setData, tuning } from './sim/config.js';
 import { newGame, randomSeed } from './sim/modes.js';
 import { parliamentHash } from './sim/generate.js';
 import { getState, setState, dispatch, subscribe } from './state.js';
+import './sim/pacing.js';
 import * as chamber from './chamber/scene.js';
-import { createHud } from './ui/hud.js';
+import { createHud, createTuningPanel } from './ui/hud.js';
 import { createMpCard } from './ui/mpCard.js';
 import { createBook } from './ui/book.js';
+import { createAgenda } from './ui/agenda.js';
+import { createCountBoard } from './ui/countBoard.js';
 import { t, partyColor } from './ui/text.js';
 
 const params = new URLSearchParams(location.search);
 const DEBUG = params.get('debug') === '1';
+
+// "At risk" in the book: how likely an MP is to stray on the next whipped vote, from what you can see.
+// Riding effects are public; loyalty only counts once you've learned it.
+function nextBill(state) {
+  return Object.values(state.bills)
+    .filter((b) => b.status === 'active' && b.nextVote != null)
+    .sort((a, b) => a.nextVote - b.nextVote)[0];
+}
+
+function riskOf(state, id, asLabel = false) {
+  const b = nextBill(state);
+  const m = state.mps[id];
+  if (!b || m.party === 'ind') return asLabel ? '' : -1;
+  const sign = { yea: 1, nay: -1 }[b.positions[m.party]] || 0;
+  const loyaltyKnown = state.player.knowledge[id]?.loyalty?.known;
+  const risk = -(b.ridingEffects[m.riding.type] || 0) * sign * 50 + (loyaltyKnown ? (100 - m.loyalty) / 2 : 15);
+  if (!asLabel) return risk;
+  return risk > 40 ? '⚠ at risk' : risk > 20 ? 'leaning?' : '';
+}
 
 async function boot() {
   const data = await loadData();
@@ -45,6 +67,7 @@ async function boot() {
   const card = createMpCard(ui, { getState, onClose: () => room.select(null) });
   const book = createBook(ui, {
     getState,
+    riskOf,
     onPick(mpId) {
       const mp = getState().mps[mpId];
       if (mp.seatId) {
@@ -62,10 +85,32 @@ async function boot() {
     debugText: DEBUG ? () => `${getState().seed} · ${t('debug.hash', { hash: parliamentHash(getState()) })}` : null,
   });
 
-  subscribe(() => {
+  const agenda = createAgenda(ui, {
+    getState,
+    onContinue: () => dispatch({ type: 'advance' }),
+    onSkip: () => dispatch({ type: 'skip' }),
+    onNewGame: () => {
+      const url = new URL(location.href);
+      url.searchParams.delete('seed');
+      location.href = url.toString();
+    },
+  });
+  const countBoard = createCountBoard(ui, {
+    getState,
+    room,
+    onChoose: (choice) => dispatch({ type: 'resolve', choice }),
+    onContinue: () => dispatch({ type: 'advance' }),
+  });
+
+  function renderAll() {
+    const state = getState();
+    agenda.render(state);
+    countBoard.render(state);
     card.refresh();
     book.refresh();
-  });
+  }
+  subscribe(renderAll);
+  renderAll();
 
   let stats = null;
   if (DEBUG) {
@@ -78,7 +123,12 @@ async function boot() {
       knowledge: await import('./sim/knowledge.js'),
       relationships: await import('./sim/relationships.js'),
       rng: await import('./sim/rng.js'),
+      bills: await import('./sim/bills.js'),
+      mp: await import('./sim/mp.js'),
+      vote: await import('./sim/vote.js'),
+      pacing: await import('./sim/pacing.js'),
     };
+    createTuningPanel(ui, tuning());
     window.whip = { get state() { return getState(); }, dispatch, sim, room, renderer, THREE, card, book };
   }
 

@@ -19,3 +19,28 @@ export function createHud(root, { buttons = [], debugText = null }) {
   render();
   return { el, render, setButtons(next) { buttons = next; render(); } };
 }
+
+// ?debug=1: a slider for every number in data/tuning.json, changed live (not saved).
+export function createTuningPanel(root, tuning) {
+  const wrap = document.createElement('details');
+  wrap.className = 'tuning-panel';
+  const rows = [];
+  for (const [section, values] of Object.entries(tuning)) {
+    for (const [key, v] of Object.entries(values)) {
+      if (typeof v !== 'number') continue;
+      const span = Math.max(1, Math.abs(v) * 3);
+      const step = Number.isInteger(v) && Math.abs(v) >= 2 ? 1 : 0.01;
+      rows.push(`<label><span>${section}.${key}</span><input type="range" data-s="${section}" data-k="${key}" min="${v < 0 ? -span : 0}" max="${span}" step="${step}" value="${v}"><output>${v}</output></label>`);
+    }
+  }
+  wrap.innerHTML = `<summary>Tuning</summary><div class="tuning-rows">${rows.join('')}</div>`;
+  wrap.querySelectorAll('input').forEach((inp) => {
+    inp.oninput = () => {
+      tuning[inp.dataset.s][inp.dataset.k] = Number(inp.value);
+      inp.nextElementSibling.textContent = inp.value;
+    };
+  });
+  // First in the overlay, so sheets and the book draw over it.
+  root.prepend(wrap);
+  return wrap;
+}

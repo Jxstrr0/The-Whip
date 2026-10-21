@@ -3,6 +3,7 @@ import { generateParliament } from './generate.js';
 import { createRng } from './rng.js';
 import { createPlayer } from './career.js';
 import { assignSeats } from '../chamber/layout.js';
+import { initFlow } from './pacing.js';
 
 export const SAVE_VERSION = 1;
 
@@ -46,5 +47,7 @@ export function newGame({ seed, party, first, last, age, background, mode = 'car
   };
   reseat(state);
   createPlayer(state, { party, first, last, age, background });
+  state.divisions = {};
+  initFlow(state);
   return state;
 }
