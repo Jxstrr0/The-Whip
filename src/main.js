@@ -29,6 +29,7 @@ import { createOfficeUI } from './ui/talk.js';
 import { createCaucusUI } from './ui/caucusUI.js';
 import { createRidingUI } from './ui/ridingUI.js';
 import { createQpUI } from './ui/qpUI.js';
+import { createColdOpenUI } from './ui/coldOpen.js';
 import { createStartMenu, createGameMenu, createSettingsSheet } from './ui/menus.js';
 import { createAudio } from './audio.js';
 import { getSettings, setSetting, onSettings, applySettings } from './settings.js';
@@ -80,6 +81,7 @@ function riskOf(state, id, asLabel = false) {
 // Which room the current stop belongs in.
 function roomFor(state) {
   const k = state.flow.pending?.kind;
+  if (k === 'coldOpen') return state.flow.pending.phase === 'count' ? 'riding' : 'chamber';
   if (k === 'office' || k === 'meeting') return 'office';
   if (k === 'caucus') return 'caucus';
   if (k === 'riding') return 'riding';
@@ -269,6 +271,7 @@ function buildWorld() {
   const caucusUI = createCaucusUI(ui, { getState, dispatch, getRoom: () => (rooms.name === 'caucus' ? rooms.room : null) });
   const ridingUI = createRidingUI(ui, { getState, dispatch });
   const qpUI = createQpUI(ui, { getState, dispatch, getRoom: chamberRoom, onBenches: (kind) => audio.benches(kind) });
+  const coldOpenUI = createColdOpenUI(ui, { getState, dispatch, getRoom: (name) => (rooms.name === name ? rooms.room : null), audio, colorOf: (party) => partyColor(getState(), { party }) });
 
   // Who shares the Act 1 room: the first of your cohort in your party, so it's the same face every evening.
   function deskmate(state, me) {
@@ -300,6 +303,9 @@ function buildWorld() {
         return { color: colorOf(state.mps[id]), mood: k?.known && !k.stale ? state.mps[id].mood : null, me: id === state.player.mpId };
       });
     } else if (name === 'riding') {
+      // Election night is staged by the cold open's own sheet as the count comes in; any other visit puts it away.
+      const p = state.flow.pending;
+      if (!(p?.kind === 'coldOpen' && p.phase === 'count')) room.setElectionNight?.(false);
       const v = state.ridingVisit;
       if (!v) return;
       room.setTownHall(v.phase === 'townHall', v.townHall?.crowd ?? 50, townHallPlacards(state));
@@ -322,6 +328,7 @@ function buildWorld() {
       colleague: colleague && { id: colleague.id, color: colorOf(colleague) },
       ridingType: me.riding.type,
       ridingName: me.riding.name,
+      partyShort: state.parties[me.party]?.short || '',
       seating: name === 'caucus' ? caucusSeating(state, me.party) : null,
       playerId: me.id,
     });
@@ -335,13 +342,15 @@ function buildWorld() {
     caucusUI.render(state);
     ridingUI.render(state);
     qpUI.render(state);
+    coldOpenUI.render(state);
     card.refresh();
     book.refresh();
     ledger.refresh();
     // Meeting outcomes, calls and deliveries show briefly as a toast.
     const fresh = state.log.slice(lastLog).filter((l) => l.kind === 'meeting' || l.kind === 'career');
     lastLog = state.log.length;
-    if (fresh.length) toast.show(fresh.map((l) => l.text).join(' '));
+    // The cold open tells its own story; its log line is for the record, not a toast over the walk in.
+    if (fresh.length && state.flow.pending?.kind !== 'coldOpen') toast.show(fresh.map((l) => l.text).join(' '));
   }
 
   // Autosave a moment after things settle, to the game's own slot.
@@ -453,14 +462,14 @@ async function boot() {
   if (params.get('daily') === '1') return startGame(dailyGame({}));
   if (seed) {
     // Debug and shared-seed starts skip the menu; ?guided=1 adds the first-week walkthrough.
-    return startGame(newGame({ seed, party: params.get('party') || undefined, guided: params.get('guided') === '1', act: params.get('act') }));
+    return startGame(newGame({ seed, party: params.get('party') || undefined, guided: params.get('guided') === '1', act: params.get('act'), coldOpen: params.get('coldopen') === '1' }));
   }
   const menu = createStartMenu(document.getElementById('ui'), {
     saves: allSaves(),
     latest: latestSave(),
     scenarios: scenarioList(),
     onContinue: (slot) => startGame(loadGame(slot), slot),
-    onNew: (opts, slot) => startGame(newGame({ ...opts, guided: true }), slot),
+    onNew: (opts, slot) => startGame(newGame({ ...opts, guided: true, coldOpen: true }), slot),
     onScenario: (id, person, slot) => startGame(scenarioGame(id, person), slot),
     onDaily: (person, slot) => startGame(dailyGame(person), slot),
     onShared: (opts, slot) => startGame(sharedGame(opts), slot),

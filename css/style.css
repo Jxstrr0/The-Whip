@@ -2008,3 +2008,240 @@ html.large #ui {
 .front-brief .feed li {
   padding: 3px 0;
 }
+
+/* ---- The cold open: election night's count board, then opening day's walk in ----------------------------- */
+
+body.cold-open .agenda,
+body.cold-open .topbar {
+  display: none;
+}
+.coldopen-sheet {
+  bottom: 0;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  max-height: 56dvh;
+}
+.coldopen-sheet.co-walking {
+  max-height: 38dvh;
+}
+.coldopen-sheet h2 {
+  font-size: 20px;
+}
+.coldopen-sheet .co-where,
+.coldopen-sheet.co-walking h2 + .muted {
+  font-size: 14px;
+}
+.co-walk li {
+  font-size: 16px;
+}
+.coldopen-sheet .co-where {
+  margin: 0 0 8px;
+}
+.co-polls {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.co-polls-bar {
+  display: block;
+  height: 3px;
+  background: var(--ink-4);
+}
+.co-polls-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--ink);
+  transition: width 900ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.co-board {
+  position: relative;
+  border-top: 1px solid var(--ink-3);
+}
+.co-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 42px;
+  display: grid;
+  grid-template-columns: 6px 1fr auto;
+  grid-template-rows: auto 4px;
+  column-gap: 10px;
+  align-items: center;
+  border-bottom: 1px solid var(--ink-4);
+  transition: transform 650ms cubic-bezier(0.3, 0.8, 0.2, 1);
+}
+.co-row .chip {
+  width: 6px;
+  height: auto;
+  grid-row: 1 / span 2;
+  align-self: stretch;
+  margin: 7px 0;
+}
+.co-row .nm {
+  font-size: 14px;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.co-row .nm small {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.co-row .nm small.badge {
+  display: inline-block;
+  font-size: 11px;
+  vertical-align: 2px;
+  color: var(--paper);
+}
+.co-row .v {
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.co-row.you .nm,
+.co-row.you .v {
+  font-weight: 600;
+}
+.co-row .bar {
+  grid-column: 2 / span 2;
+  height: 3px;
+  background: var(--ink-4);
+  position: relative;
+  align-self: start;
+}
+.co-row .bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  transition: width 900ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.co-row .bar::after {
+  content: attr(data-pct);
+  position: absolute;
+  right: 0;
+  top: -15px;
+  font-size: 11px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  display: none;
+}
+.co-row.lead .v::before {
+  content: "▸ ";
+  color: var(--brass);
+  font-size: 12px;
+}
+.co-line {
+  min-height: 64px;
+}
+.co-line blockquote.line {
+  margin: 10px 0 6px;
+  animation: co-line-in 420ms ease-out;
+}
+.co-called {
+  display: block;
+  font-size: 12px;
+  font-style: normal;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  color: var(--brass);
+}
+@keyframes co-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.co-house {
+  margin: 6px 0 4px;
+}
+.co-house-label {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+.co-seats {
+  position: relative;
+  display: flex;
+  height: 10px;
+  background: var(--ink-4);
+}
+.co-seats i {
+  display: block;
+  height: 100%;
+  width: 0;
+  transition: width 900ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.co-need {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 0;
+  border-left: 1.5px dashed var(--ink);
+}
+.co-seat-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.co-seat-keys i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  vertical-align: 0;
+}
+.co-seat-keys b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.co-result:not(:empty) {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ink-3);
+  animation: co-line-in 500ms ease-out;
+}
+.co-result .verdict {
+  text-align: center;
+  margin: 2px 0 8px;
+}
+.co-declare {
+  margin: 0 0 8px;
+  font-style: italic;
+}
+.co-walk {
+  list-style: none;
+  margin: 8px 0 4px;
+  padding: 0;
+}
+.co-walk li {
+  margin: 0 0 8px;
+  padding-left: 12px;
+  border-left: 2px solid var(--ink-3);
+}
+.co-walk li.fresh {
+  border-left-color: var(--brass);
+  animation: co-line-in 600ms ease-out;
+}
+@media (orientation: landscape) and (min-width: 700px) {
+  .coldopen-sheet,
+  .coldopen-sheet.co-walking {
+    top: calc(12px + env(safe-area-inset-top));
+    bottom: 0;
+    max-height: none;
+  }
+}

@@ -10,6 +10,7 @@ const LEVELS = {
   bells: 0.42,
   gavel: 0.75,
   tap: 0.35,
+  cheer: { roar: 0.32, clap: 0.22, whoop: 0.05 },
   fade: 0.9, // seconds to cross from one room's tone to the next
 };
 
@@ -278,6 +279,35 @@ export function createAudio({ sound = true, volume = 0.7 } = {}) {
     }
   }
 
+  // A room going up: a swell of voices, a ragged patter of hands, a few whoops over the top. `big` is the
+  // declaration; small is a good box coming in.
+  function cheer(big = true) {
+    if (!ensure()) return;
+    const L = LEVELS.cheer;
+    const t0 = ctx.currentTime;
+    const len = big ? 4.2 : 1.8;
+    const s = noiseSource();
+    const f = ctx.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.value = 1050;
+    f.Q.value = 0.7;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(L.roar * (big ? 1 : 0.45), t0 + 0.35);
+    g.gain.setTargetAtTime(L.roar * (big ? 0.6 : 0.25), t0 + 0.6, 0.8);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+    s.connect(f).connect(g).connect(master);
+    s.stop(t0 + len + 0.1);
+    const claps = big ? 46 : 14;
+    for (let i = 0; i < claps; i++) burst(master, { freq: 2200 + Math.random() * 900, q: 1.3, level: L.clap * (0.5 + Math.random() * 0.5), decay: 0.035, at: t0 + 0.2 + Math.random() * (len - 0.6) });
+    if (!big) return;
+    for (let i = 0; i < 5; i++) {
+      const at = t0 + 0.3 + Math.random() * 1.6;
+      const base = 420 + Math.random() * 260;
+      tone(master, { freq: base, to: base * 1.7, type: 'triangle', level: L.whoop, attack: 0.04, decay: 0.45, at });
+    }
+  }
+
   function setBells(on) {
     if (on === !!bellTimer) return;
     if (!on) {
@@ -311,6 +341,9 @@ export function createAudio({ sound = true, volume = 0.7 } = {}) {
     },
     gavel() {
       if (ctx && wanted.sound) gavel();
+    },
+    cheer(big) {
+      if (ctx && wanted.sound) cheer(big);
     },
     tap() {
       if (ctx && wanted.sound) burst(master, { freq: 3400, q: 1.5, level: LEVELS.tap, decay: 0.03 });

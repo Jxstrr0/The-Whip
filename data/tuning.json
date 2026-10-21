@@ -461,5 +461,22 @@
     "nominationChallengeAt": 60,
     "yearsPerParliament": 4,
     "pollNoiseSd": 2.5
+  },
+  "coldOpen": {
+    "rivals": 3,
+    "shareBase": 34,
+    "shareMargin": 0.65,
+    "votesMin": 36000,
+    "votesMax": 58000,
+    "pollsMin": 160,
+    "pollsMax": 260,
+    "closeMargin": 9,
+    "reporting": [0.04, 0.11, 0.22, 0.36, 0.51, 0.66, 0.8, 0.92, 1],
+    "nationalReporting": [0.08, 0.2, 0.36, 0.52, 0.66, 0.78, 0.88, 0.96, 1],
+    "callAt": 0.75,
+    "firstPollsAt": 20.5,
+    "stepMinutes": [11, 23],
+    "tickMs": 2800,
+    "walkSeconds": 15
   }
 }

@@ -294,7 +294,7 @@ export function create(ctx) {
   // From your own seat you can't see yourself, so your figure leaves the chair while the camera is in it.
   function applyHomeHiding() {
     if (!homeSeatId) return;
-    figures.setPresent(homeSeatId, controls.mode !== 'home' && life.standingSeat !== homeSeatId);
+    figures.setPresent(homeSeatId, controls.mode !== 'home' && controls.mode !== 'walk' && life.standingSeat !== homeSeatId);
   }
   controls.onModeChange(applyHomeHiding);
 
@@ -386,6 +386,18 @@ export function create(ctx) {
       controls.setMode(m);
       if (m === 'home') returnHome = false;
     },
+    // Opening day: walk in from the bar to your own seat (see camera.walkIn). onDone when you've sat.
+    walkIn(seatId, seconds, onDone) {
+      const s = seats.byId.get(seatId);
+      if (!s) return onDone?.();
+      homeSeatId = seatId;
+      returnHome = false;
+      controls.walkIn(s, seconds, onDone);
+    },
+    finishWalk: () => controls.finishWalk(),
+    get walking() {
+      return controls.walking;
+    },
     setHomeSeat(seatId) {
       const s = seats.byId.get(seatId);
       if (!s) return;
@@ -452,7 +464,7 @@ export function create(ctx) {
     resize(w, h) {
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      controls.fitAspect(camera.aspect);
+      controls.fitAspect(camera.aspect, w);
     },
     dispose() {
       controls.dispose();
