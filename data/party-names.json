@@ -1,0 +1,16 @@
+{
+  "fifth": [
+    { "name": "Living Earth Alliance", "short": "LEA", "kind": "green", "ideology": { "economy": -40, "social": -50 } },
+    { "name": "Watershed Movement", "short": "WSM", "kind": "green", "ideology": { "economy": -30, "social": -35 } },
+    { "name": "Canopy Coalition", "short": "CNC", "kind": "green", "ideology": { "economy": -20, "social": -45 } },
+    { "name": "Clean Horizon Party", "short": "CHP", "kind": "green", "ideology": { "economy": 15, "social": -25 } },
+    { "name": "Caledor First", "short": "CF", "kind": "populist", "ideology": { "economy": 30, "social": 60 } },
+    { "name": "Main Street Movement", "short": "MS", "kind": "populist", "ideology": { "economy": 25, "social": 30 } },
+    { "name": "Hearth and Home League", "short": "HHL", "kind": "populist", "ideology": { "economy": 5, "social": 70 } },
+    { "name": "Dominion Workers' Front", "short": "DWF", "kind": "populist", "ideology": { "economy": -55, "social": 35 } },
+    { "name": "Pothole Protest Party", "short": "PPP", "kind": "protest", "ideology": { "economy": 0, "social": 0 } },
+    { "name": "None of the Above", "short": "NOA", "kind": "protest", "ideology": { "economy": 5, "social": 10 } },
+    { "name": "Ratepayers' Revolt", "short": "RR", "kind": "protest", "ideology": { "economy": 55, "social": 15 } },
+    { "name": "Tenants' Uprising", "short": "TU", "kind": "protest", "ideology": { "economy": -60, "social": -20 } }
+  ]
+}

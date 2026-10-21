@@ -1,0 +1,24 @@
+{
+  "core": [
+    { "id": "p1", "name": "National Union", "short": "NU", "color": "#2F6DB5", "home": "Centre-right: markets, resource economy, rural base",
+      "ideology": { "economy": 45, "social": 25 }, "regionAffinity": { "west": 0.6, "prairie": 1.2, "central": 0.1, "east": -0.1, "north": 0.3 }, "typeAffinity": { "urban": -0.6, "suburban": 0.3, "rural": 0.9, "northern": 0.3 } },
+    { "id": "p2", "name": "Commonwealth Party", "short": "CP", "color": "#C8423B", "home": "Centre, big tent: urban and suburban base",
+      "ideology": { "economy": 5, "social": -15 }, "regionAffinity": { "west": 0.1, "prairie": -0.6, "central": 0.8, "east": 0.4, "north": 0.2 }, "typeAffinity": { "urban": 0.5, "suburban": 0.7, "rural": -0.3, "northern": 0.1 } },
+    { "id": "p3", "name": "Labour Democrats", "short": "LD", "color": "#E0A526", "home": "Left: unions, cities, social programs",
+      "ideology": { "economy": -50, "social": -40 }, "regionAffinity": { "west": 0.6, "prairie": -0.2, "central": 0.2, "east": 0.0, "north": 0.6 }, "typeAffinity": { "urban": 0.9, "suburban": -0.1, "rural": -0.3, "northern": 0.5 } },
+    { "id": "p4", "name": "Eastern Compact", "short": "EC", "color": "#4FB3BF", "home": "Regional: the eastern provinces first",
+      "ideology": { "economy": -5, "social": 10 }, "regionAffinity": { "west": -9, "prairie": -9, "central": -9, "east": 1.6, "north": -9 }, "typeAffinity": { "urban": 0.0, "suburban": 0.1, "rural": 0.4, "northern": 0.0 } }
+  ],
+  "fifthColor": "#8E6BBF",
+  "independentColor": "#9AA0A6",
+  "fifthAffinity": {
+    "green": { "regionAffinity": { "west": 0.9, "prairie": -0.5, "central": 0.2, "east": 0.2, "north": 0.1 }, "typeAffinity": { "urban": 0.8, "suburban": 0.0, "rural": -0.2, "northern": 0.2 } },
+    "populist": { "regionAffinity": { "west": 0.4, "prairie": 0.8, "central": 0.0, "east": 0.0, "north": 0.3 }, "typeAffinity": { "urban": -0.5, "suburban": 0.2, "rural": 0.8, "northern": 0.4 } },
+    "protest": { "regionAffinity": { "west": 0.2, "prairie": 0.2, "central": 0.3, "east": 0.2, "north": 0.2 }, "typeAffinity": { "urban": 0.3, "suburban": 0.2, "rural": 0.2, "northern": 0.2 } }
+  },
+  "roles": {
+    "government": [45, 70], "opposition": [30, 50], "third": [8, 18], "regional": [4, 14], "minor": [1, 5], "independents": [0, 4]
+  },
+  "leaderPersonalities": ["controlling", "handsOff", "paranoid", "loyal"],
+  "whipStyles": ["fixer", "enforcer", "operator"]
+}

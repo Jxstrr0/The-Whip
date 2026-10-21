@@ -1,0 +1,1750 @@
+{
+  "templates": [
+    {
+      "id": "t001",
+      "title": "Rural Roads Fund Act",
+      "kind": "government",
+      "category": "roads",
+      "axis": "economy",
+      "position": -30,
+      "visibility": 40,
+      "ridingEffects": {
+        "urban": -0.6,
+        "suburban": 0.1,
+        "rural": 0.7,
+        "northern": 0.5
+      },
+      "confidence": false,
+      "summary": "Sends federal money to repave and widen rural and small-town roads; drivers outside the cities win, and urban taxpayers foot part of the bill."
+    },
+    {
+      "id": "t002",
+      "title": "Carbon Levy Adjustment Act",
+      "kind": "government",
+      "category": "environment",
+      "axis": "economy",
+      "position": -55,
+      "visibility": 85,
+      "ridingEffects": {
+        "urban": 0.6,
+        "suburban": 0.1,
+        "rural": -0.7,
+        "northern": -0.6
+      },
+      "confidence": false,
+      "summary": "Raises the carbon levy each year and returns most of it as rebates; city commuters on transit come out ahead while long-distance rural and northern drivers pay more."
+    },
+    {
+      "id": "t003",
+      "title": "Farm-Gate Fuel Exemption Act",
+      "kind": "government",
+      "category": "agriculture",
+      "axis": "economy",
+      "position": 35,
+      "visibility": 45,
+      "ridingEffects": {
+        "urban": -0.3,
+        "suburban": 0,
+        "rural": 0.8,
+        "northern": 0.4
+      },
+      "regionEffects": {
+        "prairie": 0.4
+      },
+      "confidence": false,
+      "summary": "Exempts diesel and propane used on farms from the carbon levy, saving farmers money at the cost of a smaller climate fund."
+    },
+    {
+      "id": "t004",
+      "title": "{province} Ports Modernization Act",
+      "kind": "government",
+      "category": "trade",
+      "axis": "economy",
+      "position": -20,
+      "visibility": 35,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0.1,
+        "rural": 0.2,
+        "northern": 0.2
+      },
+      "confidence": false,
+      "summary": "Funds new cranes, berths and rail spurs at {province}'s main ports so exporters can ship more, paid for out of general revenue."
+    },
+    {
+      "id": "t005",
+      "title": "Regional Rail Rationalization Act",
+      "kind": "government",
+      "category": "transit",
+      "axis": "economy",
+      "position": 25,
+      "visibility": 70,
+      "ridingEffects": {
+        "urban": 0.7,
+        "suburban": 0.3,
+        "rural": -0.9,
+        "northern": -0.6
+      },
+      "confidence": false,
+      "summary": "Closes money-losing rural branch rail lines and moves the savings into urban commuter rail; city riders win and small towns lose their train."
+    },
+    {
+      "id": "t006",
+      "title": "Urban Transit Capital Fund Act",
+      "kind": "government",
+      "category": "transit",
+      "axis": "economy",
+      "position": -40,
+      "visibility": 55,
+      "ridingEffects": {
+        "urban": 0.7,
+        "suburban": 0.4,
+        "rural": -0.3,
+        "northern": -0.2
+      },
+      "confidence": false,
+      "summary": "Creates a permanent fund for subway, light rail and bus lanes in large cities, benefiting urban riders while rural areas see little of it."
+    },
+    {
+      "id": "t007",
+      "title": "Coastal Fisheries Quota Act",
+      "kind": "government",
+      "category": "fisheries",
+      "axis": "economy",
+      "position": -25,
+      "visibility": 50,
+      "ridingEffects": {
+        "urban": 0.6,
+        "suburban": 0.1,
+        "rural": -0.8,
+        "northern": -0.3
+      },
+      "regionEffects": {
+        "east": -0.6
+      },
+      "confidence": false,
+      "summary": "Cuts groundfish quotas to rebuild collapsing stocks; conservationists cheer while coastal fishing towns lose income for years."
+    },
+    {
+      "id": "t008",
+      "title": "Northern Housing Partnership Act",
+      "kind": "government",
+      "category": "northern",
+      "axis": "economy",
+      "position": -50,
+      "visibility": 40,
+      "ridingEffects": {
+        "urban": 0,
+        "suburban": 0,
+        "rural": 0.1,
+        "northern": 0.8
+      },
+      "regionEffects": {
+        "north": 0.6
+      },
+      "confidence": false,
+      "summary": "Funds thousands of new homes in remote northern communities where overcrowding is worst, at significant federal cost."
+    },
+    {
+      "id": "t009",
+      "title": "Westward Pipeline Approval Act",
+      "kind": "government",
+      "category": "energy",
+      "axis": "economy",
+      "position": 60,
+      "visibility": 90,
+      "ridingEffects": {
+        "urban": -0.7,
+        "suburban": 0.2,
+        "rural": 0.6,
+        "northern": 0.5
+      },
+      "regionEffects": {
+        "prairie": 0.7,
+        "west": -0.3
+      },
+      "confidence": false,
+      "summary": "Approves a new oil pipeline from the prairies to the west coast; energy workers and producers win, while environmental groups and coastal opponents lose."
+    },
+    {
+      "id": "t010",
+      "title": "{province} Mill Restructuring Assistance Act",
+      "kind": "government",
+      "category": "labour",
+      "axis": "economy",
+      "position": -35,
+      "visibility": 45,
+      "ridingEffects": {
+        "urban": -0.2,
+        "suburban": 0,
+        "rural": 0.6,
+        "northern": 0.5
+      },
+      "confidence": false,
+      "summary": "Gives a struggling {province} paper mill a subsidy package to keep it open, saving local jobs with public money."
+    },
+    {
+      "id": "t011",
+      "title": "Firearms Safe Storage and Licensing Act",
+      "kind": "government",
+      "category": "justice",
+      "axis": "social",
+      "position": -45,
+      "visibility": 80,
+      "ridingEffects": {
+        "urban": 0.8,
+        "suburban": 0.3,
+        "rural": -0.8,
+        "northern": -0.7
+      },
+      "confidence": false,
+      "summary": "Tightens firearm licensing, mandates locked storage and bans several rifle models; urban voters back it while rural hunters and farmers feel targeted."
+    },
+    {
+      "id": "t012",
+      "title": "Safer Streets Sentencing Act",
+      "kind": "government",
+      "category": "justice",
+      "axis": "social",
+      "position": 65,
+      "visibility": 75,
+      "ridingEffects": {
+        "urban": -0.4,
+        "suburban": 0.5,
+        "rural": 0.4,
+        "northern": 0.2
+      },
+      "confidence": false,
+      "summary": "Brings back mandatory minimum sentences for repeat violent and gun offences, which pleases law-and-order voters and alarms civil liberties groups."
+    },
+    {
+      "id": "t013",
+      "title": "Immigration Levels Plan Act",
+      "kind": "government",
+      "category": "immigration",
+      "axis": "social",
+      "position": -40,
+      "visibility": 70,
+      "ridingEffects": {
+        "urban": 0.6,
+        "suburban": 0.2,
+        "rural": -0.4,
+        "northern": -0.1
+      },
+      "confidence": false,
+      "summary": "Raises permanent immigration targets to fill labour shortages; employers and newcomer communities win while critics warn of pressure on housing."
+    },
+    {
+      "id": "t014",
+      "title": "Immigration Stabilization Act",
+      "kind": "government",
+      "category": "immigration",
+      "axis": "social",
+      "position": 45,
+      "visibility": 70,
+      "ridingEffects": {
+        "urban": -0.5,
+        "suburban": 0.2,
+        "rural": 0.4,
+        "northern": 0
+      },
+      "confidence": false,
+      "summary": "Lowers immigration targets for three years to ease housing and service pressure, disappointing employers and newcomer communities."
+    },
+    {
+      "id": "t015",
+      "title": "Public Pension Enhancement Act",
+      "kind": "government",
+      "category": "seniors",
+      "axis": "economy",
+      "position": -45,
+      "visibility": 70,
+      "ridingEffects": {
+        "urban": 0.3,
+        "suburban": 0.4,
+        "rural": 0.4,
+        "northern": 0.3
+      },
+      "confidence": false,
+      "summary": "Increases the public pension for low-income seniors, funded by higher payroll contributions from working people and employers."
+    },
+    {
+      "id": "t016",
+      "title": "Pension Age Modernization Act",
+      "kind": "government",
+      "category": "seniors",
+      "axis": "economy",
+      "position": 60,
+      "visibility": 85,
+      "ridingEffects": {
+        "urban": -0.2,
+        "suburban": -0.3,
+        "rural": -0.5,
+        "northern": -0.4
+      },
+      "confidence": false,
+      "summary": "Gradually raises the public pension age from 65 to 67 to save money, hitting workers in physical jobs hardest."
+    },
+    {
+      "id": "t017",
+      "title": "Coastal Patrol Vessel Procurement Act",
+      "kind": "government",
+      "category": "defence",
+      "axis": "economy",
+      "position": -10,
+      "visibility": 45,
+      "ridingEffects": {
+        "urban": 0,
+        "suburban": 0.1,
+        "rural": 0.2,
+        "northern": 0.3
+      },
+      "regionEffects": {
+        "east": 0.5,
+        "west": 0.3
+      },
+      "confidence": false,
+      "summary": "Orders a new fleet of coastal patrol ships built in domestic shipyards, bringing jobs to coastal regions at a high price tag."
+    },
+    {
+      "id": "t018",
+      "title": "National Arts Endowment Act",
+      "kind": "government",
+      "category": "arts",
+      "axis": "economy",
+      "position": -40,
+      "visibility": 30,
+      "ridingEffects": {
+        "urban": 0.6,
+        "suburban": 0.1,
+        "rural": -0.6,
+        "northern": -0.3
+      },
+      "confidence": false,
+      "summary": "Creates a permanent endowment for theatres, orchestras and galleries, mostly in big cities, funded from general revenue."
+    },
+    {
+      "id": "t019",
+      "title": "Gig Worker Fair Treatment Act",
+      "kind": "government",
+      "category": "labour",
+      "axis": "economy",
+      "position": -50,
+      "visibility": 60,
+      "ridingEffects": {
+        "urban": 0.6,
+        "suburban": 0.2,
+        "rural": -0.1,
+        "northern": 0
+      },
+      "confidence": false,
+      "summary": "Amends the Labour Code so app-based delivery and ride drivers get minimum wage and benefits, raising costs for platform companies and their customers."
+    },
+    {
+      "id": "t020",
+      "title": "Rent Relief Benefit Act",
+      "kind": "government",
+      "category": "housing",
+      "axis": "economy",
+      "position": -55,
+      "visibility": 65,
+      "ridingEffects": {
+        "urban": 0.7,
+        "suburban": 0.3,
+        "rural": -0.3,
+        "northern": -0.1
+      },
+      "confidence": false,
+      "summary": "Pays a monthly top-up to low-income renters, mostly helping city tenants, at a large cost to the treasury."
+    },
+    {
+      "id": "t021",
+      "title": "Housing Supply Acceleration Act",
+      "kind": "government",
+      "category": "housing",
+      "axis": "economy",
+      "position": 30,
+      "visibility": 55,
+      "ridingEffects": {
+        "urban": 0.4,
+        "suburban": 0.5,
+        "rural": -0.1,
+        "northern": 0
+      },
+      "confidence": false,
+      "summary": "Ties federal infrastructure money to cities cutting development fees and red tape so builders can put up homes faster; neighbours who oppose density lose out."
+    },
+    {
+      "id": "t022",
+      "title": "Small Business Tax Relief Act",
+      "kind": "government",
+      "category": "smallBusiness",
+      "axis": "economy",
+      "position": 50,
+      "visibility": 55,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0.4,
+        "rural": 0.3,
+        "northern": 0.2
+      },
+      "confidence": false,
+      "summary": "Cuts the small business tax rate, helping local shops and contractors while reducing federal revenue."
+    },
+    {
+      "id": "t023",
+      "title": "Regulatory Red Tape Reduction Act",
+      "kind": "government",
+      "category": "smallBusiness",
+      "axis": "economy",
+      "position": 65,
+      "visibility": 35,
+      "ridingEffects": {
+        "urban": -0.2,
+        "suburban": 0.3,
+        "rural": 0.3,
+        "northern": 0.2
+      },
+      "confidence": false,
+      "summary": "Scraps two regulations for every new one and shortens permit timelines, pleasing business owners and worrying consumer and safety advocates."
+    },
+    {
+      "id": "t024",
+      "title": "Rural Hospital Consolidation Act",
+      "kind": "government",
+      "category": "health",
+      "axis": "economy",
+      "position": 35,
+      "visibility": 80,
+      "ridingEffects": {
+        "urban": 0.6,
+        "suburban": 0.3,
+        "rural": -0.9,
+        "northern": -0.8
+      },
+      "confidence": false,
+      "summary": "Closes small rural hospitals and folds their budgets into larger urban regional centres; city patients get shorter waits while rural patients drive hours for care."
+    },
+    {
+      "id": "t025",
+      "title": "Pharmacare Framework Act",
+      "kind": "government",
+      "category": "health",
+      "axis": "economy",
+      "position": -65,
+      "visibility": 75,
+      "ridingEffects": {
+        "urban": 0.5,
+        "suburban": 0.3,
+        "rural": 0.2,
+        "northern": 0.3
+      },
+      "confidence": false,
+      "summary": "Sets up a national plan covering essential prescription drugs, saving families money while costing the treasury billions and squeezing private insurers."
+    },
+    {
+      "id": "t026",
+      "title": "Post-Secondary Tuition Freeze Act",
+      "kind": "government",
+      "category": "education",
+      "axis": "economy",
+      "position": -45,
+      "visibility": 55,
+      "ridingEffects": {
+        "urban": 0.5,
+        "suburban": 0.4,
+        "rural": 0.1,
+        "northern": 0.1
+      },
+      "confidence": false,
+      "summary": "Freezes tuition at colleges and universities for four years and backfills their budgets, helping students and costing taxpayers."
+    },
+    {
+      "id": "t027",
+      "title": "Rural Connectivity Act",
+      "kind": "government",
+      "category": "rural",
+      "axis": "economy",
+      "position": -30,
+      "visibility": 40,
+      "ridingEffects": {
+        "urban": -0.1,
+        "suburban": 0,
+        "rural": 0.8,
+        "northern": 0.7
+      },
+      "confidence": false,
+      "summary": "Pays to bring high-speed internet to every rural and remote household within five years, funded from general revenue."
+    },
+    {
+      "id": "t028",
+      "title": "Northern Resource Corridor Act",
+      "kind": "government",
+      "category": "northern",
+      "axis": "economy",
+      "position": 50,
+      "visibility": 50,
+      "ridingEffects": {
+        "urban": -0.6,
+        "suburban": 0,
+        "rural": 0.3,
+        "northern": 0.8
+      },
+      "regionEffects": {
+        "north": 0.6
+      },
+      "confidence": false,
+      "summary": "Fast-tracks mine roads and power lines in the north by shortening environmental reviews; northern jobs grow while conservation groups object."
+    },
+    {
+      "id": "t029",
+      "title": "Coal Power Phase-Out Act",
+      "kind": "government",
+      "category": "energy",
+      "axis": "economy",
+      "position": -60,
+      "visibility": 70,
+      "ridingEffects": {
+        "urban": 0.6,
+        "suburban": 0.3,
+        "rural": -0.4,
+        "northern": -0.7
+      },
+      "regionEffects": {
+        "prairie": -0.4
+      },
+      "confidence": false,
+      "summary": "Requires all coal-fired power plants to close by the end of the decade, cutting emissions but costing jobs in coal towns."
+    },
+    {
+      "id": "t030",
+      "title": "Ardenmark Free Trade Implementation Act",
+      "kind": "government",
+      "category": "trade",
+      "axis": "economy",
+      "position": 55,
+      "visibility": 60,
+      "ridingEffects": {
+        "urban": 0.6,
+        "suburban": 0.3,
+        "rural": -0.7,
+        "northern": 0
+      },
+      "confidence": false,
+      "summary": "Implements a free trade deal with Ardenmark that helps exporters and lowers prices, but opens dairy and poultry farmers to foreign competition."
+    },
+    {
+      "id": "t031",
+      "title": "Supply Management Protection Act",
+      "kind": "government",
+      "category": "agriculture",
+      "axis": "economy",
+      "position": -30,
+      "visibility": 40,
+      "ridingEffects": {
+        "urban": -0.2,
+        "suburban": 0,
+        "rural": 0.7,
+        "northern": 0.2
+      },
+      "confidence": false,
+      "summary": "Bars future trade negotiators from giving away any more of the dairy, egg and poultry market, protecting farm incomes and keeping grocery prices higher."
+    },
+    {
+      "id": "t032",
+      "title": "Veterans Benefits Restoration Act",
+      "kind": "government",
+      "category": "veterans",
+      "axis": "economy",
+      "position": -40,
+      "visibility": 50,
+      "ridingEffects": {
+        "urban": 0.2,
+        "suburban": 0.3,
+        "rural": 0.3,
+        "northern": 0.3
+      },
+      "confidence": false,
+      "summary": "Restores lifelong disability pensions for injured veterans that were replaced by lump sums, at a large long-term cost."
+    },
+    {
+      "id": "t033",
+      "title": "Veterans Service Modernization Act",
+      "kind": "government",
+      "category": "veterans",
+      "axis": "economy",
+      "position": 45,
+      "visibility": 45,
+      "ridingEffects": {
+        "urban": 0.2,
+        "suburban": 0.1,
+        "rural": -0.6,
+        "northern": -0.6
+      },
+      "confidence": false,
+      "summary": "Closes small-town veterans' service offices and moves services online and to city hubs, saving money but leaving rural veterans further from help."
+    },
+    {
+      "id": "t034",
+      "title": "{province} Highway Twinning Act",
+      "kind": "government",
+      "category": "roads",
+      "axis": "economy",
+      "position": -20,
+      "visibility": 45,
+      "ridingEffects": {
+        "urban": -0.1,
+        "suburban": 0.4,
+        "rural": 0.6,
+        "northern": 0.3
+      },
+      "confidence": false,
+      "summary": "Funds twinning a dangerous two-lane highway in {province}, improving safety for commuters and truckers at federal expense."
+    },
+    {
+      "id": "t035",
+      "title": "Congestion Charge Enabling Act",
+      "kind": "government",
+      "category": "transit",
+      "axis": "economy",
+      "position": -20,
+      "visibility": 60,
+      "ridingEffects": {
+        "urban": 0.6,
+        "suburban": -0.8,
+        "rural": 0.1,
+        "northern": 0
+      },
+      "confidence": false,
+      "summary": "Lets big cities charge drivers to enter downtown and spend the money on transit; downtown residents gain while suburban commuters pay every day."
+    },
+    {
+      "id": "t036",
+      "title": "Postal Network Modernization Act",
+      "kind": "government",
+      "category": "rural",
+      "axis": "economy",
+      "position": 40,
+      "visibility": 55,
+      "ridingEffects": {
+        "urban": 0.6,
+        "suburban": 0.2,
+        "rural": -0.9,
+        "northern": -0.7
+      },
+      "confidence": false,
+      "summary": "Closes hundreds of rural post offices and invests the savings in urban parcel hubs, speeding city deliveries while small towns lose a local service."
+    },
+    {
+      "id": "t037",
+      "title": "Child Care Spaces Act",
+      "kind": "government",
+      "category": "education",
+      "axis": "economy",
+      "position": -55,
+      "visibility": 65,
+      "ridingEffects": {
+        "urban": 0.6,
+        "suburban": 0.5,
+        "rural": 0,
+        "northern": 0
+      },
+      "confidence": false,
+      "summary": "Funds tens of thousands of new low-fee child care spaces, helping working parents at a high public cost."
+    },
+    {
+      "id": "t038",
+      "title": "Medical Assistance in Dying Expansion Act",
+      "kind": "government",
+      "category": "health",
+      "axis": "social",
+      "position": -50,
+      "visibility": 75,
+      "ridingEffects": {
+        "urban": 0.4,
+        "suburban": 0,
+        "rural": -0.3,
+        "northern": -0.2
+      },
+      "confidence": false,
+      "summary": "Widens eligibility for medically assisted dying, which advocates call compassionate and religious and disability groups strongly oppose."
+    },
+    {
+      "id": "t039",
+      "title": "Online Harms Act",
+      "kind": "government",
+      "category": "justice",
+      "axis": "social",
+      "position": -30,
+      "visibility": 65,
+      "ridingEffects": {
+        "urban": 0.3,
+        "suburban": 0.1,
+        "rural": -0.3,
+        "northern": -0.2
+      },
+      "confidence": false,
+      "summary": "Forces social media platforms to remove hateful and exploitative content within a day, protecting users but raising free speech concerns."
+    },
+    {
+      "id": "t040",
+      "title": "Border Security Enhancement Act",
+      "kind": "government",
+      "category": "immigration",
+      "axis": "social",
+      "position": 55,
+      "visibility": 60,
+      "ridingEffects": {
+        "urban": -0.3,
+        "suburban": 0.3,
+        "rural": 0.3,
+        "northern": 0.2
+      },
+      "confidence": false,
+      "summary": "Hires more border officers and speeds up removal of failed asylum claimants, pleasing enforcement advocates and angering refugee groups."
+    },
+    {
+      "id": "t041",
+      "title": "Temporary Foreign Worker Reform Act",
+      "kind": "government",
+      "category": "immigration",
+      "axis": "social",
+      "position": 30,
+      "visibility": 50,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0.2,
+        "rural": -0.6,
+        "northern": -0.2
+      },
+      "confidence": false,
+      "summary": "Caps temporary foreign worker permits to push employers to hire locally, which unions support and farms and processing plants fear."
+    },
+    {
+      "id": "t042",
+      "title": "Fishing Licence Owner-Operator Act",
+      "kind": "government",
+      "category": "fisheries",
+      "axis": "economy",
+      "position": -35,
+      "visibility": 40,
+      "ridingEffects": {
+        "urban": -0.1,
+        "suburban": 0,
+        "rural": 0.6,
+        "northern": 0.3
+      },
+      "regionEffects": {
+        "east": 0.6
+      },
+      "confidence": false,
+      "summary": "Bans corporations from controlling inshore fishing licences so they stay with independent harvesters, angering large processors."
+    },
+    {
+      "id": "t043",
+      "title": "Grain Transportation Act",
+      "kind": "government",
+      "category": "agriculture",
+      "axis": "economy",
+      "position": -20,
+      "visibility": 35,
+      "ridingEffects": {
+        "urban": -0.1,
+        "suburban": 0,
+        "rural": 0.6,
+        "northern": 0.2
+      },
+      "regionEffects": {
+        "prairie": 0.6
+      },
+      "confidence": false,
+      "summary": "Caps what railways can charge to haul grain and fines them for delays, helping prairie farmers at the railways' expense."
+    },
+    {
+      "id": "t044",
+      "title": "Wildlife Protected Areas Expansion Act",
+      "kind": "government",
+      "category": "environment",
+      "axis": "economy",
+      "position": -45,
+      "visibility": 45,
+      "ridingEffects": {
+        "urban": 0.6,
+        "suburban": 0.2,
+        "rural": -0.7,
+        "northern": -0.6
+      },
+      "confidence": false,
+      "summary": "Sets aside large new protected areas for endangered species, closing them to logging, mining and some hunting."
+    },
+    {
+      "id": "t045",
+      "title": "Drug Decriminalization Pilot Act",
+      "kind": "government",
+      "category": "health",
+      "axis": "social",
+      "position": -65,
+      "visibility": 85,
+      "ridingEffects": {
+        "urban": 0.6,
+        "suburban": -0.3,
+        "rural": -0.6,
+        "northern": -0.4
+      },
+      "confidence": false,
+      "summary": "Lets cities run pilots where possession of small amounts of drugs is treated as a health issue rather than a crime."
+    },
+    {
+      "id": "t046",
+      "title": "Public Service Spending Restraint Act",
+      "kind": "government",
+      "category": "labour",
+      "axis": "economy",
+      "position": 70,
+      "visibility": 60,
+      "ridingEffects": {
+        "urban": -0.4,
+        "suburban": 0.2,
+        "rural": 0.1,
+        "northern": 0
+      },
+      "confidence": false,
+      "summary": "Freezes public service wages and hiring for two years to cut the deficit, angering federal unions."
+    },
+    {
+      "id": "t047",
+      "title": "Infrastructure Bank Wind-Down Act",
+      "kind": "government",
+      "category": "roads",
+      "axis": "economy",
+      "position": 60,
+      "visibility": 40,
+      "ridingEffects": {
+        "urban": -0.3,
+        "suburban": 0.3,
+        "rural": 0.1,
+        "northern": -0.2
+      },
+      "confidence": false,
+      "summary": "Shuts down the federal infrastructure bank and returns its unspent money to the treasury, cancelling several planned projects."
+    },
+    {
+      "id": "t048",
+      "title": "{region} Hydro Interconnect Act",
+      "kind": "government",
+      "category": "energy",
+      "axis": "economy",
+      "position": -30,
+      "visibility": 40,
+      "ridingEffects": {
+        "urban": 0.2,
+        "suburban": 0.2,
+        "rural": 0.1,
+        "northern": 0.3
+      },
+      "confidence": false,
+      "summary": "Funds new transmission lines so the {region} can share clean hydro power between provinces, paid for by federal taxpayers."
+    },
+    {
+      "id": "t049",
+      "title": "Fall Economic Statement Implementation Act",
+      "kind": "government",
+      "category": "housing",
+      "axis": "economy",
+      "position": -35,
+      "visibility": 75,
+      "ridingEffects": {
+        "urban": 0.3,
+        "suburban": 0.3,
+        "rural": 0,
+        "northern": 0.1
+      },
+      "confidence": true,
+      "summary": "Enacts the government's fall spending package on housing and affordability; a confidence vote that could topple the government if defeated."
+    },
+    {
+      "id": "t050",
+      "title": "Fiscal Restraint and Deficit Reduction Act",
+      "kind": "government",
+      "category": "smallBusiness",
+      "axis": "economy",
+      "position": 65,
+      "visibility": 75,
+      "ridingEffects": {
+        "urban": -0.3,
+        "suburban": 0.3,
+        "rural": 0.1,
+        "northern": -0.1
+      },
+      "confidence": true,
+      "summary": "Cuts program spending across departments to balance the budget within three years; a confidence vote that could bring down the government."
+    },
+    {
+      "id": "t051",
+      "title": "Rural Ambulance Response Standards Act",
+      "kind": "privateMember",
+      "category": "rural",
+      "axis": "economy",
+      "position": -25,
+      "visibility": 20,
+      "ridingEffects": {
+        "urban": 0,
+        "suburban": 0,
+        "rural": 0.6,
+        "northern": 0.5
+      },
+      "confidence": false,
+      "summary": "Sets national target times for ambulances to reach rural callers and requires provinces to report how often they miss them."
+    },
+    {
+      "id": "t052",
+      "title": "Merchant Mariners Remembrance Day Act",
+      "kind": "privateMember",
+      "category": "veterans",
+      "axis": "social",
+      "position": 20,
+      "visibility": 10,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0.1,
+        "rural": 0.2,
+        "northern": 0.2
+      },
+      "confidence": false,
+      "summary": "Creates a national day honouring wartime merchant sailors; symbolic and cheap, but popular with veterans' groups."
+    },
+    {
+      "id": "t053",
+      "title": "Farmer Mental Health Strategy Act",
+      "kind": "privateMember",
+      "category": "agriculture",
+      "axis": "economy",
+      "position": -20,
+      "visibility": 15,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0.1,
+        "rural": 0.5,
+        "northern": 0.2
+      },
+      "confidence": false,
+      "summary": "Requires the health minister to produce a national plan for farmer mental health and suicide prevention."
+    },
+    {
+      "id": "t054",
+      "title": "Right to Repair Act",
+      "kind": "privateMember",
+      "category": "smallBusiness",
+      "axis": "economy",
+      "position": -20,
+      "visibility": 30,
+      "ridingEffects": {
+        "urban": 0.2,
+        "suburban": 0.2,
+        "rural": 0.6,
+        "northern": 0.3
+      },
+      "confidence": false,
+      "summary": "Forces manufacturers to sell parts, tools and software so farmers and independent shops can fix equipment themselves."
+    },
+    {
+      "id": "t055",
+      "title": "Surplus Federal Buildings for Housing Act",
+      "kind": "privateMember",
+      "category": "housing",
+      "axis": "economy",
+      "position": -30,
+      "visibility": 25,
+      "ridingEffects": {
+        "urban": 0.5,
+        "suburban": 0.2,
+        "rural": 0,
+        "northern": 0
+      },
+      "confidence": false,
+      "summary": "Requires empty federal buildings and land to be offered first for affordable housing before they are sold."
+    },
+    {
+      "id": "t056",
+      "title": "Credit Card Swipe Fee Cap Act",
+      "kind": "privateMember",
+      "category": "smallBusiness",
+      "axis": "economy",
+      "position": -25,
+      "visibility": 30,
+      "ridingEffects": {
+        "urban": 0.2,
+        "suburban": 0.3,
+        "rural": 0.2,
+        "northern": 0.2
+      },
+      "confidence": false,
+      "summary": "Caps the fees banks charge merchants on card payments, saving small shops money at the banks' expense."
+    },
+    {
+      "id": "t057",
+      "title": "Hunting and Angling Heritage Act",
+      "kind": "privateMember",
+      "category": "rural",
+      "axis": "social",
+      "position": 40,
+      "visibility": 20,
+      "ridingEffects": {
+        "urban": -0.6,
+        "suburban": 0,
+        "rural": 0.7,
+        "northern": 0.6
+      },
+      "confidence": false,
+      "summary": "Recognizes hunting, trapping and fishing as protected heritage activities, which rural voters love and animal-welfare groups oppose."
+    },
+    {
+      "id": "t058",
+      "title": "Firearms Owner Rights Act",
+      "kind": "privateMember",
+      "category": "justice",
+      "axis": "social",
+      "position": 60,
+      "visibility": 60,
+      "ridingEffects": {
+        "urban": -0.8,
+        "suburban": 0,
+        "rural": 0.8,
+        "northern": 0.7
+      },
+      "confidence": false,
+      "summary": "Repeals the recent rifle ban and simplifies licence renewals, delighting rural gun owners and outraging urban gun-control advocates."
+    },
+    {
+      "id": "t059",
+      "title": "Animal Cruelty Penalties Act",
+      "kind": "privateMember",
+      "category": "justice",
+      "axis": "social",
+      "position": -15,
+      "visibility": 25,
+      "ridingEffects": {
+        "urban": 0.3,
+        "suburban": 0.2,
+        "rural": -0.2,
+        "northern": -0.1
+      },
+      "confidence": false,
+      "summary": "Raises penalties for animal cruelty and bans puppy mills, with farm groups worried it could reach livestock practices."
+    },
+    {
+      "id": "t060",
+      "title": "Seniors' Fraud Protection Act",
+      "kind": "privateMember",
+      "category": "seniors",
+      "axis": "social",
+      "position": 25,
+      "visibility": 20,
+      "ridingEffects": {
+        "urban": 0.2,
+        "suburban": 0.3,
+        "rural": 0.2,
+        "northern": 0.2
+      },
+      "confidence": false,
+      "summary": "Adds tougher sentences for scams targeting the elderly and requires banks to flag suspicious withdrawals."
+    },
+    {
+      "id": "t061",
+      "title": "Small-Town Library and Museum Access Act",
+      "kind": "privateMember",
+      "category": "arts",
+      "axis": "economy",
+      "position": -30,
+      "visibility": 10,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0,
+        "rural": 0.4,
+        "northern": 0.3
+      },
+      "confidence": false,
+      "summary": "Creates a small grant program for libraries and museums in towns under 20,000 people."
+    },
+    {
+      "id": "t062",
+      "title": "Apprenticeship Tax Credit Act",
+      "kind": "privateMember",
+      "category": "education",
+      "axis": "economy",
+      "position": 25,
+      "visibility": 20,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0.3,
+        "rural": 0.3,
+        "northern": 0.3
+      },
+      "confidence": false,
+      "summary": "Gives employers a tax credit for each apprentice they hire in the skilled trades."
+    },
+    {
+      "id": "t063",
+      "title": "Gig Worker Tip Protection Act",
+      "kind": "privateMember",
+      "category": "labour",
+      "axis": "economy",
+      "position": -30,
+      "visibility": 25,
+      "ridingEffects": {
+        "urban": 0.5,
+        "suburban": 0.2,
+        "rural": 0,
+        "northern": 0
+      },
+      "confidence": false,
+      "summary": "Stops delivery apps from keeping any part of customers' tips and requires them to show workers what they earned."
+    },
+    {
+      "id": "t064",
+      "title": "Heritage Rail Corridor Preservation Act",
+      "kind": "privateMember",
+      "category": "transit",
+      "axis": "economy",
+      "position": -20,
+      "visibility": 20,
+      "ridingEffects": {
+        "urban": 0,
+        "suburban": 0,
+        "rural": 0.5,
+        "northern": 0.3
+      },
+      "confidence": false,
+      "summary": "Bans railways from tearing up abandoned rural lines so they can be restored or turned into trails."
+    },
+    {
+      "id": "t065",
+      "title": "Northern Residents Deduction Increase Act",
+      "kind": "privateMember",
+      "category": "northern",
+      "axis": "economy",
+      "position": 20,
+      "visibility": 15,
+      "ridingEffects": {
+        "urban": 0,
+        "suburban": 0,
+        "rural": 0.1,
+        "northern": 0.7
+      },
+      "regionEffects": {
+        "north": 0.7
+      },
+      "confidence": false,
+      "summary": "Raises the tax deduction for people living in remote northern areas to offset the high cost of living."
+    },
+    {
+      "id": "t066",
+      "title": "Foreign Buyer Ban Extension Act",
+      "kind": "privateMember",
+      "category": "housing",
+      "axis": "economy",
+      "position": -20,
+      "visibility": 45,
+      "ridingEffects": {
+        "urban": 0.5,
+        "suburban": 0.4,
+        "rural": -0.1,
+        "northern": 0
+      },
+      "confidence": false,
+      "summary": "Extends the ban on foreign buyers of homes indefinitely, which housing advocates support and developers oppose."
+    },
+    {
+      "id": "t067",
+      "title": "Fishing Vessel Safety Act",
+      "kind": "privateMember",
+      "category": "fisheries",
+      "axis": "economy",
+      "position": -20,
+      "visibility": 15,
+      "ridingEffects": {
+        "urban": 0,
+        "suburban": 0,
+        "rural": 0.3,
+        "northern": 0.2
+      },
+      "regionEffects": {
+        "east": 0.3,
+        "west": 0.2
+      },
+      "confidence": false,
+      "summary": "Requires life-saving gear and stability checks on small fishing boats, with a rebate to help owners pay for them."
+    },
+    {
+      "id": "t068",
+      "title": "Military Family Support Act",
+      "kind": "privateMember",
+      "category": "defence",
+      "axis": "economy",
+      "position": -25,
+      "visibility": 20,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0.2,
+        "rural": 0.2,
+        "northern": 0.3
+      },
+      "confidence": false,
+      "summary": "Guarantees health-care and school continuity for military families when they are moved between provinces."
+    },
+    {
+      "id": "t069",
+      "title": "Rural Property Crime Act",
+      "kind": "privateMember",
+      "category": "justice",
+      "axis": "social",
+      "position": 55,
+      "visibility": 35,
+      "ridingEffects": {
+        "urban": -0.3,
+        "suburban": 0.1,
+        "rural": 0.7,
+        "northern": 0.5
+      },
+      "confidence": false,
+      "summary": "Makes theft and break-ins on farms and rural properties an aggravating factor at sentencing."
+    },
+    {
+      "id": "t070",
+      "title": "Protected Bike Lane Standards Act",
+      "kind": "privateMember",
+      "category": "transit",
+      "axis": "economy",
+      "position": -20,
+      "visibility": 25,
+      "ridingEffects": {
+        "urban": 0.6,
+        "suburban": -0.2,
+        "rural": -0.6,
+        "northern": -0.3
+      },
+      "confidence": false,
+      "summary": "Ties federal road money to building protected bike lanes, popular with city cyclists and resented by rural drivers who see no benefit."
+    },
+    {
+      "id": "t071",
+      "title": "Gas Tax Holiday Act",
+      "kind": "privateMember",
+      "category": "energy",
+      "axis": "economy",
+      "position": 45,
+      "visibility": 60,
+      "ridingEffects": {
+        "urban": -0.6,
+        "suburban": 0.4,
+        "rural": 0.7,
+        "northern": 0.5
+      },
+      "confidence": false,
+      "summary": "Suspends the federal fuel excise tax for the summer, saving drivers money and cutting transit and road funding."
+    },
+    {
+      "id": "t072",
+      "title": "Credential Recognition for Newcomers Act",
+      "kind": "privateMember",
+      "category": "immigration",
+      "axis": "social",
+      "position": -25,
+      "visibility": 25,
+      "ridingEffects": {
+        "urban": 0.4,
+        "suburban": 0.3,
+        "rural": 0,
+        "northern": 0.1
+      },
+      "confidence": false,
+      "summary": "Sets a 90-day deadline for regulators to assess foreign professional credentials so trained newcomers can work in their fields."
+    },
+    {
+      "id": "t073",
+      "title": "Opposition motion: Cancel the carbon levy increase",
+      "kind": "oppositionMotion",
+      "category": "environment",
+      "axis": "economy",
+      "position": 55,
+      "visibility": 80,
+      "ridingEffects": {
+        "urban": -0.6,
+        "suburban": 0.3,
+        "rural": 0.8,
+        "northern": 0.6
+      },
+      "confidence": false,
+      "summary": "Calls on the government to scrap the scheduled carbon levy increase, which rural drivers cheer and climate-focused city voters oppose."
+    },
+    {
+      "id": "t074",
+      "title": "That the House call on the government to restore rural passenger rail",
+      "kind": "oppositionMotion",
+      "category": "transit",
+      "axis": "economy",
+      "position": -30,
+      "visibility": 40,
+      "ridingEffects": {
+        "urban": -0.2,
+        "suburban": 0,
+        "rural": 0.8,
+        "northern": 0.5
+      },
+      "confidence": false,
+      "summary": "Asks the government to bring back passenger trains to small-town lines that were cut, at a cost to the transit budget."
+    },
+    {
+      "id": "t075",
+      "title": "Opposition motion: Emergency rent freeze",
+      "kind": "oppositionMotion",
+      "category": "housing",
+      "axis": "economy",
+      "position": -60,
+      "visibility": 60,
+      "ridingEffects": {
+        "urban": 0.7,
+        "suburban": 0.2,
+        "rural": -0.3,
+        "northern": -0.1
+      },
+      "confidence": false,
+      "summary": "Calls for a two-year federal rent freeze in exchange for housing funds, which tenants welcome and landlords and builders fight."
+    },
+    {
+      "id": "t076",
+      "title": "That the House call on the government to cut payroll taxes for small employers",
+      "kind": "oppositionMotion",
+      "category": "smallBusiness",
+      "axis": "economy",
+      "position": 45,
+      "visibility": 35,
+      "ridingEffects": {
+        "urban": 0,
+        "suburban": 0.3,
+        "rural": 0.3,
+        "northern": 0.2
+      },
+      "confidence": false,
+      "summary": "Asks the government to lower payroll contributions for businesses with fewer than 50 staff, reducing revenue for pension and job programs."
+    },
+    {
+      "id": "t077",
+      "title": "Opposition motion: Condemn defence procurement delays",
+      "kind": "oppositionMotion",
+      "category": "defence",
+      "axis": "economy",
+      "position": 10,
+      "visibility": 40,
+      "ridingEffects": {
+        "urban": 0,
+        "suburban": 0.2,
+        "rural": 0.2,
+        "northern": 0.3
+      },
+      "confidence": false,
+      "summary": "Condemns years of delays buying new equipment for the armed forces and demands a firm delivery schedule."
+    },
+    {
+      "id": "t078",
+      "title": "That the House call on the government to protect supply management in all trade talks",
+      "kind": "oppositionMotion",
+      "category": "trade",
+      "axis": "economy",
+      "position": -20,
+      "visibility": 35,
+      "ridingEffects": {
+        "urban": -0.2,
+        "suburban": 0,
+        "rural": 0.7,
+        "northern": 0.2
+      },
+      "confidence": false,
+      "summary": "Asks the government to promise no more dairy and poultry concessions in future trade deals, keeping farm incomes and grocery prices up."
+    },
+    {
+      "id": "t079",
+      "title": "Opposition motion: Lower immigration targets until housing catches up",
+      "kind": "oppositionMotion",
+      "category": "immigration",
+      "axis": "social",
+      "position": 45,
+      "visibility": 75,
+      "ridingEffects": {
+        "urban": -0.6,
+        "suburban": 0.6,
+        "rural": 0.4,
+        "northern": 0.2
+      },
+      "confidence": false,
+      "summary": "Calls for immigration targets to be cut until housing starts catch up, appealing to squeezed suburban homebuyers and alarming newcomer communities."
+    },
+    {
+      "id": "t080",
+      "title": "That the House call on the government to establish universal pharmacare",
+      "kind": "oppositionMotion",
+      "category": "health",
+      "axis": "economy",
+      "position": -60,
+      "visibility": 55,
+      "ridingEffects": {
+        "urban": 0.5,
+        "suburban": 0.3,
+        "rural": 0.2,
+        "northern": 0.3
+      },
+      "confidence": false,
+      "summary": "Asks the government to cover all prescription drugs under a single public plan, saving families money at a large public cost."
+    },
+    {
+      "id": "t081",
+      "title": "Opposition motion: Repeal the firearms buyback",
+      "kind": "oppositionMotion",
+      "category": "justice",
+      "axis": "social",
+      "position": 60,
+      "visibility": 65,
+      "ridingEffects": {
+        "urban": -0.7,
+        "suburban": 0.1,
+        "rural": 0.8,
+        "northern": 0.7
+      },
+      "confidence": false,
+      "summary": "Calls for an end to the mandatory rifle buyback and refunds to owners, a rallying cry in rural ridings and a red flag in cities."
+    },
+    {
+      "id": "t082",
+      "title": "That the House call on the government to reopen veterans' service offices",
+      "kind": "oppositionMotion",
+      "category": "veterans",
+      "axis": "economy",
+      "position": -25,
+      "visibility": 40,
+      "ridingEffects": {
+        "urban": 0,
+        "suburban": 0.1,
+        "rural": 0.5,
+        "northern": 0.5
+      },
+      "confidence": false,
+      "summary": "Asks the government to reopen closed small-town veterans' offices so veterans can get help in person."
+    },
+    {
+      "id": "t083",
+      "title": "That the House call on the government to lift the groundfish moratorium",
+      "kind": "oppositionMotion",
+      "category": "fisheries",
+      "axis": "economy",
+      "position": 40,
+      "visibility": 45,
+      "ridingEffects": {
+        "urban": -0.4,
+        "suburban": 0,
+        "rural": 0.6,
+        "northern": 0.2
+      },
+      "regionEffects": {
+        "east": 0.6
+      },
+      "confidence": false,
+      "summary": "Calls for the commercial groundfish fishery to reopen, which coastal towns want and scientists warn could wipe out recovering stocks."
+    },
+    {
+      "id": "t084",
+      "title": "Opposition motion: Fund northern airstrips and winter roads",
+      "kind": "oppositionMotion",
+      "category": "northern",
+      "axis": "economy",
+      "position": -30,
+      "visibility": 25,
+      "ridingEffects": {
+        "urban": 0,
+        "suburban": 0,
+        "rural": 0.1,
+        "northern": 0.7
+      },
+      "regionEffects": {
+        "north": 0.7
+      },
+      "confidence": false,
+      "summary": "Calls for a dedicated fund to keep remote northern airstrips and ice roads open year-round."
+    },
+    {
+      "id": "t085",
+      "title": "That the House call on the government to revoke the pipeline approval",
+      "kind": "oppositionMotion",
+      "category": "energy",
+      "axis": "economy",
+      "position": -50,
+      "visibility": 75,
+      "ridingEffects": {
+        "urban": 0.7,
+        "suburban": 0,
+        "rural": -0.6,
+        "northern": -0.5
+      },
+      "regionEffects": {
+        "prairie": -0.7,
+        "west": 0.3
+      },
+      "confidence": false,
+      "summary": "Asks the government to cancel its approval of the new oil pipeline, pleasing environmentalists and enraging energy workers."
+    },
+    {
+      "id": "t086",
+      "title": "Opposition motion: Index pensions to wages, not prices",
+      "kind": "oppositionMotion",
+      "category": "seniors",
+      "axis": "economy",
+      "position": -40,
+      "visibility": 50,
+      "ridingEffects": {
+        "urban": 0.2,
+        "suburban": 0.3,
+        "rural": 0.4,
+        "northern": 0.3
+      },
+      "confidence": false,
+      "summary": "Calls for public pensions to rise with wages instead of prices, giving seniors bigger increases at a growing cost to younger workers."
+    },
+    {
+      "id": "t087",
+      "title": "That the House call on the government to redirect arts subsidies to seniors' care",
+      "kind": "oppositionMotion",
+      "category": "arts",
+      "axis": "economy",
+      "position": 40,
+      "visibility": 30,
+      "ridingEffects": {
+        "urban": -0.6,
+        "suburban": 0.2,
+        "rural": 0.6,
+        "northern": 0.3
+      },
+      "confidence": false,
+      "summary": "Asks the government to cut big-city arts grants and spend the money on long-term care beds, splitting cultural and rural voters."
+    },
+    {
+      "id": "t088",
+      "title": "Opposition motion: Fix the highways before building more transit",
+      "kind": "oppositionMotion",
+      "category": "roads",
+      "axis": "economy",
+      "position": 20,
+      "visibility": 45,
+      "ridingEffects": {
+        "urban": -0.7,
+        "suburban": 0.3,
+        "rural": 0.8,
+        "northern": 0.6
+      },
+      "confidence": false,
+      "summary": "Calls for highway repair money to come before any new urban transit funding, a clear choice between rural drivers and city riders."
+    },
+    {
+      "id": "t089",
+      "title": "That the House call on the government to cap tuition increases",
+      "kind": "oppositionMotion",
+      "category": "education",
+      "axis": "economy",
+      "position": -35,
+      "visibility": 35,
+      "ridingEffects": {
+        "urban": 0.4,
+        "suburban": 0.4,
+        "rural": 0,
+        "northern": 0
+      },
+      "confidence": false,
+      "summary": "Asks the government to tie university transfer payments to a cap on tuition hikes, helping students and squeezing schools."
+    },
+    {
+      "id": "t090",
+      "title": "Opposition motion: Restore police funding for transit safety",
+      "kind": "oppositionMotion",
+      "category": "justice",
+      "axis": "social",
+      "position": 40,
+      "visibility": 45,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0.4,
+        "rural": 0.1,
+        "northern": 0
+      },
+      "confidence": false,
+      "summary": "Calls for more police officers on city transit systems after a string of violent incidents, which civil liberties groups say misses the root causes."
+    },
+    {
+      "id": "t091",
+      "title": "Main Estimates",
+      "kind": "supply",
+      "category": "health",
+      "axis": "economy",
+      "position": 0,
+      "visibility": 55,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0.1,
+        "rural": 0.1,
+        "northern": 0.1
+      },
+      "confidence": true,
+      "summary": "Approves the government's planned spending for every department this year; losing it would bring down the government."
+    },
+    {
+      "id": "t092",
+      "title": "Supplementary Estimates (A)",
+      "kind": "supply",
+      "category": "defence",
+      "axis": "economy",
+      "position": -10,
+      "visibility": 30,
+      "ridingEffects": {
+        "urban": 0,
+        "suburban": 0.1,
+        "rural": 0.1,
+        "northern": 0.1
+      },
+      "confidence": true,
+      "summary": "Approves extra spending since the Main Estimates, mostly for defence and emergency relief; a confidence vote."
+    },
+    {
+      "id": "t093",
+      "title": "Supplementary Estimates (B)",
+      "kind": "supply",
+      "category": "housing",
+      "axis": "economy",
+      "position": -15,
+      "visibility": 30,
+      "ridingEffects": {
+        "urban": 0.2,
+        "suburban": 0.1,
+        "rural": 0,
+        "northern": 0
+      },
+      "confidence": true,
+      "summary": "Approves mid-year top-ups for housing programs and disaster recovery; a confidence vote."
+    },
+    {
+      "id": "t094",
+      "title": "Supplementary Estimates (C)",
+      "kind": "supply",
+      "category": "veterans",
+      "axis": "economy",
+      "position": -5,
+      "visibility": 25,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0.1,
+        "rural": 0.1,
+        "northern": 0.1
+      },
+      "confidence": true,
+      "summary": "Approves the last spending adjustments of the fiscal year, including veterans' benefits that ran over budget; a confidence vote."
+    },
+    {
+      "id": "t095",
+      "title": "Budget Implementation Act",
+      "kind": "supply",
+      "category": "smallBusiness",
+      "axis": "economy",
+      "position": 10,
+      "visibility": 85,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0.2,
+        "rural": 0.1,
+        "northern": 0.1
+      },
+      "confidence": true,
+      "summary": "Puts the government's budget into law, from tax changes to new programs; defeat would trigger an election."
+    },
+    {
+      "id": "t096",
+      "title": "Ways and Means motion on the budget",
+      "kind": "supply",
+      "category": "trade",
+      "axis": "economy",
+      "position": 10,
+      "visibility": 80,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0.1,
+        "rural": 0.1,
+        "northern": 0.1
+      },
+      "confidence": true,
+      "summary": "Approves the tax measures in the budget and is the House's first verdict on it; a defeat would bring down the government."
+    },
+    {
+      "id": "t097",
+      "title": "Address in Reply to the Speech from the Throne",
+      "kind": "supply",
+      "category": "labour",
+      "axis": "economy",
+      "position": 0,
+      "visibility": 90,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0.1,
+        "rural": 0.1,
+        "northern": 0.1
+      },
+      "confidence": true,
+      "summary": "Endorses the government's agenda as set out in the Speech from the Throne; the first confidence test of a new parliament."
+    },
+    {
+      "id": "t098",
+      "title": "Interim Supply Act",
+      "kind": "supply",
+      "category": "seniors",
+      "axis": "economy",
+      "position": 0,
+      "visibility": 35,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0.1,
+        "rural": 0.1,
+        "northern": 0.1
+      },
+      "confidence": true,
+      "summary": "Lets the government keep paying pensions, salaries and bills for the first months of the year until the full estimates pass; a confidence vote."
+    },
+    {
+      "id": "t099",
+      "title": "Borrowing Authority Act",
+      "kind": "supply",
+      "category": "roads",
+      "axis": "economy",
+      "position": -20,
+      "visibility": 40,
+      "ridingEffects": {
+        "urban": 0,
+        "suburban": 0.1,
+        "rural": 0,
+        "northern": 0
+      },
+      "confidence": true,
+      "summary": "Raises the cap on how much the government can borrow to fund its infrastructure plans; a confidence vote opponents use to attack the deficit."
+    },
+    {
+      "id": "t100",
+      "title": "Ways and Means motion on the Fall Economic Statement",
+      "kind": "supply",
+      "category": "education",
+      "axis": "economy",
+      "position": -10,
+      "visibility": 60,
+      "ridingEffects": {
+        "urban": 0.1,
+        "suburban": 0.1,
+        "rural": 0,
+        "northern": 0
+      },
+      "confidence": true,
+      "summary": "Approves the tax changes announced in the fall economic update; a confidence vote."
+    }
+  ]
+}

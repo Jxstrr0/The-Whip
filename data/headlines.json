@@ -1,0 +1,93 @@
+{
+  "papers": [
+    "The Ostrava Ledger",
+    "The Dominion Standard",
+    "Caledor Press Wire",
+    "The Lakeshire Examiner",
+    "Valmont Courier",
+    "The Seaward Tribune",
+    "Westmark Herald",
+    "The Brennick Telegraph",
+    "Tidewater Chronicle",
+    "The Precinct Report"
+  ],
+  "headlines": [
+    { "id": "h001", "event": "billPassed", "text": "{bill} clears the House, {yeas} to {nays}" },
+    { "id": "h002", "event": "billPassed", "text": "{party} gets its way on {bill}, with votes to spare" },
+    { "id": "h003", "event": "billPassed", "text": "{bill} passes; opposition promises to remember" },
+    { "id": "h004", "event": "billPassed", "text": "After weeks of noise, {bill} passes without much of it" },
+    { "id": "h005", "event": "billPassed", "text": "{leader} claims win as {bill} heads to the Senate" },
+
+    { "id": "h006", "event": "billDefeated", "text": "{bill} goes down {nays} to {yeas} in rare House defeat" },
+    { "id": "h007", "event": "billDefeated", "text": "Embarrassment for {leader} as {bill} fails" },
+    { "id": "h008", "event": "billDefeated", "text": "{party} loses {bill}; whips left counting what went wrong" },
+    { "id": "h009", "event": "billDefeated", "text": "House kills {bill}. Ministers decline to say what's next" },
+    { "id": "h010", "event": "billDefeated", "text": "{bill} defeated. Government calls it ‘a setback,’ not a crisis" },
+
+    { "id": "h011", "event": "rebellion", "text": "{count} {party} MPs break ranks on {bill}" },
+    { "id": "h012", "event": "rebellion", "text": "Backbench revolt: {count} defy the whip on {bill}" },
+    { "id": "h013", "event": "rebellion", "text": "Cracks show in {party} caucus as {count} vote against the line" },
+    { "id": "h014", "event": "rebellion", "text": "{leader}'s grip questioned after {count} rebels" },
+    { "id": "h015", "event": "rebellion", "text": "Whip's office scrambles after {count} MPs go their own way" },
+
+    { "id": "h016", "event": "playerRebelled", "text": "{riding} MP {name} votes against own party on {bill}" },
+    { "id": "h017", "event": "playerRebelled", "text": "Rookie {name} defies the whip, sides with {riding}" },
+    { "id": "h018", "event": "playerRebelled", "text": "‘My riding first’: {name} breaks with {party}" },
+    { "id": "h019", "event": "playerRebelled", "text": "{name} stands alone on {bill}. Whip's office takes note" },
+    { "id": "h020", "event": "playerRebelled", "text": "A lonely nay from {riding} on {bill}" },
+
+    { "id": "h021", "event": "playerToedLine", "text": "{name} backs {bill} despite grumbling in {riding}" },
+    { "id": "h022", "event": "playerToedLine", "text": "{riding} MP votes with party; locals ask why" },
+    { "id": "h023", "event": "playerToedLine", "text": "{name} sticks with {party} on {bill}" },
+    { "id": "h024", "event": "playerToedLine", "text": "No surprises from {name} as {bill} vote follows the line" },
+    { "id": "h025", "event": "playerToedLine", "text": "{riding} wanted a no on {bill}. It got a yes" },
+
+    { "id": "h026", "event": "confidenceSurvived", "text": "Government survives confidence vote, {yeas} to {nays}" },
+    { "id": "h027", "event": "confidenceSurvived", "text": "{leader} lives to fight another day" },
+    { "id": "h028", "event": "confidenceSurvived", "text": "No election yet: {party} holds on" },
+    { "id": "h029", "event": "confidenceSurvived", "text": "Minority government clears confidence test on {bill}" },
+    { "id": "h030", "event": "confidenceSurvived", "text": "Whips exhale as government scrapes through, {yeas}–{nays}" },
+
+    { "id": "h031", "event": "confidenceLost", "text": "Government falls, {nays} to {yeas}" },
+    { "id": "h032", "event": "confidenceLost", "text": "{leader}'s government defeated on {bill}; election looms" },
+    { "id": "h033", "event": "confidenceLost", "text": "Confidence lost. Caledor heads back to the polls" },
+    { "id": "h034", "event": "confidenceLost", "text": "{party} loses the House, and maybe much more" },
+    { "id": "h035", "event": "confidenceLost", "text": "Minority Parliament ends on a {nays}–{yeas} vote" },
+
+    { "id": "h036", "event": "closeVote", "text": "{bill} squeaks through, {yeas} to {nays}" },
+    { "id": "h037", "event": "closeVote", "text": "Nail-biter in the House as {bill} decided by a handful" },
+    { "id": "h038", "event": "closeVote", "text": "{yeas}–{nays}: the closest vote of the session" },
+    { "id": "h039", "event": "closeVote", "text": "Whips count to the last member as {bill} comes down to the wire" },
+    { "id": "h040", "event": "closeVote", "text": "Every vote counted on {bill}, and a few were counted twice" },
+
+    { "id": "h041", "event": "townHall", "text": "Packed town hall puts {name} on the spot over {bill}" },
+    { "id": "h042", "event": "townHall", "text": "{riding} residents get their say, and then some" },
+    { "id": "h043", "event": "townHall", "text": "{name} takes questions, and a few hard ones, at home" },
+    { "id": "h044", "event": "townHall", "text": "Coffee, squares and complaints: {name} meets {riding}" },
+    { "id": "h045", "event": "townHall", "text": "Town hall crowd warms to {name}, mostly" },
+
+    { "id": "h046", "event": "absence", "text": "{name} misses key vote on {bill}" },
+    { "id": "h047", "event": "absence", "text": "Where was the member for {riding}?" },
+    { "id": "h048", "event": "absence", "text": "{count} {party} MPs absent as {bill} comes to a vote" },
+    { "id": "h049", "event": "absence", "text": "Empty seats on government side raise eyebrows" },
+    { "id": "h050", "event": "absence", "text": "{name}'s chair empty for the vote that mattered" },
+
+    { "id": "h051", "event": "walkout", "text": "{count} MPs walk out of the House before {bill} vote" },
+    { "id": "h052", "event": "walkout", "text": "Opposition empties its benches in protest over {bill}" },
+    { "id": "h053", "event": "walkout", "text": "Walkout leaves Speaker facing half a chamber" },
+    { "id": "h054", "event": "walkout", "text": "{party} members leave the chamber rather than vote" },
+    { "id": "h055", "event": "walkout", "text": "{name} leads walkout; whips call it ‘theatre’" },
+
+    { "id": "h056", "event": "leak", "text": "Leaked memo shows {party} split on {bill}" },
+    { "id": "h057", "event": "leak", "text": "What was said in Wednesday's caucus, by people who were there" },
+    { "id": "h058", "event": "leak", "text": "{leader}'s office hunts for source of {bill} leak" },
+    { "id": "h059", "event": "leak", "text": "Whip's count sheet on {bill} obtained by {paper}" },
+    { "id": "h060", "event": "leak", "text": "Insiders say {count} MPs privately oppose {bill}" },
+
+    { "id": "h061", "event": "routine", "text": "House sits late as {bill} debate drags on" },
+    { "id": "h062", "event": "routine", "text": "Quiet week in Ostrava, and nobody's complaining" },
+    { "id": "h063", "event": "routine", "text": "Committee hears from witnesses on {bill}; few minds changed" },
+    { "id": "h064", "event": "routine", "text": "{party} talks up {bill} ahead of next week's vote" },
+    { "id": "h065", "event": "routine", "text": "Question Period produces heat, little light" }
+  ]
+}
