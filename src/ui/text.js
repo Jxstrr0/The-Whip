@@ -1,5 +1,6 @@
 // UI text: strings from data/strings.en.json with {slot} filling, plus shared formatting for MPs and parties.
 import { data } from '../sim/config.js';
+import { getSettings } from '../settings.js';
 
 export function t(key, vars = {}) {
   const s = data().strings[key] ?? key;
@@ -49,8 +50,14 @@ export function partyOf(state, mp) {
   return mp.party === 'ind' ? null : state.parties[mp.party];
 }
 
+// Party colours; the colour-blind setting swaps in the Okabe-Ito palette from data/parties.json.
 export function partyColor(state, mp) {
-  return mp.party === 'ind' ? data().parties.independentColor : state.parties[mp.party].color;
+  const P = data().parties;
+  if (getSettings().colourBlind) {
+    if (mp.party === 'ind') return P.independentCbColor;
+    return P.core.find((q) => q.id === mp.party)?.cbColor ?? P.fifthCbColor;
+  }
+  return mp.party === 'ind' ? P.independentColor : state.parties[mp.party].color;
 }
 
 export function partyShort(state, mp) {

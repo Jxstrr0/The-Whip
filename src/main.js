@@ -25,7 +25,9 @@ import { createCountBoard } from './ui/countBoard.js';
 import { createOfficeUI } from './ui/talk.js';
 import { createCaucusUI } from './ui/caucusUI.js';
 import { createRidingUI } from './ui/ridingUI.js';
-import { createStartMenu, createGameMenu } from './ui/menus.js';
+import { createStartMenu, createGameMenu, createSettingsSheet } from './ui/menus.js';
+import { createAudio } from './audio.js';
+import { getSettings, setSetting, onSettings, applySettings } from './settings.js';
 import { createLedger } from './ui/ledger.js';
 import { createCareerUI } from './ui/careerUI.js';
 import { createRecordUI } from './ui/recordUI.js';
@@ -36,6 +38,20 @@ import { stageLabel } from './sim/vote.js';
 
 const params = new URLSearchParams(location.search);
 const DEBUG = params.get('debug') === '1';
+
+// Sound and settings exist before any game does: the title page has a room tone and a settings sheet too.
+applySettings();
+const audio = createAudio(getSettings());
+let settingsSheet = null;
+function openSettings() {
+  settingsSheet ||= createSettingsSheet(document.getElementById('ui'), { get: getSettings, set: setSetting });
+  settingsSheet.open();
+}
+onSettings((s, key) => {
+  if (key === 'sound' || key === 'volume') audio.configure(s);
+  // New party colours mean every room redraws; the menu's preview Parliament too.
+  if (key === 'colourBlind') world?.recolor();
+});
 
 // "At risk" in the book: how likely an MP is to stray on the next whipped vote, from what you can see.
 // Riding effects are public; loyalty only counts once you've learned it.
@@ -94,8 +110,11 @@ function buildWorld() {
         else card.hide();
       },
       onMpTap: (mpId) => card.show(mpId),
+      onBells: (on) => audio.bells(on),
+      onGavel: () => audio.gavel(),
     },
     onChange(name, room) {
+      audio.room(name);
       // Cut through black: cover the swap at once, then fade back in once the new room has drawn a frame.
       const fade = document.getElementById('fade');
       if (fade) {
@@ -197,6 +216,11 @@ function buildWorld() {
     onLedger: () => ledger.open(),
     onRetire: () => dispatch({ type: 'retire' }),
     onCross: (party) => dispatch({ type: 'crossFloor', party }),
+    onSettings: openSettings,
+  });
+  // A soft paper tick on every button, once sound is open.
+  ui.addEventListener('click', (e) => {
+    if (e.target.closest('.btn, .switch')) audio.tap();
   });
   hud = createHud(ui, {
     buttons: [
@@ -319,6 +343,7 @@ function buildWorld() {
   window.addEventListener('resize', resize);
 
   let stats = null;
+  let onRecolor = null;
   let last = performance.now();
   renderer.setAnimationLoop((now) => {
     const dt = Math.min(0.1, (now - last) / 1000);
@@ -341,6 +366,16 @@ function buildWorld() {
     resize,
     setStats(s) {
       stats = s;
+    },
+    // Rebuild the current room so new party colours land everywhere (seats, chips, caucus table).
+    recolor() {
+      const state = getState();
+      rooms.reset();
+      if (state) renderAll(state);
+      else onRecolor?.();
+    },
+    set onRecolor(fn) {
+      onRecolor = fn;
     },
   };
 }
@@ -385,6 +420,8 @@ async function debugTools(w) {
     THREE,
     card: w.card,
     book: w.book,
+    audio,
+    settings: { get: getSettings, set: setSetting },
   };
 }
 
@@ -425,6 +462,7 @@ async function boot() {
       clearTimeout(previewTimer);
       previewTimer = setTimeout(() => showPreview(seed), 600);
     },
+    onSettings: openSettings,
   });
   // The seed's own Parliament sits in the chamber behind the title page, the camera drifting slowly.
   let previewTimer = null;
@@ -443,6 +481,7 @@ async function boot() {
       console.warn('menu preview', e);
     }
   }
+  world.onRecolor = () => showPreview(menu.querySelector('[name="seed"]')?.value.trim());
   showPreview(menu.querySelector('[name="seed"]').value.trim());
 }
 

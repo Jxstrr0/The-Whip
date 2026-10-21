@@ -250,10 +250,14 @@ export function create(ctx) {
     setBells(on) {
       bells = on;
       lights.bells(on);
+      ctx.onBells?.(on);
       hemiGoal = on ? hemiBase * 0.8 : hemiBase;
       if (on) takeDivisionShot();
     },
-    gavel: () => life.gavel(),
+    gavel() {
+      life.gavel();
+      ctx.onGavel?.();
+    },
     nudge: () => controls.nudge(),
     autoOrbit: (on) => controls.autoOrbit(on),
     get view() {
