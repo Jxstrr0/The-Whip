@@ -4,11 +4,12 @@ import { t, esc, mpName, partyColor, partyShort, partyName, roleName, ordinal } 
 
 const FILTERS = ['party', 'clique', 'cohort', 'type'];
 
-export function createBook(root, { getState, onPick, riskOf = null }) {
+export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
   const el = document.createElement('section');
   el.className = 'sheet book hidden';
   root.appendChild(el);
   const ui = { q: '', party: '', clique: '', cohort: '', type: '', sort: 'seat' };
+  let title = null;
 
   function knownCount(state, id) {
     const v = cardView(state, id);
@@ -65,7 +66,7 @@ export function createBook(root, { getState, onPick, riskOf = null }) {
     const total = Object.keys(state.mps).length;
     el.innerHTML = `
       <header class="book-head">
-        <h2>${t('book.title')}</h2>
+        <h2>${esc(title || t('book.title'))}</h2>
         <button class="btn icon" data-act="close" aria-label="${t('btn.close')}">✕</button>
       </header>
       <input class="search" type="search" placeholder="${t('book.search')}" value="${esc(ui.q)}" autocomplete="off">
@@ -106,7 +107,7 @@ export function createBook(root, { getState, onPick, riskOf = null }) {
     });
     el.querySelectorAll('li[data-id]').forEach((li) => {
       li.onclick = () => {
-        api.close();
+        el.classList.add('hidden');
         onPick?.(li.dataset.id);
       };
     });
@@ -116,12 +117,15 @@ export function createBook(root, { getState, onPick, riskOf = null }) {
     get isOpen() {
       return !el.classList.contains('hidden');
     },
-    open() {
+    // A title turns the book into a picker (whom to invite or call).
+    open(opts = {}) {
+      title = opts.title || null;
       el.classList.remove('hidden');
       render();
     },
     close() {
       el.classList.add('hidden');
+      onClose?.();
     },
     refresh() {
       if (api.isOpen) render();
