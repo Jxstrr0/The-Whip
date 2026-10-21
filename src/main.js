@@ -267,6 +267,13 @@ function buildWorld() {
   const ridingUI = createRidingUI(ui, { getState, dispatch });
   const qpUI = createQpUI(ui, { getState, dispatch, getRoom: chamberRoom, onBenches: (kind) => audio.benches(kind) });
 
+  // Who shares the Act 1 room: the first of your cohort in your party, so it's the same face every evening.
+  function deskmate(state, me) {
+    return Object.values(state.mps)
+      .filter((m) => m.party === me.party && m.id !== me.id && m.cohort === me.cohort)
+      .sort((a, b) => (a.id < b.id ? -1 : 1))[0] || null;
+  }
+
   // Keep each room in step with the sim: who's in the chair, moods, the board, the crowd.
   function syncRoom(name, state) {
     const room = rooms.room;
@@ -302,9 +309,13 @@ function buildWorld() {
   function renderAll(state = getState()) {
     const name = roomFor(state);
     const me = state.mps[state.player.mpId];
+    const colleague = name === 'office' && state.player.act < 2 ? deskmate(state, me) : null;
     rooms.show(name, {
       playerColor: colorOf(me),
-      tier: state.player.act >= 4 ? 2 : 1,
+      act: state.player.act,
+      variant: state.player.act,
+      playerName: `${me.name.first} ${me.name.last}`,
+      colleague: colleague && { id: colleague.id, color: colorOf(colleague) },
       ridingType: me.riding.type,
       ridingName: me.riding.name,
       seating: name === 'caucus' ? caucusSeating(state, me.party) : null,
@@ -477,7 +488,7 @@ async function boot() {
     try {
       const st = newGame({ seed: seed || 'CALEDOR-1', party: 'p1' });
       world.rooms.reset();
-      const room = world.rooms.show('chamber', { playerColor: '#555', tier: 1, ridingType: 'rural', ridingName: '', seating: null, playerId: null });
+      const room = world.rooms.show('chamber', { playerColor: '#555', ridingType: 'rural', ridingName: '', seating: null, playerId: null });
       room.sync(st, (mp) => partyColor(st, mp));
       room.autoOrbit(true);
       world.resize();
