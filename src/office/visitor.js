@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { blobMaterial, merge, worldUVs } from '../kit3d.js';
 import { lookFor, shade, HEAD_R, CAP_TOP, tieParts, pinPart, partMaterial, capsule, egg, hairCap } from '../figures.js';
+import { faceTexture } from '../figureTextures.js';
 
 const HIP = 0.86;
 const THIGH = 0.39;
@@ -33,6 +34,7 @@ export function createFigure(color, mpId = 'x', outfit = null) {
   const mats = {
     suit: partMaterial('suit', { color: outfit?.suit || shade(color, mpId), weave: outfit?.weave }),
     skin: partMaterial('skin', { color: look.skin }),
+    head: partMaterial('head', { color: look.skin }),
     hair: partMaterial('hair', { color: look.hair }),
     shirt: partMaterial('shirt'),
     dark: partMaterial('dark'),
@@ -52,7 +54,7 @@ export function createFigure(color, mpId = 'x', outfit = null) {
   // The head turns and nods about the neck.
   const head = new THREE.Group();
   head.position.set(0, HEAD_H - 0.12, 0);
-  const skull = new THREE.Mesh(egg(HEAD_R, 0, 0.12, 0, 1, 1.12, 1.02, 14), mats.skin);
+  const skull = new THREE.Mesh(egg(HEAD_R, 0, 0.12, 0, 1, 1.12, 1.02, 14), mats.head);
   // The cap hangs from its crown, so its style squashes it toward the crown as the crowd's does.
   const cap = new THREE.Mesh(hairCap(-CAP_TOP), mats.hair);
   cap.scale.y = Math.max(look.hairStyle, 0.01);
@@ -112,6 +114,10 @@ export function createFigure(color, mpId = 'x', outfit = null) {
     setHeadVisible(v) {
       head.visible = v;
     },
+    // The face follows the mood: brows and mouth from figureTextures' faces.
+    setFace(mood) {
+      mats.head.map = faceTexture(mood);
+    },
   };
 }
 
@@ -133,6 +139,7 @@ const POSES = {
 
 export function poseFigure(f, name, k = 1) {
   const p = POSES[name] || POSES.standing;
+  f.setFace?.(name);
   const lerp = (a, b) => a + (b - a) * k;
   f.body.position.y = lerp(f.body.position.y, p.bodyY);
   f.body.rotation.x = lerp(f.body.rotation.x, p.lean);
