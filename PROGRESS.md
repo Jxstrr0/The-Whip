@@ -906,3 +906,18 @@ Kelbo asked for the game to be easier to "read": make it clear what your job is 
 
 - I wrote all the job lines fresh. None repeats a line already on the same screen (the confidence-vote note no longer echoes the red warning beneath it).
 - Checked at phone size in portrait and landscape at Acts 1, 3 and 5: the morning, the office, a meeting, caucus, the division, the riding and the weekend paper, plus opening and closing the aim sheet. No console errors. Four new tests cover the aim thresholds, that every job line has its words in every act, that the first week happens once, and that the whip never calls themselves in.
+
+## 2026-10-21 · Three fixes: office time by act, a fresh count each act, and the Chief Whip's caucus tools
+
+Three things turned up while building the aim strip, and Kelbo asked for all three to be fixed.
+
+- **Office time follows the act, as tuned.** The list of evening blocks per act (2, 3, 3, 4, 5) was being read one place off. Act 3 got Act 4's four blocks, Act 4 got five, and Act 5 only got its five by luck. Each act now gets its own number. Crossing the floor also puts you back to Act 1's two blocks, which it hadn't been doing.
+- **Each act counts its own progress.**
+  - Going back to the row as an assistant whip, after a promotion or a demotion, now starts the count of carried votes from zero. Before, a deputy whip demoted to the row could still have three carries from last time, and would be promoted again ten weeks later having done nothing.
+  - Going back to the backbench now caps "noticed" at the Act 1 bar (8). Headless runs showed it growing to about 100 over three years. That made the next contest for a whip's chair *easier* each time you fell. Rebellions still count against you, as before.
+- **The free vote and expulsion are in the caucus room.** From Act 5 the caucus sheet has a section, "The Chief Whip's business":
+  - **Free the vote** on the week's whipped bill. Loyalty rises and the leader takes it by temper, the same as setting a free vote on Monday. This is the mid-week climb-down; a confidence vote can never be freed.
+  - **Expel a member.** It opens a paper list of members below the front bench, most rebellious first, each showing how often they've voted against the line this Parliament and their loyalty. A confirm step follows, because there's no undo. Their chair at the table empties, they leave their clique, and one is enough for one morning. If the revolt is still open, it is one voice smaller. Without the leader's trust (50), the section says so instead of showing a dead button. The leader, cabinet, the whip's office and the Speaker can't be expelled.
+  - As Chief Whip, a restless room now stops you for caucus, not only an angry one, so these tools turn up when they matter. The "caucus fights" pause setting still covers it.
+
+Checked at phone size: portrait (expel, the confirm step, a free vote in week 3) and landscape (short of the leader's trust). No console errors. `tests.html`: 96 passed, 0 failed (two new tests, one rewritten).
