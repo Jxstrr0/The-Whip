@@ -6,6 +6,7 @@ import { createSeats } from './seats.js';
 import { createChamberCamera } from './camera.js';
 import { createPicker } from './picking.js';
 import { createMpFigures } from './mps3d.js';
+import { createVoteLights } from './voteLights.js';
 
 const C = {
   carpet: '#2f5a3c',
@@ -127,6 +128,9 @@ export function create(ctx) {
   scene.add(seats.group);
   const figures = createMpFigures(seats.records);
   scene.add(figures.group);
+  const lights = createVoteLights(seats.records);
+  scene.add(lights.group);
+  let hidden = [];
   // The Speaker in the chair, in a black robe.
   const speaker = new THREE.Group();
   speaker.add(new THREE.Mesh(new THREE.CapsuleGeometry(0.21, 0.4, 4, 10), new THREE.MeshStandardMaterial({ color: '#15161a', roughness: 0.8 })));
@@ -147,7 +151,21 @@ export function create(ctx) {
     camera,
     seats,
     figures,
+    lights,
     controls,
+    // Play a division: absent members leave their chairs, then the standing count lights up seat by seat.
+    playDivision(result, opts = {}) {
+      room.clearDivision();
+      const seatOf = (id) => state.mps[id]?.seatId;
+      hidden = result.absent.map(seatOf).filter(Boolean);
+      for (const sid of hidden) figures.setPresent(sid, false);
+      lights.play(result, seatOf, opts);
+    },
+    clearDivision() {
+      for (const sid of hidden) figures.setPresent(sid, true);
+      hidden = [];
+      lights.reset();
+    },
     // Redraw who sits where and in what colour; call after a new game, load or reseating.
     sync(next, colorOf) {
       state = next;
@@ -164,6 +182,7 @@ export function create(ctx) {
     update(dt) {
       controls.update(dt);
       seats.update(dt, camera);
+      lights.update(dt, camera);
     },
     resize(w, h) {
       camera.aspect = w / h;
