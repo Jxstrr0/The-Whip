@@ -1,6 +1,7 @@
 // Caucus camera: seated eye height just behind your own chair, looking along the table. Drag pans the look
 // along the table within limits; Speak turns it to the head of the table and back.
 import * as THREE from 'three';
+import { sideAim, aimCamera } from '../framing.js';
 
 const DEG = Math.PI / 180;
 
@@ -10,6 +11,7 @@ export function createCaucusCamera(camera, el, from) {
   const limits = [-6, 6];
   const pointers = new Map();
   let aimDrop = 0;
+  let aimSide = 0;
   let head = false;
   const side = from.x < 0 ? -1 : 1;
   // Stand a step back from your chair, a little outside the row, so your neighbours' backs frame the shot.
@@ -51,11 +53,12 @@ export function createCaucusCamera(camera, el, from) {
       }
       look.lerp(goalLook, k);
       camera.position.copy(pos);
-      camera.lookAt(look.x, look.y - aimDrop, look.z);
+      aimCamera(camera, look, aimDrop, aimSide);
     },
-    fitAspect(aspect) {
+    fitAspect(aspect, cssWidth = 0) {
       aimDrop = aspect < 1 ? 1.0 : 0.15;
       camera.fov = Math.max(50, Math.min(78, (2 * Math.atan(Math.tan(25 * DEG) / Math.max(aspect, 0.3))) / DEG));
+      aimSide = sideAim(aspect, camera.fov, cssWidth);
       camera.updateProjectionMatrix();
     },
     dispose() {
