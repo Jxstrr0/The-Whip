@@ -739,3 +739,25 @@ Kelbo's once-over picked twelve things. This is the first: the two rooms where a
 - On a phone held upright the paper's ears are too narrow for three items, so "Weekend edition" gives way and the ears show the weather and the date. The date dropped its "Weekend of" prefix for the same reason.
 - The calendar lives in `src/sim/calendar.js`; months, season starts, monthly highs, first snow, thaw length and each season's weather mix are in `data/tuning.json` under `calendar`; the season lines are in `data/seasons.json`. The falling snow and rain are one shared piece (`src/weatherFx.js`) used by the office and the riding.
 - Three new tests: the calendar's dates, weather that is deterministic and fits its season without touching the dice, and the winter line logged exactly once.
+
+## 2026-10-21 · Round two, 12 (tenth of twelve): The bells as a chase
+
+**What was built**
+
+- **A map of the Hill on the bells sheet.** From Act 3, when the division bells ring on a whipped vote, the sheet shows an ink plan of Parliament Hill: the Centre Block with the chamber and the lobbies behind it, the Halden Block and the Ferrier Building across the street, and the road out to the airport. Members of every party walk in to vote as the clock runs.
+- **Our absent members, where they are.** Each of ours who isn't in the building is a pip in their party colour, placed where the whip's office has them: "in the barber's chair downstairs", "on a long call in the Ferrier Building", "at the gate with boarding called". Each pip shows the round trip in seconds. If more than six are missing, the rest are "not answering" and can't be fetched.
+- **A real clock.** The bells run 30 seconds (15 for a scheduled vote) with a draining bar under the heading. The bar and the bell line turn red for the last five seconds. When the clock hits zero the doors close and you vote with your party, as before.
+- **Staff to send.** Tap a pip to send someone. A staffer's dot walks the route out and back in real time; a member who was found follows them in and takes a seat on the floor of the House, and the count updates. A member who wasn't there leaves the staffer coming back alone and the pip marked "not found". Trips that can no longer beat the doors grey out as "too far now".
+- **Staff grow with rank.** One runner as a junior whip (Act 3), two as deputy (Act 4), three as chief whip (Act 5). The staff dots beside the heading show who's free.
+- **The record.** Each fetch goes in the ledger with its line, and when the doors close the log gets one line for the whole chase ("You sent for three during the bells on the Border Security Enhancement Act; two made it in.").
+
+**Things to know / decisions I made**
+
+- Who is away is worked out from the seed, the bill and the stage with its own hash, never the game's dice, so opening the bells changes nothing else. That list *is* our side's attendance for that division: anyone away and not fetched misses the vote, everyone else is in the building.
+- The outcome of a fetch is settled the moment the staffer leaves, but only shown when they get back. The log and ledger lines are written when the doors close, so the date bar doesn't spoil a result mid-run.
+- A failed fetch now costs that runner's time, not the whole bells. DESIGN.md says a failed chase "costs the bell period"; with one runner at Act 3 a miss on a long trip still does exactly that, but later a chief whip with three runners can recover. Each send still costs 10 minutes of House time, as before.
+- The odds and trips: the lobbies are close and nearly certain (about 5 seconds, 95%), the offices middling (about 11 seconds, 75%), the airport a long shot (about 21 seconds, 50%). Members with leave granted are mostly at the airport. Paired members are left off the map: their pair holds them out.
+- During the bells the count line agrees with the map: members away are counted "away" whatever the book said, and a member the book had away who is actually in the building is counted with us or lost by how they'll vote.
+- Over a headless Parliament, a whipped division has about two of ours away on average and six at most; about half are in the lobbies, two in five in the offices, one in eight at the airport. Trips run 4 to 23 seconds.
+- The two office buildings are fictional names. The map's text is in `data/strings.en.json` under `hill.*`, the places and lines in `data/hill.json`, and the numbers in `data/tuning.json` under `tools.chase`. The drawing is `src/ui/hillMap.js`; the sim side is the "bells" section of `src/sim/tools.js`.
+- Two new tests (the seeded away list, the clock and staff limits, the count rising after a fetch, the ledger and log on close; every Hill line filling with a spot on the map for each place) and the old chase test rewritten for the map.

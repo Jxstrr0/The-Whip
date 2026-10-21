@@ -250,15 +250,15 @@
     "persuadeNudge": 0.4,
     "persuadeBand": 0.6,
     "persuadeWasted": 0.08,
-    "chaseWhere": {
-      "lobby": 0.5,
-      "office": 0.35,
-      "airport": 0.15
-    },
-    "chaseOdds": {
-      "lobby": 0.9,
-      "office": 0.6,
-      "airport": 0.2
+    "chase": {
+      "runnersByAct": [0, 0, 0, 1, 2, 3],
+      "shown": 6,
+      "leaveAirport": 0.7,
+      "places": {
+        "lobby": { "weight": 0.45, "trip": 5, "spread": 1, "odds": 0.95 },
+        "office": { "weight": 0.37, "trip": 11, "spread": 2, "odds": 0.75 },
+        "airport": { "weight": 0.18, "trip": 21, "spread": 3, "odds": 0.5 }
+      }
     },
     "pairTrustNeeded": 10,
     "pairTrustGain": 2,

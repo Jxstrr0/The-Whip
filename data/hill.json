@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "places": {
+    "lobby": {
+      "label": "The lobbies",
+      "spots": [
+        { "text": "in the lobby behind the curtains", "at": "lobby" },
+        { "text": "on the lobby phones", "at": "lobby" },
+        { "text": "in the members' dining room", "at": "lobby" },
+        { "text": "asleep over a newspaper in the reading room", "at": "lobby" },
+        { "text": "at the bottom of the gallery stairs", "at": "lobby" },
+        { "text": "in the barber's chair downstairs", "at": "lobby" },
+        { "text": "giving two reporters a quote in the foyer", "at": "lobby" }
+      ]
+    },
+    "office": {
+      "label": "The office blocks",
+      "spots": [
+        { "text": "in their office in the Halden Block", "at": "halden" },
+        { "text": "in a committee room in the Halden Block", "at": "halden" },
+        { "text": "in the Halden Block cafeteria", "at": "halden" },
+        { "text": "at their desk in the Ferrier Building with the door shut", "at": "ferrier" },
+        { "text": "with a delegation from home in the Ferrier Building", "at": "ferrier" },
+        { "text": "on a long call in the Ferrier Building", "at": "ferrier" }
+      ]
+    },
+    "airport": {
+      "label": "The airport road",
+      "spots": [
+        { "text": "in a cab on the airport road", "at": "road" },
+        { "text": "on the shuttle to the terminal", "at": "road" },
+        { "text": "in the queue at security", "at": "airport" },
+        { "text": "in the departures lounge", "at": "airport" },
+        { "text": "at the gate with boarding called", "at": "airport" }
+      ]
+    }
+  },
+  "found": [
+    "{name} was {spot}. They're in their seat.",
+    "Found {name} {spot}. In through the doors.",
+    "{name} was {spot}, and came at a run.",
+    "{name}, {spot}, dropped everything."
+  ],
+  "missed": {
+    "lobby": [
+      "{name} wasn't {spot} after all. Nobody had seen them.",
+      "Nobody in the lobbies had seen {name} for an hour."
+    ],
+    "office": [
+      "{name}'s door was locked and the phone rang out.",
+      "{name} wasn't {spot}. Their assistant had no idea where they'd gone."
+    ],
+    "airport": [
+      "{name} was already through security.",
+      "By the time anyone got there, {name}'s flight was boarding.",
+      "{name} was {spot}, and wasn't turning round."
+    ]
+  },
+  "log": {
+    "oneIn": "You sent for {name} during the bells on {bill}, and they made it in.",
+    "oneOut": "You sent for {name} during the bells on {bill}. They didn't make it.",
+    "allIn": "You sent for {n} during the bells on {bill} and got every one of them in.",
+    "someIn": "You sent for {n} during the bells on {bill}; {k} made it in.",
+    "noneIn": "You sent for {n} during the bells on {bill}. Nobody made it back."
+  }
+}

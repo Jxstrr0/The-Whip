@@ -10,7 +10,8 @@ import { dilemmaFor, applyPlayerVote } from './career.js';
 import { decayKnowledge, reveal } from './knowledge.js';
 
 // Rooms and phases that later stages hook into (office, caucus, riding). Each returns a pending stop or null.
-export const hooks = { morning: [], caucus: [], questionPeriod: [], house: [], office: [], riding: [], fallout: [], weekend: [] };
+// bells(state, item, bill, secs) runs when a division waits on the player; doorsClose(state, item) just before it's decided.
+export const hooks = { morning: [], caucus: [], questionPeriod: [], house: [], office: [], riding: [], fallout: [], weekend: [], bells: [], doorsClose: [] };
 // Stage 8 hangs the early-Parliament handover here: a fallen government may be replaced without an election.
 // Registered by election.js: `canHandOver(state)` says whether a fallen government hands over to the opposition
 // instead of forcing an election; `beforeDissolve(state, rng)` performs it.
@@ -174,6 +175,8 @@ function houseStep(state, rng) {
   if (item.stop && !flow.choices[keyOf(item)]) {
     const me = state.mps[state.player.mpId];
     const T = tuning().vote;
+    const bells = bill.scheduled ? T.bellsScheduled : T.bellsUnscheduled;
+    for (const fn of hooks.bells) fn(state, item, bill, bells);
     return {
       kind: 'division',
       needsChoice: true,
@@ -184,12 +187,15 @@ function houseStep(state, rng) {
       dilemma: item.stop.dilemma,
       line: bill.lines[me.party],
       position: bill.positions[me.party],
-      bells: bill.scheduled ? T.bellsScheduled : T.bellsUnscheduled,
+      bells,
     };
   }
   flow.queue.shift();
   const choice = flow.choices[keyOf(item)] || autoChoice(state, bill);
+  for (const fn of hooks.doorsClose) fn(state, item);
   const result = decide(state, rng, item, choice, item.stop?.dilemma || null);
+  // The bells' list of who was away stood for our attendance on this one division only.
+  state.bells = null;
   delete flow.choices[keyOf(item)];
   if (flow.day.matters && result.recorded) return { kind: 'result', divisionId: result.id, playerVote: voteOf(result, state.player.mpId) };
   return null;
