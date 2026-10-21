@@ -108,6 +108,7 @@ export function create(ctx) {
     tint: (fn) => figures.tint(fn),
     update(dt) {
       cam.update(dt);
+      figures.update(dt);
     },
     resize(w, h) {
       camera.aspect = w / h;

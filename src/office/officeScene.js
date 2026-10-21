@@ -151,6 +151,7 @@ export function create(ctx) {
 
   // The player sits behind the desk (or, in the reversal, in the other visitor chair).
   const player = createFigure(ctx.playerColor || '#555', 'player');
+  player.setHeadVisible(false);
   scene.add(player.group);
   let deskFigure = null;
   let visitor = null;
