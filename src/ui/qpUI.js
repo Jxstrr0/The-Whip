@@ -1,7 +1,7 @@
 // Question Period in three beats: the Speaker calls your name and you choose how to ask; the minister answers
 // and the benches react; the gallery's verdict and what it cost or bought you. The chamber plays along: you
 // stand, the minister stands, the gavel falls when you sit.
-import { t, esc, stamp, firstWeekHint, mpName, roleName } from './text.js';
+import { t, esc, stamp, firstWeekHint, jobLine, mpName, roleName } from './text.js';
 import { tuning } from '../sim/config.js';
 import { FRAMINGS } from '../sim/questionPeriod.js';
 
@@ -44,7 +44,7 @@ export function createQpUI(root, { getState, dispatch, getRoom, onBenches }) {
       body = `<p class="muted">${esc(t('qp.slot', { day }))}${qp.source === 'deal' ? ` · ${esc(t('qp.deal'))}` : ''}</p>
         <blockquote class="line call">${esc(qp.call)}</blockquote>
         ${minister ? `<p class="muted to">${esc(t('qp.to', { minister: mpName(minister), role: roleName(state, minister) }))}</p>` : ''}
-        ${firstWeekHint(state, 'tutorial.qp')}
+        ${jobLine(state, 'questionPeriod')}${firstWeekHint(state, 'tutorial.qp')}
         <div class="choices">${FRAMINGS.map((f) => `<button class="btn" data-framing="${f}"><small class="approach">${t('qp.' + f)}</small>${esc(qp.questions[f])}</button>`).join('')}</div>`;
     } else if (verdictFor !== key) {
       phase = 'answer';

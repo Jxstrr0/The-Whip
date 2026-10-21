@@ -1,5 +1,5 @@
 // The riding UI: who's in the chair, carrying cases, the reporter, the president, the town hall, standing.
-import { t, esc, firstWeekHint } from './text.js';
+import { t, esc, firstWeekHint, jobLine } from './text.js';
 import { data } from '../sim/config.js';
 import { fillRiding } from '../sim/riding.js';
 
@@ -54,7 +54,7 @@ export function createRidingUI(root, { getState, dispatch }) {
         <button class="btn primary" data-act="home">${t('riding.home')}</button></div>`;
     }
     sheet.innerHTML = `<div class="sheet-handle"></div><h2>${esc(t('riding.title', { riding: me.riding.name }))}</h2>
-      <div class="tally">${bar(t('riding.standing'), p.ridingStanding)}</div>${firstWeekHint(state, 'tutorial.riding')}${body}`;
+      <div class="tally">${bar(t('riding.standing'), p.ridingStanding)}</div>${jobLine(state, 'riding')}${firstWeekHint(state, 'tutorial.riding')}${body}`;
     const on = (sel, action) => sheet.querySelector(sel)?.addEventListener('click', () => dispatch(action));
     on('[data-act="carry"]', { type: 'ridingCase', carry: true });
     on('[data-act="decline"]', { type: 'ridingCase', carry: false });

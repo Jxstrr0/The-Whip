@@ -1,5 +1,5 @@
 // The caucus room UI: the leader's line, grievances, and the player's three moves (listen, speak, whisper).
-import { t, esc, mpName } from './text.js';
+import { t, esc, mpName, jobLine } from './text.js';
 import { data } from '../sim/config.js';
 import { neighbours, fillStance } from '../sim/caucus.js';
 
@@ -25,6 +25,7 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
     sheet.classList.remove('hidden');
     sheet.innerHTML = `<div class="sheet-handle"></div>
       <h2>${t('caucus.title')}</h2>
+      ${jobLine(state, 'caucus', { revolt: c.revolt })}
       <p class="muted">${esc(c.moodText)}</p>
       <blockquote class="line">${esc(c.opening)}</blockquote>
       <p><b>${bill ? esc(t('caucus.line', { bill: bill.title, line: lineText })) : t('caucus.noLine')}</b></p>

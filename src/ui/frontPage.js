@@ -1,7 +1,7 @@
 // The weekend edition: the week in review as the front page of an Ostrava paper. The lead story is the
 // week's biggest headline from the press gallery, the rest run below the fold, with the polls as a chart,
 // the week's numbers, and the player's photograph when the story is theirs.
-import { t, esc, scenarioVerdict } from './text.js';
+import { t, esc, scenarioVerdict, aimShort } from './text.js';
 import { data, tuning } from '../sim/config.js';
 import { quietLead } from '../sim/media.js';
 import { calendarOf, weatherOf } from '../sim/calendar.js';
@@ -104,6 +104,7 @@ export function renderFrontPage(state, p, photoUrl) {
             <div class="kv"><span class="k">${t('week.divisions')}</span><span class="v">${s.divisions}</span></div>
             ${state.player.act >= 3 ? `<div class="kv${(state.pressure || 0) >= 70 ? ' stale' : ''}"><span class="k">${t('week.pressure')}</span><span class="v">${Math.round(state.pressure || 0)} / 100</span></div>` : ''}
           </div>
+          <p class="aim-week"><span class="k">${t('week.aim')}</span>${esc(aimShort(state))}</p>
           <p class="muted small">${esc(t('week.act', { n: state.player.act, n2: state.player.whipFile.length, noticed: Math.round(state.player.actProgress.noticed) }))}</p>
         </section>
         <section class="front-polls">
