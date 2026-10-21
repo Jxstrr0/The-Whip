@@ -1,5 +1,5 @@
 // The office UI: the evening board (slots, walk-ins, invite, call) and the meeting's talk phase.
-import { t, esc, mpName, partyColor, partyShort } from './text.js';
+import { t, esc, mpName, partyColor, partyShort, firstWeekHint } from './text.js';
 import { fillLine } from '../sim/meetings.js';
 import { renderDealTable } from './dealTable.js';
 import { tuning } from '../sim/config.js';
@@ -69,6 +69,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
       : `<li class="muted">${t('office.none')}</li>`;
     sheet.innerHTML = `<div class="sheet-handle"></div>
       <header class="card-head"><div class="who"><h2>${t('office.title')}</h2><p>${t('office.slots')}: <span class="slots">${slotDots(e)}</span></p></div></header>
+      ${firstWeekHint(state, 'tutorial.office')}
       ${whip}
       <h3>${t('office.walkIns')}</h3><ul class="book-list">${rows}</ul>
       ${whipsDesk(state)}

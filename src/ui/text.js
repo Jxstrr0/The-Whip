@@ -32,6 +32,11 @@ export function scenarioVerdict(state) {
   return `<blockquote class="line scenario-verdict">${stamp(t('scenario.stamp.' + v.key), kind)} ${esc(v.text)}</blockquote>`;
 }
 
+// Week 0 is the guided first week: a hint on each room's first sheet, then never again.
+export function firstWeekHint(state, key) {
+  return state.date.absWeek === 0 && state.mode?.kind !== 'scenario' ? `<p class="tutorial">${t(key)}</p>` : '';
+}
+
 export function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }

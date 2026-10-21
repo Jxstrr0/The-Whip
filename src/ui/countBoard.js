@@ -1,5 +1,5 @@
 // The count board: the bells and your choice during a division, then the standing count ticking up by party.
-import { t, esc, stamp, partyShort, partyColor, mpName, countLine } from './text.js';
+import { t, esc, stamp, partyShort, partyColor, mpName, countLine, firstWeekHint } from './text.js';
 import { tuning } from '../sim/config.js';
 import { stageLabel, questionText } from '../sim/vote.js';
 import { prediction } from '../sim/count.js';
@@ -56,7 +56,7 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
       <p class="muted">${esc(questionText(bill, p.stage))} · ${esc(stageLabel(p.stage))}</p>
       <p>${esc(bill.summary || '')}</p>
       ${bill.confidence ? `<p class="warn">${t('div.confidence')}</p>` : ''}
-      ${p.reason === 'ownBill' ? `<p class="tutorial">${t('div.ownBill')}</p>` : ''}
+      ${p.reason === 'ownBill' ? `<p class="tutorial">${t('div.ownBill')}</p>` : firstWeekHint(state, 'tutorial.bells')}
       ${count}
       <div class="kvs">
         <div class="kv"><span class="k">${t('div.line', { line: '' }).replace(': ', '')}</span><span class="v">${esc(lineText)}</span></div>
