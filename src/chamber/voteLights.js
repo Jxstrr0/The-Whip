@@ -48,6 +48,13 @@ export function createVoteLights(records) {
     group.add(icons[kind]);
   }
   group.add(lamp);
+  // A short vertical flash above a seat as it lights: additive, fading over flashFor seconds.
+  const flash = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.5, 1.0), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }), n);
+  flash.count = 0;
+  flash.frustumCulled = false;
+  group.add(flash);
+  const flashes = [];
+  const flashFor = 0.45;
   const color = new THREE.Color();
   const m = new THREE.Matrix4();
   const byId = new Map(records.map((s, i) => [s.seatId, i]));
@@ -69,6 +76,8 @@ export function createVoteLights(records) {
   let onTick = null;
   let onDone = null;
   let showIcons = true;
+  let bellsOn = false;
+  let bellT = 0;
 
   function set(seatId, kind) {
     const i = byId.get(seatId);
@@ -149,6 +158,7 @@ export function createVoteLights(records) {
           const [k, sid] = queue.shift();
           set(sid, k);
           this.counts[k]++;
+          flashes.push({ i: byId.get(sid), k, t: 0 });
           onTick?.(this.counts);
           if (!queue.length) {
             const d = onDone;
@@ -170,7 +180,44 @@ export function createVoteLights(records) {
           pulse = [];
         }
       }
+      if (bellsOn && !queue.length) {
+        bellT += dt;
+        const v = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(bellT * 3.2));
+        color.set('#e0a526').multiplyScalar(v);
+        for (let i = 0; i < n; i++) if (state[i] === 'off') lamp.setColorAt(i, color);
+        lamp.instanceColor.needsUpdate = true;
+      }
+      // Flashes rise a little and fade.
+      let live = 0;
+      for (const f of flashes) {
+        f.t += dt;
+        if (f.t > flashFor) continue;
+        const s = records[f.i];
+        const a = 1 - f.t / flashFor;
+        pos.set(s.x, s.y + 1.3 + f.t * 0.6, s.z);
+        m.compose(pos, q.copy(camera.quaternion), one);
+        flash.setMatrixAt(live, m);
+        flash.setColorAt(live, color.set(VOTE_COLORS[f.k]).multiplyScalar(a * a));
+        live++;
+      }
+      while (flashes.length && flashes[0].t > flashFor) flashes.shift();
+      flash.count = live;
+      if (live) {
+        flash.instanceMatrix.needsUpdate = true;
+        if (flash.instanceColor) flash.instanceColor.needsUpdate = true;
+      }
       if (lamp.visible) layoutIcons(camera);
+    },
+    // The bells are ringing: every unlit seat lamp pulses amber until the count starts.
+    bells(on) {
+      bellsOn = on;
+      bellT = 0;
+      if (on) {
+        lamp.visible = true;
+      } else if (!queue.length && state.every((s) => s === 'off')) {
+        for (const s of records) set(s.seatId, 'off');
+        lamp.visible = false;
+      }
     },
   };
 }

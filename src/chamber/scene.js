@@ -1,7 +1,8 @@
 // The chamber room: shell, Speaker's dais, Clerk's table and Mace, the bar and galleries, plus seats and camera.
 import * as THREE from 'three';
 import { GEOMETRY as G, seatX } from './layout.js';
-import { box, slab, panel, cylinder, sphere, merge, vertexMaterial, glowMaterial, disposeTree, roomLights, lamp, bakeAO, contactShadows } from '../kit3d.js';
+import { box, slab, panel, cylinder, sphere, merge, vertexMaterial, glowMaterial, washMaterial, worldUVs, disposeTree, roomLights, lamp, bakeAO, contactShadows } from '../kit3d.js';
+import { surface } from '../textures.js';
 import { PALETTE } from '../look.js';
 import { tuning } from '../sim/config.js';
 import { createSeats } from './seats.js';
@@ -17,24 +18,28 @@ const C = {
   oak: '#6e4a2b',
   oakLight: '#8a5f38',
   oakDark: '#3f2a17',
-  stone: '#b9b0a0',
-  stoneDark: '#8f877a',
-  ceiling: '#a68d66',
-  glass: '#c9b98a',
+  stone: '#c6b79e',
+  stoneDark: '#9a8c78',
+  plaster: '#e6dcc6',
   brass: '#c9a24a',
   gold: '#d8b04c',
   speakerChair: '#3c2a1a',
   leather: '#2f5a3c',
 };
 
+// Muted suits for the people in the galleries: staff, press, the public.
+const GALLERY_SUITS = ['#4a4a4f', '#5c4a3a', '#3d4650', '#6b5a48', '#2f3a44', '#7a6a5a', '#444'];
+
 function buildShell() {
   const L = G.floorLength / 2;
   const W = G.floorWidth / 2;
-  const parts = [];
+  const H = G.ceiling;
+  // Parts grouped by surface, so each group gets its own grain: one mesh per group.
+  const g = { carpet: [], oak: [], walnut: [], leather: [], stone: [], plaster: [], metal: [], glow: [], wash: [] };
 
-  // Floor, aisle runner and the tiered platforms that lift each row.
-  parts.push(slab(-W, -0.05, -L, W, 0, L, C.carpet, 1.5));
-  parts.push(slab(-G.aisleWidth / 2, 0, -L, G.aisleWidth / 2, 0.01, L, C.aisle));
+  // Floor, aisle runner and the tiered platforms that lift each row; oak riser faces read as steps.
+  g.carpet.push(slab(-W, -0.05, -L, W, 0, L, C.carpet, 1.5));
+  g.carpet.push(slab(-G.aisleWidth / 2, 0, -L, G.aisleWidth / 2, 0.01, L, C.aisle, 1.5));
   for (const sign of [-1, 1]) {
     for (let row = 2; row <= G.rows; row++) {
       const inner = Math.abs(seatX('gov', row)) - 0.85;
@@ -42,91 +47,131 @@ function buildShell() {
       const h = (row - 1) * G.rowRise;
       const x0 = sign < 0 ? -outer : inner;
       const x1 = sign < 0 ? -inner : outer;
-      parts.push(slab(x0, 0, -9, x1, h, 9, C.carpet));
-      // An oak riser face toward the aisle reads as a step.
+      g.carpet.push(slab(x0, 0, -9, x1, h, 9, C.carpet, 1.5));
       const fx = sign < 0 ? -inner : inner;
-      parts.push(slab(fx - 0.03, 0, -9, fx + 0.03, h, 9, C.oak));
+      g.oak.push(slab(fx - 0.03, 0, -9, fx + 0.03, h, 9, C.oak));
     }
   }
 
-  // Walls and ceiling are one-sided inward panels, so the default camera above the bar can see through the end wall.
-  const H = G.ceiling;
-  const walls = [];
-  // Things that are themselves light: the window panes and the chandeliers. Drawn unlit so they read as lit.
-  const glow = [];
+  // Long walls: stone in courses above an oak wainscot with panel strips; tall windows with mullions and a
+  // light wash on the wall beneath each. Walls are one-sided so the overview camera can sit outside the room.
   for (const sign of [-1, 1]) {
     const facing = sign < 0 ? '+x' : '-x';
-    walls.push(panel(G.floorLength, H, sign * W, H / 2, 0, C.stone, facing, 2));
-    walls.push(panel(G.floorLength, 2.2, sign * (W - 0.01), 1.1, 0, C.oak, facing, 2));
-    // Tall windows above the gallery, with dark mullions.
+    const wx = (d) => sign * (W - d);
+    g.stone.push(panel(G.floorLength, H, wx(0), H / 2, 0, C.stone, facing, 2));
+    for (let y = 3.2; y < H - 0.2; y += 1.1) g.stone.push(panel(G.floorLength, 0.03, wx(0.005), y, 0, C.stoneDark, facing));
+    g.oak.push(panel(G.floorLength, 2.2, wx(0.01), 1.1, 0, C.oak, facing, 2));
+    for (let z = -12; z <= 12; z += 1.2) g.oak.push(panel(0.06, 1.9, wx(0.02), 1.05, z, C.oakDark, facing));
+    g.oak.push(panel(G.floorLength, 0.1, wx(0.02), 2.2, 0, C.oakDark, facing));
+    g.oak.push(panel(G.floorLength, 0.06, wx(0.02), 0.2, 0, C.oakDark, facing));
     for (let i = -3; i <= 3; i++) {
-      glow.push(panel(1.6, 2.6, sign * (W - 0.02), 7.9, i * 3.4, PALETTE.paneWarm, facing));
-      walls.push(panel(0.08, 2.6, sign * (W - 0.03), 7.9, i * 3.4, C.oakDark, facing));
-      walls.push(panel(1.6, 0.08, sign * (W - 0.03), 7.9, i * 3.4, C.oakDark, facing));
+      g.glow.push(panel(1.6, 2.6, wx(0.02), 7.9, i * 3.4, PALETTE.paneWarm, facing));
+      g.oak.push(panel(0.08, 2.6, wx(0.03), 7.9, i * 3.4, C.oakDark, facing));
+      g.oak.push(panel(1.6, 0.08, wx(0.03), 7.9, i * 3.4, C.oakDark, facing));
+      g.oak.push(panel(1.9, 0.12, wx(0.03), 6.55, i * 3.4, C.oakDark, facing));
+      g.wash.push(panel(3.6, 4.2, wx(0.04), 5.2, i * 3.4, PALETTE.paneWarm, facing));
     }
   }
-  for (const z of [-7, 0, 7]) {
-    glow.push(cylinder(0.8, 0.6, 0.12, 0, H - 2.7, z, PALETTE.paneWarm, 16));
-    walls.push(cylinder(0.04, 0.04, 1.6, 0, H - 1.8, z, C.oakDark, 8));
-    walls.push(cylinder(0.85, 0.85, 0.06, 0, H - 2.6, z, C.brass, 16));
+  // End walls, the doors at the bar end, and a plaster ceiling with oak beams.
+  for (const [z, facing, wain] of [[-L, '+z', 2.4], [L, '-z', 2.2]]) {
+    const in1 = facing === '+z' ? 1 : -1;
+    g.stone.push(panel(G.floorWidth, H, 0, H / 2, z, C.stoneDark, facing, 2));
+    for (let y = 3.2; y < H - 0.2; y += 1.1) g.stone.push(panel(G.floorWidth, 0.03, 0, y, z + in1 * 0.005, C.stoneDark, facing));
+    g.oak.push(panel(G.floorWidth, wain, 0, wain / 2, z + in1 * 0.01, C.oak, facing, 2));
+    for (let x = -7; x <= 7; x += 1.2) g.oak.push(panel(0.06, wain - 0.3, x, wain / 2 - 0.05, z + in1 * 0.02, C.oakDark, facing));
+    g.oak.push(panel(G.floorWidth, 0.1, 0, wain, z + in1 * 0.02, C.oakDark, facing));
   }
-  walls.push(panel(G.floorWidth, H, 0, H / 2, -L, C.stoneDark, '+z', 2));
-  walls.push(panel(G.floorWidth, 2.4, 0, 1.2, -L + 0.01, C.oak, '+z', 2));
-  walls.push(panel(G.floorWidth, H, 0, H / 2, L, C.stoneDark, '-z', 2));
-  walls.push(panel(G.floorWidth, 2.2, 0, 1.1, L - 0.01, C.oak, '-z', 2));
-  // Doors at the bar end.
-  walls.push(panel(1.8, 2.8, 0, 1.4, L - 0.02, C.oakLight, '-z'));
-  walls.push(panel(G.floorWidth, G.floorLength, 0, H, 0, C.ceiling, 'down', 2.5));
-  for (let i = -5; i <= 5; i++) walls.push(panel(G.floorWidth, 0.3, 0, H - 0.01, i * 2.4, C.oak, 'down'));
+  g.walnut.push(panel(1.8, 2.8, 0, 1.4, L - 0.03, C.oakLight, '-z'));
+  g.plaster.push(panel(G.floorWidth, G.floorLength, 0, H, 0, C.plaster, 'down', 2.5));
+  for (let i = -5; i <= 5; i++) g.oak.push(slab(-W, H - 0.35, i * 2.4 - 0.18, W, H, i * 2.4 + 0.18, C.oakDark));
+  g.oak.push(slab(-0.18, H - 0.35, -L, 0.18, H, L, C.oakDark));
+  // Three chandeliers down the centre: a lit dish on a stem with a brass ring.
+  for (const z of [-7, 0, 7]) {
+    g.glow.push(cylinder(0.72, 0.55, 0.1, 0, H - 2.72, z, PALETTE.paneWarm, 16));
+    g.walnut.push(cylinder(0.04, 0.04, 1.6, 0, H - 1.8, z, C.oakDark, 8));
+    g.metal.push(cylinder(0.85, 0.85, 0.07, 0, H - 2.64, z, C.brass, 16));
+  }
 
-  // Galleries along both long walls: a floor slab, a front rail and stepped benches.
+  // Galleries along both long walls: an oak floor, a railed front with posts and a brass top rail, leather benches.
   for (const sign of [-1, 1]) {
     const x0 = sign * (W - G.gallery.depth);
     const x1 = sign * W;
-    parts.push(slab(Math.min(x0, x1), G.gallery.y - 0.3, -L + 1, Math.max(x0, x1), G.gallery.y, L - 1, C.oak));
-    parts.push(slab(x0 - 0.05, G.gallery.y, -L + 1, x0 + 0.05, G.gallery.y + 0.95, L - 1, C.oakLight));
+    const gy = G.gallery.y;
+    g.oak.push(slab(Math.min(x0, x1), gy - 0.3, -L + 1, Math.max(x0, x1), gy, L - 1, C.oak));
+    g.oak.push(slab(x0 - 0.05, gy, -L + 1, x0 + 0.05, gy + 0.9, L - 1, C.oakLight));
+    for (let z = -L + 1.5; z <= L - 1.5; z += 2) g.walnut.push(cylinder(0.035, 0.035, 0.95, x0, gy + 0.47, z, C.oakDark, 8));
+    g.metal.push(cylinder(0.025, 0.025, G.floorLength - 2, x0, gy + 0.96, 0, C.brass, 8, 'z'));
     for (let s = 0; s < 3; s++) {
       const bx = x0 + sign * (0.6 + s * 0.8);
-      parts.push(slab(bx - 0.3, G.gallery.y, -L + 1.5, bx + 0.3, G.gallery.y + 0.35 + s * 0.3, L - 1.5, C.leather));
+      g.leather.push(slab(bx - 0.3, gy, -L + 1.5, bx + 0.3, gy + 0.35 + s * 0.3, L - 1.5, C.leather));
     }
   }
 
-  // Speaker's dais and chair with a carved canopy.
+  // Speaker's dais and chair: a tall carved back under a canopy with a crest, side pillars, a leather seat.
   const dz = G.dais.z;
-  parts.push(slab(-G.dais.width / 2, 0, dz - 1.2, G.dais.width / 2, G.dais.height, dz + 1, C.oak));
-  parts.push(box(1.1, 0.5, 0.9, 0, G.dais.height + 0.25, dz, C.leather));
-  parts.push(box(1.3, 3.2, 0.25, 0, G.dais.height + 1.6, dz - 0.5, C.speakerChair));
-  parts.push(box(1.7, 0.4, 1.4, 0, G.dais.height + 3.4, dz - 0.1, C.oak));
-  parts.push(box(0.12, 1, 0.8, -0.55, G.dais.height + 0.75, dz, C.speakerChair));
-  parts.push(box(0.12, 1, 0.8, 0.55, G.dais.height + 0.75, dz, C.speakerChair));
+  const dh = G.dais.height;
+  g.oak.push(slab(-G.dais.width / 2, 0, dz - 1.2, G.dais.width / 2, dh, dz + 1, C.oak));
+  g.oak.push(slab(-G.dais.width / 2 - 0.3, 0, dz + 1, G.dais.width / 2 + 0.3, dh / 2, dz + 1.4, C.oak));
+  g.leather.push(box(1.1, 0.5, 0.9, 0, dh + 0.25, dz, C.leather));
+  g.walnut.push(box(1.3, 3.2, 0.25, 0, dh + 1.6, dz - 0.5, C.speakerChair));
+  g.walnut.push(box(1.9, 0.4, 1.5, 0, dh + 3.4, dz - 0.1, C.speakerChair));
+  g.walnut.push(cylinder(0.02, 0.95, 0.8, 0, dh + 4.0, dz - 0.1, C.speakerChair, 4));
+  for (const x of [-0.85, 0.85]) {
+    g.walnut.push(box(0.14, 3.2, 0.14, x, dh + 1.6, dz + 0.5, C.speakerChair));
+    g.walnut.push(box(0.12, 1, 0.8, x * 0.65, dh + 0.75, dz, C.speakerChair));
+  }
+  g.metal.push(sphere(0.09, 0, dh + 4.45, dz - 0.1, C.gold, 10));
 
-  // Clerk's table on the aisle.
+  // Clerk's table on the aisle: oak, a green cloth top, brass brackets for the Mace, two clerks' chairs.
   const t = G.clerkTable;
-  parts.push(slab(-t.width / 2, 0, t.zFrom, t.width / 2, t.height - 0.05, t.zTo, C.oak));
-  parts.push(slab(-t.width / 2 - 0.03, t.height - 0.05, t.zFrom - 0.03, t.width / 2 + 0.03, t.height, t.zTo + 0.03, C.leather));
-  // Clerks' chairs at the Speaker's end of the table.
-  for (const x of [-0.45, 0.45]) parts.push(box(0.5, 0.9, 0.5, x, 0.45, t.zFrom - 0.5, C.leather));
+  g.oak.push(slab(-t.width / 2, 0, t.zFrom, t.width / 2, t.height - 0.05, t.zTo, C.oak));
+  g.leather.push(slab(-t.width / 2 - 0.03, t.height - 0.05, t.zFrom - 0.03, t.width / 2 + 0.03, t.height, t.zTo + 0.03, C.leather));
+  const mz = (t.zFrom + t.zTo) / 2;
+  for (const z of [mz - 0.5, mz + 0.5]) g.metal.push(box(0.16, 0.08, 0.06, 0, t.height + 0.02, z, C.brass));
+  for (const x of [-0.45, 0.45]) g.leather.push(box(0.5, 0.9, 0.5, x, 0.45, t.zFrom - 0.5, C.leather));
+
+  // Brass and gold: the bar and its posts, the Mace.
+  g.metal.push(cylinder(0.035, 0.035, G.aisleWidth, 0, 0.9, G.barZ, C.brass, 10, 'x'));
+  for (const x of [-G.aisleWidth / 2, G.aisleWidth / 2]) g.metal.push(cylinder(0.05, 0.07, 0.95, x, 0.47, G.barZ, C.brass, 10));
+  g.metal.push(cylinder(0.035, 0.03, 1.5, 0, t.height + 0.08, mz, C.gold, 10, 'z'));
+  g.metal.push(sphere(0.11, 0, t.height + 0.11, mz - 0.8, C.gold, 12));
+  g.metal.push(cylinder(0.06, 0.04, 0.1, 0, t.height + 0.08, mz + 0.78, C.gold, 10, 'z'));
 
   const bounds = { x0: -W, x1: W, z0: -L, z1: L };
-  const shellGeo = bakeAO(merge(parts), { bounds });
-  const wallGeo = bakeAO(merge(walls), { bounds, ceilY: H, reach: 1.8 });
-
-  // Brass and gold share a metallic material: the bar and its posts, the Mace.
-  const metal = [];
-  metal.push(cylinder(0.035, 0.035, G.aisleWidth, 0, 0.9, G.barZ, C.brass, 10, 'x'));
-  for (const x of [-G.aisleWidth / 2, G.aisleWidth / 2]) metal.push(cylinder(0.05, 0.07, 0.95, x, 0.47, G.barZ, C.brass, 10));
-  const mz = (t.zFrom + t.zTo) / 2;
-  metal.push(cylinder(0.035, 0.03, 1.5, 0, t.height + 0.05, mz, C.gold, 10, 'z'));
-  metal.push(sphere(0.11, 0, t.height + 0.08, mz - 0.8, C.gold, 12));
-  metal.push(cylinder(0.06, 0.04, 0.1, 0, t.height + 0.05, mz + 0.78, C.gold, 10, 'z'));
-  const metalGeo = merge(metal);
-
   const group = new THREE.Group();
-  group.add(new THREE.Mesh(shellGeo, vertexMaterial()));
-  group.add(new THREE.Mesh(wallGeo, vertexMaterial()));
-  group.add(new THREE.Mesh(metalGeo, vertexMaterial({ metalness: 0.7, roughness: 0.35, envMapIntensity: 1 })));
-  group.add(new THREE.Mesh(merge(glow), glowMaterial()));
+  const textured = { carpet: 'carpet', oak: 'oak', walnut: 'walnut', leather: 'leather', stone: 'stone', plaster: 'plaster' };
+  for (const [kind, parts] of Object.entries(g)) {
+    if (!parts.length) continue;
+    let geo = merge(parts);
+    let mat;
+    if (textured[kind]) {
+      geo = worldUVs(bakeAO(geo, { bounds, ceilY: kind === 'stone' ? H : null, reach: kind === 'stone' ? 1.8 : 0.9, strength: kind === 'plaster' ? 0.2 : null }));
+      mat = surface(textured[kind]);
+    } else if (kind === 'metal') mat = vertexMaterial({ metalness: 0.7, roughness: 0.35, envMapIntensity: 1 });
+    else if (kind === 'glow') mat = glowMaterial();
+    else mat = washMaterial(0.5);
+    const mesh = new THREE.Mesh(geo, mat);
+    if (kind === 'wash') mesh.renderOrder = 2;
+    group.add(mesh);
+  }
   return group;
+}
+
+// A few people in the galleries, seated on the front bench, in muted clothes.
+function buildSpectators() {
+  const W = G.floorWidth / 2;
+  const n = 14;
+  const crowd = createFigureCrowd(n, { pose: 'seated' });
+  for (let i = 0; i < n; i++) {
+    const sign = i % 2 ? 1 : -1;
+    const look = lookFor(`gallery-${i}`);
+    const x = sign * (W - G.gallery.depth + 0.6);
+    const z = -8 + Math.floor(i / 2) * 2.6 + look.yaw * 4;
+    crowd.place(i, { x, y: G.gallery.y - 0.12, z, rotY: sign < 0 ? Math.PI / 2 : -Math.PI / 2, scale: look.height, lean: look.lean, yaw: look.yaw });
+    crowd.dress(i, { ...look, suit: GALLERY_SUITS[i % GALLERY_SUITS.length] });
+  }
+  crowd.commit();
+  return crowd;
 }
 
 export function create(ctx) {
@@ -136,10 +181,14 @@ export function create(ctx) {
   scene.fog = new THREE.Fog('#1b1a17', 40, 70);
   scene.environment = ctx.environment || null;
   // Daylight from the high windows, a cool fill, and three warm chandeliers down the centre.
-  roomLights(scene, { hemi: 0.4, key: 1.0, fill: 0.2, keyPos: [9, 14, -4] });
+  const lightsRig = roomLights(scene, { hemi: 0.4, key: 1.0, fill: 0.2, ground: '#5a4a38', keyPos: [9, 14, -4] });
+  const hemiBase = lightsRig.hemi.intensity;
+  let hemiGoal = hemiBase;
   for (const z of [-7, 0, 7]) lamp(scene, { intensity: tuning().look.chandelier, distance: 18, y: G.ceiling - 2.8, z });
 
   scene.add(buildShell());
+  const spectators = buildSpectators();
+  scene.add(spectators.group);
   const seats = createSeats();
   scene.add(seats.group);
   // A soft shadow under every desk-and-chair pair.
@@ -160,6 +209,24 @@ export function create(ctx) {
   const controls = createChamberCamera(camera, renderer.domElement);
   const picker = createPicker(camera, seats.pickMesh, seats.records);
   let state = null;
+  let homeSeatId = null;
+  let returnHome = false;
+
+  // The three-quarter shot for a division, remembering to come back to your seat afterwards.
+  function takeDivisionShot() {
+    if (controls.mode === 'home') {
+      returnHome = true;
+      controls.setMode('overview');
+    }
+    controls.divisionShot(true);
+  }
+
+  // From your own seat you can't see yourself, so your figure leaves the chair while the camera is in it.
+  function applyHomeHiding() {
+    if (!homeSeatId) return;
+    figures.setPresent(homeSeatId, controls.mode !== 'home');
+  }
+  controls.onModeChange(applyHomeHiding);
 
   const room = {
     name: 'chamber',
@@ -170,8 +237,32 @@ export function create(ctx) {
     lights,
     controls,
     // Play a division: absent members leave their chairs, then the standing count lights up seat by seat.
+    // The bells: the room dims a touch, every seat lamp pulses amber, and the camera goes to the three-quarter
+    // shot where the count reads (coming back to your seat when the result is dismissed).
+    setBells(on) {
+      lights.bells(on);
+      hemiGoal = on ? hemiBase * 0.8 : hemiBase;
+      if (on) takeDivisionShot();
+    },
+    get view() {
+      return controls.mode;
+    },
+    setView(m) {
+      controls.setMode(m);
+      if (m === 'home') returnHome = false;
+    },
+    setHomeSeat(seatId) {
+      const s = seats.byId.get(seatId);
+      if (!s) return;
+      homeSeatId = seatId;
+      controls.setHome(s);
+      applyHomeHiding();
+    },
     playDivision(result, opts = {}) {
-      room.clearDivision();
+      for (const sid of hidden) figures.setPresent(sid, true);
+      hidden = [];
+      lights.reset();
+      takeDivisionShot();
       const seatOf = (id) => state.mps[id]?.seatId;
       hidden = result.absent.map(seatOf).filter(Boolean);
       for (const sid of hidden) figures.setPresent(sid, false);
@@ -181,11 +272,20 @@ export function create(ctx) {
       for (const sid of hidden) figures.setPresent(sid, true);
       hidden = [];
       lights.reset();
+      lights.bells(false);
+      hemiGoal = hemiBase;
+      controls.divisionShot(false);
+      if (returnHome) {
+        returnHome = false;
+        controls.setMode('home');
+      }
+      applyHomeHiding();
     },
     // Redraw who sits where and in what colour; call after a new game, load or reseating.
     sync(next, colorOf) {
       state = next;
       figures.sync(state, colorOf);
+      applyHomeHiding();
     },
     select(seatId) {
       seats.select(seatId);
@@ -195,12 +295,18 @@ export function create(ctx) {
       const s = seats.byId.get(seatId);
       if (s) controls.frame(blockFor(s));
     },
+    frameBlock(seatId) {
+      const s = seats.byId.get(seatId);
+      if (s) controls.frame(blockFor(s));
+    },
     update(dt) {
       controls.update(dt);
+      lightsRig.hemi.intensity += (hemiGoal - lightsRig.hemi.intensity) * Math.min(1, dt * 3);
       seats.update(dt, camera);
       lights.update(dt, camera);
       figures.update(dt);
       speaker.update(dt);
+      spectators.update(dt);
     },
     resize(w, h) {
       camera.aspect = w / h;
