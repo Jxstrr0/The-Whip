@@ -322,3 +322,24 @@ The first step of `ART-PASS.md`. Nothing in the rooms was redesigned yet; this i
 
 - I kept the native dropdown list under the styled select. A fully custom paper list sheet is a small follow-up; the native one works on every phone today.
 - The menu's live chamber behind the title page (from the plan) is deferred to V7, when the figures and the room are final.
+
+---
+
+## 2026-10-21 · Art pass V4: the office
+
+**What changed**
+
+- **Real furniture.** The desk, the desk chair, the two visitor chairs, the bookcases, the books, the desk lamp, the laptop, the plant, the coat rack by the door and the bin are models from Kenney's Furniture Kit (CC0, about 290 KB for twenty props, listed in `assets/LICENSES.md`). `src/models.js` loads each once and maps the kit's flat material names (`wood`, `metal`, `carpet`...) to the game's own surfaces, so the desk is the same oak as the chamber benches and the chair seats the same green leather.
+- **The room.** Plaster walls with an oak wainscot, panel strips and a skirting; a wool carpet; a framed door with a brass knob; the window with a frame, a sill and half-open blinds, and dusk over the lawn behind it (a dark tower with lit windows, two layers of trees): evenings are when the office happens. The count board is a corkboard with pinned cards. The desk lamp has a lit shade and throws a warm pool.
+- **The framing is fixed.** The camera sits over your shoulder with the visitor's head in the top third of a portrait screen, above the sheet; your own shoulder shows at the edge of the frame and your head doesn't. The deal table pushes in a little closer.
+- **The whip's office** is a different room for the Act 1 reversal: a big walnut desk, two bookcases, the flag in the party's colour behind the chair, the blinds shut, the daylight down and the lamp up. You sit in the visitor's chair and the whip leans in across the desk.
+
+**Checks**
+
+- Guided week through the real buttons in a headless phone browser: no console errors. `tests.html`: 33 of 33.
+- Draw calls: the office is over the handoff's 40 (two jointed figures are 19 small meshes each, plus about 25 props). They're tiny meshes, and the phone frame rate is what matters; V8 measures it, and merging the figures' fixed parts is the lever if it's needed.
+
+**Things to know**
+
+- The visitor still walks in from the door, which takes about two seconds; the whip, in the reversal, is already seated when you arrive.
+- The tier-2 corner office (Acts 4–5) still builds but isn't dressed; that comes with stage 7.
