@@ -365,6 +365,7 @@
     "caucusSupportForChief": 55,
     "leaderTrustForChief": 60,
     "wrongCountsForFailure": 1,
+    "revoltBelowSupport": 40,
     "temptationWeek": 6,
     "temptationTrust": -5,
     "cabinetOfferOdds": 0.06,

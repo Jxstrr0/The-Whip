@@ -9,6 +9,7 @@ import { putQuestion, runDivision, voiceResult, recordResult, voteOf, stageLabel
 import { dilemmaFor, applyPlayerVote } from './career.js';
 import { decayKnowledge, reveal } from './knowledge.js';
 import { rememberDivision } from './memoir.js';
+import { isGuidedWeek } from './goals.js';
 
 // Rooms and phases that later stages hook into (office, caucus, riding). Each returns a pending stop or null.
 // bells(state, item, bill, secs) runs when a division waits on the player; doorsClose(state, item) just before it's decided.
@@ -89,7 +90,7 @@ function startDay(state, rng) {
   state.flow.day = { matters: stops.some(Boolean) || !!state.flow.forceWatch, results: [] };
   for (const fn of hooks.morning) queueStop(state, fn(state, rng));
   state.orderPaper = items.map((it) => it.billId);
-  const note = state.date.absWeek === 0 ? `tutorial.d${d.dayOfWeek}` : null;
+  const note = isGuidedWeek(state) ? `tutorial.d${d.dayOfWeek}` : null;
   if (state.flow.day.matters) return { kind: 'morning', note, items: state.flow.queue.map(({ billId, stage, stop }) => ({ billId, stage, stop: stop?.reason || null })) };
   return null;
 }
@@ -239,7 +240,7 @@ function weekend(state, rng) {
   // The guided first week is over; from here only days that matter stop you.
   state.flow.forceWatch = false;
   state.player.script = null;
-  if (pending) pending.firstWeek = state.date.absWeek === 1;
+  if (pending) pending.firstWeek = state.date.absWeek === 1 && (state.player.record?.parliaments ?? 1) === 1 && state.mode?.kind !== 'scenario';
   return pending;
 }
 
