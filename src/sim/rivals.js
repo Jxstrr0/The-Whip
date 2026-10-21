@@ -6,6 +6,7 @@ import { hooks, log, isSittingWeek } from './pacing.js';
 import { baseScore } from './mp.js';
 import { lineFor } from './bills.js';
 import { ledgerAdd, nextVote } from './tools.js';
+import { headline } from './media.js';
 
 const SIGN = { yea: 1, nay: -1 };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -71,6 +72,11 @@ function leak(state, rng, party, whip) {
   const note = `${data().headlines.papers[0]}: ${rng.pick(reasons)}`;
   ledgerAdd(state, { from: whip, to: p.mpId, kind: 'rival', what: 'leak', note });
   log(state, note, 'press');
+  // Some leaks make the front page too.
+  if (rng.chance(tuning().media.leakPress)) {
+    const bill = Object.values(state.bills).filter((b) => b.status === 'active' && b.nextVote != null && b.kind !== 'oppositionMotion').sort((a, b) => a.nextVote - b.nextVote)[0];
+    headline(state, rng, 'leak', { party: state.parties[me.party].name, bill: bill?.title || 'the bill', count: Math.max(2, party.whipAI.targets.length + 1) });
+  }
   return true;
 }
 

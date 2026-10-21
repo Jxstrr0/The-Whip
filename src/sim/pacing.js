@@ -246,6 +246,8 @@ export function weekSummary(state) {
     whipRapport: [w.start.whipRapport, now.whipRapport],
     rebellions: now.rebellions - w.start.rebellions,
     divisions: w.start.votes,
+    press: w.press || [],
+    polling: { ...state.polling },
   };
 }
 

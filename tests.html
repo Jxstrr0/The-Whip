@@ -1615,6 +1615,54 @@ test('Every Question Period line and headline fills with no placeholder left ove
   return `${n} lines, ${H.length} headlines`;
 });
 
+section('Round two · The front page');
+
+test('The weekend paper: a lead with a deck, the polls on the record, a quiet week still makes a page, every deck fills', () => {
+  // A guided first week ends on a front page whose lead is filled in and whose polls have their first point.
+  const s = newGame({ seed: 'TEST-1', party: 'p1', guided: true });
+  const rng = createRng('front');
+  for (let i = 0; i < 4000 && s.flow.pending?.kind !== 'weekSummary'; i++) botAct(s, rng);
+  const sum = s.flow.pending?.summary;
+  assert(sum, 'reached the first weekend');
+  const lead = sum.press[0];
+  assert(lead && lead.text && lead.paper && lead.event, 'the first week has a lead story');
+  assert(!/[{}]/.test(lead.text + (lead.deck || '')), 'the lead is filled in: ' + lead.text);
+  assert(sum.press.every((e, i) => i === 0 || media.FRONT_PRIORITY.indexOf(e.event) >= media.FRONT_PRIORITY.indexOf(sum.press[i - 1].event)), 'stories run in front-page order');
+  assert(s.pollHistory.length === 1 && Object.keys(s.pollHistory[0].polling).join() === Object.keys(s.polling).join(), 'the polls go on the record at the weekend');
+  assert(sum.polling && typeof sum.polling[s.house.government] === 'number', 'the summary carries the polls');
+  // Weeks later the chart has a line to draw.
+  for (let i = 0; i < 4000 && s.date.absWeek < 3; i++) botAct(s, rng);
+  assert(s.pollHistory.length >= 2, 'poll history grows week by week: ' + s.pollHistory.length);
+  // A week with no press at all still gets a lead, chosen without touching the RNG.
+  const q = newGame({ seed: 'TEST-2', party: 'p2' });
+  q.press = [];
+  const before = JSON.stringify(q.rng);
+  for (const fn of pacing.hooks.weekend) fn(q, createRng('unused'));
+  const quiet = q.flow.week.press[0];
+  assert(quiet?.quiet && quiet.text && quiet.deck && quiet.paper && !/[{}]/.test(quiet.text + quiet.deck), 'a quiet week has a filled lead');
+  assert(JSON.stringify(q.rng) === before, 'the quiet lead does not draw on the RNG');
+  // Every deck, byline and caption uses only the keys a headline can fill.
+  const H = data().headlines;
+  const keys = new Set(['name', 'riding', 'party', 'leader', 'paper', 'bill', 'yeas', 'nays', 'count', 'opposition', 'minister', 'issue']);
+  let decks = 0;
+  for (const [event, list] of Object.entries(H.decks)) {
+    assert(H.headlines.some((h) => h.event === event), 'decks for a known event: ' + event);
+    for (const d of list) {
+      decks++;
+      for (const k of d.match(/\{(\w+)\}/g) || []) assert(keys.has(k.slice(1, -1)), `deck key ${k} in: ${d}`);
+    }
+  }
+  for (const c of [...H.bylines, ...H.captions]) for (const k of c.match(/\{(\w+)\}/g) || []) assert(['name', 'riding'].includes(k.slice(1, -1)), 'caption key ' + k);
+  // The player's stories carry their photograph; the House's do not.
+  const r2 = createRng('you');
+  media.headline(s, r2, 'townHall', { bill: 'An Act' });
+  media.headline(s, r2, 'billPassed', { bill: 'An Act', yeas: 60, nays: 50 });
+  const [th, bp] = s.press.slice(-2);
+  assert(th.you === true && bp.you === false, 'the photo flag follows the player');
+  assert(th.deck && !/[{}]/.test(th.deck), 'a deck comes with the headline');
+  return `${lead.paper}: ${lead.text} · ${decks} decks`;
+});
+
 async function run() {
   setData(await loadData());
   const out = document.getElementById('out');

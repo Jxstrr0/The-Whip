@@ -433,5 +433,15 @@
   "settings.colourBlindNote": "Swaps the party colours and the yea/nay marks for a palette that stays apart under every common colour vision.",
   "settings.largeText": "Larger text",
   "settings.largeTextNote": "Scales the whole Order Paper up a notch.",
-  "settings.done": "Done"
+  "settings.done": "Done",
+  "front.edition": "Weekend edition",
+  "front.date": "Week {week} · Year {year}",
+  "front.dateline": "Ostrava · Parliament Hill · {polls}",
+  "front.elsewhere": "Elsewhere in the press",
+  "front.numbers": "By the numbers",
+  "front.polls": "The polls",
+  "front.pollsNote": "National polling, week by week",
+  "front.pollsFirst": "The first reading. A line needs a second week.",
+  "front.brief": "The week in brief",
+  "front.quietBrief": "A week that made no news is still a week on the record."
 }

@@ -1,11 +1,12 @@
 // The agenda: the date, Continue and Skip, the day's feed, the morning order paper and the weekly review.
-import { t, esc, scenarioBrief, scenarioVerdict } from './text.js';
+import { t, esc, scenarioBrief } from './text.js';
 import { tuning } from '../sim/config.js';
 import { stageLabel } from '../sim/vote.js';
 import { prediction } from '../sim/count.js';
 import { countLine } from './text.js';
+import { renderFrontPage } from './frontPage.js';
 
-export function createAgenda(root, { getState, onContinue, onSkip }) {
+export function createAgenda(root, { getState, onContinue, onSkip, photo = null }) {
   const bar = document.createElement('section');
   bar.className = 'agenda';
   root.appendChild(bar);
@@ -58,22 +59,12 @@ export function createAgenda(root, { getState, onContinue, onSkip }) {
     sheet.classList.remove('hidden');
   }
 
+  // The weekly review is the weekend paper. The player's photograph is rendered on demand, once per member.
   function showWeek(p) {
     const state = getState();
-    const s = p.summary;
-    const delta = ([a, b]) => `${a} → <b>${b}</b>${b > a ? ' ▲' : b < a ? ' ▼' : ''}`;
-    sheet.innerHTML = `<div class="sheet-handle"></div><h2>${p.firstWeek ? t('week.firstTitle') : t('week.title', { week: s.week })}</h2>
-      ${scenarioVerdict(state)}${p.firstWeek ? `<p class="tutorial">${t('week.firstNote')}</p>` : ''}
-      <p class="muted budget">${esc(t('week.act', { n: state.player.act, n2: state.player.whipFile.length, noticed: Math.round(state.player.actProgress.noticed) }))}</p>
-      <div class="kvs">
-        <div class="kv"><span class="k">${t('week.riding')}</span><span class="v">${delta(s.ridingStanding)}</span></div>
-        <div class="kv"><span class="k">${t('week.whip')}</span><span class="v">${delta(s.whipRapport)}</span></div>
-        <div class="kv"><span class="k">${t('week.rebellions')}</span><span class="v">${s.rebellions}</span></div>
-        <div class="kv"><span class="k">${t('week.divisions')}</span><span class="v">${s.divisions}</span></div>
-        ${state.player.act >= 3 ? `<div class="kv${(state.pressure || 0) >= 70 ? ' stale' : ''}"><span class="k">${t('week.pressure')}</span><span class="v">${Math.round(state.pressure || 0)} / 100</span></div>` : ''}
-      </div>
-      <h3>${t('agenda.feed')}</h3><ol class="feed">${s.lines.slice().reverse().map((l) => `<li>${esc(l)}</li>`).join('')}</ol>
-      <div class="card-actions"><button class="btn primary" data-act="next">${t('week.next')}</button></div>`;
+    const me = state.mps[state.player.mpId];
+    const url = p.summary.press?.[0]?.you && photo ? photo(me) : null;
+    sheet.innerHTML = renderFrontPage(state, p, url);
     sheet.querySelector('[data-act="next"]').onclick = onContinue;
     sheet.classList.remove('hidden');
   }
