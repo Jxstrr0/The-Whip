@@ -1,7 +1,7 @@
 // The press gallery: one headline a day for the vote that mattered most, moving national polling and the
 // player's standing at home. Scandal scores for members whose secrets get used.
 import { data, tuning } from './config.js';
-import { hooks, log } from './pacing.js';
+import { hooks, log, dissolution } from './pacing.js';
 import { lineFor } from './bills.js';
 import { voteOf } from './vote.js';
 
@@ -9,7 +9,7 @@ const SIGN = { yea: 1, nay: -1 };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
 // Which story leads when a day has several.
-const PRIORITY = ['confidenceLost', 'confidenceSurvived', 'billDefeated', 'playerRebelled', 'rebellion', 'closeVote', 'playerToedLine', 'billPassed'];
+const PRIORITY = ['confidenceLost', 'confidenceLostHandover', 'confidenceSurvived', 'billDefeated', 'playerRebelled', 'rebellion', 'closeVote', 'playerToedLine', 'billPassed'];
 
 function fill(text, ctx) {
   return text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
@@ -41,7 +41,12 @@ function storiesOf(state) {
     if (!d?.recorded) continue;
     const bill = state.bills[d.billId];
     const ctx = { bill: bill.title, yeas: d.yeas.length, nays: d.nays.length };
-    if (bill.confidence && bill.kind !== 'oppositionMotion') out.push({ event: d.carried ? 'confidenceSurvived' : 'confidenceLost', ctx, bill });
+    if (bill.confidence && bill.kind !== 'oppositionMotion') {
+      // A fall early in the Parliament hands the House to the opposition; later it means an election.
+      const handover = !d.carried && dissolution.canHandOver?.(state);
+      const opp = Object.values(state.parties).find((q) => q.role === 'opposition');
+      out.push({ event: d.carried ? 'confidenceSurvived' : handover ? 'confidenceLostHandover' : 'confidenceLost', ctx: { ...ctx, opposition: opp?.name || 'the opposition' }, bill });
+    }
     else if (!d.carried && bill.kind === 'government') out.push({ event: 'billDefeated', ctx, bill });
     else if (Math.abs(d.yeas.length - d.nays.length) <= margin) out.push({ event: 'closeVote', ctx, bill });
     else if (d.carried && bill.kind !== 'oppositionMotion') out.push({ event: 'billPassed', ctx, bill });

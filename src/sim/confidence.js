@@ -109,8 +109,10 @@ hooks.fallout.push((state) => {
 hooks.weekend.push((state) => {
   const C = tuning().confidence;
   const p = state.player;
+  // A meter that topped out during the week costs the whip their office at the weekend, before any decay.
+  const toppedOut = (state.pressure || 0) >= C.pressureReplaced;
   state.pressure = clamp((state.pressure || 0) - C.pressureDecay, 0, 100);
-  if (state.pressure < C.pressureReplaced || state.ending) return null;
+  if (!toppedOut || state.ending) return null;
   const R = data().career.replaced;
   const leader = state.parties[state.mps[p.mpId].party]?.leader;
   const ctx = { leader: leader ? fullName(state.mps[leader]) : 'The leader' };

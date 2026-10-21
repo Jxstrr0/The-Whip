@@ -247,13 +247,21 @@ function openParliament(state, parliamentNo) {
 
 // A government that falls early in a Parliament can be replaced without an election, if the rest of the House
 // can carry a majority against it.
-export function tryHandover(state, rng) {
+// A government that falls in its first months hands over to the opposition, if the rest of the House could
+// carry one, instead of sending the country back to the polls. Pure, so the press can call it on the night.
+export function canHandOver(state) {
   const C = tuning().confidence;
-  if (!state.house.fallen || state.date.absWeek >= C.handoverWeeks) return null;
+  if (state.date.absWeek >= C.handoverWeeks) return false;
   const gov = state.parties[state.house.government];
   const opp = Object.values(state.parties).find((q) => q.role === 'opposition');
   const others = Object.values(state.parties).filter((q) => q.id !== gov.id && q.id !== 'ind').reduce((s, q) => s + q.seats, 0);
-  if (!opp || others < data().world.majority) return null;
+  return !!opp && others >= data().world.majority;
+}
+
+export function tryHandover(state, rng) {
+  if (!state.house.fallen || !canHandOver(state)) return null;
+  const gov = state.parties[state.house.government];
+  const opp = Object.values(state.parties).find((q) => q.role === 'opposition');
   gov.role = 'opposition';
   opp.role = 'government';
   state.house.government = opp.id;
@@ -274,6 +282,7 @@ export function tryHandover(state, rng) {
   return { kind: 'election', phase: 'handover', important: true, needsChoice: true, from: gov.id, to: opp.id, fromName: gov.name, toName: opp.name };
 }
 
+dissolution.canHandOver = canHandOver;
 dissolution.beforeDissolve = tryHandover;
 
 // The campaign stop resolves into election night; election night into the new Parliament or the record.

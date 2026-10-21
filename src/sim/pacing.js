@@ -12,7 +12,9 @@ import { decayKnowledge, reveal } from './knowledge.js';
 // Rooms and phases that later stages hook into (office, caucus, riding). Each returns a pending stop or null.
 export const hooks = { morning: [], caucus: [], house: [], office: [], riding: [], fallout: [], weekend: [] };
 // Stage 8 hangs the early-Parliament handover here: a fallen government may be replaced without an election.
-export const dissolution = { beforeDissolve: null };
+// Registered by election.js: `canHandOver(state)` says whether a fallen government hands over to the opposition
+// instead of forcing an election; `beforeDissolve(state, rng)` performs it.
+export const dissolution = { canHandOver: null, beforeDissolve: null };
 
 const MOODS = ['cooperative', 'guarded', 'angry', 'anxious'];
 

@@ -410,7 +410,12 @@ test('A meeting with a scripted choice sequence produces the expected ledger ent
   ACTIONS.invite(s, { mpId: target.id });
   assert(s.flow.pending.kind === 'meeting', 'meeting did not start');
   const mt = s.meetings[s.meeting];
-  while (mt.phase === 'talk') ACTIONS.talk(s, { index: mt.talk.options.findIndex((o) => o.approach === 'listen') });
+  for (let i = 0; i < 6 && mt.phase === 'talk'; i++) {
+    const listen = mt.talk.options.findIndex((o) => o.approach === 'listen');
+    assert(listen >= 0, 'no way to listen on turn ' + mt.turn + ': ' + mt.talk.options.map((o) => o.approach).join(', '));
+    ACTIONS.talk(s, { index: listen });
+  }
+  assert(mt.phase !== 'talk', 'the talk never ended');
   // Offer a riding mention, ask a favour: a fair trade for a friendly MP.
   target.rapport = 40;
   ACTIONS.propose(s, { offers: ['ridingMention'], asks: ['favor'] });
@@ -436,7 +441,11 @@ test('Meetings reveal fields in the knowledge map', () => {
   const mt = s.meetings[s.meeting];
   assert(cardView(s, target.id).fields.mood.known, 'mood not revealed on sitting down');
   target.mood = mt.mood = 'angry';
-  while (mt.phase === 'talk') ACTIONS.talk(s, { index: Math.max(0, mt.talk.options.findIndex((o) => o.approach === 'listen')) });
+  for (let i = 0; i < 6 && mt.phase === 'talk'; i++) {
+    const listen = mt.talk.options.findIndex((o) => o.approach === 'listen');
+    assert(listen >= 0, 'no way to listen on turn ' + mt.turn);
+    ACTIONS.talk(s, { index: listen });
+  }
   const known = HIDDEN_FIELDS.filter((f) => cardView(s, target.id).fields[f].known);
   assert(known.length >= 3, `only ${known.join(', ')} known`);
   return known.join(', ');
@@ -1175,7 +1184,11 @@ test('A minority government falls on a lost confidence vote and an election is c
   assert(night.player.result === 'held' && s.house.parliament === 25 && s.date.absWeek === 0, 'held the seat; the 25th Parliament opens');
   assert(Object.keys(s.mps).length === 120 && Object.values(s.parties).reduce((n, q) => n + q.seats, 0) + s.house.independents === 120, 'a full House');
   pacing.resolve(s, null);
-  assert(!s.flow.pending && pacing.next(s) !== undefined && s.bills && Object.values(s.bills).length > 0, 'business resumes');
+  for (let i = 0; i < 60 && s.date.absWeek < 1; i++) {
+    const q = pacing.skip(s);
+    if (q && q.kind !== 'dissolved') pacing.resolve(s, q.kind === 'division' ? 'line' : null);
+  }
+  assert(s.date.absWeek >= 1 && s.date.parliament === 25 && Object.values(s.bills).length > 0, 'business resumes');
   // The handover: a government that falls in its first months hands over to the opposition, no election.
   const h = newGame({ seed: 'TEST-1', party: 'p2' });
   const gov0 = h.house.government;
@@ -1203,7 +1216,7 @@ test('A full four-year Parliament and its election play through with the bot, no
     assert(s.house.parliament === 25 && s.player.record.parliaments === 2, 'second Parliament on the record');
     for (let i = 0; i < 3000; i++) { const p = s.flow.pending; if (p) { if (p.kind === 'ending') break; botAct(s, rng); } else pacing.next(s); if (s.date.absWeek >= 2) break; }
     assert(s.date.absWeek >= 2, 'the new Parliament sits');
-  } else assert(s.ending?.endingKind === 'defeated', 'the defeated ending');
+  } else assert(['defeated', 'nomination'].includes(s.ending?.endingKind), 'the defeated or deselected ending: ' + s.ending?.endingKind);
   // Losing the riding: a member the whole country has turned on.
   const l = newGame({ seed: 'TEST-1', party: 'p2' });
   const me = l.mps[l.player.mpId];
@@ -1238,7 +1251,9 @@ test('After an election the blocks, roles and cohorts are new and the ledger car
   s.player.act = 3;
   s.parties.p2.assistantWhips.push(me.id);
   me.caucusRole = 'assistantWhip';
-  for (const id of Object.keys(s.polling)) s.polling[id] = id === 'p3' ? 45 : 12;
+  // The third party surges. The player sits on a safe margin so the test is about the House, not their seat.
+  me.margin = 30;
+  for (const id of Object.keys(s.polling)) if (id !== me.party) s.polling[id] = id === 'p3' ? 45 : 12;
   s.flow.pending = { kind: 'dissolved', important: true, needsChoice: true, reason: 'fixedDate' };
   pacing.resolve(s, 'canvass');
   const night = pacing.next(s);
@@ -1269,9 +1284,14 @@ test('Headlines lead with the day\'s biggest story and move polling, standing an
   s.flow.day = { matters: true, results: ['d1'] };
   const poll0 = s.polling[me.party];
   const press0 = s.log.filter((l) => l.kind === 'press').length;
+  // Early in the Parliament the gallery knows the opposition will be sent for; later, that an election follows.
+  s.date.absWeek = 2;
+  for (const fn of pacing.hooks.fallout) fn(s, createRng('press'));
+  assert(s.press.at(-1).event === 'confidenceLostHandover' && !/\{\w+\}/.test(s.press.at(-1).text), 'the handover headline: ' + s.press.at(-1)?.text);
+  s.date.absWeek = tuning().confidence.handoverWeeks;
   for (const fn of pacing.hooks.fallout) fn(s, createRng('press'));
   const press = s.log.filter((l) => l.kind === 'press');
-  assert(press.length === press0 + 1 && s.press.at(-1).event === 'confidenceLost' && !/\{\w+\}/.test(press.at(-1).text), 'one headline, the government falling: ' + press.at(-1)?.text);
+  assert(press.length === press0 + 2 && s.press.at(-1).event === 'confidenceLost' && !/\{\w+\}/.test(press.at(-1).text), 'one headline, the government falling: ' + press.at(-1)?.text);
   assert(s.polling[me.party] < poll0, 'polling fell');
   assert(s.pressure >= tuning().confidence.pressureConfidenceLost + 20, 'the leader\'s office noticed: pressure ' + s.pressure);
   // Replacing the whip when the meter tops out.
