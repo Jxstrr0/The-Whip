@@ -645,19 +645,82 @@ test('A chase during the bells puts an absent member in their seat', () =>
   quiet(() => {
     const { s, b, me } = whipScenario(3);
     const m = caucusOf(s, me)[1];
-    m.attendance = 0;
+    m.attendance = -200; // certain to be away
     setScoreAt(s, m, b, 1.5);
+    const bells = tools.openBells(s, b, 'second', 30);
+    assert(bells?.away[m.id]?.where, 'they should be on the map of the Hill');
     const before = intentions(s, b, createRng('att'))[m.id];
     assert(!before.present, 'should be absent before the chase');
-    const odds = { ...tuning().tools.chaseOdds };
-    Object.assign(tuning().tools.chaseOdds, { lobby: 1, office: 1, airport: 1 });
-    const r = ACTIONS.useTool(s, { tool: 'chase', mpId: m.id, billId: b.id });
-    Object.assign(tuning().tools.chaseOdds, odds);
-    assert(r.ok && r.found, 'chase should find them');
+    const P = tuning().tools.chase.places;
+    const odds = Object.fromEntries(Object.entries(P).map(([k, v]) => [k, v.odds]));
+    for (const v of Object.values(P)) v.odds = 1;
+    const r = ACTIONS.useTool(s, { tool: 'chase', mpId: m.id, billId: b.id, secsLeft: 30 });
+    for (const [k, v] of Object.entries(odds)) P[k].odds = v;
+    assert(r.ok && r.found, 'chase should find them: ' + JSON.stringify(r));
     const after = intentions(s, b, createRng('att'))[m.id];
     assert(after.present && after.vote === tools.wantedSide(s, b), 'chased member should be present and voting the line');
-    return `found ${r.where}; present ${before.present} → ${after.present}`;
+    return `found ${r.where}, ${r.trip}s there and back; present ${before.present} → ${after.present}`;
   }));
+
+test('The bells: who is away comes from the seed, and the clock and the staff limit the chase', () =>
+  quiet(() => {
+    const { s, b, me } = whipScenario(3);
+    const [m1, m2] = caucusOf(s, me).slice(2, 4);
+    for (const m of [m1, m2]) {
+      m.attendance = -200;
+      setScoreAt(s, m, b, 1.5);
+    }
+    const rngBefore = JSON.stringify(s.rng);
+    const bells = tools.openBells(s, b, 'second', 30);
+    assert(JSON.stringify(s.rng) === rngBefore, 'opening the bells must not touch the RNG');
+    assert(JSON.stringify(tools.bellsAway(s, b, 'second')) === JSON.stringify(bells.away), 'the same seed, bill and stage give the same list');
+    assert(bells.away[m1.id]?.where && bells.away[m2.id]?.where, 'both should be on the map');
+    // Everyone of ours not on the list is in the building for this vote.
+    const ints = intentions(s, b, createRng('x'));
+    const wrong = caucusOf(s, me).filter((m) => ints[m.id].vote !== 'abstain' && ints[m.id].present === !!bells.away[m.id]);
+    assert(!wrong.length, 'the list is the attendance: ' + wrong.map((m) => m.id).join(','));
+    const P = tuning().tools.chase.places;
+    const odds = Object.fromEntries(Object.entries(P).map(([k, v]) => [k, v.odds]));
+    for (const v of Object.values(P)) v.odds = 1;
+    try {
+      const countBefore = count.prediction(s, b.id).ours;
+      assert(tools.runners(s) === 1, 'one pair of legs in act 3');
+      const far = ACTIONS.useTool(s, { tool: 'chase', mpId: m1.id, billId: b.id, secsLeft: bells.away[m1.id].trip - 1 });
+      assert(!far.ok && far.reason === 'far', 'a trip that cannot beat the doors is refused: ' + JSON.stringify(far));
+      const r1 = ACTIONS.useTool(s, { tool: 'chase', mpId: m1.id, billId: b.id, secsLeft: 30 });
+      assert(r1.ok && r1.found, 'first chase goes: ' + JSON.stringify(r1));
+      const busy = ACTIONS.useTool(s, { tool: 'chase', mpId: m2.id, billId: b.id, secsLeft: 30 - 0.5 });
+      const left = r1.back;
+      assert(!busy.ok && busy.reason === 'runners', 'the only runner is out: ' + JSON.stringify(busy));
+      const r2 = ACTIONS.useTool(s, { tool: 'chase', mpId: m2.id, billId: b.id, secsLeft: left });
+      assert(r2.ok || r2.reason === 'far', 'back in time to go again: ' + JSON.stringify(r2));
+      assert(count.prediction(s, b.id).ours > countBefore, 'the count should move as they come in');
+      assert(s.player.toolTime === tuning().tools.timePerWeek - tuning().tools.cost.chase * (r2.ok ? 2 : 1), 'each run costs House time, refusals cost nothing');
+      const ledger = s.ledger.length;
+      for (const fn of pacing.hooks.doorsClose) fn(s, { billId: b.id, stage: 'second' });
+      assert(s.ledger.length === ledger + s.bells.runs.length, 'every run goes in the ledger when the doors close');
+      const line = s.log[s.log.length - 1].text;
+      assert(line.includes(b.title) && !/[{}]/.test(line), 'one line in the log: ' + line);
+      return `${Object.keys(bells.away).length} away · ${s.bells.runs.length} fetched · count ${countBefore} → ${count.prediction(s, b.id).ours} · "${line}"`;
+    } finally {
+      for (const [k, v] of Object.entries(odds)) P[k].odds = v;
+    }
+  }));
+
+test('Every Hill line fills, and the map has a spot for every place', () => {
+  const H = data().hill;
+  const lines = [...H.found, ...Object.values(H.missed).flat()];
+  for (const where of Object.keys(tuning().tools.chase.places)) {
+    assert(H.places[where]?.spots.length >= 3, `${where} needs spots`);
+    assert(H.missed[where]?.length >= 2, `${where} needs missed lines`);
+  }
+  for (const l of lines) for (const sp of Object.values(H.places).flatMap((p) => p.spots)) {
+    const out = l.replace('{name}', 'Ada Moss').replace('{spot}', sp.text);
+    assert(!/[{}]/.test(out), 'unfilled: ' + out);
+  }
+  assert(new Set(lines).size === lines.length, 'no repeated lines');
+  return `${lines.length} lines over ${Object.values(H.places).flatMap((p) => p.spots).length} spots`;
+});
 
 test('A pair keeps both members out of the count; granted leave keeps yours away', () =>
   quiet(() => {
