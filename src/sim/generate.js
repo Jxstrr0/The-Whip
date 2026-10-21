@@ -3,7 +3,7 @@ import { createRng, hashString } from './rng.js';
 import { data, tuning } from './config.js';
 import { buildCliques, buildRelations, assignMentors } from './relationships.js';
 
-const MOODS = ['cooperative', 'guarded', 'angry', 'anxious'];
+export const MOODS = ['cooperative', 'guarded', 'angry', 'anxious'];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const pad = (n) => String(n).padStart(3, '0');
 
@@ -85,7 +85,7 @@ function electionResult(rng, parties) {
   return { seats, roles, independents, gov: gov.id };
 }
 
-function affinity(party, riding, rng) {
+export function affinity(party, riding, rng) {
   const region = party.regionAffinity?.[riding.region] ?? 0;
   const type = party.typeAffinity?.[riding.type] ?? 0;
   return region + type - ideoDist(party.ideology, riding.lean) / 80 + rng.normal(0, 0.35);
@@ -118,10 +118,11 @@ function allocateRidings(rng, ridings, parties, result) {
   return owner;
 }
 
-function uniqueNames(rng, n) {
+// Fresh names for new members: `taken` holds the first and last names already in the House.
+export function uniqueNames(rng, n, taken = null) {
   const { first, last } = data().names;
-  const usedFirst = new Set();
-  const usedLast = new Set();
+  const usedFirst = new Set(taken?.first || []);
+  const usedLast = new Set(taken?.last || []);
   const out = [];
   // Unique first and last names keep a 120-member House easy to tell apart on a phone.
   while (out.length < n) {
@@ -143,7 +144,7 @@ function pickInterests(rng, riding) {
   return [...out];
 }
 
-function makeMp(rng, i, riding, partyId, partyRec, name, parliamentNo) {
+export function makeMp(rng, i, riding, partyId, partyRec, name, parliamentNo) {
   const D = data();
   const T = tuning().generate;
   const k = rng.weighted([0, 1, 2, 3, 4, 5, 6], (x) => T.cohortWeights[x]);
@@ -190,7 +191,7 @@ function makeMp(rng, i, riding, partyId, partyRec, name, parliamentNo) {
 }
 
 // Leader, House Leader, whips, cabinet or shadow cabinet, parliamentary secretaries, committee chairs.
-function assignRoles(rng, party, members, isGov) {
+export function assignRoles(rng, party, members, isGov) {
   const free = new Set(members.map((m) => m.id));
   const byId = new Map(members.map((m) => [m.id, m]));
   // Score each candidate once: random draws inside a sort comparator would depend on the browser's sort.
@@ -223,7 +224,7 @@ function assignRoles(rng, party, members, isGov) {
   }
 }
 
-function assignCommittees(rng, mps, committees, govId) {
+export function assignCommittees(rng, mps, committees, govId) {
   const load = Object.fromEntries(committees.map((c) => [c.id, 0]));
   const busy = new Set(['leader', 'cabinet', 'speaker', 'chiefWhip', 'houseLeader']);
   for (const m of rng.shuffle([...mps])) {

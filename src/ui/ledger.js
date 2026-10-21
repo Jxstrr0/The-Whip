@@ -13,6 +13,7 @@ export function createLedger(root, { getState }) {
   function who(state, id) {
     if (!id) return '';
     if (state.mps[id]) return mpName(state.mps[id]);
+    if (state.alumni?.[id]) return `${mpName(state.alumni[id])} (gone)`;
     if (state.parties[id]) return state.parties[id].name;
     return id;
   }
@@ -37,7 +38,7 @@ export function createLedger(root, { getState }) {
   function row(state, e) {
     const pid = state.player.mpId;
     const other = e.from === pid ? e.to : e.from;
-    const m = state.mps[other];
+    const m = state.mps[other] || state.alumni?.[other];
     const bar = m ? partyColor(state, m) : state.parties[other]?.color || '#6b6f76';
     return `<li><span class="bar" style="background:${bar}"></span><span class="main"><b>${esc(who(state, other))}</b><small>${esc(label(state, e))}</small></span>${outcome(e)}</li>`;
   }
