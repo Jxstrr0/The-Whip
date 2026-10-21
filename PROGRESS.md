@@ -987,4 +987,4 @@ Kelbo's notes: some artifacting in the one-on-one meeting room, and members walk
 **Things to know**
 
 - I can't reproduce phone-GPU flicker in the headless browser (it has a deeper depth buffer). If you still see artifacting in the office, tell me where in the room it is and I'll chase it.
-- **Checked:** `tests.html` is 99 of 99. The offices (Acts 1 to 5, with and without a visitor) and the chamber render at phone size with no console errors.
+- **Checked:** `tests.html` is 99 of 99. The offices (Acts 1 to 5, with and without a visitor) and the chamber render at phone size with no console errors, and a walker was followed down the gangway and the steps at the end of the bench.
