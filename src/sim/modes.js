@@ -21,6 +21,7 @@ import './record.js';
 import './media.js';
 import './election.js';
 import './calendar.js';
+import { coldOpenStop } from './coldOpen.js';
 
 export const SAVE_VERSION = 2;
 
@@ -34,7 +35,7 @@ export function reseat(state) {
   }
 }
 
-export function newGame({ seed, party, first, last, age, background, ridingType, province, mode = 'career', modeId = null, guided = false, act = null, minority = false, startWeek = 0, startDay = 1 } = {}) {
+export function newGame({ seed, party, first, last, age, background, ridingType, province, mode = 'career', modeId = null, guided = false, coldOpen = false, act = null, minority = false, startWeek = 0, startDay = 1 } = {}) {
   const parl = generateParliament(seed, { minority });
   const C = tuning().calendar;
   const state = {
@@ -65,6 +66,8 @@ export function newGame({ seed, party, first, last, age, background, ridingType,
   initFlow(state);
   // A career started from the menu gets the guided first week.
   if (guided) setupFirstWeek(state);
+  // A career from the menu opens on its own election night, before the first Monday.
+  if (coldOpen) state.flow.pending = coldOpenStop(state);
   return state;
 }
 

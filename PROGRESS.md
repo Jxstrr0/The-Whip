@@ -761,3 +761,25 @@ Kelbo's once-over picked twelve things. This is the first: the two rooms where a
 - Over a headless Parliament, a whipped division has about two of ours away on average and six at most; about half are in the lobbies, two in five in the offices, one in eight at the airport. Trips run 4 to 23 seconds.
 - The two office buildings are fictional names. The map's text is in `data/strings.en.json` under `hill.*`, the places and lines in `data/hill.json`, and the numbers in `data/tuning.json` under `tools.chase`. The drawing is `src/ui/hillMap.js`; the sim side is the "bells" section of `src/sim/tools.js`.
 - Two new tests (the seeded away list, the clock and staff limits, the count rising after a fetch, the ledger and log on close; every Hill line filling with a spot on the map for each place) and the old chase test rewritten for the map.
+
+## 2026-10-21 · Round two, 13 (eleventh of twelve): The cold open
+
+**What was built**
+
+- **A new career starts on election night.** Before the guided first week, you're outside your campaign office in your own riding after dark. The street is lit by the lamps and the open door, there's bunting in your party's colour, lawn signs with your name, and a crowd of supporters holding placards ("FUNG", "NU · Fung", "Vote Fung").
+- **The count comes in poll by poll.** An Order Paper sheet shows the polls reporting and the time. You and three rivals each get a row with votes that count up and a share bar. The rows change places when the lead changes hands. Under them sits a line of commentary that never repeats in a night ("The first polls are in from Ravensworth, and they are not yours…"). A bar of the House fills in nationally, with the line for a majority marked, and the broadcaster calls the government partway through.
+- **The crowd rides the lead.** The supporters' mood follows your margin. They cheer when the lead comes your way and roar at the end, with sound to match.
+- **The declaration.** The returning officer reads the result at the local hall, and an ELECTED stamp comes down over your majority and the shape of the country ("A minority National Union government, 60 of 120 seats"). "Skip to the result" jumps straight here.
+- **Opening day.** "To the Hill" cuts to the chamber. The camera walks you in through the doors at the bar, down the aisle on your side past the Clerks' table with your eyes on the Speaker's chair, then over the desks and down into your own seat. While you walk, the lines come up one at a time: the door, the Speaker in the chair, where your seat is, your mentor catching your eye. When you sit, the benches thump their desks. "Begin the first week" takes you to Monday morning, as before.
+- **It's on the record.** The night logs one line ("Election night in Ravensworth–Mill Creek: elected by 10,949 votes. A minority National Union government."). The career timeline (pitch 14) can start from it.
+
+**Things to know / decisions I made**
+
+- The night is built from the Parliament the game already generated. Your share comes from your riding's margin, the runner-up finishes exactly that margin behind, and the national seats end on the real House. It runs on its own seeded stream, so the cold open changes nothing else about the game: the same seed gives the same Parliament with or without it.
+- A close seat (under 9 points) always starts behind and turns during the night, which is where the tension is. A safe seat leads from the first box. Over 240 headless nights the margins ran from 421 to 11,517 votes, and no line repeated within a night.
+- Rivals are the parties that run strongest in your riding (region and riding type, then national polls). Rival and returning-officer names come from the same name pools as the MPs and never clash with a sitting member.
+- The cold open plays for every new career from the menu. Scenarios, the daily seed and shared seeds skip it. "Straight to Monday" on the result skips the walk. Reloading mid-night restarts the count.
+- The walk's clock starts on the first frame drawn in the chamber, and a single slow frame only nudges it on, so a hitch on the room swap doesn't skip the walk. The walk takes 15 seconds. "Take your seat" cuts to the end.
+- The agenda bar and top bar are hidden for the cold open. The night's log line doesn't toast over the walk.
+- The broadcaster ("Dominion Broadcasting") and the halls are fictional. The text is in `data/cold-open.json` and `data/strings.en.json` (`coldOpen.*`), and the timings and vote ranges are in `data/tuning.json` under `coldOpen`. The sim is `src/sim/coldOpen.js`, the sheet is `src/ui/coldOpen.js`, the night street is in `src/riding/ridingScene.js` and the walk is in `src/chamber/camera.js`. `?coldopen=1` with a seed starts on it for testing.
+- Two new tests: the night is deterministic, ends on your margin and the real House, never repeats a line, and every close seat turns; a new career goes count, walk, Monday (or count, Monday when skipped) without touching the RNG.
