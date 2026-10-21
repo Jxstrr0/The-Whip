@@ -8,7 +8,7 @@ Best on a phone in portrait. Landscape and desktop work too.
 
 ## Status
 
-**The Act 1 vertical slice (stage 4b) is playable.** It covers stages 0–4b of the build plan: a start menu, the chamber, the office, the caucus room and the riding, plus a guided first week. After that week the simulation keeps running week to week; elections, the later acts and the whip's tools come in stages 5–9. See [`PROGRESS.md`](PROGRESS.md) for exactly what's built and what to test.
+**The Act 1 vertical slice (stage 4b) is playable, and the art pass is in** (oak, green leather and stone under baked light; the Order Paper UI). It covers stages 0–4b of the build plan: a start menu, the chamber, the office, the caucus room and the riding, plus a guided first week. After that week the simulation keeps running week to week; elections, the later acts and the whip's tools come in stages 5–9. See [`PROGRESS.md`](PROGRESS.md) for exactly what's built and what to test.
 
 ## How to play
 

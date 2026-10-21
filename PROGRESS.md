@@ -403,3 +403,28 @@ The first step of `ART-PASS.md`. Nothing in the rooms was redesigned yet; this i
 
 - The walker is a cosmetic figure; nobody's attendance changes. If a member is out when a vote is called they're simply back in their seat for it.
 - The menu preview builds the game's world before you press Start, which is why the first frame of the chamber appears a beat after the title page.
+
+---
+
+## 2026-10-21 · Art pass V8: the numbers, and what the pass changed
+
+The art pass (`ART-PASS.md`) is done: nine steps, nine merged PRs, all on the live site. Before and after, in one line per room:
+
+- **Chamber:** was a flat green map seen from above the bar; now you open in your own seat looking across the aisle, under stone walls and lit windows, with the division staged (bells dim the room, lamps pulse amber, the camera moves to a three-quarter shot, each seat flashes as it's counted), members coming and going, the Clerks standing for the count and the gavel falling on the result.
+- **Office:** was a bare box with a window and chair backs; now a wainscoted room with real furniture, a desk lamp's pool, dusk through the blinds, a corkboard, the visitor framed in the top third, and a darker whip's office for the reversal.
+- **Riding:** was a chair back in a beige room; now a storefront with your riding's name on the glass, a street outside with props and a skyline per riding type, a photo wall, the visitor framed open, and the town hall on the pavement with placards when the crowd turns.
+- **Caucus:** was a grey table and pegs; now a baize-covered table with carafes and papers, kit chairs, a party banner, pendants, moods as shaped marks and floor glows, and pairs that lean together when you listen.
+- **People:** were a capsule and a ball; now one shared silhouette with shoulders, hair, collar and hands, varied per person, with readable moods and small idle motion.
+- **UI:** was dark glass and gold buttons; now the Order Paper: cream paper, ink, Fraunces, small caps, bench-green actions, brass rules, rubber stamps, a title page over the live House.
+
+**The numbers** (headless phone viewport, `?seed=TEST-1`): cold load 1.15 MB in 87 requests (budget 10 MB). Draw calls at rest: chamber 36, office 47, caucus 22, riding 45, town hall 19. Ten room switches in a row bring the chamber back to the same 41 geometries it started with, so nothing leaks. `tests.html` 33 of 33; the `TEST-1` Parliament hash is the same as before the pass began (`b7c60eaf77c918bc`): the sim was never touched.
+
+**Still yours**
+
+1. **Frame rate on your phone.** Open the live site with `?debug=1` and read the counter bottom-right in each room, portrait and landscape. The headless browser can't measure this. If the office or riding dip, the fix is known (merge each figure's fixed parts into fewer meshes) and small.
+2. **Longlight's colours.** Send the photo; they go on the masthead, the mark at the foot of the title page and the weekly review header (`--brand` in `css/style.css`).
+3. **The decisions in `ART-PASS.md` section 5**, if you want any overturned: no faces, procedural figures with CC0 props, one serif, your own seat as the default view, dusk light in the office.
+
+**Left alone on purpose:** audio (stage 9), the colour-blind setting (stage 9; the shaped marks and icons already read without colour), the tier-2 corner office (stage 7), lettering on placards, a fully custom dropdown list.
+
+Next: HANDOFF stage 5, the whip's tools, the count board's marks, pairing and rival whips.
