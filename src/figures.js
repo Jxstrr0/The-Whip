@@ -39,6 +39,22 @@ export function shade(color, id, amount = 0.06) {
   return '#' + tmp.getHexString();
 }
 
+// What people wear. Up close (the caucus table, the office) suits are real suit colours and the party shows
+// in the tie and the lapel pin; on the benches the suit keeps the party colour so the House reads from your
+// seat, and the tie goes neutral. Every member wears the pin.
+export const SUIT_COLOURS = ['#2b2d33', '#1f2a44', '#3a3d45', '#4a3a2e', '#15161a', '#2f3b36', '#55575e', '#3b2b3a'];
+export const TIE_NEUTRALS = ['#1f2a44', '#6b1f2a', '#2b2d33', '#8a8f98', '#2f4a3a', '#4a3a2e'];
+export function wardrobe(id, partyColor, { bench = false } = {}) {
+  const h = hashOf(id || 'x');
+  const neutral = TIE_NEUTRALS[(h >>> 7) % TIE_NEUTRALS.length];
+  return {
+    suit: bench ? shade(partyColor, id) : shade(SUIT_COLOURS[(h >>> 4) % SUIT_COLOURS.length], id, 0.04),
+    // Two in three wear the party's tie at the table; on the benches the suit already says it.
+    tie: !bench && (h >>> 10) % 3 ? shade(partyColor, id, 0.1) : neutral,
+    pin: partyColor,
+  };
+}
+
 const UP = new THREE.Vector3(0, 1, 0);
 const _a = new THREE.Vector3();
 const _b = new THREE.Vector3();
@@ -65,6 +81,18 @@ function block(w, h, d, x, y, z) {
   const g = new THREE.BoxGeometry(w, h, d);
   g.translate(x, y, z);
   return g;
+}
+// A tie: the knot under the collar and a blade that narrows toward it.
+export function tieParts(shoulderY) {
+  const blade = new THREE.BoxGeometry(0.046, 0.2, 0.014);
+  const p = blade.attributes.position;
+  for (let i = 0; i < p.count; i++) if (p.getY(i) > 0) p.setX(i, p.getX(i) * 0.7);
+  blade.translate(0, shoulderY - 0.215, 0.138);
+  return [block(0.05, 0.045, 0.022, 0, shoulderY - 0.1, 0.134), blade];
+}
+// The lapel pin: a small flattened disc on the left lapel.
+export function pinPart(shoulderY) {
+  return egg(0.017, 0.082, shoulderY - 0.075, 0.121, 1, 1, 0.35, 8);
 }
 
 // Proportions in metres, facing +z, origin on the floor between the feet.
@@ -99,6 +127,8 @@ export function figureParts(pose = 'seated') {
   const hair = [];
   const shirt = [];
   const dark = [];
+  const tie = tieParts(P.shoulderY);
+  const pin = [pinPart(P.shoulderY)];
   const torsoH = P.shoulderY - P.hip + 0.1;
   suit.push(egg(1, 0, P.hip + torsoH * 0.48, 0, 0.2, torsoH / 2, 0.14, 14));
   suit.push(limb([-0.19, P.shoulderY, 0], [0.19, P.shoulderY, 0], 0.085, 10));
@@ -120,7 +150,7 @@ export function figureParts(pose = 'seated') {
   cap.translate(0, P.headY + 0.005, -0.012);
   hair.push(cap);
   shirt.push(block(0.12, 0.09, 0.02, 0, P.shoulderY - 0.05, 0.133));
-  return { suit: merge(suit), hands: merge(hands), head: merge(head), hair: merge(hair), shirt: merge(shirt), dark: merge(dark), pose: P };
+  return { suit: merge(suit), hands: merge(hands), head: merge(head), hair: merge(hair), shirt: merge(shirt), dark: merge(dark), tie: merge(tie), pin: merge(pin), pose: P };
 }
 
 // An instanced crowd of n figures in one pose. Six draw calls however many people.
@@ -134,6 +164,8 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
     hair: figureMaterial({ roughness: 0.95 }),
     shirt: figureMaterial({ color: '#e9e3d8', roughness: 0.7 }),
     dark: figureMaterial({ color: '#1d1a16', roughness: 0.8 }),
+    tie: figureMaterial({ roughness: 0.55 }),
+    pin: figureMaterial({ roughness: 0.3, metalness: 0.6 }),
   };
   const meshes = {};
   for (const k of Object.keys(mats)) {
@@ -146,6 +178,9 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
   const base = Array.from({ length: n }, () => new THREE.Matrix4().makeScale(0, 0, 0));
   const shown = new Array(n).fill(false);
   const hairStyle = new Float32Array(n).fill(1);
+  // Ties and pins only on people dressed with one (members, not clerks or the gallery).
+  const tieOn = new Uint8Array(n);
+  const pinOn = new Uint8Array(n);
   const headYaw = new Float32Array(n);
   const m = new THREE.Matrix4();
   const m2 = new THREE.Matrix4();
@@ -163,6 +198,8 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
     meshes.hands.setMatrixAt(i, b);
     meshes.shirt.setMatrixAt(i, b);
     meshes.dark.setMatrixAt(i, b);
+    meshes.tie.setMatrixAt(i, tieOn[i] ? b : zero);
+    meshes.pin.setMatrixAt(i, pinOn[i] ? b : zero);
     // The head turns about the neck; the hair rides on the head and squashes for its style.
     m.makeTranslation(0, neckY, 0).multiply(m2.makeRotationY(headYaw[i])).multiply(new THREE.Matrix4().makeTranslation(0, -neckY, 0));
     m.premultiply(b);
@@ -195,12 +232,17 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
       shown[i] = true;
       write(i);
     },
-    // Colours and hair for one person. `look` comes from lookFor(id); `suit` is the party colour.
-    dress(i, { suit, skin, hair, hairStyle: style = 1 }) {
+    // Colours and hair for one person. `look` comes from lookFor(id); `suit`, `tie` and `pin` from
+    // wardrobe() (or a plain suit colour with no tie or pin, for staff and the gallery).
+    dress(i, { suit, skin, hair, hairStyle: style = 1, tie = null, pin = null }) {
       meshes.suit.setColorAt(i, color.set(suit));
       meshes.hands.setColorAt(i, color.set(skin));
       meshes.head.setColorAt(i, color.set(skin));
       meshes.hair.setColorAt(i, color.set(hair));
+      if (tie) meshes.tie.setColorAt(i, color.set(tie));
+      if (pin) meshes.pin.setColorAt(i, color.set(pin));
+      tieOn[i] = tie ? 1 : 0;
+      pinOn[i] = pin ? 1 : 0;
       hairStyle[i] = style;
       write(i);
     },

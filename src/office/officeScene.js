@@ -8,6 +8,7 @@ import { placeModel } from '../models.js';
 import { tuning } from '../sim/config.js';
 import { createOfficeCamera } from './officeCamera.js';
 import { createVisitor, createFigure, poseFigure } from './visitor.js';
+import { wardrobe } from '../figures.js';
 
 const W = 3; // half of 6 m (x)
 const D = 2.5; // half of 5 m (z)
@@ -236,7 +237,7 @@ export function create(ctx) {
   const cam = createOfficeCamera(camera);
 
   // The player sits behind the desk (or, in the reversal, in the other visitor chair).
-  const player = createFigure(ctx.playerColor || '#555', 'player');
+  const player = createFigure(ctx.playerColor || '#555', 'player', wardrobe(ctx.playerId || 'player', ctx.playerColor || '#555'));
   player.setHeadVisible(false);
   scene.add(player.group);
   let deskFigure = null;
@@ -284,7 +285,7 @@ export function create(ctx) {
       deskFigure = null;
       if (v.reversal) {
         seatPlayer(true);
-        const f = createFigure(v.color, v.mpId);
+        const f = createFigure(v.color, v.mpId, wardrobe(v.mpId, v.color));
         f.group.position.set(DESK_SEAT[0], 0, DESK_SEAT[1]);
         f.group.rotation.y = Math.PI;
         poseFigure(f, v.mood, 1);
@@ -295,7 +296,7 @@ export function create(ctx) {
         return;
       }
       seatPlayer(false);
-      visitor = createVisitor(scene, { color: v.color, mpId: v.mpId, path: VISITOR_PATH, seat: VISITOR_SEAT, facing: 0 });
+      visitor = createVisitor(scene, { color: v.color, mpId: v.mpId, path: VISITOR_PATH, seat: VISITOR_SEAT, facing: 0, outfit: wardrobe(v.mpId, v.color) });
       visitor.mpId = v.mpId;
       visitor.setMood(v.mood);
       if (v.snap) visitor.sitNow();
