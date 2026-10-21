@@ -1,6 +1,8 @@
 // The office: desk, two visitor chairs, the count board, a window on the lawn, the door. Two tiers by rank.
 import * as THREE from 'three';
-import { box, slab, panel, merge, vertexMaterial, disposeTree, addSoftLights, paintedTexture, texturedPanel } from '../kit3d.js';
+import { box, slab, panel, merge, vertexMaterial, glowMaterial, disposeTree, roomLights, lamp, bakeAO, contactShadows, paintedTexture, texturedPanel } from '../kit3d.js';
+import { PALETTE } from '../look.js';
+import { tuning } from '../sim/config.js';
 import { createOfficeCamera } from './officeCamera.js';
 import { createVisitor, createFigure, poseFigure } from './visitor.js';
 
@@ -62,13 +64,13 @@ export function drawBoard(g, w, h, rows, title) {
 function buildRoom(tier) {
   const parts = [];
   const walls = [];
-  parts.push(slab(-W, -0.05, -D, W, 0, D, C.floor));
+  parts.push(slab(-W, -0.05, -D, W, 0, D, C.floor, 1));
   parts.push(slab(-1.6, 0, -2.0, 1.6, 0.01, 1.6, tier > 1 ? '#3d4f6b' : C.rug));
-  walls.push(panel(2 * D, H, -W, H / 2, 0, C.wall, '+x'));
-  walls.push(panel(2 * D, H, W, H / 2, 0, C.wall, '-x'));
-  walls.push(panel(2 * W, H, 0, H / 2, -D, C.wall, '+z'));
-  walls.push(panel(2 * W, H, 0, H / 2, D, C.wallDark, '-z'));
-  walls.push(panel(2 * W, 2 * D, 0, H, 0, '#e8e4da', 'down'));
+  walls.push(panel(2 * D, H, -W, H / 2, 0, C.wall, '+x', 1));
+  walls.push(panel(2 * D, H, W, H / 2, 0, C.wall, '-x', 1));
+  walls.push(panel(2 * W, H, 0, H / 2, -D, C.wall, '+z', 1));
+  walls.push(panel(2 * W, H, 0, H / 2, D, C.wallDark, '-z', 1));
+  walls.push(panel(2 * W, 2 * D, 0, H, 0, '#e8e4da', 'down', 1));
   if (tier > 1) {
     for (const [x, f] of [[-W + 0.01, '+x'], [W - 0.01, '-x']]) walls.push(panel(2 * D, 1.1, x, 0.55, 0, C.oak, f));
     walls.push(panel(2 * W, 1.1, 0, 0.55, -D + 0.01, C.oak, '+z'));
@@ -118,14 +120,24 @@ export function create(ctx) {
   const tier = ctx.tier || 1;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#1b1a17');
-  addSoftLights(scene, { intensity: 0.9 });
-  const lamp = new THREE.PointLight('#ffd9a0', 4, 6, 1.5);
-  lamp.position.set(-0.6, 1.4, 0.15);
-  scene.add(lamp);
+  scene.environment = ctx.environment || null;
+  // Daylight from the window behind the visitors, and the warm pool of the desk lamp.
+  roomLights(scene, { hemi: 0.35, key: 0.8, fill: 0.25, keyPos: [-2, 4, -6], fillPos: [4, 3, 3] });
+  lamp(scene, { intensity: tuning().look.deskLamp, distance: 5, x: -0.6, y: 1.3, z: 0.15 });
 
   const { parts, walls } = buildRoom(tier);
-  scene.add(new THREE.Mesh(merge(parts), vertexMaterial()));
-  scene.add(new THREE.Mesh(merge(walls), vertexMaterial()));
+  const bounds = { x0: -W, x1: W, z0: -D, z1: D };
+  scene.add(new THREE.Mesh(bakeAO(merge(parts), { bounds, reach: 0.6 }), vertexMaterial()));
+  scene.add(new THREE.Mesh(bakeAO(merge(walls), { bounds, ceilY: H, reach: 1.0 }), vertexMaterial()));
+  // The desk lamp's shade, lit from inside.
+  scene.add(new THREE.Mesh(merge([box(0.24, 0.12, 0.24, -0.6, 1.1, 0.15, PALETTE.paneWarm)]), glowMaterial()));
+  scene.add(contactShadows([
+    { x: 0, z: 0, sx: 2.4, sz: 1.4 },
+    { x: DESK_SEAT[0], z: DESK_SEAT[1], sx: 0.9, sz: 0.9 },
+    { x: -0.5, z: -1.0, sx: 0.9, sz: 0.9 },
+    { x: 0.5, z: -1.0, sx: 0.9, sz: 0.9 },
+    { x: W - 0.2, z: -1.2, sx: 0.7, sz: 1.9 },
+  ], { radius: 0.55 }));
 
   const lawn = paintedTexture(512, 320, paintLawn);
   scene.add(texturedPanel(2.0, 1.25, lawn, { x: 0, y: 1.7, z: -D + 0.02 }));

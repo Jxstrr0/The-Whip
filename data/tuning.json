@@ -207,5 +207,14 @@
     "keptPromiseRapport": 4,
     "whipNeed": 6,
     "promiseDueWeeks": 2
+  },
+  "look": {
+    "exposure": 0.9,
+    "envIntensity": 0.35,
+    "aoStrength": 0.5,
+    "contactShadow": 0.45,
+    "chandelier": 22,
+    "deskLamp": 10,
+    "pendant": 16
   }
 }

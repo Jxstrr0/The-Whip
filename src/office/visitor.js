@@ -1,5 +1,6 @@
 // The visiting figure: walks in from the door, sits, takes a pose for their mood, and leaves.
 import * as THREE from 'three';
+import { blobMaterial, figureMaterial } from '../kit3d.js';
 
 const SKIN = ['#f1c8a5', '#e0ac85', '#c68d63', '#a26b45', '#7c4f31', '#5b3a24', '#efd2b8', '#d6a07a'];
 
@@ -12,9 +13,9 @@ function hashIndex(id, n) {
 // A simple jointed figure: torso, head, arms and legs, built to sit or stand.
 export function createFigure(color, mpId = 'x') {
   const g = new THREE.Group();
-  const suit = new THREE.MeshStandardMaterial({ color, roughness: 0.7 });
-  const dark = new THREE.MeshStandardMaterial({ color: '#23252b', roughness: 0.8 });
-  const skin = new THREE.MeshStandardMaterial({ color: SKIN[hashIndex(mpId, SKIN.length)], roughness: 0.6 });
+  const suit = figureMaterial({ color, roughness: 0.7 });
+  const dark = figureMaterial({ color: '#23252b', roughness: 0.8 });
+  const skin = figureMaterial({ color: SKIN[hashIndex(mpId, SKIN.length)], roughness: 0.6 });
   const body = new THREE.Group();
   const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.19, 0.38, 4, 10), suit);
   torso.position.y = 0.33;
@@ -40,7 +41,11 @@ export function createFigure(color, mpId = 'x') {
     return pivot;
   });
   g.add(body);
-  return { group: g, body, head, arms, legs, materials: [suit, dark, skin] };
+  // A soft shadow that travels with the figure.
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9).rotateX(-Math.PI / 2), blobMaterial());
+  shadow.position.y = 0.012;
+  g.add(shadow);
+  return { group: g, body, head, arms, legs, materials: [suit, dark, skin, shadow.material] };
 }
 
 const POSES = {

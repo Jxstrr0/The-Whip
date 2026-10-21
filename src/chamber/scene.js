@@ -1,7 +1,9 @@
 // The chamber room: shell, Speaker's dais, Clerk's table and Mace, the bar and galleries, plus seats and camera.
 import * as THREE from 'three';
 import { GEOMETRY as G, seatX } from './layout.js';
-import { box, slab, panel, cylinder, sphere, merge, vertexMaterial, disposeTree, addSoftLights } from '../kit3d.js';
+import { box, slab, panel, cylinder, sphere, merge, vertexMaterial, glowMaterial, disposeTree, roomLights, lamp, bakeAO, contactShadows, figureMaterial } from '../kit3d.js';
+import { PALETTE } from '../look.js';
+import { tuning } from '../sim/config.js';
 import { createSeats } from './seats.js';
 import { createChamberCamera } from './camera.js';
 import { createPicker } from './picking.js';
@@ -13,6 +15,7 @@ const C = {
   aisle: '#284d33',
   oak: '#6e4a2b',
   oakLight: '#8a5f38',
+  oakDark: '#3f2a17',
   stone: '#b9b0a0',
   stoneDark: '#8f877a',
   ceiling: '#a68d66',
@@ -29,7 +32,7 @@ function buildShell() {
   const parts = [];
 
   // Floor, aisle runner and the tiered platforms that lift each row.
-  parts.push(slab(-W, -0.05, -L, W, 0, L, C.carpet));
+  parts.push(slab(-W, -0.05, -L, W, 0, L, C.carpet, 1.5));
   parts.push(slab(-G.aisleWidth / 2, 0, -L, G.aisleWidth / 2, 0.01, L, C.aisle));
   for (const sign of [-1, 1]) {
     for (let row = 2; row <= G.rows; row++) {
@@ -48,20 +51,31 @@ function buildShell() {
   // Walls and ceiling are one-sided inward panels, so the default camera above the bar can see through the end wall.
   const H = G.ceiling;
   const walls = [];
+  // Things that are themselves light: the window panes and the chandeliers. Drawn unlit so they read as lit.
+  const glow = [];
   for (const sign of [-1, 1]) {
     const facing = sign < 0 ? '+x' : '-x';
-    walls.push(panel(G.floorLength, H, sign * W, H / 2, 0, C.stone, facing));
-    walls.push(panel(G.floorLength, 2.2, sign * (W - 0.01), 1.1, 0, C.oak, facing));
-    // Tall windows above the gallery.
-    for (let i = -3; i <= 3; i++) walls.push(panel(1.6, 2.6, sign * (W - 0.02), 7.9, i * 3.4, C.glass, facing));
+    walls.push(panel(G.floorLength, H, sign * W, H / 2, 0, C.stone, facing, 2));
+    walls.push(panel(G.floorLength, 2.2, sign * (W - 0.01), 1.1, 0, C.oak, facing, 2));
+    // Tall windows above the gallery, with dark mullions.
+    for (let i = -3; i <= 3; i++) {
+      glow.push(panel(1.6, 2.6, sign * (W - 0.02), 7.9, i * 3.4, PALETTE.paneWarm, facing));
+      walls.push(panel(0.08, 2.6, sign * (W - 0.03), 7.9, i * 3.4, C.oakDark, facing));
+      walls.push(panel(1.6, 0.08, sign * (W - 0.03), 7.9, i * 3.4, C.oakDark, facing));
+    }
   }
-  walls.push(panel(G.floorWidth, H, 0, H / 2, -L, C.stoneDark, '+z'));
-  walls.push(panel(G.floorWidth, 2.4, 0, 1.2, -L + 0.01, C.oak, '+z'));
-  walls.push(panel(G.floorWidth, H, 0, H / 2, L, C.stoneDark, '-z'));
-  walls.push(panel(G.floorWidth, 2.2, 0, 1.1, L - 0.01, C.oak, '-z'));
+  for (const z of [-7, 0, 7]) {
+    glow.push(cylinder(0.8, 0.6, 0.12, 0, H - 2.7, z, PALETTE.paneWarm, 16));
+    walls.push(cylinder(0.04, 0.04, 1.6, 0, H - 1.8, z, C.oakDark, 8));
+    walls.push(cylinder(0.85, 0.85, 0.06, 0, H - 2.6, z, C.brass, 16));
+  }
+  walls.push(panel(G.floorWidth, H, 0, H / 2, -L, C.stoneDark, '+z', 2));
+  walls.push(panel(G.floorWidth, 2.4, 0, 1.2, -L + 0.01, C.oak, '+z', 2));
+  walls.push(panel(G.floorWidth, H, 0, H / 2, L, C.stoneDark, '-z', 2));
+  walls.push(panel(G.floorWidth, 2.2, 0, 1.1, L - 0.01, C.oak, '-z', 2));
   // Doors at the bar end.
   walls.push(panel(1.8, 2.8, 0, 1.4, L - 0.02, C.oakLight, '-z'));
-  walls.push(panel(G.floorWidth, G.floorLength, 0, H, 0, C.ceiling, 'down'));
+  walls.push(panel(G.floorWidth, G.floorLength, 0, H, 0, C.ceiling, 'down', 2.5));
   for (let i = -5; i <= 5; i++) walls.push(panel(G.floorWidth, 0.3, 0, H - 0.01, i * 2.4, C.oak, 'down'));
 
   // Galleries along both long walls: a floor slab, a front rail and stepped benches.
@@ -92,8 +106,9 @@ function buildShell() {
   // Clerks' chairs at the Speaker's end of the table.
   for (const x of [-0.45, 0.45]) parts.push(box(0.5, 0.9, 0.5, x, 0.45, t.zFrom - 0.5, C.leather));
 
-  const shellGeo = merge(parts);
-  const wallGeo = merge(walls);
+  const bounds = { x0: -W, x1: W, z0: -L, z1: L };
+  const shellGeo = bakeAO(merge(parts), { bounds });
+  const wallGeo = bakeAO(merge(walls), { bounds, ceilY: H, reach: 1.8 });
 
   // Brass and gold share a metallic material: the bar and its posts, the Mace.
   const metal = [];
@@ -108,7 +123,8 @@ function buildShell() {
   const group = new THREE.Group();
   group.add(new THREE.Mesh(shellGeo, vertexMaterial()));
   group.add(new THREE.Mesh(wallGeo, vertexMaterial()));
-  group.add(new THREE.Mesh(metalGeo, vertexMaterial({ metalness: 0.7, roughness: 0.35 })));
+  group.add(new THREE.Mesh(metalGeo, vertexMaterial({ metalness: 0.7, roughness: 0.35, envMapIntensity: 1 })));
+  group.add(new THREE.Mesh(merge(glow), glowMaterial()));
   return group;
 }
 
@@ -117,15 +133,16 @@ export function create(ctx) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#1b1a17');
   scene.fog = new THREE.Fog('#1b1a17', 40, 70);
-  addSoftLights(scene);
-  // A warm overhead wash, like chandeliers, so the floor isn't flat.
-  const chandelier = new THREE.PointLight('#ffd9a0', 30, 30, 1.6);
-  chandelier.position.set(0, 8.5, 0);
-  scene.add(chandelier);
+  scene.environment = ctx.environment || null;
+  // Daylight from the high windows, a cool fill, and three warm chandeliers down the centre.
+  roomLights(scene, { hemi: 0.4, key: 1.0, fill: 0.2, keyPos: [9, 14, -4] });
+  for (const z of [-7, 0, 7]) lamp(scene, { intensity: tuning().look.chandelier, distance: 18, y: G.ceiling - 2.8, z });
 
   scene.add(buildShell());
   const seats = createSeats();
   scene.add(seats.group);
+  // A soft shadow under every desk-and-chair pair.
+  scene.add(contactShadows(seats.records.map((s) => ({ x: s.x + (s.side === 'gov' ? 0.25 : -0.25), y: s.y, z: s.z, sx: 1.3, sz: 1.4 })), { radius: 0.6 }));
   const figures = createMpFigures(seats.records);
   scene.add(figures.group);
   const lights = createVoteLights(seats.records);
@@ -133,8 +150,8 @@ export function create(ctx) {
   let hidden = [];
   // The Speaker in the chair, in a black robe.
   const speaker = new THREE.Group();
-  speaker.add(new THREE.Mesh(new THREE.CapsuleGeometry(0.21, 0.4, 4, 10), new THREE.MeshStandardMaterial({ color: '#15161a', roughness: 0.8 })));
-  const sHead = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), new THREE.MeshStandardMaterial({ color: '#e0ac85', roughness: 0.6 }));
+  speaker.add(new THREE.Mesh(new THREE.CapsuleGeometry(0.21, 0.4, 4, 10), figureMaterial({ color: '#15161a', roughness: 0.8 })));
+  const sHead = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), figureMaterial({ color: '#e0ac85', roughness: 0.6 }));
   sHead.position.y = 0.5;
   speaker.add(sHead);
   speaker.position.set(0, G.dais.height + 0.9, G.dais.z + 0.05);
