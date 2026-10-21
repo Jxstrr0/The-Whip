@@ -1,6 +1,6 @@
 // Menus: the start screen (continue, or a new career: name, party, background, riding, age, seed) and the
 // in-game menu.
-import { t, esc } from './text.js';
+import { t, esc, longlightMark } from './text.js';
 import { data, tuning } from '../sim/config.js';
 
 // A fresh seed for the form. The seed may come from anywhere (this is UI, not sim); everything after it is deterministic.
@@ -86,7 +86,7 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
       </details>
       <p class="status muted" aria-live="polite"></p>
       <div class="choices"><button class="btn" data-act="settings">${t('menu.settings')}</button></div>
-      <footer class="colophon"><span class="mark">W</span>${t('menu.studio')}</footer>
+      <footer class="colophon">${longlightMark()}${t('menu.studio')}</footer>
     </div>`;
     wire();
   }

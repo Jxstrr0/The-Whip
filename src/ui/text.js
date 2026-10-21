@@ -118,3 +118,8 @@ export function ordinal(n) {
   const v = n % 100;
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
+
+// Longlight's mark: the sun on the horizon, in the studio's colours. Used on the title page and the loading screen.
+export function longlightMark(cls = 'mark') {
+  return `<svg class="${cls}" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#141413"/><path class="sun" d="M20 40a12 12 0 0 1 24 0z" fill="#d97757"/><rect x="8" y="39.5" width="48" height="3" fill="#7b3fc4"/></svg>`;
+}
