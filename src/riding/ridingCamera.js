@@ -2,11 +2,10 @@
 import * as THREE from 'three';
 
 const DEG = Math.PI / 180;
-// The handoff puts the camera "behind the desk at (0.4, 1.6, 0.4)", but the desk is at z = -1 and the
-// player faces +z, so behind the desk is the -z side. These keep the same height and offset.
+// The desk is at z = -1 and the player faces +z, so "behind the desk" is the -z side.
 export const RIDING_SHOTS = {
-  desk: { pos: [0.4, 1.6, -2.3], look: [0, 1.0, -0.15], drop: 1.0 },
-  townHall: { pos: [0, 2.1, 1.2], look: [0, 1.3, 7.5], drop: 3.2 },
+  desk: { pos: [0.6, 1.5, -2.15], look: [0.05, 1.1, -0.1], drop: 1.05 },
+  townHall: { pos: [0.3, 2.0, 3.0], look: [0, 1.35, 8.0], drop: 1.8 },
 };
 
 export function createRidingCamera(camera) {
@@ -16,6 +15,7 @@ export function createRidingCamera(camera) {
   const gl = look.clone();
   let portrait = false;
   let drop = RIDING_SHOTS.desk.drop;
+  let sway = 0;
   return {
     shot(name, snap = false) {
       drop = RIDING_SHOTS[name].drop;
@@ -30,12 +30,13 @@ export function createRidingCamera(camera) {
       const k = 1 - Math.exp(-dt * 3);
       pos.lerp(gp, k);
       look.lerp(gl, k);
-      camera.position.copy(pos);
-      camera.lookAt(look.x, look.y - (portrait ? drop : 0), look.z);
+      sway += dt;
+      camera.position.set(pos.x + Math.sin(sway * 0.5) * 0.008, pos.y + Math.sin(sway * 0.7) * 0.005, pos.z);
+      camera.lookAt(look.x, look.y - (portrait ? drop : 0.08), look.z);
     },
     fitAspect(aspect) {
       portrait = aspect < 1;
-      camera.fov = Math.max(52, Math.min(78, (2 * Math.atan(Math.tan(25 * DEG) / Math.max(aspect, 0.3))) / DEG));
+      camera.fov = Math.max(48, Math.min(76, (2 * Math.atan(Math.tan(23 * DEG) / Math.max(aspect, 0.3))) / DEG));
       camera.updateProjectionMatrix();
     },
   };

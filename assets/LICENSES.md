@@ -27,3 +27,9 @@ All from **ambientCG** (https://ambientcg.com), licence **CC0 1.0 Universal** (h
 From **Kenney** (https://kenney.nl/assets/furniture-kit), licence **CC0 1.0 Universal** (the pack's `License.txt`: "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/"). Used as shipped (GLB, no textures; flat materials named `wood`, `metal`, `carpet` and so on, which `src/models.js` maps to the game's own surfaces). About 0.52 of real scale; the loader scales them.
 
 Files: desk, chairDesk, chairCushion, loungeChair, loungeChairRelax, loungeSofa, loungeSofaLong, bookcaseClosedWide, bookcaseOpen, books, lampRoundTable, lampWall, pottedPlant, plantSmall2, coatRackStanding, computerScreen, laptop, trashcan, tableCross, kitchenCoffeeMachine.
+
+### `street/` — KayKit City Builder Bits 1.0
+
+From **KayKit** (https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits), licence **CC0 1.0 Universal** (the repo's `LICENSE.txt`: "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/"). Used as shipped (glTF + bin + the shared `citybits_texture.png` atlas, which stays on the models). About 1:5 scale; the loader scales them.
+
+Files: streetlight, bench, car_sedan, firehydrant, trash_A, bush.

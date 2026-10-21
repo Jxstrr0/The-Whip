@@ -237,6 +237,7 @@ function buildWorld() {
       playerColor: colorOf(me),
       tier: state.player.act >= 4 ? 2 : 1,
       ridingType: me.riding.type,
+      ridingName: me.riding.name,
       seating: name === 'caucus' ? caucusSeating(state, me.party) : null,
       playerId: me.id,
     });
