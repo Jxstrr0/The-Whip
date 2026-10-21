@@ -10,6 +10,11 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
 // Which story leads when a day has several.
 const PRIORITY = ['confidenceLost', 'confidenceLostHandover', 'confidenceSurvived', 'billDefeated', 'playerRebelled', 'rebellion', 'closeVote', 'playerToedLine', 'billPassed'];
+// Which story leads the weekend front page when a week has several (the day's lead list, plus what the week
+// turned up outside the division lobby).
+export const FRONT_PRIORITY = ['confidenceLost', 'confidenceLostHandover', 'confidenceSurvived', 'billDefeated', 'playerRebelled', 'walkout', 'rebellion', 'qpHit', 'leak', 'townHall', 'closeVote', 'absence', 'playerToedLine', 'qpRiding', 'qpParried', 'billPassed', 'qpLob', 'routine'];
+// Stories the player is in: the front page runs their photograph beside these.
+const PLAYER_EVENTS = new Set(['playerRebelled', 'playerToedLine', 'townHall', 'absence', 'qpHit', 'qpParried', 'qpLob', 'qpRiding']);
 
 function fill(text, ctx) {
   return text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
@@ -25,7 +30,9 @@ export function headline(state, rng, event, ctx = {}) {
   const base = { name: fullName(me), riding: me.riding.name, party: gov?.name || 'The government', leader: gov?.leader ? fullName(state.mps[gov.leader]) : 'The Prime Minister', paper: rng.pick(H.papers), bill: 'the bill', yeas: 0, nays: 0, count: 0 };
   const full = { ...base, ...ctx };
   const text = fill(rng.pick(pool).text, full);
-  state.press = [...(state.press || []), { day: state.date.absWeek * 5 + state.date.dayOfWeek, event, text, paper: full.paper }].slice(-30);
+  const decks = H.decks?.[event];
+  const deck = decks?.length ? fill(rng.pick(decks), full) : null;
+  state.press = [...(state.press || []), { day: state.date.absWeek * 5 + state.date.dayOfWeek, event, text, paper: full.paper, deck, you: PLAYER_EVENTS.has(event) }].slice(-30);
   log(state, `${full.paper}: ${text}`, 'press');
   return text;
 }
@@ -98,8 +105,36 @@ hooks.fallout.push((state, rng) => {
   return null;
 });
 
+// A week with no story of its own still gets a front page. Chosen by the week number, not the RNG, so a
+// quiet week never reshuffles the draws that follow it.
+export function quietLead(state) {
+  const H = data().headlines;
+  const me = state.mps[state.player.mpId];
+  const week = state.date.absWeek;
+  const pool = H.headlines.filter((h) => h.event === 'quiet');
+  const decks = H.decks?.quiet || [];
+  const ctx = { name: fullName(me), riding: me.riding.name };
+  return {
+    day: week * 5 + 5,
+    event: 'quiet',
+    quiet: true,
+    text: fill(pool[week % pool.length].text, ctx),
+    deck: decks.length ? fill(decks[(week * 7 + 3) % decks.length], ctx) : null,
+    paper: H.papers[week % H.papers.length],
+  };
+}
+
+// The weekend: scandal fades, the polls go on the record, and the week's press is sorted for the front page.
 hooks.weekend.push((state) => {
-  const decay = tuning().media.scandalDecay;
-  for (const m of Object.values(state.mps)) if (m.scandal > 0) m.scandal = Math.max(0, m.scandal - decay);
+  const M = tuning().media;
+  for (const m of Object.values(state.mps)) if (m.scandal > 0) m.scandal = Math.max(0, m.scandal - M.scandalDecay);
+  const week = state.date.absWeek;
+  state.pollHistory = [...(state.pollHistory || []), { week, polling: { ...state.polling } }].slice(-M.pollHistoryWeeks);
+  const rank = (e) => {
+    const i = FRONT_PRIORITY.indexOf(e.event);
+    return i < 0 ? FRONT_PRIORITY.length : i;
+  };
+  const press = (state.press || []).filter((e) => Math.floor((e.day - 1) / 5) === week).sort((a, b) => rank(a) - rank(b) || b.day - a.day);
+  state.flow.week.press = press.length ? press : [quietLead(state)];
   return null;
 });

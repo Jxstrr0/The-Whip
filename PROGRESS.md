@@ -699,3 +699,22 @@ Kelbo's once-over picked twelve things. This is the first: the two rooms where a
 - The deskmate is chosen deterministically (lowest id among your party's first-term members, you excepted), so the same seed always gives the same colleague. They're only in the Act 1 set.
 - The whip's office for the reversal is built lazily, the first time it's needed, so Acts 2–5 never pay for it.
 - The old `tier` extra went away; the office takes `act` now. One new test: the first evening at each rank logs the line once, and every Act has a room, a line and a title.
+
+## 2026-10-21 · Round two, 9 of 12: The weekly front page
+
+**What was built**
+
+- The week's review is a newspaper now. At the weekend the sheet is the front page of one of Ostrava's papers: the ears (Weekend edition · Week 7, Year 1), the masthead in heavy type between rules (whichever paper ran the week's biggest story: *The Ostrava Ledger*, *Westmark Herald*, *Caledor Press Wire* …), and a dateline with the national polls as a ticker (NU 36 · CP 36 · LD 13 …).
+- **The lead story** is the week's biggest headline from the press gallery, chosen by weight (a confidence vote beats a defeat beats your own rebellion beats a walkout beats a backbench revolt beats a Question Period hit beats a leak …), with a new second line under it, the *deck*, a dry sentence or two in the paper's voice ("The whip's office declined to comment, which in that office is a comment."), and a byline. Every event that makes a headline now has two or three decks to draw from.
+- **Your photograph** runs beside the lead when the story is yours: a rebellion, a line toed against the riding, a town hall, a Question Period, an absence. It's the game's own figure of you in your own suit, tie and pin, rendered once off screen in three-quarter view and screened into newsprint halftone (ink dots on a tilted lattice over cream), with a caption ("The member for Prentiss–Long Lake, photographed before the division."). Rendered on demand and kept, so it costs one frame once per career.
+- **Below the fold:** *Elsewhere in the press*, the week's other headlines with their papers; *By the numbers*, the same riding standing, whip's view, rebellions and divisions as before; *The polls*, a line chart of national polling over the last twelve weeks in the party colours, with each party's figure down the right edge (the first weekend shows a single reading and says a line needs a second week); and *The week in brief*, the log in small type, oldest first, which is how a week reads.
+- A week that made no news still gets a paper: seven quiet headlines ("Parliament sits, talks, adjourns") with decks to match, chosen by the week number so they rotate without touching the dice.
+- Two kinds of story that had headlines written but never fired now do: a packed town hall at home makes the paper about half the time, and a rival whip's leak about your caucus reaches the front page about a third of the time.
+
+**Things to know / decisions I made**
+
+- The sim keeps a weekly poll history (`state.pollHistory`, 52 weeks) from the weekend hook; the chart draws the last twelve. Old saves start the history at their next weekend and the chart grows from there.
+- The front page is pure data from the sim: the week's press entries (sorted by `FRONT_PRIORITY` in `media.js`), the polls, and the same summary as before; `src/ui/frontPage.js` lays it out and `src/pressPhoto.js` makes the photograph. The sim never sees the photo.
+- Press entries now carry a `deck` and a `you` flag. Decks, bylines, captions and the quiet headlines live in `data/headlines.json`; the four new numbers (`pollHistoryWeeks`, `chartWeeks`, `townHallPress`, `leakPress`) in `data/tuning.json` under `media`.
+- Checked over a 48-week headless Parliament: every week has a lead, no placeholders left unfilled, a quarter of weeks quiet, the rest led by confidence votes, bills, revolts and leaks in a believable mix. Leaks were leading too often at first (one week in four), so they're rarer now and rank below a revolt.
+- One new test: the first week's page, the poll history, a quiet week's lead without a dice roll, every deck using only keys a headline can fill, and the photo flag following the player.

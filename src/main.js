@@ -22,6 +22,7 @@ import { createHud, createTuningPanel, createToast } from './ui/hud.js';
 import { createMpCard } from './ui/mpCard.js';
 import { createBook } from './ui/book.js';
 import { createAgenda } from './ui/agenda.js';
+import { pressPhoto } from './pressPhoto.js';
 import { createCountBoard } from './ui/countBoard.js';
 import { createOfficeUI } from './ui/talk.js';
 import { createCaucusUI } from './ui/caucusUI.js';
@@ -251,6 +252,7 @@ function buildWorld() {
     getState,
     onContinue: () => dispatch({ type: 'advance' }),
     onSkip: () => dispatch({ type: 'skip' }),
+    photo: (mp) => pressPhoto(renderer, environment, mp, colorOf(mp)),
   });
   const countBoard = createCountBoard(ui, {
     getState,

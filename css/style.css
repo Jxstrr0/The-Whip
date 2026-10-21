@@ -1525,3 +1525,166 @@ html.large #ui {
 .setting input[type="range"]:disabled {
   opacity: 0.4;
 }
+
+/* The weekend edition: the week in review set as a newspaper front page. Heavy masthead between double
+   rules, a lead story with a deck and byline, the halftone photograph when the story is yours, the polls as
+   a chart, the numbers and the week's record in small type below the fold. */
+.front-page .masthead {
+  text-align: center;
+  padding: 2px 0 6px;
+  border-bottom: 1px solid var(--ink);
+  box-shadow: 0 3px 0 -2px var(--ink);
+  margin-bottom: 10px;
+}
+.front-page .ears {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--ink-3);
+  padding-bottom: 3px;
+}
+.front-page .masthead h2 {
+  margin: 6px 0 2px;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  font-variation-settings: "opsz" 144;
+}
+.front-page .dateline {
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  border-top: 1px solid var(--ink-3);
+  padding-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.front-page .lead {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--ink-3);
+}
+.front-page .lead h3 {
+  margin: 0 0 6px;
+  font-size: 25px;
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.012em;
+  text-transform: none;
+  font-variant-caps: normal;
+  color: var(--ink);
+}
+.front-page .deck {
+  margin: 0 0 6px;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--ink-2);
+  font-style: italic;
+}
+.front-page .byline {
+  margin: 0;
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.press-photo {
+  flex: none;
+  width: 118px;
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--ink-2);
+}
+.press-photo img {
+  display: block;
+  width: 118px;
+  height: auto;
+  border: 1px solid var(--ink);
+  box-shadow: 0 0 0 3px var(--paper), 0 0 0 4px var(--ink-3);
+  image-rendering: auto;
+}
+.press-photo figcaption {
+  margin-top: 7px;
+  font-style: italic;
+}
+.front-page h4 {
+  margin: 12px 0 4px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 3px;
+}
+.front-elsewhere ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.front-elsewhere li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--ink-4);
+  font-size: 15px;
+  line-height: 1.3;
+  font-weight: 500;
+}
+.front-elsewhere .paper {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  font-weight: 400;
+  margin-right: 4px;
+}
+.front-grid {
+  display: grid;
+  gap: 0 18px;
+}
+/* Two columns only where the sheet is wide (a tablet held upright); the landscape side sheet is too narrow. */
+@media (orientation: portrait) and (min-width: 560px) {
+  .front-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.front-numbers .kv .v {
+  white-space: nowrap;
+}
+.front-page .small {
+  font-size: 12.5px;
+  margin: 6px 0 0;
+}
+.poll-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 4px;
+  font-size: 11px;
+  font-family: var(--serif);
+  font-weight: 600;
+}
+.poll-chart .grid {
+  stroke: var(--ink-4);
+  stroke-width: 1;
+}
+.poll-chart .axis {
+  fill: var(--ink-2);
+  font-weight: 400;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+}
+.front-brief .feed {
+  font-size: 13px;
+  margin: 0;
+  padding-left: 18px;
+}
+.front-brief .feed li {
+  padding: 3px 0;
+}
