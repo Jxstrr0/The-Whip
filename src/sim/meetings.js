@@ -209,7 +209,19 @@ export function planEvening(state, rng) {
   if (state.date.absWeek < T.introductionWeeks && rng.chance(T.walkInOdds.introduction)) add(rng.pick(cohort).id, 'introduction');
   if (rng.chance(T.walkInOdds.gossip)) add(rng.pick(cohort.filter((m) => m.party === mine.party).length ? cohort.filter((m) => m.party === mine.party) : cohort).id, 'gossip');
   if (rng.chance(T.walkInOdds.favorAsk)) add(rng.weighted(party, (m) => 1 + (m.cohort === mine.cohort ? 2 : 0) + (m.clique && m.clique === mine.clique ? 2 : 0)).id, 'favorAsk');
-  const list = walkIns.slice(0, T.maxWalkIns);
+  // The guided first week sends specific visitors on specific evenings.
+  for (const sit of p.script?.[state.date.dayOfWeek] || []) {
+    if (sit === 'mentorAdvice') add(p.mentor, 'mentorAdvice', up?.bill.id || p.forceDilemma);
+    else if (sit === 'rebelRecruit' && p.forceDilemma) {
+      const pos = state.bills[p.forceDilemma].positions[mine.party];
+      const rebel = party.filter((m) => m.riding.type === mine.riding.type && m.caucusRole === 'backbencher').sort((a, b) => a.loyalty - b.loyalty)[0] || party.sort((a, b) => a.loyalty - b.loyalty)[0];
+      if (rebel && pos) walkIns.unshift({ mpId: rebel.id, situation: 'rebelRecruit', billId: p.forceDilemma, reason: REASONS.rebelRecruit });
+    } else {
+      const pool = sit === 'introduction' ? cohort : party.filter((m) => m.cohort === mine.cohort);
+      if (pool.length) add(rng.pick(pool).id, sit);
+    }
+  }
+  const list = walkIns.slice(0, T.maxWalkIns + (p.script ? 1 : 0));
   if (!whipCall && !list.length) return null;
   return { slots: p.slots, used: 0, walkIns: list, whipCall, met: [], called: [] };
 }

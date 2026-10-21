@@ -37,6 +37,11 @@ import * as meetings from './src/sim/meetings.js';
 import { botPlayParliament } from './src/sim/bot.js';
 import { ACTIONS } from './src/sim/actions.js';
 import { spreadBrokenPromise } from './src/sim/relationships.js';
+import * as caucusSim from './src/sim/caucus.js';
+window.__caucus = caucusSim;
+import './src/sim/riding.js';
+import { botAct } from './src/sim/bot.js';
+import { exportSave, importSave } from './src/save.js';
 
 const sections = [];
 let current = null;
@@ -463,6 +468,74 @@ test('The bot plays a whole Parliament through meetings and the whip calls, no e
   assert(s.flow.pending.kind === 'dissolved', 'did not finish');
   assert(seen.meeting > 0 && seen.office > 0, 'no meetings');
   return `${Object.keys(s.meetings).length} meetings kept, ${s.ledger.length} ledger entries, save ${Math.round(JSON.stringify(s).length / 1024)} KB`;
+});
+
+
+// ---------- Stage 4b: the vertical slice ----------
+section('Stage 4b · Act 1, week one');
+
+test('A guided first week visits all four rooms in order and ends at the weekend review', () => {
+  const out = [];
+  for (const party of ['p1', 'p2', 'p3', 'p4']) {
+    const s = newGame({ seed: 'SLICE-' + party, party, guided: true });
+    const rng = createRng('slice');
+    const seen = [];
+    for (let i = 0; i < 4000; i++) {
+      const p = s.flow.pending;
+      if (p?.kind === 'weekSummary') break;
+      if (p && seen[seen.length - 1] !== p.kind) seen.push(p.kind);
+      botAct(s, rng);
+    }
+    assert(s.flow.pending?.kind === 'weekSummary' && s.flow.pending.firstWeek, `${party}: never reached the first-week review`);
+    for (const k of ['morning', 'office', 'meeting', 'caucus', 'division', 'riding']) assert(seen.includes(k), `${party}: no ${k} stop`);
+    const firstCaucus = seen.indexOf('caucus');
+    const firstDivision = seen.indexOf('division');
+    const firstRiding = seen.indexOf('riding');
+    assert(firstCaucus < firstDivision && firstDivision < firstRiding, `${party}: rooms out of order`);
+    const whipMet = Object.values(s.meetings).some((m) => m.reversal);
+    assert(whipMet, `${party}: the whip never called`);
+    out.push(`${s.parties[party].short}: ${s.player.whipFile.length ? 'rebelled' : 'toed the line'}, riding ${s.player.ridingStanding}`);
+  }
+  return out.join(' · ');
+});
+
+test("The first week's dilemma is a bill the player's riding pulls against, voted Thursday", () => {
+  for (const party of ['p1', 'p2', 'p3', 'p4']) {
+    const s = newGame({ seed: 'SLICE-' + party, party, guided: true });
+    const b = s.bills[s.player.forceDilemma];
+    const me = s.mps[s.player.mpId];
+    assert(b && b.nextVote === 3, `${party}: no Thursday dilemma`);
+    assert(Math.sign(b.ridingEffects[me.riding.type]) !== (b.positions[me.party] === 'yea' ? 1 : -1), `${party}: riding agrees with the line`);
+  }
+});
+
+test('Caucus: listen, speak and whisper each work once the room is open', () => {
+  const s = newGame({ seed: 'SLICE-p1', party: 'p1', guided: true });
+  for (let i = 0; i < 400 && s.flow.pending?.kind !== 'caucus'; i++) {
+    const p = s.flow.pending;
+    if (!p) pacing.next(s);
+    else pacing.resolve(s, p.kind === 'division' ? 'line' : null);
+  }
+  assert(s.flow.pending?.kind === 'caucus', 'no caucus');
+  const heard = ACTIONS.caucusListen(s);
+  assert(heard && heard.ids.length > 0, 'listen did nothing');
+  const said = ACTIONS.caucusSpeak(s, { stance: s.caucus.stanceOptions[0] });
+  assert(said, 'speak did nothing');
+  const { neighbours } = window.__caucus;
+  const w = ACTIONS.caucusWhisper(s, { mpId: neighbours(s)[0] });
+  assert(w && w.text, 'whisper did nothing');
+  assert(s.caucus.actions === 0, 'actions not spent');
+  return `heard ${heard.ids.length} moods; whisper: ${w.text.slice(0, 60)}…`;
+});
+
+test('A save round-trips through export and import unchanged', () => {
+  const s = newGame({ seed: 'SLICE-p2', party: 'p2', guided: true });
+  const rng = createRng('save');
+  for (let i = 0; i < 300; i++) botAct(s, rng);
+  const text = exportSave(s);
+  const back = importSave(text);
+  assert(JSON.stringify(back) === JSON.stringify(s), 'save changed in the round trip');
+  return `${Math.round(text.length / 1024)} KB exported`;
 });
 
 // ---------- runner ----------
