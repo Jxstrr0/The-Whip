@@ -36,6 +36,7 @@ import { getSettings, setSetting, onSettings, applySettings } from './settings.j
 import { createLedger } from './ui/ledger.js';
 import { createCareerUI } from './ui/careerUI.js';
 import { createRecordUI } from './ui/recordUI.js';
+import { createMemoir } from './ui/memoirUI.js';
 import { createElectionUI } from './ui/electionUI.js';
 import { canUse, nextVote } from './sim/tools.js';
 import { t, partyColor } from './ui/text.js';
@@ -213,6 +214,7 @@ function buildWorld() {
 
   toast = createToast(ui);
   ledger = createLedger(ui, { getState });
+  const memoir = createMemoir(ui, { getState, onPerson: (mpId) => card.show(mpId) });
   const gameMenu = createGameMenu(ui, {
     getState,
     onQuit: () => {
@@ -220,6 +222,7 @@ function buildWorld() {
       location.href = location.pathname;
     },
     onLedger: () => ledger.open(),
+    onMemoir: () => memoir.open(),
     onRetire: () => dispatch({ type: 'retire' }),
     onCross: (party) => dispatch({ type: 'crossFloor', party }),
     onSettings: openSettings,
@@ -266,7 +269,7 @@ function buildWorld() {
   });
   const officeUI = createOfficeUI(ui, { getState, dispatch, pickMp, onLedger: () => ledger.open() });
   const careerUI = createCareerUI(ui, { getState, dispatch });
-  const recordUI = createRecordUI(ui, { getState, onNewGame: () => (location.href = location.pathname) });
+  const recordUI = createRecordUI(ui, { getState, onNewGame: () => (location.href = location.pathname), onPerson: (mpId) => card.show(mpId) });
   const electionUI = createElectionUI(ui, { getState, dispatch });
   const caucusUI = createCaucusUI(ui, { getState, dispatch, getRoom: () => (rooms.name === 'caucus' ? rooms.room : null) });
   const ridingUI = createRidingUI(ui, { getState, dispatch });

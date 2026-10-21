@@ -6,6 +6,7 @@ import { data, tuning } from './config.js';
 import { createRng } from './rng.js';
 import { uniqueNames } from './generate.js';
 import { resolvers, queueStop, log } from './pacing.js';
+import { remember, person } from './memoir.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
@@ -172,5 +173,11 @@ resolvers.coldOpen = (state, p, choice) => {
   if (p.phase !== 'count') return;
   const n = p.night;
   log(state, `Election night in ${n.riding}: elected by ${fmt(n.margin)} votes. ${n.minority ? 'A minority' : 'A majority'} ${n.govName} government.`, 'career');
+  const rival = n.candidates[1];
+  const N = data().memoir.notes;
+  remember(state, 'electionNight', {
+    ctx: { votes: fmt(n.margin), rival: rival.name, gov: n.govName, govKind: n.minority ? 'minority' : 'majority' },
+    people: [{ id: null, name: rival.name, party: rival.party, note: `${N.ranSecond}, ${fmt(rival.votes)} votes` }, person(state, state.player.mentor, N.mentor)],
+  });
   if (choice !== 'skip') queueStop(state, { kind: 'coldOpen', phase: 'walk', needsChoice: true, important: true, walk: walkIn(state) });
 };

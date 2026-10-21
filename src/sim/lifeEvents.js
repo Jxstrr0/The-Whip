@@ -5,6 +5,7 @@ import { hooks, log, resolvers } from './pacing.js';
 import { adjustRapport } from './relationships.js';
 import { reveal } from './knowledge.js';
 import { budget } from './tools.js';
+import { remember, person } from './memoir.js';
 
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
 const fill = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
@@ -45,6 +46,13 @@ hooks.weekend.push((state, rng) => {
   return stop;
 });
 
+// Showing up, or not, goes in the memoir; a note is the decent minimum and doesn't.
+function rememberLifeEvent(state, m, e, sub) {
+  const M = data().memoir;
+  const what = (M.lifeWhat[e.kind] || M.lifeWhat.crisis).replace('{where}', m.riding.name);
+  remember(state, 'lifeEvent', { sub, ctx: { name: fullName(m), first: m.name.first, what }, people: [person(state, m.id, M.notes.lifeEvent)] });
+}
+
 function respond(state, p, choice) {
   const C = tuning().career;
   const m = state.mps[p.mpId];
@@ -57,6 +65,7 @@ function respond(state, p, choice) {
     adjustRapport(state, m.id, C.showUpRapport);
     m.relations[state.player.mpId] = Math.min(100, (m.relations[state.player.mpId] || 0) + 15);
     log(state, `You showed up for ${fullName(m)}. They won't forget it.`, 'career');
+    rememberLifeEvent(state, m, e, 'showUp');
   } else if (choice === 'sendNote') {
     adjustRapport(state, m.id, C.noteRapport);
     log(state, `You sent ${fullName(m)} a note.`, 'career');
@@ -64,6 +73,7 @@ function respond(state, p, choice) {
     adjustRapport(state, m.id, C.ignoreRapport);
     e.ignoredBy = state.player.mpId;
     log(state, `${fullName(m)} noticed you didn't come by.`, 'career');
+    rememberLifeEvent(state, m, e, 'ignore');
   }
 }
 
