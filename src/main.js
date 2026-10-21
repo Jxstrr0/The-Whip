@@ -10,7 +10,7 @@ import { getState, setState, dispatch, subscribe } from './state.js';
 import './sim/pacing.js';
 import './sim/meetings.js';
 import { caucusSeating } from './sim/caucus.js';
-import './sim/riding.js';
+import { townHallPlacards } from './sim/riding.js';
 import { saveGame, loadGame, deleteSave, exportSave, importSave, allSaves, latestSave } from './save.js';
 import { createRooms } from './rooms.js';
 import * as chamber from './chamber/scene.js';
@@ -288,7 +288,7 @@ function buildWorld() {
     } else if (name === 'riding') {
       const v = state.ridingVisit;
       if (!v) return;
-      room.setTownHall(v.phase === 'townHall', v.townHall?.crowd ?? 50);
+      room.setTownHall(v.phase === 'townHall', v.townHall?.crowd ?? 50, townHallPlacards(state));
       const item = v.phase === 'visitors' ? v.queue[v.at] : null;
       room.setVisitor(item ? { key: `${v.week}:${v.at}`, role: item.role } : null);
     }
