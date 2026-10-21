@@ -682,3 +682,19 @@ Kelbo's once-over picked twelve things. This is the first: the two rooms where a
 - An off-script question marks a carried riding case as raised in the House, so it isn't asked twice; when there's no case, a riding-type issue stands in ("the winter road season", "the rent"). The minister for an off-script question is whoever holds that interest in cabinet, not the bill's sponsor.
 - The question comes before any division, so the "Noticed" it earns counts toward Act 2 the same week. Saves from before this change load unchanged: a player without a `lastQp` is simply due.
 - Four new tests (the guided-week slot, each framing's effects for both sides, the promised slot, every line and headline filling).
+
+## 2026-10-21 · Figures: cloth, hair, skin and silk
+
+**What was built**
+
+- The figures are no longer smooth plastic next to grained wood and stone. Every part is now made of something: suits in a fine worsted twill, hair in strands that run down from the crown, a faint grain on skin and on polished shoes, silk ribs on the ties. All of it is painted once on small canvases at load (`src/figureTextures.js`), so there are no new files under `assets/` and nothing new to license; the maps are greyscale and the party or suit colour still comes through the instance colour, the same trick the rooms use.
+- The cloth and hair maps are sized in metres, like the rooms' textures, so a weave reads at the same density on a sleeve as on a lapel. Three's own capsule gives the straight part of a limb one step of texture however long it is, which stretched the weave along every sleeve; the figure kit now builds its own capsules with the texture following the arc.
+- Up close, suits come in three cloths: plain, pinstripe, chalk stripe (decided by who you are, like the suit colour), and half the ties are rep stripes rather than solid. The crowds share one plain weave and one silk: the office visitor, the whip in the reversal, the chamber walkers, the player seen from behind and the riding's callers wear the full wardrobe.
+- The hair cap is new: a shell that stands a little proud of the skull, with a hairline above the brow at the front and down to the nape at the back. The old cap sat on the skull's surface and came down over where the eyes are. "Receding" now squashes the cap toward the crown, so the forehead gets higher rather than the hair shrinking all over.
+
+**Things to know / decisions I made**
+
+- No new draw calls: the parts are the same eight instanced meshes per crowd and the same jointed meshes per visitor, with maps on their materials. Nine small canvases in all (256² and below), shared by every room for the life of the page and never disposed with a room.
+- Cloth patterns are per figure, not per instance, so the benches and the caucus table are all plain weave; stripes would not read at that distance anyway.
+- `tools/lineup.html` now dresses its figures with `wardrobe()` and takes `?zoom=1` (the articulated figures) or `?zoom=2` (two crowd figures) for judging the cloth and hair up close.
+- `tests.html`: 74 of 74. Chamber, office (all four moods), caucus, riding and the town hall checked at phone size in portrait and landscape; no console errors.
