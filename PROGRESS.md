@@ -204,3 +204,7 @@ The handoff asks for this slice to be played before stage 5, and for your verdic
 **Checks**
 
 - On the live site in a headless phone browser: the start menu loads, a guided game opens on Monday of week 1 with the chamber drawn, and `tests.html` passes 33 of 33.
+
+**Fix found while testing the live site**
+
+- During a vote count, the count board was rebuilding itself every few seats, which replaced the "Show result" button each time. A tap that landed during a rebuild could be lost. The board is now built once per vote, and the count only updates the numbers and bars, so its buttons stay put.
