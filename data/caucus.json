@@ -1,0 +1,120 @@
+{
+  "leaderOpenings": {
+    "controlling": [
+      "{leader} doesn't sit. “We're voting for {bill}, all of us, and I'd like that to be the shortest item on today's agenda.”",
+      "{leader} hands out a single page of talking points on {bill}. “These are the words. Please use these words.”",
+      "“I've read every amendment to {bill}, including the ones you were thinking of moving,” {leader} says. “We support it as written.”",
+      "{leader} taps the table twice. “{bill} is whipped. {whip} will be taking attendance, and so will I.”",
+      "“There will be no free vote on {bill},” {leader} says, before anyone has asked for one."
+    ],
+    "handsOff": [
+      "{leader} reads the agenda aloud, gets to {bill}, and looks at {whip}. “I gather we're supporting this. Any thoughts?”",
+      "“I'm not going to tell you how to feel about {bill},” {leader} says. “{whip} will tell you how to vote.”",
+      "{leader} arrives four minutes late with a coffee. “{bill}. We're for it, broadly. Let's hear from the room.”",
+      "“I trust this caucus,” {leader} says, which everyone knows means {whip} has already done the count on {bill}.",
+      "{leader} leans back. “The line on {bill} is support. If that's a problem for anyone, talk to {whip}, not the press.”"
+    ],
+    "paranoid": [
+      "{leader} closes the door personally and checks it. “What's said about {bill} in this room ends up in the paper. I'd like to know how.”",
+      "“Someone told the gallery we were split on {bill},” {leader} says. “We are not split. We are voting yes.”",
+      "{leader} looks down the table one face at a time. “I'll know who's with me on {bill} by Thursday night.”",
+      "“Phones in the basket,” {leader} says. {whip} walks the basket around. Then: “Now. {bill}.”",
+      "{leader} says the line on {bill} is support, then adds, to no one in particular, that loyalty is noticed."
+    ],
+    "loyal": [
+      "{leader} stands. “{bill} is a hard vote for some of you, and I know who. I'm asking you to trust me on this one.”",
+      "“Some of your ridings won't love {bill},” {leader} says. “When they ask, send them to me. That's my job, not yours.”",
+      "{leader} thanks the caucus for the last vote, by name, before turning to {bill}. “We're for it. Let's carry it together.”",
+      "“I've never asked this caucus for more than it could give,” {leader} says. “I'm asking for {bill}.”",
+      "{leader} sets the line on {bill} and promises to visit every riding that pays a price for it. A few people write that down."
+    ]
+  },
+  "grievances": [
+    { "text": "{name} stands up and complains that {riding} found out about {bill} from the evening news.", "target": "leader", "heat": 2 },
+    { "text": "{name} stands up and complains that the leader's office rewrote their press release and spelled {riding} wrong.", "target": "leader", "heat": 1 },
+    { "text": "{name} stands up and complains that {leader} hasn't set foot in their province since the campaign bus left.", "target": "leader", "heat": 2 },
+    { "text": "{name} stands up and complains that the platform promised one thing and {bill} does the opposite.", "target": "leader", "heat": 3 },
+    { "text": "{name} stands up and complains that every decision now gets made by three staffers under thirty.", "target": "leader", "heat": 3 },
+    { "text": "{name} stands up and complains that caucus is told the line rather than asked about it.", "target": "leader", "heat": 2 },
+    { "text": "{name} stands up and complains that {leader} took questions from the gallery before taking them from caucus.", "target": "leader", "heat": 2 },
+    { "text": "{name} stands up and complains that {whip} denied their travel to a funeral in {riding} and approved {other}'s trip to a conference.", "target": "whip", "heat": 3 },
+    { "text": "{name} stands up and complains that the whip's office called their spouse looking for them.", "target": "whip", "heat": 2 },
+    { "text": "{name} stands up and complains that they've been on House duty four Fridays in a row while {other} hasn't done one.", "target": "whip", "heat": 2 },
+    { "text": "{name} stands up and complains that {whip} keeps a file on everyone and they'd like to see theirs.", "target": "whip", "heat": 3 },
+    { "text": "{name} stands up and complains that their Question Period slot was given away without a phone call.", "target": "whip", "heat": 1 },
+    { "text": "{name} stands up and complains that the whip's office threatened their committee seat over a tweet.", "target": "whip", "heat": 2 },
+    { "text": "{name} stands up and complains that pairs are being handed out like party favours to the leader's friends.", "target": "whip", "heat": 2 },
+    { "text": "{name} stands up and complains that the transport minister hasn't returned a call about {riding} since March.", "target": "cabinet", "heat": 1 },
+    { "text": "{name} stands up and complains that cabinet announced money in {riding} without inviting its MP.", "target": "cabinet", "heat": 2 },
+    { "text": "{name} stands up and complains that ministers treat backbenchers like a studio audience.", "target": "cabinet", "heat": 2 },
+    { "text": "{name} stands up and complains that the department wrote {bill} without asking anyone who'd ever lived outside Ostrava.", "target": "cabinet", "heat": 2 },
+    { "text": "{name} stands up and complains that a minister's chief of staff hung up on their constituency assistant.", "target": "cabinet", "heat": 1 },
+    { "text": "{name} stands up and complains that cabinet is drawn entirely from three provinces and it shows.", "target": "cabinet", "heat": 3 },
+    { "text": "{name} stands up and complains that {other} briefed the press on {bill} before caucus had seen it.", "target": "other", "heat": 3 },
+    { "text": "{name} stands up and complains that the parking passes for the precinct have been reassigned again.", "target": "other", "heat": 1 },
+    { "text": "{name} stands up and complains that {other} has been fundraising in {riding} without asking.", "target": "other", "heat": 2 },
+    { "text": "{name} stands up and complains that the research bureau's polling on {bill} has been sitting in a drawer.", "target": "other", "heat": 2 },
+    { "text": "{name} stands up and complains that the caucus coffee is, and has always been, undrinkable.", "target": "other", "heat": 1 },
+    { "text": "{name} stands up and complains that {other} voted against the line last month and nothing happened to them.", "target": "other", "heat": 3 }
+  ],
+  "stances": [
+    { "id": "support1", "text": "Back the line on {bill}. We win this one together or not at all.", "kind": "support", "leader": 6, "room": -2, "riding": -2 },
+    { "id": "support2", "text": "Thank the leader for the briefing and say you'll carry {bill} in your riding.", "kind": "support", "leader": 5, "room": 0, "riding": -1 },
+    { "id": "support3", "text": "Remind the room that the opposition would love nothing more than a split vote.", "kind": "support", "leader": 7, "room": 2, "riding": -1 },
+    { "id": "support4", "text": "Say {bill} isn't perfect, but it's ours, and you'll vote for it.", "kind": "support", "leader": 4, "room": 3, "riding": -1 },
+    { "id": "riding1", "text": "Tell them what {bill} costs your riding, with the numbers, and ask for a fix.", "kind": "riding", "leader": -2, "room": 3, "riding": 3 },
+    { "id": "riding2", "text": "Read out a letter from a constituent, word for word, and sit down.", "kind": "riding", "leader": -1, "room": 4, "riding": 2 },
+    { "id": "riding3", "text": "Say you'll vote for it if your riding gets the amendment. Otherwise, you can't.", "kind": "riding", "leader": -4, "room": 2, "riding": 4 },
+    { "id": "riding4", "text": "Ask that the next riding announcement go to a seat that paid for this vote.", "kind": "riding", "leader": -1, "room": 5, "riding": 2 },
+    { "id": "challenge1", "text": "Ask why caucus is told the line instead of asked. Loudly.", "kind": "challenge", "leader": -8, "room": 6, "riding": 2 },
+    { "id": "challenge2", "text": "Say you won't vote for {bill} as written, and that you suspect you're not alone.", "kind": "challenge", "leader": -10, "room": 4, "riding": 4 },
+    { "id": "challenge3", "text": "Ask the whip, in front of everyone, what happens to members who vote their riding.", "kind": "challenge", "leader": -6, "room": 5, "riding": 1 },
+    { "id": "challenge4", "text": "Move that {bill} be a free vote. Ask for a show of hands.", "kind": "challenge", "leader": -9, "room": 8, "riding": 3 },
+    { "id": "quiet1", "text": "Say nothing. Take notes. Watch who's sitting with whom.", "kind": "quiet", "leader": 0, "room": 0, "riding": 0 },
+    { "id": "quiet2", "text": "Nod when the leader speaks and leave before the grievances.", "kind": "quiet", "leader": 2, "room": -3, "riding": 0 },
+    { "id": "quiet3", "text": "Stay seated, but catch the whip after the meeting with your concerns.", "kind": "quiet", "leader": 1, "room": -1, "riding": 1 },
+    { "id": "quiet4", "text": "Pass a note down the table and let someone braver read it out.", "kind": "quiet", "leader": 0, "room": 2, "riding": 0 }
+  ],
+  "whispers": [
+    { "mood": "cooperative", "text": "“Say the word and I'll back you up if you speak. I owe you one from last month.”" },
+    { "mood": "cooperative", "text": "“{whip} is in a good mood today. If you want something, ask before the vote, not after.”" },
+    { "mood": "cooperative", "text": "“{name} wants to get a group of rookies together for dinner. You should come.”" },
+    { "mood": "cooperative", "text": "“{leader} actually listens when it's about a riding. Ask about yours.”" },
+    { "mood": "cooperative", "text": "“I'm voting for {bill}, but I'd sit next to you if you didn't.”" },
+    { "mood": "guarded", "text": "“Careful what you say about {bill} today. Half this table talks to the gallery.”" },
+    { "mood": "guarded", "text": "“I've heard things about {other}. I'll tell you later. Not here.”" },
+    { "mood": "guarded", "text": "“Don't look now, but {whip} is writing down who claps.”" },
+    { "mood": "guarded", "text": "“I'm keeping my head down this week. I'd suggest you do the same.”" },
+    { "mood": "guarded", "text": "“Whatever {name} is about to say, I'm not with them. Officially.”" },
+    { "mood": "angry", "text": "“If {leader} says ‘team’ one more time, I'm walking out.”" },
+    { "mood": "angry", "text": "“{whip} cancelled my pair an hour before the vote. An hour. I had a daughter's recital.”" },
+    { "mood": "angry", "text": "“There are eight of us who won't vote for {bill}. Nine, if you're interested.”" },
+    { "mood": "angry", "text": "“{other} got the riding announcement I was promised. Ask yourself who's next.”" },
+    { "mood": "angry", "text": "“I didn't win my seat by forty votes to be a yes on {bill}.”" },
+    { "mood": "anxious", "text": "“If {bill} goes the wrong way, does that trigger an election? Nobody will give me a straight answer.”" },
+    { "mood": "anxious", "text": "“My riding association president has started returning other people's calls.”" },
+    { "mood": "anxious", "text": "“Do you think {whip} knows about the thing? You know the thing.”" },
+    { "mood": "anxious", "text": "“I'm four points down at home and I just got asked to vote for {bill}.”" },
+    { "mood": "anxious", "text": "“{name} says there's a shuffle coming. Are you hearing that? Is it bad?”" }
+  ],
+  "roomMoods": {
+    "calm": [
+      "The room is quiet. Someone is passing around a birthday card, and most people are signing it.",
+      "People are reading the agenda instead of each other. The coffee is gone by the second item.",
+      "The cliques sit where they always sit, and nobody is leaning across the table.",
+      "A few laughs at the leader's joke, more than it deserved. Nobody wants a fight today."
+    ],
+    "restless": [
+      "Chairs creak. The back end of the table is whispering more than it's listening.",
+      "Two members from the same province have their heads together, and they stop when the whip looks over.",
+      "Someone asks a procedural question that is not really a procedural question.",
+      "The applause after the leader's remarks starts on time and ends early."
+    ],
+    "angry": [
+      "Nobody claps. The silence after the leader sits down goes on long enough to be counted.",
+      "Three people stand to speak at once, and the chair has to pick one.",
+      "The whip has stopped taking notes and started counting heads.",
+      "Someone says “with respect,” which in this room means the opposite."
+    ]
+  }
+}

@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Whip - sim tests</title>
+<style>
+  body { font: 15px/1.4 system-ui, sans-serif; background: #14171c; color: #e8e6e1; margin: 0; padding: 16px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  #summary { font-weight: 600; margin: 8px 0 16px; }
+  .pass { color: #2e9e5b; }
+  .fail { color: #e0605a; }
+  li { margin: 4px 0; }
+  small { color: #9aa0a6; display: block; white-space: pre-wrap; }
+  h2 { font-size: 15px; color: #9aa0a6; text-transform: uppercase; letter-spacing: .08em; margin: 18px 0 6px; }
+</style>
+</head>
+<body>
+<h1>The Whip · sim tests</h1>
+<div id="summary">Running…</div>
+<div id="out"></div>
+<script type="module">
+// Browser-run sim checks. Each stage adds a section; everything here runs without the 3D renderer.
+import { loadData } from './src/loadData.js';
+import { setData, tuning } from './src/sim/config.js';
+import { newGame } from './src/sim/modes.js';
+import { parliamentHash } from './src/sim/generate.js';
+import { cardView, HIDDEN_FIELDS, reveal, decayKnowledge } from './src/sim/knowledge.js';
+import { buildSeats } from './src/chamber/layout.js';
+
+const sections = [];
+let current = null;
+function section(name) {
+  current = { name, tests: [] };
+  sections.push(current);
+}
+function test(name, fn) {
+  current.tests.push({ name, fn });
+}
+function assert(cond, msg) {
+  if (!cond) throw new Error(msg || 'assertion failed');
+}
+
+const seatRec = new Map(buildSeats().map((s) => [s.seatId, s]));
+const seatOf = (state, mpId) => seatRec.get(state.mps[mpId].seatId);
+
+// ---------- Stage 2: MPs, parties, cohorts and cliques ----------
+section('Stage 2 · Parliament generation');
+
+test('Seed TEST-1 gives the same Parliament (hash, cohorts, cliques) on every load', () => {
+  const a = newGame({ seed: 'TEST-1' });
+  const b = newGame({ seed: 'TEST-1' });
+  assert(parliamentHash(a) === parliamentHash(b), 'hash differs');
+  assert(JSON.stringify(Object.values(a.mps).map((m) => [m.cohort, m.clique])) === JSON.stringify(Object.values(b.mps).map((m) => [m.cohort, m.clique])), 'cohorts or cliques differ');
+  return `hash ${parliamentHash(a)}`;
+});
+
+test('Different seeds give different Parliaments', () => {
+  assert(parliamentHash(newGame({ seed: 'TEST-1' })) !== parliamentHash(newGame({ seed: 'TEST-2' })));
+});
+
+test('Four core parties plus a generated fifth party are present, 120 MPs in all', () => {
+  const s = newGame({ seed: 'TEST-1' });
+  const names = Object.values(s.parties).map((p) => p.name);
+  for (const n of ['National Union', 'Commonwealth Party', 'Labour Democrats', 'Eastern Compact']) assert(names.includes(n), `missing ${n}`);
+  assert(s.parties.p5 && s.parties.p5.seats >= 1, 'no fifth party seats');
+  assert(Object.keys(s.mps).length === 120, 'not 120 MPs');
+  return `${names.join(', ')}`;
+});
+
+test('Seat counts per party equal party seat totals (the Speaker has no desk)', () => {
+  for (const seed of ['TEST-1', 'SEED-17', 'SEED-8', 'SEED-34']) {
+    const s = newGame({ seed });
+    const seated = {};
+    for (const { mpId } of Object.values(s.seats)) seated[s.mps[mpId].party] = (seated[s.mps[mpId].party] || 0) + 1;
+    for (const p of Object.values(s.parties)) {
+      const expect = p.seats - (s.mps[s.house.speaker].party === p.id ? 1 : 0);
+      assert((seated[p.id] || 0) === expect, `${seed} ${p.short}: seated ${seated[p.id]} expected ${expect}`);
+    }
+    assert(Object.keys(s.seats).length === 119, `${seed}: ${Object.keys(s.seats).length} seated`);
+  }
+});
+
+test('Whips sit where the spec says: Chief Whip row 2 first seat of the block, Deputy beside them', () => {
+  const s = newGame({ seed: 'TEST-1' });
+  for (const p of Object.values(s.parties)) {
+    if (!p.chiefWhip || p.seats < 8) continue;
+    const cw = seatOf(s, p.chiefWhip);
+    const mates = Object.values(s.mps).filter((m) => m.party === p.id && m.seatId).map((m) => seatOf(s, m.id)).filter((x) => x.side === cw.side && x.row === 2);
+    assert(cw.row === 2, `${p.short} chief whip in row ${cw.row}`);
+    assert(mates.every((x) => x.index >= cw.index), `${p.short} chief whip not at the block's first seat`);
+    if (p.deputyWhip) {
+      const dw = seatOf(s, p.deputyWhip);
+      assert(dw.row === 2 && mates.filter((x) => x.index < dw.index).length === 1, `${p.short} deputy whip not beside the chief whip`);
+    }
+  }
+});
+
+test('Cabinet and leaders sit in the front row on the government side', () => {
+  const s = newGame({ seed: 'TEST-1' });
+  const gov = s.parties[s.house.government];
+  assert(seatOf(s, gov.leader).row === 1 && seatOf(s, gov.leader).side === 'gov', 'PM not in front row');
+  const cab = Object.values(s.mps).filter((m) => m.caucusRole === 'cabinet');
+  const front = cab.filter((m) => seatOf(s, m.id).row === 1).length;
+  assert(front >= Math.min(cab.length, 10), `only ${front} of ${cab.length} ministers in row 1`);
+});
+
+test('Cliques sit together (contiguous within each party block)', () => {
+  const s = newGame({ seed: 'TEST-1' });
+  const roles = new Set(['backbencher', 'committeeChair']);
+  for (const side of ['gov', 'opp']) {
+    const order = buildSeats().filter((x) => x.side === side).sort((a, b) => a.index - b.index || a.row - b.row);
+    const seqByParty = {};
+    for (const seat of order) {
+      const id = s.seats[seat.seatId]?.mpId;
+      if (!id) continue;
+      const m = s.mps[id];
+      if (!roles.has(m.caucusRole) || !m.clique) continue;
+      (seqByParty[m.party] ||= []).push(m.clique);
+    }
+    for (const [pid, seq] of Object.entries(seqByParty)) {
+      const seen = new Set();
+      for (let i = 0; i < seq.length; i++) {
+        if (i > 0 && seq[i] === seq[i - 1]) continue;
+        assert(!seen.has(seq[i]), `${pid} on ${side}: clique ${seq[i]} split`);
+        seen.add(seq[i]);
+      }
+    }
+  }
+});
+
+test('Every MP is in at most one clique and clique member lists agree', () => {
+  const s = newGame({ seed: 'TEST-1' });
+  for (const q of Object.values(s.cliques)) for (const id of q.members) assert(s.mps[id].clique === q.id, `${id} not marked in ${q.id}`);
+  for (const m of Object.values(s.mps)) if (m.clique) assert(s.cliques[m.clique].members.includes(m.id), `${m.id} missing from ${m.clique}`);
+  const per = {};
+  for (const q of Object.values(s.cliques)) per[q.party] = (per[q.party] || 0) + 1;
+  return Object.entries(per).map(([p, n]) => `${s.parties[p].short}:${n}`).join(' ');
+});
+
+test('A minority Parliament seats correctly (TEST-1)', () => {
+  const s = newGame({ seed: 'TEST-1' });
+  assert(s.house.minority, 'TEST-1 should be a minority');
+  const gov = s.house.government;
+  const govOnOpp = Object.values(s.mps).filter((m) => m.party === gov && m.seatId && seatOf(s, m.id).side === 'opp');
+  assert(govOnOpp.length === 0, 'minority government should not overflow');
+  const inds = Object.values(s.mps).filter((m) => m.party === 'ind');
+  for (const m of inds) assert(seatOf(s, m.id).index >= 12, `independent ${m.id} not near the bar`);
+});
+
+test('A majority Parliament overflows onto the opposition back rows at the bar (SEED-17)', () => {
+  const s = newGame({ seed: 'SEED-17' });
+  assert(!s.house.minority, 'SEED-17 should be a majority');
+  const gov = s.house.government;
+  const over = Object.values(s.mps).filter((m) => m.party === gov && m.seatId && seatOf(s, m.id).side === 'opp');
+  assert(over.length === s.parties[gov].seats - 1 - 60, `overflow ${over.length}`);
+  for (const m of over) assert(seatOf(s, m.id).index === 15 || seatOf(s, m.id).index === 14, 'overflow not at the bar end');
+  return `${over.length} government members across the aisle`;
+});
+
+test("A fresh game's card shows only name, party, riding and seat", () => {
+  const s = newGame({ seed: 'TEST-1' });
+  const other = Object.values(s.mps).find((m) => m.id !== s.player.mpId && m.seatId);
+  const v = cardView(s, other.id);
+  assert(v.name && v.party && v.riding && v.seatId, 'public facts missing');
+  for (const f of HIDDEN_FIELDS) assert(!v.fields[f].known && v.fields[f].value === null, `${f} visible`);
+});
+
+test('The player is a rookie in their chosen party', () => {
+  for (const party of ['p1', 'p2', 'p3', 'p4']) {
+    const s = newGame({ seed: 'TEST-1', party });
+    const m = s.mps[s.player.mpId];
+    assert(m.party === party && m.tenure === 0 && m.caucusRole === 'backbencher', `${party}: ${m.party} ${m.tenure} ${m.caucusRole}`);
+  }
+});
+
+test('Knowledge fields go stale after the tuned number of weeks without contact', () => {
+  const s = newGame({ seed: 'TEST-1' });
+  const id = Object.keys(s.mps).find((x) => x !== s.player.mpId);
+  reveal(s, id, 'loyalty', 'test');
+  s.date.absWeek = tuning().knowledge.staleWeeks - 1;
+  decayKnowledge(s);
+  assert(!cardView(s, id).fields.loyalty.stale, 'went stale too early');
+  s.date.absWeek = tuning().knowledge.staleWeeks + 1;
+  decayKnowledge(s);
+  assert(cardView(s, id).fields.loyalty.stale, 'did not go stale');
+});
+
+// ---------- runner ----------
+async function run() {
+  setData(await loadData());
+  const out = document.getElementById('out');
+  let pass = 0;
+  let fail = 0;
+  const failures = [];
+  for (const sec of sections) {
+    const h = document.createElement('h2');
+    h.textContent = sec.name;
+    out.appendChild(h);
+    const ul = document.createElement('ul');
+    out.appendChild(ul);
+    for (const t of sec.tests) {
+      const li = document.createElement('li');
+      const t0 = performance.now();
+      try {
+        const note = await t.fn();
+        pass++;
+        li.innerHTML = `<span class="pass">✔</span> ${t.name} <small>${note ? note + ' · ' : ''}${Math.round(performance.now() - t0)} ms</small>`;
+      } catch (e) {
+        fail++;
+        failures.push(`${t.name}: ${e.message}`);
+        li.innerHTML = `<span class="fail">✘</span> ${t.name}<small>${e.stack || e.message}</small>`;
+      }
+      ul.appendChild(li);
+      await new Promise((r) => setTimeout(r));
+    }
+  }
+  const sum = document.getElementById('summary');
+  sum.textContent = `${pass} passed, ${fail} failed`;
+  sum.className = fail ? 'fail' : 'pass';
+  sum.dataset.done = '1';
+  sum.dataset.fail = String(fail);
+  window.testResults = { pass, fail, failures };
+}
+run();
+</script>
+</body>
+</html>

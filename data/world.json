@@ -1,0 +1,221 @@
+{
+  "country": "Dominion of Caledor",
+  "capital": "Ostrava",
+  "seats": 120,
+  "seatsPerSide": 60,
+  "rows": 4,
+  "seatsPerRow": 15,
+  "majority": 61,
+  "firstParliament": 24,
+  "provinces": [
+    {
+      "id": "seaward",
+      "name": "Seaward",
+      "region": "west",
+      "seats": 14
+    },
+    {
+      "id": "westmark",
+      "name": "Westmark",
+      "region": "prairie",
+      "seats": 10
+    },
+    {
+      "id": "brightwater",
+      "name": "Brightwater",
+      "region": "prairie",
+      "seats": 8
+    },
+    {
+      "id": "lakeshire",
+      "name": "Lakeshire",
+      "region": "central",
+      "seats": 32
+    },
+    {
+      "id": "valmont",
+      "name": "Valmont",
+      "region": "central",
+      "seats": 22
+    },
+    {
+      "id": "brennick",
+      "name": "Brennick",
+      "region": "east",
+      "seats": 14
+    },
+    {
+      "id": "tidewater",
+      "name": "Tidewater",
+      "region": "east",
+      "seats": 10
+    },
+    {
+      "id": "kestrel",
+      "name": "Kestrel Isle",
+      "region": "east",
+      "seats": 6
+    },
+    {
+      "id": "reaches",
+      "name": "Northern Reaches",
+      "region": "north",
+      "seats": 4
+    }
+  ],
+  "interests": [
+    "agriculture",
+    "energy",
+    "fisheries",
+    "health",
+    "education",
+    "housing",
+    "transit",
+    "roads",
+    "labour",
+    "smallBusiness",
+    "defence",
+    "justice",
+    "environment",
+    "immigration",
+    "rural",
+    "northern",
+    "trade",
+    "seniors",
+    "veterans",
+    "arts"
+  ],
+  "committees": [
+    {
+      "id": "c01",
+      "name": "Finance",
+      "interests": [
+        "trade",
+        "smallBusiness",
+        "seniors"
+      ]
+    },
+    {
+      "id": "c02",
+      "name": "Health",
+      "interests": [
+        "health",
+        "seniors"
+      ]
+    },
+    {
+      "id": "c03",
+      "name": "Agriculture and Agri-Food",
+      "interests": [
+        "agriculture",
+        "rural"
+      ]
+    },
+    {
+      "id": "c04",
+      "name": "Fisheries and Oceans",
+      "interests": [
+        "fisheries"
+      ]
+    },
+    {
+      "id": "c05",
+      "name": "Transport, Infrastructure and Communities",
+      "interests": [
+        "roads",
+        "transit",
+        "housing"
+      ]
+    },
+    {
+      "id": "c06",
+      "name": "Natural Resources",
+      "interests": [
+        "energy",
+        "northern"
+      ]
+    },
+    {
+      "id": "c07",
+      "name": "Environment and Sustainable Development",
+      "interests": [
+        "environment"
+      ]
+    },
+    {
+      "id": "c08",
+      "name": "Justice and Human Rights",
+      "interests": [
+        "justice"
+      ]
+    },
+    {
+      "id": "c09",
+      "name": "National Defence",
+      "interests": [
+        "defence",
+        "veterans"
+      ]
+    },
+    {
+      "id": "c10",
+      "name": "Citizenship and Immigration",
+      "interests": [
+        "immigration"
+      ]
+    },
+    {
+      "id": "c11",
+      "name": "Human Resources and Labour",
+      "interests": [
+        "labour",
+        "education"
+      ]
+    },
+    {
+      "id": "c12",
+      "name": "Heritage and the Arts",
+      "interests": [
+        "arts"
+      ]
+    },
+    {
+      "id": "c13",
+      "name": "Industry and Technology",
+      "interests": [
+        "smallBusiness",
+        "trade",
+        "energy"
+      ]
+    },
+    {
+      "id": "c14",
+      "name": "Indigenous and Northern Affairs",
+      "interests": [
+        "northern"
+      ]
+    }
+  ],
+  "interestNames": {
+    "agriculture": "agriculture",
+    "energy": "energy",
+    "fisheries": "fisheries",
+    "health": "health",
+    "education": "education",
+    "housing": "housing",
+    "transit": "transit",
+    "roads": "roads",
+    "labour": "labour",
+    "smallBusiness": "small business",
+    "defence": "defence",
+    "justice": "justice",
+    "environment": "environment",
+    "immigration": "immigration",
+    "rural": "rural affairs",
+    "northern": "northern affairs",
+    "trade": "trade",
+    "seniors": "seniors",
+    "veterans": "veterans",
+    "arts": "the arts"
+  }
+}
