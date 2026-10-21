@@ -46,6 +46,8 @@ export function canUse(state, tool, mpId = null) {
   const def = TOOLS[tool];
   if (!def) return { ok: false, reason: 'unknown' };
   const p = state.player;
+  // Every tool is spent on someone else; House time is never spent on yourself.
+  if (mpId && mpId === p.mpId) return { ok: false, reason: 'self' };
   if (p.act < def.act) return { ok: false, reason: 'act', act: def.act };
   if (def.government && state.house.government !== me(state).party) return { ok: false, reason: 'government' };
   if (def.needsLeader && p.leaderTrust < tuning().tools.expelLeaderTrust) return { ok: false, reason: 'leader' };
