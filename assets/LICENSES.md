@@ -20,6 +20,10 @@ All from **ambientCG** (https://ambientcg.com), licence **CC0 1.0 Universal** (h
 
 **Fraunces** by Undercase Type, from Google Fonts, licence **SIL Open Font License 1.1** (https://raw.githubusercontent.com/google/fonts/main/ofl/fraunces/OFL.txt: "This Font Software is licensed under the SIL Open Font License, Version 1.1."). `Fraunces-Regular.woff2` and `Fraunces-Italic.woff2` are the variable latin subsets served by Google Fonts (optical size and weight axes), fetched once and committed.
 
-## Models
+## Models (`assets/models/`)
 
-Added in later steps of the art pass; each gets a row here when it lands.
+### `furniture/` — Kenney Furniture Kit 2.0
+
+From **Kenney** (https://kenney.nl/assets/furniture-kit), licence **CC0 1.0 Universal** (the pack's `License.txt`: "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/"). Used as shipped (GLB, no textures; flat materials named `wood`, `metal`, `carpet` and so on, which `src/models.js` maps to the game's own surfaces). About 0.52 of real scale; the loader scales them.
+
+Files: desk, chairDesk, chairCushion, loungeChair, loungeChairRelax, loungeSofa, loungeSofaLong, bookcaseClosedWide, bookcaseOpen, books, lampRoundTable, lampWall, pottedPlant, plantSmall2, coatRackStanding, computerScreen, laptop, trashcan, tableCross, kitchenCoffeeMachine.
