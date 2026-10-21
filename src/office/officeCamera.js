@@ -1,6 +1,7 @@
 // The office camera: fixed over the player's shoulder, with small eases (settle, push-in, the reversal).
 // The person you're dealing with sits in the top third of a portrait screen, above the sheet.
 import * as THREE from 'three';
+import { sideAim, aimCamera } from '../framing.js';
 
 const DEG = Math.PI / 180;
 export const SHOTS = {
@@ -20,6 +21,7 @@ export function createOfficeCamera(camera) {
   let sway = 0;
   // In portrait the bottom sheet covers the lower half, so aim lower and the people sit in the upper third.
   let aimDrop = 0;
+  let aimSide = 0;
   camera.position.copy(pos);
   camera.lookAt(look);
   return {
@@ -38,11 +40,12 @@ export function createOfficeCamera(camera) {
       look.lerp(goalLook, k);
       sway += dt;
       camera.position.set(pos.x + Math.sin(sway * 0.5) * 0.01, pos.y + Math.sin(sway * 0.7) * 0.006, pos.z);
-      camera.lookAt(look.x, look.y - aimDrop, look.z);
+      aimCamera(camera, look, aimDrop, aimSide);
     },
-    fitAspect(aspect) {
+    fitAspect(aspect, cssWidth = 0) {
       aimDrop = aspect < 1 ? 1.15 : 0.1;
       camera.fov = Math.max(46, Math.min(74, (2 * Math.atan(Math.tan(22 * DEG) / Math.max(aspect, 0.3))) / DEG));
+      aimSide = sideAim(aspect, camera.fov, cssWidth);
       camera.updateProjectionMatrix();
     },
   };
