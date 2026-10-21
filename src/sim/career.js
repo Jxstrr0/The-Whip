@@ -1,7 +1,9 @@
 // The career: creating the player's MP, acts and (later) graduation, vacancies, offers and endings.
-import { data } from './config.js';
+import { data, tuning } from './config.js';
 import { withRng, createRng } from './rng.js';
 import { makeBill } from './bills.js';
+import { hooks, log, resolvers, queueStop } from './pacing.js';
+import { adjustRapport } from './relationships.js';
 
 export function blankPlayer(mpId) {
   return {
@@ -163,3 +165,161 @@ export function setupFirstWeek(state) {
   state.flow.forceWatch = true;
   return p.forceDilemma;
 }
+
+// ---------- acts: being noticed, the rival, the vacancy ----------
+
+const fullName = (m) => `${m.name.first} ${m.name.last}`;
+const fill = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
+const whipOf = (state) => state.parties[state.mps[state.player.mpId].party]?.chiefWhip;
+
+// The cohort-mate who wants what you want: same party, your election, the most ambitious of them.
+export function pickRival(state) {
+  const p = state.player;
+  const me = state.mps[p.mpId];
+  const pool = Object.values(state.mps).filter((m) => m.party === me.party && m.id !== me.id && m.cohort === me.cohort && m.id !== p.mentor && m.caucusRole === 'backbencher');
+  // A small caucus may have no other rookie: then the most ambitious backbencher, then anyone not running the party.
+  const alt = Object.values(state.mps).filter((m) => m.party === me.party && m.id !== me.id && m.id !== p.mentor && m.caucusRole === 'backbencher');
+  const any = Object.values(state.mps).filter((m) => m.party === me.party && m.id !== me.id && m.id !== p.mentor && !['leader', 'chiefWhip', 'speaker', 'houseLeader'].includes(m.caucusRole));
+  const r = (pool.length ? pool : alt.length ? alt : any).sort((a, b) => b.ambition - a.ambition)[0];
+  return r ? r.id : null;
+}
+
+// Act 1 ends when the whip's office has noticed you, as reliable or as useful trouble.
+function graduateAct1(state) {
+  const C = tuning().career;
+  const p = state.player;
+  if (p.act !== 1 || state.date.absWeek < C.act1MinWeeks || p.actProgress.noticed < C.noticedForAct2) return null;
+  p.act = 2;
+  p.actStart = state.date.absWeek;
+  p.reputation = p.actProgress.rebellions >= C.usefulTroubleRebellions ? 'usefulTrouble' : 'reliable';
+  p.rival = pickRival(state);
+  p.slots = tuning().meetings.slotsByAct?.[2] ?? p.slots;
+  const rival = p.rival ? state.mps[p.rival] : null;
+  log(state, `Act 2. The whip's office has you down as ${p.reputation === 'reliable' ? 'reliable' : 'useful trouble'}.${rival ? ` ${fullName(rival)} wants the same things you do.` : ''}`, 'career');
+  return { kind: 'career', event: 'act2', important: true, needsChoice: true, reputation: p.reputation, rival: p.rival, text: data().career.act2[p.reputation], rivalText: rival ? fill(data().career.rival, { rival: fullName(rival) }) : '' };
+}
+
+// The score the whip weighs: your file, your mentor, your clique, and what you've done since.
+export function contestScore(state, choice) {
+  const C = tuning().career.contest;
+  const p = state.player;
+  const me = state.mps[p.mpId];
+  const whip = whipOf(state);
+  let s = (whip ? state.mps[whip].rapport : 0) * C.whipRapport + p.actProgress.noticed * C.noticed + p.actProgress.rebellions * C.rebellion;
+  if (p.mentor) s += (state.mps[p.mentor].rapport / 4 + state.mps[p.mentor].tenure / 2) * C.mentor;
+  if (me.clique && state.cliques[me.clique]) {
+    const mates = state.cliques[me.clique].members.filter((id) => id !== me.id).map((id) => state.mps[id].rapport);
+    if (mates.length) s += (mates.reduce((a, b) => a + b, 0) / mates.length) * C.clique;
+  }
+  const top = Object.entries(p.style).sort((a, b) => b[1] - a[1])[0]?.[0];
+  if (top === 'loyalist') s += C.loyalist;
+  if (top === 'fixer') s += C.fixer;
+  if (me.caucusRole === 'committeeChair') s += C.chair;
+  if (choice === 'askMentor' && p.mentor) s += C.askMentor;
+  if (choice === 'askClique' && me.clique) s += C.askClique;
+  return s;
+}
+
+export function rivalScore(state) {
+  const C = tuning().career.contest;
+  const r = state.mps[state.player.rival];
+  if (!r) return -Infinity;
+  const whip = whipOf(state);
+  return C.rivalBase + r.loyalty * C.rivalLoyalty + r.ambition * C.rivalAmbition + (whip ? (r.relations[whip] || 0) : 0) * C.rivalWhip;
+}
+
+// A chair opens in the whip's office: one of the assistant whips moves on, and the whip has two names.
+function openVacancy(state, rng) {
+  const C = tuning().career;
+  const p = state.player;
+  if (p.act !== 2 || state.date.absWeek - (p.actStart ?? 0) < C.act2MinWeeks) return null;
+  const due = p.vacancyDue != null && state.date.absWeek >= p.vacancyDue;
+  if (!due && !rng.chance(C.vacancyOdds)) return null;
+  p.vacancyDue = null;
+  if (!p.rival || !state.mps[p.rival] || state.mps[p.rival].party !== state.mps[p.mpId].party) p.rival = pickRival(state);
+  if (!p.rival) return null;
+  const party = state.parties[state.mps[p.mpId].party];
+  const outgoingId = party.assistantWhips[0] || null;
+  const outgoing = outgoingId ? state.mps[outgoingId] : null;
+  if (outgoing) {
+    party.assistantWhips = party.assistantWhips.filter((id) => id !== outgoingId);
+    outgoing.caucusRole = 'parliamentarySecretary';
+  }
+  const whip = whipOf(state);
+  const ctx = { outgoing: outgoing ? fullName(outgoing) : 'An assistant whip', rival: fullName(state.mps[p.rival]), whip: whip ? fullName(state.mps[whip]) : 'The whip' };
+  log(state, `${ctx.outgoing} is leaving the whip's office. You and ${ctx.rival} are both in for the chair.`, 'career');
+  const V = data().career.vacancy;
+  return { kind: 'career', event: 'vacancy', important: true, needsChoice: true, rival: p.rival, text: fill(V.open, ctx), options: [{ id: 'askMentor', label: V.askMentor, note: V.askMentorNote, enabled: !!p.mentor }, { id: 'askClique', label: V.askClique, note: V.askCliqueNote, enabled: !!state.mps[p.mpId].clique }, { id: 'letItRun', label: V.letItRun, note: V.letItRunNote, enabled: true }] };
+}
+
+function decideVacancy(state, rng, choice) {
+  const C = tuning().career.contest;
+  const V = data().career.vacancy;
+  const p = state.player;
+  const me = state.mps[p.mpId];
+  const whip = whipOf(state);
+  const pick = ['askMentor', 'askClique', 'letItRun'].includes(choice) ? choice : 'letItRun';
+  if (pick === 'askMentor' && p.mentor) adjustRapport(state, p.mentor, C.mentorCost);
+  if (pick === 'askClique' && me.clique) for (const id of state.cliques[me.clique].members) if (id !== me.id) adjustRapport(state, id, C.cliqueCost);
+  const mine = contestScore(state, pick) + rng.normal(0, C.noise);
+  const theirs = rivalScore(state) + rng.normal(0, C.noise);
+  const rival = state.mps[p.rival];
+  const ctx = { whip: whip ? fullName(state.mps[whip]) : 'The whip', rival: rival ? fullName(rival) : 'your rival' };
+  const party = state.parties[me.party];
+  if (mine >= theirs) {
+    p.act = 3;
+    p.actStart = state.date.absWeek;
+    me.caucusRole = 'assistantWhip';
+    party.assistantWhips.push(me.id);
+    p.slots = tuning().meetings.slotsByAct?.[3] ?? p.slots;
+    if (whip) adjustRapport(state, whip, 5);
+    log(state, `The chair is yours. You're an assistant whip, with a row to answer for.`, 'career');
+    return { kind: 'career', event: 'act3', important: true, needsChoice: true, text: fill(V.won, ctx) + ' ' + data().career.act3, score: [Math.round(mine), Math.round(theirs)] };
+  }
+  if (rival) {
+    rival.caucusRole = 'assistantWhip';
+    party.assistantWhips.push(rival.id);
+  }
+  log(state, `${ctx.rival} got the chair in the whip's office. 'Next time,' the whip said.`, 'career');
+  return { kind: 'career', event: 'lost', important: true, needsChoice: true, rival: p.rival, text: fill(V.lost, ctx), score: [Math.round(mine), Math.round(theirs)], options: [{ id: 'wait', label: V.wait, note: V.waitNote, enabled: true }, { id: 'changeClique', label: V.changeClique, note: V.changeCliqueNote, enabled: true }, { id: 'committeeChair', label: V.committeeChair, note: V.committeeChairNote, enabled: me.caucusRole !== 'committeeChair' }] };
+}
+
+function afterLoss(state, choice) {
+  const C = tuning().career;
+  const p = state.player;
+  const me = state.mps[p.mpId];
+  p.rival = pickRival(state);
+  p.vacancyDue = state.date.absWeek + C.waitWeeks;
+  if (choice === 'changeClique') {
+    const best = Object.values(state.cliques)
+      .filter((q) => q.party === me.party && q.id !== me.clique)
+      .map((q) => ({ q, r: q.members.reduce((a, id) => a + (state.mps[id]?.rapport || 0), 0) / Math.max(1, q.members.length) }))
+      .sort((a, b) => b.r - a.r)[0];
+    if (best) {
+      if (me.clique && state.cliques[me.clique]) state.cliques[me.clique].members = state.cliques[me.clique].members.filter((id) => id !== me.id);
+      me.clique = best.q.id;
+      best.q.members.push(me.id);
+      for (const id of best.q.members) if (id !== me.id) adjustRapport(state, id, 5);
+      log(state, `You've moved over to the ${best.q.name}. They'll push for you next time.`, 'career');
+    }
+  } else if (choice === 'committeeChair') {
+    me.caucusRole = 'committeeChair';
+    p.standing = Math.min(100, (p.standing || 50) + 5);
+    log(state, `You took the committee chair. A title, a staff, and your name still on the whip's list.`, 'career');
+  } else {
+    log(state, `You'll wait for the next vacancy.`, 'career');
+  }
+}
+
+hooks.weekend.push((state, rng) => {
+  const g = graduateAct1(state);
+  if (g) return g;
+  return openVacancy(state, rng);
+});
+
+// Career stops resolve with the player's pick; some open a second stop straight away.
+resolvers.career = (state, p, choice) => {
+  if (p.event === 'vacancy') queueStop(state, withRng(state, (rng) => decideVacancy(state, rng, choice)));
+  else if (p.event === 'lost') afterLoss(state, choice || 'wait');
+  else if (resolvers.careerExtra) resolvers.careerExtra(state, p, choice);
+};

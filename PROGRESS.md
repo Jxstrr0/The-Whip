@@ -457,3 +457,33 @@ Next: HANDOFF stage 5, the whip's tools, the count board's marks, pairing and ri
 - **Rival moves are visible but don't stop you yet.** `rivalMove` is in the pacing stop list; wiring a stop for the big ones (a found skeleton, a broken pair before a confidence vote) belongs with stage 8's consequences.
 - **The first week is a honeymoon:** rivals don't work a rookie in week one, so the guided week is unchanged.
 - Files beyond the handoff's layout: `src/sim/count.js` (the marks and the prediction; the handoff had them inside the count board UI).
+
+---
+
+## 2026-10-21 · Stage 6: the career, Acts 1 and 2
+
+**What was built**
+
+- **Being noticed ends Act 1.** The whip's office keeps a tally of what gets you noticed (votes, caucus, meetings, now your own bill). Past the threshold, after a few weeks, Act 2 arrives as a page: *reliable* if you toed the line, *useful trouble* if you've rebelled three times. Nobody notices a quiet member, and Act 2 arrives late, or not at all, exactly as the design doc says.
+- **The rival.** When Act 2 opens, the most ambitious member of your cohort in your party is named as the one who wants what you want. A small caucus may have no other rookie, so it falls back to the most ambitious backbencher.
+- **The private members' lottery.** In Act 2 your name comes up: three bills that suit your interests and your riding, one to choose. It's scheduled four weeks out, your own side gets a free vote, and the week before, you can ask two opposition members who are close to supporting it. Then the whip stops you in the lobby and asks why you've been across the aisle: explain yourself (the whip cools) or drop it (the asks are withdrawn, the bill probably dies). The vote is a stop of its own, and a bill that passes makes your name.
+- **The vacancy contest.** After ten weeks in Act 2, when a chair opens in the whip's office, the whip weighs two names: yours and the rival's. You can ask your mentor to speak for you (they spend their capital on you and expect it back), ask your clique to weigh in as a bloc (it costs you with each of them), or let the record speak. Win, and you're an assistant whip with a row: Act 3. Lose, and you choose: wait for the next vacancy, change cliques, or take the committee chair the office is offering.
+- **Life events** (`src/sim/lifeEvents.js`). MPs' lives move: an ambition, a crisis, trouble in the riding, a retirement in the air. When it happens to someone close to you, you're asked to show up (an evening of yours, and they won't forget), send a note, or let it pass (they notice). Crises dent attendance; riding trouble eats margins.
+- **The career sheet** (`src/ui/careerUI.js`): every career moment as a page with its choices and, where it matters, a stamp (ACT 2, ACT 3, PASSED OVER). The weekly review now says which act you're in and how thick the whip's file is.
+- **Under the hood:** stops raised by the morning, fallout and weekend hooks were being dropped by the day loop (a stage 3 gap that nothing used until now). They're queued and shown before the day goes on, and a resolver can chain a second stop (the asks, then the whip's question; the vacancy, then its verdict).
+
+**Checks** (HANDOFF stage 6, all five)
+
+- A new player in any of the four parties starts in Act 1 with a mentor, a cohort and a whipped dilemma vote.
+- Rebelling and toeing the line move the whip's file, riding standing and the whip's rapport in opposite directions.
+- Friday leave is refused when the whip is cross and granted leave opens the riding.
+- A private member's bill was drawn, chosen, asked for across the aisle (twice), questioned by the whip and voted on, headless.
+- Act 1 → Act 2 by being noticed, with both reputations and the unnoticed drift; Act 2 ends in a contest that can be won (assistant whip) or lost (committee chair taken, next vacancy queued).
+- `tests.html`: 50 of 50. The guided first week plays through the real buttons with no console errors. A forced run through Act 2, the lottery, the asks, the whip's question and the vacancy was screenshotted at every stop.
+
+**Things to know / decisions I made**
+
+- **The contest is a reckoning you can read:** the sheet shows both scores after the fact, so a loss teaches you what the whip weighed (rapport, the file, your mentor, your clique, your style, rebellions).
+- **The committee chair isn't a dead end:** it adds to your next contest score and the next vacancy is queued ten weeks out.
+- **By-elections and retirements as departures** come with stage 8's elections; for now a retirement is a life event with text.
+- Files beyond the handoff's layout: `src/sim/pmb.js` (the lottery and the player's bill) and `data/career.json` (the career texts).
