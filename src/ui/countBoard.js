@@ -157,7 +157,7 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
         <div class="bar-row"><span>✖ ${t('div.nays')}</span><div class="bar"><i class="nay" data-bar="nay"></i><em style="left:${(100 * needed) / max}%"></em></div><b data-n="nay">0</b></div>
       </div>
       <p class="muted">${t('div.needed', { n: needed })} · <span data-parties></span></p>
-      <div data-outcome><p class="muted">${t('div.counting')}…</p></div>
+      <div data-outcome><p class="muted">${t('div.counting')}</p><p class="roll" data-roll></p></div>
       <div class="card-actions"><button class="btn" data-act="fast">${t('div.skipAnim')}</button></div>`;
   }
 
@@ -193,10 +193,22 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
     const room = getRoom();
     if (!room) return finishBoard(result);
     let last = 0;
+    const myParty = state.mps[state.player.mpId].party;
+    const rollEl = board.querySelector('[data-roll]');
     room.playDivision(result, {
       secondsPerSeat: tuning().vote.secondsPerSeat,
-      tick(c) {
-        // Update at most every few seats so phones stay smooth.
+      tick(c, mpId, kind) {
+        // The Clerk reads each name as its seat lights: the last few run along the strip, your caucus in bold.
+        const mp = mpId && state.mps[mpId];
+        if (mp && rollEl) {
+          // Append rather than rebuild, so only the new name slides in and the rest sit still.
+          const span = document.createElement('span');
+          span.className = `${kind}${mp.party === myParty ? ' mine' : ''}${mpId === state.player.mpId ? ' me' : ''}`;
+          span.textContent = mp.name.last;
+          rollEl.appendChild(span);
+          while (rollEl.children.length > 4) rollEl.firstChild.remove();
+        }
+        // The numbers update at most every few seats so phones stay smooth.
         if (c.yea + c.nay - last >= 3) {
           last = c.yea + c.nay;
           updateCounts(result, c);
