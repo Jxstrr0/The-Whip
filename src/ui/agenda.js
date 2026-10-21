@@ -33,7 +33,7 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
       <div class="agenda-row">
         <button class="agenda-date" data-act="expand" aria-expanded="${expanded}">${esc(dateText(state))}<small>${esc(last)}</small></button>
         <button class="btn primary" data-act="continue" ${blocked ? 'disabled' : ''}>${t('agenda.continue')}</button>
-        <button class="btn" data-act="skip" ${blocked ? 'disabled' : ''} title="${t('agenda.skipHint')}">⏭</button>
+        <button class="btn" data-act="skip" ${blocked ? 'disabled' : ''} title="${t('agenda.skipHint')}" aria-label="${t('agenda.skipHint')}"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5l5 5-5 5M10 5l5 5-5 5"/></svg></button>
       </div>${feed}`;
     bar.querySelector('[data-act="expand"]').onclick = () => {
       expanded = !expanded;

@@ -832,3 +832,21 @@ Kelbo picked this one after the twelve were done. It ties "knowing people is the
 - The numbers are in `data/tuning.json` under `faces` (talks for the feature, talks and things known for the keepsake). How well you know someone is `familiarity()` in `src/sim/knowledge.js`, which counts your conversations in `player.talks`. A save from before this treats anyone you've had contact with as one talk.
 - The face parts are in `src/faces.js`. The crowds in `src/figures.js` draw each kind of part as one instanced mesh that's switched off when nobody in the room wears it, so a room of strangers costs no extra draw calls.
 - Counting talks changes nothing about how the game plays: same seed, same Parliament. Two new tests check the tiers, the old-save rule and that faces don't move the game; that a face is the same every time; and that each tier only adds parts.
+
+## 2026-10-21 · A softer Order Paper
+
+Kelbo asked for the UI to look less "AI-made" and a bit softer. It's still the Order Paper (paper, serif, green and brass), with the edges taken off.
+
+**What changed**
+
+- **Labels stopped shouting.** Section heads, field labels and buttons were in spaced small capitals. They're now in ordinary sentence case, and section heads are a quiet italic ("What you know", "At your door") over a light rule.
+- **Buttons are soft paper.** Rounded corners, a pale fill, a hairline edge and a gentle shadow, and they press in slightly when tapped. The main action is still the green button, now with a soft green shadow. The top-bar tags are rounded the same way, and the masthead's purple bar became a small purple dot.
+- **Sheets and cards are rounded.** The sheets that rise from the bottom have rounded top corners (the left corners in landscape) and a soft shadow instead of the green-and-brass rule. The start card lost its stripe and its heavy title rule.
+- **No hard bars.** The brass and party-colour bars down the left of notes, quotes, counts and names became tinted rounded panels, pill-shaped colour marks or small dots. Badges and progress bars are pills. Lines between rows are much lighter.
+- **No debug type.** The import box was in a typewriter face; it's now the same serif as everything else. The skip button's ⏭ emoji is a drawn double chevron. The only monospace left is the seed readout and tuning panel you see with `?debug=1`.
+
+**Things to know / decisions I made**
+
+- Three places keep their capitals on purpose, because that's what the real thing looks like: the stamps (PASSED, DEFEATED), the newspaper's front page, and the game's title on the start card.
+- The new shared values are at the top of `css/style.css` (`--r-sm/md/lg` for corners, `--line`, `--fill`, `--lift`, `--float`), so the softness can be turned up or down in one place.
+- Only styles changed (plus the skip icon); nothing about how the game plays. Checked at phone size in portrait and landscape: the start menu, the office, an MP card and the division sheet.
