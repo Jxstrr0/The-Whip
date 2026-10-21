@@ -921,15 +921,69 @@ test('Rival whips act every week: a poach, a leak and a pair test are all observ
 
 test('A free vote releases the caucus; expulsion makes an independent and reseats the House', () => {
   const { s, b, me } = whipScenario(5);
+  s.parties[me.party].leaderPersonality = 'controlling';
+  s.player.leaderTrust = 80;
   ACTIONS.useTool(s, { tool: 'freeVote', billId: b.id });
   assert(b.lines[me.party] === 'free', 'line should be free');
+  assert(s.player.leaderTrust === 80 + tuning().ranks.freeVoteTrust.controlling, 'a controlling leader should mind: ' + s.player.leaderTrust);
+  assert(!ACTIONS.useTool(s, { tool: 'freeVote', billId: b.id }).ok, 'a free vote cannot be freed again');
+  b.lines[me.party] = 'whipped';
+  b.confidence = true;
+  assert(!ACTIONS.useTool(s, { tool: 'freeVote', billId: b.id }).ok, 'a confidence vote is never released');
   s.player.leaderTrust = 80;
-  const m = caucusOf(s, me)[4];
+  const leader = s.parties[me.party].leader;
+  const other = Object.values(s.mps).find((m) => m.party !== me.party && s.parties[m.party]);
+  for (const id of [leader, me.id, other.id]) assert(!ACTIONS.useTool(s, { tool: 'expel', mpId: id }).ok, 'should refuse to expel ' + s.mps[id].caucusRole + ' of ' + s.mps[id].party);
+  const pick = tools.expelCandidates(s);
+  assert(pick.length && pick.every((x) => tools.canExpel(s, x.mpId)), 'candidates should all be expellable');
+  const m = s.mps[pick[0].mpId];
+  const clique = m.clique;
   const seatsBefore = s.parties[me.party].seats;
   const r = ACTIONS.useTool(s, { tool: 'expel', mpId: m.id });
   assert(r.ok && m.party === 'ind' && s.parties[me.party].seats === seatsBefore - 1, 'expel: ' + JSON.stringify(r));
   assert(m.seatId && s.seats[m.seatId]?.mpId === m.id, 'expelled member should still have a seat');
+  assert(!clique || !s.cliques[clique].members.includes(m.id), 'expelled member should leave their clique');
   return `${m.name.first} ${m.name.last} now sits as an independent; ${me.party} down to ${s.parties[me.party].seats}`;
+});
+
+test('In caucus the Chief Whip can expel once, and the chair empties', () => {
+  const s = newGame({ seed: 'EXPEL-1', party: 'p2', act: 5 });
+  const rng = createRng('expel');
+  caucusSim.startCaucus(s, rng);
+  s.player.leaderTrust = 80;
+  const [a, b2] = tools.expelCandidates(s).filter((x) => s.caucus.seats.includes(x.mpId));
+  assert(a && b2, 'need two candidates at the table');
+  const size = s.caucus.revolt?.size;
+  assert(ACTIONS.useTool(s, { tool: 'expel', mpId: a.mpId }).ok, 'first expulsion');
+  assert(!s.caucus.seats.includes(a.mpId) && s.caucus.expelled === a.mpId, 'they leave the table');
+  if (size) assert(s.caucus.revolt.size === size - 1, 'one fewer in the room for the revolt');
+  assert(ACTIONS.useTool(s, { tool: 'expel', mpId: b2.mpId }).reason === 'once', 'one expulsion a morning');
+  return `${s.mps[a.mpId].name.last} out; ${s.caucus.seats.length} left at the table`;
+});
+
+test('Meeting slots follow the act, and each act counts its own progress', () => {
+  const S = tuning().meetings.slotsByAct;
+  const ROLE = [null, 'backbencher', 'backbencher', 'assistantWhip', 'deputyWhip', 'chiefWhip'];
+  const at = (act) => {
+    const g = newGame({ seed: 'SLOTS-1', party: 'p2' });
+    ranks.assignRank(g, act, ROLE[act]);
+    return g.player.slots;
+  };
+  const got = [1, 2, 3, 4, 5].map(at);
+  assert(got.every((n, i) => n === S[i]), 'slots by act ' + got.join(',') + ' vs ' + S.join(','));
+  // Demoted from the count back to the row: the carries start again.
+  const s = newGame({ seed: 'SLOTS-1', party: 'p2', act: 4 });
+  s.player.actProgress.rowVotesCarried = 5;
+  s.player.rowStats = { carried: 5, rebels: 0, failures: 1 };
+  ranks.assignRank(s, 3, 'assistantWhip');
+  assert(s.player.actProgress.rowVotesCarried === 0 && !s.player.rowStats, 'a new row starts from nothing');
+  assert(goals.actAim(s).counters.find((c) => c.key === 'carried').have === 0, 'the aim strip shows the fresh count');
+  // Back to the backbench: notice earned higher up doesn't make the next contest easier.
+  s.player.actProgress.noticed = 90;
+  ranks.assignRank(s, 2, 'backbencher');
+  assert(s.player.actProgress.noticed === tuning().career.noticedForAct2, 'notice capped on the backbench: ' + s.player.actProgress.noticed);
+  assert(s.player.slots === S[1], 'backbench slots');
+  return `slots ${got.join(' · ')}`;
 });
 
 
