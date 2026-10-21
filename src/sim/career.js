@@ -1,6 +1,7 @@
 // The career: creating the player's MP, acts and (later) graduation, vacancies, offers and endings.
 import { data } from './config.js';
-import { withRng } from './rng.js';
+import { withRng, createRng } from './rng.js';
+import { makeBill } from './bills.js';
 
 export function blankPlayer(mpId) {
   return {
@@ -38,7 +39,10 @@ export function createPlayer(state, opts = {}) {
   return withRng(state, (rng) => {
     const members = Object.values(state.mps).filter((m) => m.party === partyId && m.caucusRole === 'backbencher');
     const rookies = members.filter((m) => m.tenure === 0);
-    const pool = rookies.length ? rookies : members.sort((a, b) => a.tenure - b.tenure).slice(0, 3);
+    // Prefer a riding of the type and province the player asked for; fall back gracefully.
+    const fit = (list) => list.filter((m) => (!opts.ridingType || m.riding.type === opts.ridingType) && (!opts.province || state.ridings[m.riding.id]?.province === opts.province));
+    const byType = (list) => list.filter((m) => !opts.ridingType || m.riding.type === opts.ridingType);
+    const pool = [fit(rookies), fit(members), byType(rookies), byType(members), rookies, members.sort((a, b) => a.tenure - b.tenure).slice(0, 3)].find((l) => l.length);
     const m = rng.pick(pool);
     const bg = D.backgrounds.backgrounds.find((b) => b.id === opts.background) || rng.pick(D.backgrounds.backgrounds);
     if (opts.first) m.name.first = opts.first;
@@ -78,9 +82,12 @@ export function dilemmaFor(state, bill, baseScore, tuningPacing) {
   if (line !== 'whipped' || !['yea', 'nay'].includes(position)) return null;
   const { parts } = baseScore(state, me, bill);
   const lineSign = position === 'yea' ? 1 : -1;
-  const ridingPull = 0.6 * parts.R - 0.9 * parts.C;
+  let ridingPull = 0.6 * parts.R - 0.9 * parts.C;
   const conscience = 0.8 * parts.I;
-  const pull = ridingPull + conscience;
+  // The first week's set piece is always a real dilemma: the riding pulls hard against the line.
+  const forced = state.player.forceDilemma === bill.id;
+  if (forced) ridingPull = -lineSign * Math.max(0.7, Math.abs(ridingPull));
+  const pull = ridingPull + (forced ? 0 : conscience);
   if (Math.sign(pull) === lineSign || Math.abs(pull) < tuningPacing.dilemmaThreshold) return null;
   return { line: position, against: position === 'yea' ? 'nay' : 'yea', ridingPull, conscience, strength: Math.abs(pull), ridingSide: Math.abs(ridingPull) >= Math.abs(conscience) };
 }
@@ -113,4 +120,46 @@ export function applyPlayerVote(state, bill, choice, dilemma, T) {
       p.style.loyalist++;
     }
   }
+}
+
+// Act 1, week one: a mentor, the first dilemma (a bill your riding hates, whipped the other way,
+// voted Thursday), the whip calling you in, a Wednesday caucus, a Friday at home.
+export function setupFirstWeek(state) {
+  const p = state.player;
+  const me = state.mps[p.mpId];
+  if (!p.mentor) {
+    const pool = Object.values(state.mps).filter((m) => m.party === me.party && m.tenure >= 7 && !['leader', 'speaker', 'chiefWhip'].includes(m.caucusRole));
+    const mentor = pool.sort((a, b) => b.tenure + b.loyalty / 10 - (a.tenure + a.loyalty / 10))[0];
+    if (mentor) {
+      p.mentor = mentor.id;
+      me.mentor = mentor.id;
+      mentor.proteges.push(me.id);
+      mentor.rapport = Math.max(mentor.rapport, 25);
+    }
+  }
+  const type = me.riding.type;
+  const rng = createRng(`${state.seed}:firstWeek`);
+  const templates = data()
+    .billTemplates.templates.filter((t) => t.kind === 'government' && !t.confidence && Math.abs(t.ridingEffects[type] || 0) >= 0.5)
+    .sort((a, b) => Math.abs(b.ridingEffects[type]) - Math.abs(a.ridingEffects[type]));
+  for (const t of templates) {
+    const b = makeBill(state, rng, t);
+    const pos = b.positions[me.party];
+    const fits = b.lines[me.party] === 'whipped' && (pos === 'yea' || pos === 'nay') && Math.sign(b.ridingEffects[type]) !== (pos === 'yea' ? 1 : -1);
+    if (!fits) {
+      delete state.bills[b.id];
+      state.billSeq--;
+      continue;
+    }
+    b.visibility = Math.max(b.visibility, 65);
+    b.stage = 'second';
+    b.nextVote = 3; // Thursday of week one
+    b.scheduled = true;
+    p.forceDilemma = b.id;
+    break;
+  }
+  // Who drops by which evening, so the first week shows every kind of meeting.
+  p.script = { 2: ['mentorAdvice', 'rebelRecruit'], 3: ['introduction'], 4: ['gossip'] };
+  state.flow.forceWatch = true;
+  return p.forceDilemma;
 }

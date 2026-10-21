@@ -49,7 +49,7 @@ export function createAgenda(root, { getState, onContinue, onSkip, onNewGame }) 
           })
           .join('')
       : `<li>${t('agenda.noVotes')}</li>`;
-    sheet.innerHTML = `<div class="sheet-handle"></div><h2>${esc(dateText(state))}</h2><h3>${t('agenda.orderPaper')}</h3><ul class="order-paper">${rows}</ul>
+    sheet.innerHTML = `<div class="sheet-handle"></div><h2>${esc(dateText(state))}</h2>${p.note ? `<p class="tutorial">${t(p.note)}</p>` : ''}<h3>${t('agenda.orderPaper')}</h3><ul class="order-paper">${rows}</ul>
       <div class="card-actions"><button class="btn primary" data-act="go">${t('agenda.toHouse')}</button></div>`;
     sheet.querySelector('[data-act="go"]').onclick = onContinue;
     sheet.classList.remove('hidden');
@@ -58,7 +58,8 @@ export function createAgenda(root, { getState, onContinue, onSkip, onNewGame }) 
   function showWeek(p) {
     const s = p.summary;
     const delta = ([a, b]) => `${a} → <b>${b}</b>${b > a ? ' ▲' : b < a ? ' ▼' : ''}`;
-    sheet.innerHTML = `<div class="sheet-handle"></div><h2>${t('week.title', { week: s.week })}</h2>
+    sheet.innerHTML = `<div class="sheet-handle"></div><h2>${p.firstWeek ? t('week.firstTitle') : t('week.title', { week: s.week })}</h2>
+      ${p.firstWeek ? `<p class="tutorial">${t('week.firstNote')}</p>` : ''}
       <div class="kvs">
         <div class="kv"><span class="k">${t('week.riding')}</span><span class="v">${delta(s.ridingStanding)}</span></div>
         <div class="kv"><span class="k">${t('week.whip')}</span><span class="v">${delta(s.whipRapport)}</span></div>

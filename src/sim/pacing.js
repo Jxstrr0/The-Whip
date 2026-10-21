@@ -76,7 +76,8 @@ function startDay(state, rng) {
   state.flow.day = { matters: stops.some(Boolean) || !!state.flow.forceWatch, results: [] };
   for (const fn of hooks.morning) fn(state, rng);
   state.orderPaper = items.map((it) => it.billId);
-  if (state.flow.day.matters) return { kind: 'morning', items: state.flow.queue.map(({ billId, stage, stop }) => ({ billId, stage, stop: stop?.reason || null })) };
+  const note = state.date.absWeek === 0 ? `tutorial.d${d.dayOfWeek}` : null;
+  if (state.flow.day.matters) return { kind: 'morning', note, items: state.flow.queue.map(({ billId, stage, stop }) => ({ billId, stage, stop: stop?.reason || null })) };
   return null;
 }
 
@@ -110,6 +111,7 @@ function decide(state, rng, item, choice, dilemma) {
   const result = q.division ? runDivision(state, q) : voiceResult(state, q);
   recordResult(state, result, rng);
   if (choice !== 'free') applyPlayerVote(state, bill, choice === 'yea' || choice === 'nay' ? 'line' : choice, dilemma, tuning().player);
+  if (state.player.forceDilemma === bill.id) state.player.forceDilemma = null;
   afterResult(state, result);
   state.flow.day.results.push(result.id);
   return result;
@@ -215,6 +217,10 @@ function weekend(state, rng) {
   state.date.week = (state.date.absWeek % C.weeksPerYear) + 1;
   state.flow.week = { log: [], stops: 0, start: snapshot(state) };
   state.flow.step = 'morning';
+  // The guided first week is over; from here only days that matter stop you.
+  state.flow.forceWatch = false;
+  state.player.script = null;
+  if (pending) pending.firstWeek = state.date.absWeek === 1;
   return pending;
 }
 

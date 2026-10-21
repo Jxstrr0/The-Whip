@@ -1,7 +1,7 @@
 // How a game starts: a new career from a seed (scenarios, shared seeds and the daily seed come in stage 9).
 import { generateParliament } from './generate.js';
 import { createRng } from './rng.js';
-import { createPlayer } from './career.js';
+import { createPlayer, setupFirstWeek } from './career.js';
 import { assignSeats } from '../chamber/layout.js';
 import { initFlow } from './pacing.js';
 
@@ -23,7 +23,7 @@ export function reseat(state) {
   }
 }
 
-export function newGame({ seed, party, first, last, age, background, mode = 'career' } = {}) {
+export function newGame({ seed, party, first, last, age, background, ridingType, province, mode = 'career', guided = false } = {}) {
   const parl = generateParliament(seed);
   const state = {
     version: SAVE_VERSION,
@@ -46,8 +46,10 @@ export function newGame({ seed, party, first, last, age, background, mode = 'car
     log: [],
   };
   reseat(state);
-  createPlayer(state, { party, first, last, age, background });
+  createPlayer(state, { party, first, last, age, background, ridingType, province });
   state.divisions = {};
   initFlow(state);
+  // A career started from the menu gets the guided first week.
+  if (guided) setupFirstWeek(state);
   return state;
 }

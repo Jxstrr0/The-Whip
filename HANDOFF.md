@@ -494,7 +494,7 @@ Build one stage per session, in order. A stage is done only when every check und
 
 **Stage 4b: Vertical slice.** Before stage 5, make Act 1's first week playable end to end across all four rooms with placeholder art: a dilemma vote, a whip's-office reversal meeting, a Friday in the riding, a Wednesday caucus. Kelbo plays it and decides what's fun before the career is built out.
 
-- [ ] A new player can play one full week of Act 1 from the start menu to the weekend summary
+- [x] A new player can play one full week of Act 1 from the start menu to the weekend summary
 - [ ] `PROGRESS.md` records what Kelbo said worked and what didn't
 
 **Stage 5: Whip tools, the count and rival whips.** Write `tools.js`, `rivals.js` and `ui/ledger.js`. Add the chamber tools, pairing, the attendance chase during bells, act gating, the count board's firm/leaning/lost marks, and rival whip AI with weekly budgets.
