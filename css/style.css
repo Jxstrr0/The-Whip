@@ -521,6 +521,25 @@ blockquote.line {
 
 /* ---- Stamps: outcomes are rubber-stamped in ink -------------------------------------------------------- */
 
+/* Question Period: the Speaker's call in the chair's voice, who is speaking, the gallery's stamp. */
+.qp-sheet blockquote.line.call {
+  font-style: italic;
+  border-left-color: var(--ink-2);
+}
+.qp-sheet .who,
+.qp-sheet .to {
+  font-size: 13px;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.1em;
+}
+.qp-sheet .choices .btn small.approach {
+  margin-bottom: 4px;
+}
+.qp-sheet .verdict {
+  margin: 4px 0 2px;
+  text-align: center;
+}
+
 .stamp {
   display: inline-block;
   margin: 6px 4px 2px 0;

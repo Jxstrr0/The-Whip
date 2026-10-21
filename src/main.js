@@ -9,6 +9,7 @@ import { parliamentHash } from './sim/generate.js';
 import { getState, setState, dispatch, subscribe } from './state.js';
 import './sim/pacing.js';
 import './sim/meetings.js';
+import './sim/questionPeriod.js';
 import { caucusSeating } from './sim/caucus.js';
 import { townHallPlacards } from './sim/riding.js';
 import { saveGame, loadGame, deleteSave, exportSave, importSave, allSaves, latestSave } from './save.js';
@@ -25,6 +26,7 @@ import { createCountBoard } from './ui/countBoard.js';
 import { createOfficeUI } from './ui/talk.js';
 import { createCaucusUI } from './ui/caucusUI.js';
 import { createRidingUI } from './ui/ridingUI.js';
+import { createQpUI } from './ui/qpUI.js';
 import { createStartMenu, createGameMenu, createSettingsSheet } from './ui/menus.js';
 import { createAudio } from './audio.js';
 import { getSettings, setSetting, onSettings, applySettings } from './settings.js';
@@ -263,6 +265,7 @@ function buildWorld() {
   const electionUI = createElectionUI(ui, { getState, dispatch });
   const caucusUI = createCaucusUI(ui, { getState, dispatch, getRoom: () => (rooms.name === 'caucus' ? rooms.room : null) });
   const ridingUI = createRidingUI(ui, { getState, dispatch });
+  const qpUI = createQpUI(ui, { getState, dispatch, getRoom: chamberRoom, onBenches: (kind) => audio.benches(kind) });
 
   // Keep each room in step with the sim: who's in the chair, moods, the board, the crowd.
   function syncRoom(name, state) {
@@ -316,6 +319,7 @@ function buildWorld() {
     electionUI.render(state);
     caucusUI.render(state);
     ridingUI.render(state);
+    qpUI.render(state);
     card.refresh();
     book.refresh();
     ledger.refresh();

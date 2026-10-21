@@ -232,7 +232,7 @@ export function create(ctx) {
   // From your own seat you can't see yourself, so your figure leaves the chair while the camera is in it.
   function applyHomeHiding() {
     if (!homeSeatId) return;
-    figures.setPresent(homeSeatId, controls.mode !== 'home');
+    figures.setPresent(homeSeatId, controls.mode !== 'home' && life.standingSeat !== homeSeatId);
   }
   controls.onModeChange(applyHomeHiding);
 
@@ -257,6 +257,42 @@ export function create(ctx) {
     gavel() {
       life.gavel();
       ctx.onGavel?.();
+    },
+    // Question Period, from across the aisle. 'stand': you rise at your seat and the camera finds you.
+    // 'answer': you sit, the minister rises at their place and the camera holds on them. 'gallery': the
+    // minister sits, the gavel falls, the wide shot of the House takes in the reaction. null: back to your seat.
+    questionPeriod(phase, { seatId, mpId, ministerId } = {}) {
+      const mSeat = ministerId ? seats.byId.get(state?.mps[ministerId]?.seatId) : null;
+      const mySeat = seatId ? seats.byId.get(seatId) : null;
+      if (phase === 'stand') {
+        if (controls.mode === 'home') {
+          returnHome = true;
+          controls.setMode('overview');
+        }
+        if (mySeat) {
+          life.stand(seatId, mpId);
+          controls.shot(mySeat);
+        }
+      } else if (phase === 'answer') {
+        if (mSeat && ministerId) {
+          life.stand(mSeat.seatId, ministerId);
+          controls.shot(mSeat);
+        } else life.sit();
+      } else {
+        life.sit();
+        if (phase === 'gallery') {
+          life.gavel();
+          ctx.onGavel?.();
+          controls.divisionShot(true);
+        } else {
+          controls.divisionShot(false);
+          if (returnHome) {
+            returnHome = false;
+            controls.setMode('home');
+          }
+        }
+      }
+      applyHomeHiding();
     },
     nudge: () => controls.nudge(),
     autoOrbit: (on) => controls.autoOrbit(on),

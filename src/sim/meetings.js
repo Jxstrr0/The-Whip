@@ -582,9 +582,8 @@ function deliver(state, e) {
   const p = state.player;
   const [k, a] = e.what.split(':');
   if (k === 'qpSlot') {
-    p.actProgress.noticed += 1;
-    p.ridingStanding = clamp(p.ridingStanding + 2, 0, 100);
-    log(state, 'You got your Question Period slot. The riding watched.', 'career');
+    p.qpSlot = { from: e.from, week: state.date.absWeek };
+    log(state, "The whip's office has put you down for a question. Next sitting day, you're on your feet.", 'career');
   } else if (k === 'committeeSeat') {
     me(state).committee = a;
     p.actProgress.noticed += 1;

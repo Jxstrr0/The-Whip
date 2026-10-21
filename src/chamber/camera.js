@@ -40,6 +40,7 @@ export function createChamberCamera(camera, el) {
   let baseFov = 60;
   let homeFov = 62;
   let aimDrop = 0;
+  let lastAspect = 1;
 
   const pointers = new Map();
   let pinchStart = null;
@@ -246,6 +247,7 @@ export function createChamberCamera(camera, el) {
     // (Backing the camera off instead would put it outside the walls.) At home, aim a little lower in
     // portrait so the people across the aisle sit above the bottom sheet.
     fitAspect(aspect) {
+      lastAspect = aspect;
       baseFov = clamp(2 * Math.atan(Math.tan(18 * DEG) / aspect) / DEG, 50, 75);
       homeFov = clamp(2 * Math.atan(Math.tan(21 * DEG) / aspect) / DEG, 48, 80);
       aimDrop = aspect < 1 ? 0.2 : 0;
@@ -260,6 +262,20 @@ export function createChamberCamera(camera, el) {
       }
       Object.assign(goal, { r: def.r, polar: def.polar, azimuth: def.azimuth });
       goal.target.copy(DEFAULT_TARGET);
+    },
+    // Question Period: an overview shot from across the aisle on one member on their feet, aimed below them
+    // so they sit in the part of the screen the sheet leaves clear (the top band in portrait).
+    shot(seat) {
+      const portrait = lastAspect < 1;
+      goal.azimuth = (seat.x < 0 ? 1 : -1) * 52 * DEG;
+      goal.polar = 48 * DEG;
+      goal.r = portrait ? 7.5 : 5.5;
+      // The sheet covers the lower half in portrait and the right half in landscape, so aim well below the
+      // member in portrait (they stand in the band under the masthead) and to their right in landscape
+      // (they stand in the clear left half, hips at the centre of the frame).
+      const side = portrait ? 0 : 2.3;
+      goal.target.set(seat.x + Math.cos(goal.azimuth) * side, seat.y + (portrait ? -1.8 : 0.7), seat.z - Math.sin(goal.azimuth) * side);
+      clampGoal();
     },
     // The overview shot for a division, and back to the default afterwards.
     divisionShot(on) {

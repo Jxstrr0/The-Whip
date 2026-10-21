@@ -57,6 +57,7 @@ import * as record from './src/sim/record.js';
 import * as election from './src/sim/election.js';
 import * as confidence from './src/sim/confidence.js';
 import * as media from './src/sim/media.js';
+import * as qp from './src/sim/questionPeriod.js';
 
 const sections = [];
 let current = null;
@@ -1475,6 +1476,114 @@ test('Audio is synthesised, not fetched, and is safe to drive before any gesture
   a.configure({ sound: false, volume: 0.2 });
   assert(a.running === false, 'nothing runs before a tap');
   return 'room, gavel, tap, bells and configure all no-ops before the first gesture';
+});
+
+section('Round two · Question Period');
+
+// Play a fresh guided game forward to its first Question Period stop.
+function toQuestionPeriod(party) {
+  const s = newGame({ seed: 'TEST-1', party, guided: true });
+  let p = pacing.next(s);
+  for (let i = 0; i < 300 && p?.kind !== 'questionPeriod'; i++) {
+    pacing.resolve(s, p?.kind === 'division' ? 'line' : null);
+    p = pacing.next(s);
+  }
+  return s;
+}
+
+test('The first question comes on the guided week\'s Tuesday, before the day\'s votes, to a sitting minister', () => {
+  const out = [];
+  for (const party of ['p1', 'p2', 'p3']) {
+    const s = toQuestionPeriod(party);
+    const p = s.flow.pending;
+    assert(p?.kind === 'questionPeriod' && p.needsChoice, `${party}: a Question Period stop`);
+    assert(s.date.absWeek === 0 && s.date.dayOfWeek === tuning().questionPeriod.guidedDay, `${party}: on the guided day`);
+    assert(s.flow.day.results.length === 0, `${party}: before any division`);
+    const q = s.questionPeriod;
+    const minister = s.mps[q.ministerId];
+    assert(minister && minister.party === s.house.government && ['cabinet', 'leader'].includes(minister.caucusRole), `${party}: a government minister answers`);
+    assert(q.side === (s.mps[s.player.mpId].party === s.house.government ? 'government' : 'opposition'), `${party}: the right side`);
+    for (const f of qp.FRAMINGS) assert(q.questions[f] && !/[{}]/.test(q.questions[f]), `${party}: ${f} filled: ${q.questions[f]}`);
+    assert(!/[{}]/.test(q.call) && q.call.includes(s.mps[s.player.mpId].riding.name), `${party}: the Speaker calls the riding`);
+    out.push(`${party}: ${q.side}, ${minister.name.last} on ${q.bill || q.local.issue}`);
+  }
+  return out.join(' · ');
+});
+
+test('Each framing moves the whip, the riding and being noticed the tuned way, and the day carries on', () => {
+  const out = [];
+  for (const party of ['p1', 'p2']) {
+    const base = toQuestionPeriod(party);
+    const me = base.mps[base.player.mpId];
+    const whip = base.parties[me.party].chiefWhip;
+    const E = tuning().questionPeriod.effects[base.questionPeriod.side];
+    for (const f of qp.FRAMINGS) {
+      const s = structuredClone(base);
+      const r0 = s.mps[whip].rapport;
+      const n0 = s.player.actProgress.noticed;
+      const rs0 = s.player.ridingStanding;
+      ACTIONS.qpAsk(s, { framing: f });
+      const q = s.questionPeriod;
+      assert(q.phase === 'answer' && q.framing === f, `${party} ${f}: answered`);
+      const expect = { soft: ['lob'], pointed: ['hit', 'parried'], offScript: ['home'] }[f];
+      assert(expect.includes(q.outcome), `${party} ${f}: outcome ${q.outcome}`);
+      const e = E[q.outcome];
+      assert(Math.sign(s.mps[whip].rapport - r0) === Math.sign(e.whip), `${party} ${f}: whip moved ${s.mps[whip].rapport - r0} for ${e.whip}`);
+      assert(s.player.actProgress.noticed - n0 === e.noticed, `${party} ${f}: noticed`);
+      assert(s.player.ridingStanding - rs0 === e.riding, `${party} ${f}: riding ${s.player.ridingStanding - rs0} for ${e.riding}`);
+      assert(q.answer && q.benches && q.gallery && ![q.answer, q.benches, q.gallery].some((x) => /[{}]/.test(x)), `${party} ${f}: answer, benches and gallery filled`);
+      assert(q.effects && (q.effects.headline === null || s.press.at(-1).text === q.effects.headline), `${party} ${f}: a headline, if any, is in the press`);
+      pacing.resolve(s);
+      assert(!s.questionPeriod && !s.flow.pending && s.player.lastQp != null, `${party} ${f}: cleared`);
+      const nxt = pacing.advance(s);
+      assert(nxt && nxt.kind !== 'questionPeriod', `${party} ${f}: the day goes on to ${nxt?.kind}`);
+      out.push(`${party}/${f}: ${q.outcome}`);
+    }
+  }
+  return out.join(' · ');
+});
+
+test('A slot the whip promised comes due in the House, not the office, and the riding notices the favour', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p1', guided: false });
+  pacing.next(s);
+  const me = s.mps[s.player.mpId];
+  s.player.qpSlot = { from: s.parties[me.party].chiefWhip, week: 0 };
+  s.player.lastQp = s.date.absWeek * 5 + s.date.dayOfWeek; // too soon for the rota: the promise still counts
+  const rng = createRng('deal');
+  const p = pacing.hooks.questionPeriod[0](s, rng);
+  assert(p?.kind === 'questionPeriod' && p.source === 'deal', 'the promised slot arrives');
+  assert(s.player.qpSlot === null, 'the promise is spent');
+  const rs0 = s.player.ridingStanding;
+  qp.ask(s, rng, 'soft');
+  assert(s.player.ridingStanding - rs0 === tuning().questionPeriod.dealRiding, 'the riding watched');
+  const s2 = newGame({ seed: 'TEST-1', party: 'p1', guided: false });
+  pacing.next(s2);
+  s2.player.lastQp = s2.date.absWeek * 5 + s2.date.dayOfWeek;
+  assert(pacing.hooks.questionPeriod[0](s2, createRng('deal')) === null, 'no slot right after the last one without a promise');
+});
+
+test('Every Question Period line and headline fills with no placeholder left over', () => {
+  const s = toQuestionPeriod('p2');
+  let n = 0;
+  const walk = (v) => {
+    if (typeof v === 'string') {
+      n++;
+      assert(!/[{}]/.test(qp.fillQp(s, v)), 'unfilled: ' + v);
+    } else if (Array.isArray(v)) v.forEach(walk);
+    else if (v && typeof v === 'object') Object.values(v).forEach(walk);
+  };
+  const Q = data().questionPeriod;
+  walk(Q.call);
+  walk(Q.questions);
+  walk(Q.answers);
+  walk(Q.benches);
+  walk(Q.gallery);
+  for (const list of Object.values(Q.issues)) for (const i of list) assert(i.issue && data().world.interestNames[i.interest], 'issue with a known interest: ' + i.issue);
+  const H = data().headlines.headlines.filter((h) => h.event.startsWith('qp'));
+  assert(H.length >= 10, 'Question Period headlines');
+  const rng = createRng('h');
+  for (const h of H) assert(!/[{}]/.test(media.headline(s, rng, h.event, { minister: 'A. Minister', issue: 'the bridge', bill: 'An Act' })), 'headline fills: ' + h.text);
+  return `${n} lines, ${H.length} headlines`;
 });
 
 async function run() {

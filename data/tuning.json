@@ -391,6 +391,27 @@
     "scandalLeak": 12,
     "scandalDecay": 1
   },
+  "questionPeriod": {
+    "slotOdds": { "1": 0.2, "2": 0.12, "3": 0.04 },
+    "minGapDays": 7,
+    "guidedDay": 2,
+    "hitOdds": { "cooperative": 0.4, "guarded": 0.5, "angry": 0.65, "anxious": 0.75 },
+    "dealRiding": 2,
+    "effects": {
+      "government": {
+        "lob": { "whip": 4, "noticed": 1, "riding": 0, "press": 0.15, "style": "loyalist" },
+        "parried": { "whip": -5, "noticed": 1, "riding": 1, "press": 0.3, "style": "conscience" },
+        "hit": { "whip": -8, "noticed": 3, "riding": 3, "press": 0.8, "style": "conscience", "poll": -0.4 },
+        "home": { "whip": -3, "noticed": 1, "riding": 5, "press": 0.5, "style": "operator" }
+      },
+      "opposition": {
+        "lob": { "whip": 3, "noticed": 1, "riding": 0, "press": 0.2, "style": "loyalist" },
+        "parried": { "whip": 1, "noticed": 1, "riding": 1, "press": 0.3, "style": "operator" },
+        "hit": { "whip": 6, "noticed": 3, "riding": 3, "press": 0.85, "style": "operator", "poll": -0.5 },
+        "home": { "whip": -2, "noticed": 1, "riding": 5, "press": 0.5, "style": "conscience" }
+      }
+    }
+  },
   "confidence": {
     "agreementOdds": 0.35,
     "agreementWeeks": 60,
