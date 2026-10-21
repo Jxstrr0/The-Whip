@@ -61,6 +61,22 @@
     { "id": "rc042", "role": "reporter", "types": ["urban", "northern"], "interest": "justice", "what": "the courthouse delays", "text": "Three cases in {town} were tossed this year for delay because the judge vacancies haven't been filled. Appointments are federal. So, now, is my story.", "weight": 3 }
   ],
   "townHall": {
+    "placards": {
+      "th01": ["WHAT DOES {bill} DO FOR {town}?", "READ US THE BILL, NOT THE PRESS RELEASE"],
+      "th02": ["WE READ THE BILL. DID YOU?", "PAGE 40, {playerLast}. EXPLAIN IT."],
+      "th03": ["OUR MP, NOT {whip}'S", "WHO DO YOU WORK FOR?"],
+      "th04": ["WHERE'S OURS?", "{town} GETS NOTHING AGAIN"],
+      "th05": ["WHO IS {bill} FOR?", "NOBODY HERE ASKED FOR THIS"],
+      "th06": ["OUR VOICE IN OSTRAVA", "NOT OSTRAVA'S VOICE HERE"],
+      "th07": ["THE CLINIC CLOSES AT FOUR", "NO DOCTOR AFTER DARK"],
+      "th08": ["FIX THE HIGHWAY", "POTHOLES BIGGER THAN PROMISES"],
+      "th09": ["300 JOBS", "DID OSTRAVA EVEN NOTICE?"],
+      "th10": ["RENT UP $400", "WHERE ARE WE SUPPOSED TO LIVE?"],
+      "th11": ["SAVE OUR POST COUNTER", "CROWN POST: HANDS OFF {town}"],
+      "th12": ["FIRST TIME SINCE THE ELECTION", "REMEMBER US?"],
+      "th13": ["FIX THE ARENA ROOF", "IT RAINS ON THE ICE"],
+      "generic": ["WE VOTED FOR YOU", "{town} FIRST", "LISTEN TO {riding}", "ONE OF US, OR ONE OF THEM?", "NEXT TIME WE'LL REMEMBER"]
+    },
     "openers": [
       "The {town} community hall smells of burnt coffee and floor wax. Every folding chair is taken, and three people are standing along the back wall with their arms crossed.",
       "Someone has put out a plate of squares, which is a good sign, and a microphone on a stand, which is not. About sixty people have come out to see their MP for {playerRiding}.",
