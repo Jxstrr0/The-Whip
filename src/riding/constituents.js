@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { createVisitor } from '../office/visitor.js';
 import { contactShadows, vertexMaterial, box, merge, paintedTexture, texturedPanel } from '../kit3d.js';
-import { createFigureCrowd, lookFor, shade } from '../figures.js';
+import { createFigureCrowd, lookFor, shade, hashOf, CASUAL_NECKS } from '../figures.js';
 
 export const ROLE_COLORS = {
   mayor: '#1f3a5f',
@@ -48,7 +48,7 @@ export function createCrowd(count, colorFor) {
     const x = (col - 3) * 0.78 + (row % 2) * 0.38 + look.yaw;
     const z = 4.6 + row * 0.95 + look.lean * 2;
     spots.push({ x, z, look });
-    crowd.dress(i, { ...look, suit: shade(colorFor(i), id, 0.1) });
+    crowd.dress(i, { ...look, suit: shade(colorFor(i), id, 0.1), shirt: CASUAL_NECKS[(hashOf(id) >>> 5) % CASUAL_NECKS.length] });
     feet.push({ x, z, sx: 0.9, sz: 0.9 });
   }
   const g = crowd.group;
