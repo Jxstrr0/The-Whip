@@ -1,0 +1,23 @@
+{
+  "backgrounds": [
+    { "id": "councillor", "name": "Local councillor", "bio": "Former municipal councillor.", "interests": ["roads", "housing", "transit"], "strength": "Knows how a riding works", "effects": { "ridingStanding": 6 }, "skeletons": [{ "kind": "oldCouncilVote", "text": "An old council vote to rezone a friend's land", "severity": 2 }] },
+    { "id": "lawyer", "name": "Lawyer", "bio": "Former litigator.", "interests": ["justice", "immigration", "trade"], "strength": "Reads a room and a bill", "effects": { "talkBonus": 1 }, "skeletons": [{ "kind": "formerClient", "text": "A former client now under investigation", "severity": 2 }] },
+    { "id": "farmer", "name": "Farmer", "bio": "Third-generation farmer.", "interests": ["agriculture", "rural", "trade"], "strength": "Trusted in rural ridings", "effects": { "ruralStanding": 8 }, "skeletons": [{ "kind": "businessDebt", "text": "A farm-credit debt you've been quietly rolling over", "severity": 2 }] },
+    { "id": "union", "name": "Union organizer", "bio": "Former union local president.", "interests": ["labour", "health", "seniors"], "strength": "Can whip a room", "effects": { "cohortRapport": 6 }, "skeletons": [{ "kind": "strikeFund", "text": "Loose bookkeeping on an old strike fund", "severity": 2 }] },
+    { "id": "business", "name": "Business owner", "bio": "Ran a family business on main street.", "interests": ["smallBusiness", "trade", "energy"], "strength": "Knows how to make a deal", "effects": { "dealBonus": 1 }, "skeletons": [{ "kind": "relativeOnPayroll", "text": "A relative on the payroll who never showed up", "severity": 2 }] },
+    { "id": "teacher", "name": "Teacher", "bio": "Taught high school for twenty years.", "interests": ["education", "arts", "health"], "strength": "Good in front of a crowd", "effects": { "townHallBonus": 4 }, "skeletons": [{ "kind": "oldPosts", "text": "Some angry old letters to the editor", "severity": 1 }] },
+    { "id": "veteran", "name": "Veteran", "bio": "Served two tours abroad.", "interests": ["defence", "veterans", "justice"], "strength": "The whip's office trusts discipline", "effects": { "whipRapport": 8 }, "skeletons": [{ "kind": "serviceRecord", "text": "A sealed disciplinary note in your service record", "severity": 1 }] }
+  ],
+  "mpBios": ["Former county reeve.", "Former school principal.", "Ran a hardware store for thirty years.", "Former crown prosecutor.", "Former nurse.", "Former fishing-boat captain.", "Former union steward.", "Former city councillor.", "Former mayor.", "Former chamber of commerce president.", "Former police officer.", "Former family doctor.", "Former journalist.", "Former provincial cabinet staffer.", "Former engineer.", "Former band manager.", "Former social worker.", "Former real estate agent.", "Former farmer.", "Former professor.", "Former paramedic.", "Former minister's aide.", "Former lawyer.", "Former small-business owner.", "Former mine safety inspector.", "Former hockey coach."],
+  "secretKinds": [
+    { "kind": "expenseClaims", "text": "Padded travel expense claims" },
+    { "kind": "businessDebt", "text": "A failing business with unpaid suppliers" },
+    { "kind": "oldCouncilVote", "text": "An old council vote that helped a relative" },
+    { "kind": "relativeOnPayroll", "text": "A relative on the constituency payroll" },
+    { "kind": "lobbyistFriend", "text": "Undisclosed fishing trips with a lobbyist" },
+    { "kind": "privateComments", "text": "Recorded remarks mocking the leader" },
+    { "kind": "missedTaxes", "text": "Years of late property taxes" },
+    { "kind": "jobOffer", "text": "A private-sector job lined up after politics" },
+    { "kind": "floorTalks", "text": "Quiet talks with another party about crossing" }
+  ]
+}
