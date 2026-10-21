@@ -59,6 +59,7 @@ import * as election from './src/sim/election.js';
 import * as confidence from './src/sim/confidence.js';
 import * as media from './src/sim/media.js';
 import * as qp from './src/sim/questionPeriod.js';
+import * as coldOpen from './src/sim/coldOpen.js';
 
 const sections = [];
 let current = null;
@@ -1790,6 +1791,63 @@ test('The first Monday of winter logs the turn of the season once, and the first
   assert(lines.length === 1 && data().seasons.turns.winter.includes(lines[0].text), `${lines.length} season lines: ${lines.map((l) => l.text).join(' | ')}`);
   assert(lines[0].week === winterStart - 1, `logged in week ${lines[0].week + 1}, not ${winterStart}`);
   return lines[0].text;
+});
+
+test('Election night is settled by the seed: the count ends on your margin, the House fills to its real seats, no line repeats', () => {
+  let flips = 0;
+  let closeSeats = 0;
+  for (let k = 0; k < 24; k++) {
+    const s = newGame({ seed: `NIGHT-${k}`, guided: true });
+    const rngBefore = JSON.stringify(s.rng);
+    const a = coldOpen.electionNight(s);
+    const b = coldOpen.electionNight(s);
+    assert(JSON.stringify(a) === JSON.stringify(b), `${k}: not deterministic`);
+    assert(JSON.stringify(s.rng) === rngBefore, `${k}: the night moved the game's RNG`);
+    const last = a.steps[a.steps.length - 1];
+    assert(last.votes[0] === a.candidates[0].votes && last.leader === 0, `${k}: the count doesn't end on your total, or you lost`);
+    assert(a.margin > 0 && a.margin === a.candidates[0].votes - Math.max(...a.candidates.slice(1).map((c) => c.votes)), `${k}: margin ${a.margin}`);
+    const houses = {};
+    for (const m of Object.values(s.mps)) houses[m.party] = (houses[m.party] || 0) + 1;
+    assert(JSON.stringify(last.seats) === JSON.stringify(houses), `${k}: the seats don't end on the House`);
+    for (let i = 1; i < a.steps.length; i++) assert(a.steps[i].polls >= a.steps[i - 1].polls, `${k}: polls went backwards`);
+    const call = a.steps.findIndex((x) => x.called);
+    assert(call > 0 && a.steps[call].line.includes(data().coldOpen.broadcaster), `${k}: the country is never called`);
+    const lines = a.steps.map((x) => x.line);
+    assert(new Set(lines).size === lines.length, `${k}: a line repeats`);
+    assert(!lines.concat(a.declaration).some((l) => /\{\w+\}/.test(l)), `${k}: a placeholder is left`);
+    if (a.close) {
+      closeSeats++;
+      assert(a.steps[0].leader !== 0, `${k}: a close seat opens with you ahead`);
+      flips += a.steps.some((x, i) => i > 0 && x.leader === 0 && a.steps[i - 1].leader !== 0) ? 1 : 0;
+    }
+  }
+  assert(closeSeats > 0 && flips === closeSeats, `${closeSeats} close seats, ${flips} turned`);
+  return `${closeSeats} close seats of 24, every one turned`;
+});
+
+test('A new career opens on election night, walks into the chamber, then the first Monday; skipping goes straight to Monday', () => {
+  const plain = newGame({ seed: 'TEST-1', guided: true });
+  const s = newGame({ seed: 'TEST-1', guided: true, coldOpen: true });
+  assert(plain.flow.pending?.kind !== 'coldOpen', 'a game without the cold open has one');
+  assert(JSON.stringify(plain.rng) === JSON.stringify(s.rng), 'the cold open moved the RNG');
+  assert(parliamentHash(plain) === parliamentHash(s), 'the cold open changed the Parliament');
+  assert(s.flow.pending?.kind === 'coldOpen' && s.flow.pending.phase === 'count' && s.flow.pending.needsChoice, 'no count first');
+  pacing.resolve(s, 'walk');
+  pacing.advance(s);
+  const w = s.flow.pending;
+  assert(w?.kind === 'coldOpen' && w.phase === 'walk', `then ${w?.kind}/${w?.phase}`);
+  const me = s.mps[s.player.mpId];
+  assert(w.walk.seatId === me.seatId && w.walk.lines.length >= 4, 'the walk is not to your seat');
+  assert(!w.walk.lines.some((l) => /\{\w+\}/.test(l)), 'a placeholder is left in the walk');
+  assert(s.log.some((l) => l.kind === 'career' && l.text.startsWith('Election night in')), 'election night is not on the record');
+  pacing.resolve(s);
+  pacing.advance(s);
+  assert(s.flow.pending?.kind === 'morning' && s.date.absWeek === 0 && s.date.dayOfWeek === 1, `then ${s.flow.pending?.kind} on day ${s.date.dayOfWeek}`);
+  const k = newGame({ seed: 'TEST-1', guided: true, coldOpen: true });
+  pacing.resolve(k, 'skip');
+  pacing.advance(k);
+  assert(k.flow.pending?.kind === 'morning' && k.date.dayOfWeek === 1, `skip went to ${k.flow.pending?.kind}`);
+  return w.walk.lines[2];
 });
 
 async function run() {

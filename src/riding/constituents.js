@@ -60,12 +60,21 @@ export function createCrowd(count, colorFor) {
   const placards = PLACARD_SPOTS.map(({ i, dx }, k) => createPlacard(spots[i], dx, k));
   placards.forEach((p) => g.add(p.group));
 
-  function place(mood) {
-    const lean = mood > 60 ? 0.08 : mood < 40 ? -0.07 : 0.01;
-    spots.forEach((s, i) => crowd.place(i, { x: s.x, z: s.z, rotY: Math.PI, scale: s.look.height, yaw: s.look.yaw * 2, lean: lean + s.look.lean * 0.3 }));
+  // Each person's hop when the room goes up: a beat of their own, so it reads as a crowd, not a drill.
+  let mood = 50;
+  let cheer = 0;
+  let cheerGoal = 0;
+  let beat = 0;
+  const hop = (i) => (cheer > 0.01 ? cheer * 0.11 * Math.max(0, Math.sin(beat * (6.2 + (i % 5) * 0.55) + i * 1.9)) ** 2 : 0);
+  function place(v) {
+    mood = v;
+    const lean = v > 60 ? 0.08 : v < 40 ? -0.07 : 0.01;
+    spots.forEach((s, i) => crowd.place(i, { x: s.x, y: hop(i), z: s.z, rotY: Math.PI, scale: s.look.height, yaw: s.look.yaw * 2, lean: lean + s.look.lean * 0.3 }));
     crowd.commit();
   }
   place(50);
+  // Election night holds up the campaign's own signs whatever the mood; null hands them back to the mood.
+  let signs = null;
 
   return {
     group: g,
@@ -73,7 +82,7 @@ export function createCrowd(count, colorFor) {
     setMood(v) {
       g.position.z = v < 40 ? 0.5 : v > 60 ? -0.35 : 0;
       // The first two boards (one per topic) go up as the room cools; all four once it has turned.
-      const up = v < 35 ? 4 : v < 45 ? 2 : 0;
+      const up = signs ?? (v < 35 ? 4 : v < 45 ? 2 : 0);
       placards.forEach((p, k) => (p.group.visible = k < up));
       place(v);
     },
@@ -93,8 +102,28 @@ export function createCrowd(count, colorFor) {
     setPlacards(lines) {
       placards.forEach((p, k) => p.paint(lines[k] || ''));
     },
+    raiseSigns(n) {
+      signs = n;
+      this.setMood(mood);
+    },
+    // 0 to 1: how hard the crowd is cheering. Eases in and out; the signs bob with their holders.
+    setCheer(v) {
+      cheerGoal = v;
+    },
     update(dt) {
       crowd.update(dt);
+      cheer += (cheerGoal - cheer) * Math.min(1, dt * (cheerGoal > cheer ? 6 : 1.5));
+      if (cheer < 0.005 && cheerGoal === 0) {
+        if (cheer) {
+          cheer = 0;
+          place(mood);
+          placards.forEach((p) => (p.group.position.y = 1.1));
+        }
+        return;
+      }
+      beat += dt;
+      place(mood);
+      PLACARD_SPOTS.forEach(({ i }, k) => (placards[k].group.position.y = 1.1 + hop(i) * 1.6 + cheer * 0.12));
     },
   };
 }

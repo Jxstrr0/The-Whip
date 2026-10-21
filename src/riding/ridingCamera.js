@@ -7,6 +7,8 @@ const DEG = Math.PI / 180;
 export const RIDING_SHOTS = {
   desk: { pos: [0.6, 1.5, -2.15], look: [0.05, 1.1, -0.1], drop: 0.78 },
   townHall: { pos: [0.3, 2.0, 3.0], look: [0, 1.35, 8.0], drop: 1.8 },
+  // Election night: a step back into the doorway and a touch lower, so the bunting over the street is in.
+  electionNight: { pos: [0.3, 1.7, 2.45], look: [0, 1.75, 8.0], drop: 1.6 },
 };
 
 export function createRidingCamera(camera) {
