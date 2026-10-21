@@ -246,7 +246,7 @@ The first step of `ART-PASS.md`. Nothing in the rooms was redesigned yet; this i
 **Checks**
 
 - Guided week played through the real buttons in a headless phone browser: no console errors. `tests.html`: 33 of 33.
-- Chamber draw calls: about 18 (budget 60). Office, caucus and riding: under 20 each (budget 40). `window.whip.renderer.info` (already there in `?debug=1`) gives the exact numbers for later steps.
+- Chamber draw calls: 11 at rest (budget 60; a division adds the seat lamps and icons). Office, caucus and riding: under 20 each (budget 40). `window.whip.renderer.info` (already there in `?debug=1`) gives the exact numbers for later steps.
 - Still for you: the frame rate on your phone with `?debug=1`. The headless browser can't measure it.
 
 **Things to know**
