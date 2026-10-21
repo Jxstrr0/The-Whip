@@ -372,5 +372,55 @@
     "crossFloorStanding": -15,
     "crossFloorRapport": -40,
     "retireFromAct": 2
+  },
+  "media": {
+    "pollSwing": {
+      "confidenceLost": -2.5,
+      "confidenceLostHandover": -2.0,
+      "confidenceSurvived": 0.6,
+      "billDefeated": -1.2,
+      "rebellion": -0.8,
+      "closeVote": -0.3,
+      "billPassed": 0.3
+    },
+    "playerStanding": {
+      "playerRebelled": 3,
+      "playerToedLine": -3
+    },
+    "routineOdds": 0.15,
+    "scandalLeak": 12,
+    "scandalDecay": 1
+  },
+  "confidence": {
+    "agreementOdds": 0.35,
+    "agreementWeeks": 60,
+    "breakOdds": 0.03,
+    "breakAppetite": 5,
+    "handoverWeeks": 26,
+    "pressureConfidenceLost": 25,
+    "pressureRebellion": 3,
+    "pressurePlayerRebel": 6,
+    "pressureDecay": 2,
+    "pressureReplaced": 100
+  },
+  "election": {
+    "swingWeight": 1.1,
+    "standingWeight": 0.45,
+    "scandalWeight": 0.35,
+    "noiseSd": 6,
+    "retireAge": 64,
+    "retireOdds": 0.3,
+    "newMarginMean": 9,
+    "newMarginSd": 6,
+    "campaign": {
+      "canvassStanding": 8,
+      "tourStanding": -3,
+      "tourTrust": 10,
+      "tourSupport": 8,
+      "restStanding": 0
+    },
+    "nominationChallengeAt": 60,
+    "yearsPerParliament": 4,
+    "pollNoiseSd": 2.5
   }
 }

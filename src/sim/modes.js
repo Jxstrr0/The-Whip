@@ -12,6 +12,9 @@ import './lifeEvents.js';
 import './pmb.js';
 import './ranks.js';
 import './record.js';
+import './media.js';
+import './confidence.js';
+import './election.js';
 
 export const SAVE_VERSION = 1;
 

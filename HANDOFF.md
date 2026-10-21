@@ -523,9 +523,9 @@ Build one stage per session, in order. A stage is done only when every check und
 
 **Stage 8: Confidence, consequences and elections.** Write `confidence.js`, `media.js` and `election.js`. Add confidence votes, confidence-and-supply agreements, a government falling, headlines, scandal scores, the pressure meter, fixed-date elections, reseating, new cohorts and ledger carryover.
 
-- [ ] A minority government can fall on a lost confidence vote and trigger an election
-- [ ] A full four-year Parliament and its election play through without errors, and the player's riding can be lost
-- [ ] Party blocks, roles and cohorts update after an election; the ledger carries over
+- [x] A minority government can fall on a lost confidence vote and trigger an election
+- [x] A full four-year Parliament and its election play through without errors, and the player's riding can be lost
+- [x] Party blocks, roles and cohorts update after an election; the ledger carries over
 
 **Stage 9: Modes and polish.** Write `modes.js` (scenarios, shared seeds, daily seed), `save.js` with slots and export, a guided first-week tutorial that is Act 1's first week, audio (chamber murmur, division bells, Speaker's gavel, office and riding ambience, caucus room murmur), a settings menu with a color-blind option, and a performance pass across all four rooms.
 

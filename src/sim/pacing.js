@@ -11,6 +11,10 @@ import { decayKnowledge, reveal } from './knowledge.js';
 
 // Rooms and phases that later stages hook into (office, caucus, riding). Each returns a pending stop or null.
 export const hooks = { morning: [], caucus: [], house: [], office: [], riding: [], fallout: [], weekend: [] };
+// Stage 8 hangs the early-Parliament handover here: a fallen government may be replaced without an election.
+// Registered by election.js: `canHandOver(state)` says whether a fallen government hands over to the opposition
+// instead of forcing an election; `beforeDissolve(state, rng)` performs it.
+export const dissolution = { canHandOver: null, beforeDissolve: null };
 
 const MOODS = ['cooperative', 'guarded', 'angry', 'anxious'];
 
@@ -260,6 +264,14 @@ export function next(state) {
   }
   if (flow.step === 'dissolved') return flow.pending;
   if (parliamentOver(state) && flow.step === 'morning') {
+    if (state.house.fallen && dissolution.beforeDissolve) {
+      const handover = withRng(state, (rng) => dissolution.beforeDissolve(state, rng));
+      if (handover) {
+        flow.pending = handover;
+        flow.week.stops++;
+        return handover;
+      }
+    }
     flow.step = 'dissolved';
     const why = state.house.fallen ? 'The government fell on a confidence vote.' : 'Parliament reached its fixed election date.';
     log(state, `Parliament is dissolved. ${why}`, 'confidence');
@@ -314,7 +326,8 @@ function runHooks(list, state, rng) {
 export function resolve(state, choice = null) {
   const p = state.flow.pending;
   if (!p) return null;
-  if (p.kind === 'dissolved' || p.kind === 'ending') return p;
+  if (p.kind === 'ending') return p;
+  if (p.kind === 'dissolved' && !resolvers.dissolved) return p;
   if (p.kind === 'division') {
     state.flow.choices[`${p.billId}:${p.stage}`] = choice || 'line';
   }
