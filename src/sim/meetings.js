@@ -14,9 +14,11 @@ const MOODS = ['cooperative', 'guarded', 'angry', 'anxious'];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const pad = (n) => String(n).padStart(3, '0');
 const me = (state) => state.mps[state.player.mpId];
-const whipOf = (state) => {
+// Whoever holds your party's whip, or null once that's you: the whip never calls themselves in.
+export const whipOf = (state) => {
   const p = state.parties[me(state).party];
-  return p?.chiefWhip || p?.leader;
+  const id = p?.chiefWhip || p?.leader;
+  return id === state.player.mpId ? null : id;
 };
 
 export const REASONS = {

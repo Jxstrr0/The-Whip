@@ -87,7 +87,7 @@ export function startCaucus(state, rng) {
   let revolt = null;
   if (sore.length && (state.forceRevolt || (heat >= R.revoltHeat && rng.chance(R.revoltOdds)))) {
     state.forceRevolt = false;
-    const target = state.player.act === 5 && state.player.caucusSupport < 40 ? 'whip' : 'leader';
+    const target = state.player.act === 5 && state.player.caucusSupport < R.revoltBelowSupport ? 'whip' : 'leader';
     const caucus = rest.map((id) => state.mps[id]).filter((m) => m.id !== me.id);
     const against = caucus.filter((m) => (target === 'leader' ? (m.relations[party.leader] || 0) < -10 || m.loyalty < 40 : m.rapport < 0)).length;
     const RV = data().career.revolt;

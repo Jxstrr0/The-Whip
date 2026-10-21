@@ -70,6 +70,8 @@ import * as media from './src/sim/media.js';
 import * as qp from './src/sim/questionPeriod.js';
 import * as coldOpen from './src/sim/coldOpen.js';
 import * as memoir from './src/sim/memoir.js';
+import * as goals from './src/sim/goals.js';
+import { t as uiText } from './src/ui/text.js';
 
 const sections = [];
 let current = null;
@@ -449,6 +451,54 @@ test("A riding on a card you receive is yours; one you give is theirs", () => {
   assert(meetings.cardLabel(s, 'ridingMention') === 'A mention of their riding', 'you giving a mention');
   assert(meetings.cardLabel(s, 'ridingProject', true) === 'A project for your riding', 'whip giving you a project');
   assert(meetings.cardLabel(s, 'ridingProject') === 'A project for their riding', 'you giving a project');
+  return 'ok';
+});
+
+test("Each act's aim reads its thresholds from tuning", () => {
+  const s = newGame({ seed: 'AIM-1' });
+  const C = tuning().career, R = tuning().ranks;
+  const need = (st, key) => goals.actAim(st).counters.find((c) => c.key === key)?.need;
+  assert(need(s, 'noticed') === C.noticedForAct2, 'act 1 noticed');
+  s.player.act = 3; s.player.actStart = s.date.absWeek;
+  assert(need(s, 'carried') === R.rowCarriesForAct4 && need(s, 'weeks') === R.act3MinWeeks, 'act 3');
+  s.player.act = 4; s.player.actStart = s.date.absWeek - R.act4MinWeeks;
+  assert(goals.actAim(s).waiting && need(s, 'caucus') === R.caucusSupportForChief, 'act 4 waits once its weeks are served');
+  s.player.act = 5;
+  assert(need(s, 'caucusFloor') === R.revoltBelowSupport && need(s, 'pressure') === tuning().confidence.pressureReplaced, 'act 5 limits');
+  return 'ok';
+});
+
+test('Every aim and job line has its words', () => {
+  const s = newGame({ seed: 'AIM-2' });
+  const has = (key) => key in data().strings;
+  const scenes = [['morning', {}], ['morning', { items: [{ stop: 'ownVote' }] }], ['morning', { items: [{}] }], ['office', { whipCall: true }], ['caucus', {}], ['caucus', { revolt: { target: 'whip' } }], ['caucus', { revolt: { target: 'leader' } }], ['questionPeriod'], ['riding'], ['campaign'],
+    ...[{ reason: 'ownBill' }, { chase: true }, { dilemma: true }, { confidence: true }, { line: 'whipped' }, { line: 'free' }].map((x) => ['division', { pos: 'Aye', ...x }]),
+    ...['whipCall', 'rebelRecruit', 'favorAsk', 'introduction', 'gossip', 'complaint', 'mentorAdvice', 'somethingNew'].map((x) => ['meeting', { situation: x }])];
+  for (const act of [1, 3, 5]) {
+    s.player.act = act;
+    for (const [kind, ctx] of scenes) { const j = goals.sceneJob(s, kind, ctx); assert(has(j.key), `missing ${j.key}`); assert(!/\{\w+\}/.test(uiText(j.key, j.vars)), `unfilled ${j.key}`); }
+    for (const c of goals.actAim(s).counters) assert(has('aim.c.' + c.key) && has('aim.s.' + c.key), `missing counter ${c.key}`);
+    assert(has('aim.' + act) && has('aim.how.' + act) && has('aim.short.' + act), `act ${act} words`);
+  }
+  return 'ok';
+});
+
+test('The guided first week happens once, in your first Parliament', () => {
+  const s = newGame({ seed: 'AIM-3' });
+  assert(goals.isGuidedWeek(s), 'first week of a new career');
+  s.player.record = { ...(s.player.record || {}), parliaments: 2 };
+  assert(!goals.isGuidedWeek(s), 'week one again after an election');
+  assert(!goals.isGuidedWeek(scenarioGame(scenarioList()[0].id, {})), 'scenarios start mid-story');
+  return 'ok';
+});
+
+test('The whip never calls themselves in', () => {
+  const s = newGame({ seed: 'AIM-4', act: 5 });
+  const party = s.parties[s.mps[s.player.mpId].party];
+  party.chiefWhip = s.player.mpId;
+  assert(meetings.whipOf(s) === null, 'the player as whip got a whip call from themselves');
+  party.chiefWhip = Object.values(s.mps).find((m) => m.party === s.mps[s.player.mpId].party && m.id !== s.player.mpId).id;
+  assert(meetings.whipOf(s) === party.chiefWhip, 'another whip still calls');
   return 'ok';
 });
 
