@@ -8,6 +8,8 @@ import { initFlow } from './pacing.js';
 import './tools.js';
 import './count.js';
 import './rivals.js';
+import './lifeEvents.js';
+import './pmb.js';
 
 export const SAVE_VERSION = 1;
 
