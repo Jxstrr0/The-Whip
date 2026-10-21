@@ -260,6 +260,12 @@ hooks.office.push((state, rng) => {
   if (!e && state.flow.day?.matters) e = { slots: state.player.slots, used: 0, walkIns: [], whipCall: null, met: [], called: [] };
   if (!e) return null;
   state.evening = e;
+  // The first evening at a new rank, the room itself is the news.
+  if (state.player.officeAct !== state.player.act) {
+    state.player.officeAct = state.player.act;
+    const line = data().career.office?.[String(state.player.act)];
+    if (line) log(state, line, 'career');
+  }
   return officePending(state);
 });
 
