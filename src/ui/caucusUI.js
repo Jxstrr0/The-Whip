@@ -28,6 +28,7 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
       <p class="muted">${esc(c.moodText)}</p>
       <blockquote class="line">${esc(c.opening)}</blockquote>
       <p><b>${bill ? esc(t('caucus.line', { bill: bill.title, line: lineText })) : t('caucus.noLine')}</b></p>
+      ${c.revolt ? `<h3>${t('caucus.revolt')}</h3><blockquote class="line revolt">${esc(c.revolt.text)}</blockquote>${c.revolt.choice ? `<p class="note">${esc(t('caucus.revolt' + c.revolt.choice[0].toUpperCase() + c.revolt.choice.slice(1)))}.</p>` : `<div class="choices"><button class="btn" data-revolt="back">${t('caucus.revoltBack')}</button><button class="btn" data-revolt="join">${t('caucus.revoltJoin')}</button><button class="btn" data-revolt="quiet">${t('caucus.revoltQuiet')}</button></div>`}` : ''}
       ${c.grievances.length ? `<h3>${t('caucus.grievances')}</h3><ul class="feed">${c.grievances.map((g) => `<li>${esc(g.text)}</li>`).join('')}</ul>` : ''}
       <h3>${t('caucus.actions')} <span class="slots">${'●'.repeat(c.actions)}${'○'.repeat(3 - c.actions)}</span></h3>
       ${lastNote ? `<p class="note good">${esc(lastNote)}</p>` : ''}
@@ -71,6 +72,14 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
         const r = dispatch({ type: 'caucusWhisper', mpId: b.dataset.whisper });
         lastNote = r ? `${mpName(getState().mps[b.dataset.whisper])}: ${r.text}` : null;
         open = null;
+        render(getState());
+      })
+    );
+    sheet.querySelectorAll('[data-revolt]').forEach((b) =>
+      b.addEventListener('click', () => {
+        dispatch({ type: 'caucusRevolt', choice: b.dataset.revolt });
+        if (b.dataset.revolt !== 'quiet') getRoom?.()?.focusHead(true);
+        setTimeout(() => getRoom?.()?.focusHead(false), 2500);
         render(getState());
       })
     );

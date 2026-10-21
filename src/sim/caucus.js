@@ -3,7 +3,7 @@
 import { data, tuning } from './config.js';
 import { withRng } from './rng.js';
 import { registerActions } from './actions.js';
-import { hooks, resolvers, log, isSittingWeek } from './pacing.js';
+import { hooks, resolvers, log, isSittingWeek, queueStop } from './pacing.js';
 import { revealMany, touch } from './knowledge.js';
 import { adjustRapport, addStyle } from './relationships.js';
 import { dilemmaFor } from './career.js';
@@ -11,6 +11,7 @@ import { baseScore } from './mp.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
+const fillText = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
 
 // Seat the caucus by clique around the table, leader at the head; the player moves up with rank.
 export function caucusSeating(state, partyId) {
@@ -64,6 +65,17 @@ export function startCaucus(state, rng) {
   });
   const heat = grievances.reduce((s, g) => s + g.heat, 0);
   const mood = roomMood(state, me.party, heat);
+  // A hot room can turn: a revolt against the leader, or, if you hold the whip's chair, against you.
+  const R = tuning().ranks;
+  let revolt = null;
+  if (sore.length && (state.forceRevolt || (heat >= R.revoltHeat && rng.chance(R.revoltOdds)))) {
+    state.forceRevolt = false;
+    const target = state.player.act === 5 && state.player.caucusSupport < 40 ? 'whip' : 'leader';
+    const caucus = rest.map((id) => state.mps[id]).filter((m) => m.id !== me.id);
+    const against = caucus.filter((m) => (target === 'leader' ? (m.relations[party.leader] || 0) < -10 || m.loyalty < 40 : m.rapport < 0)).length;
+    const RV = data().career.revolt;
+    revolt = { target, ringleader: sore[0][0].id, support: against, size: caucus.length, text: fill(RV[target], { ringleader: fullName(sore[0][0]) }), choice: null, resolved: false };
+  }
   const opening = bill ? fill(rng.pick(C.leaderOpenings[party.leaderPersonality] || C.leaderOpenings.controlling)) : `${leader ? fullName(leader) : 'The leader'} runs through the week's business. Nothing contentious.`;
   state.caucus = {
     week: state.date.absWeek,
@@ -75,6 +87,7 @@ export function startCaucus(state, rng) {
     moodText: rng.pick(C.roomMoods[mood]),
     head,
     seats: rest,
+    revolt,
     actions: 3,
     // Three things you could say: back the line, speak for the riding, or challenge.
     stanceOptions: ['support', 'riding', 'challenge'].map((k) => rng.pick(C.stances.filter((x) => x.kind === k)).id),
@@ -169,9 +182,60 @@ export function caucusWhisper(state, rng, mpId) {
   return { text };
 }
 
+// The revolt resolves when caucus ends: the room's numbers, plus or minus you.
+export function resolveRevolt(state, rng) {
+  const c = state.caucus;
+  const r = c?.revolt;
+  if (!r || r.resolved) return null;
+  r.resolved = true;
+  const R = tuning().ranks;
+  const p = state.player;
+  const me = state.mps[p.mpId];
+  const party = state.parties[me.party];
+  const RV = data().career.revolt;
+  const strength = r.support + (r.choice === 'join' ? R.revoltJoin : r.choice === 'back' ? R.revoltBack : 0) + rng.int(-3, 3);
+  const won = strength > r.size * 0.5;
+  const leader = party.leader ? state.mps[party.leader] : null;
+  let text;
+  if (r.target === 'leader') {
+    if (won) {
+      const successor = Object.values(state.mps).filter((m) => m.party === me.party && m.id !== party.leader && ['cabinet', 'houseLeader', 'shadowCabinet'].includes(m.caucusRole)).sort((a, b) => b.ambition - a.ambition)[0] || state.mps[r.ringleader];
+      if (leader) leader.caucusRole = 'backbencher';
+      party.leader = successor.id;
+      successor.caucusRole = 'leader';
+      party.leaderPersonality = rng.pick(data().parties.leaderPersonalities);
+      p.leaderTrust = r.choice === 'join' ? R.revoltLeaderTrustJoin : r.choice === 'back' ? R.revoltLeaderTrustBack : 30;
+      text = fillText(RV.won, { leader: leader ? fullName(leader) : 'The leader', newLeader: fullName(successor) });
+    } else {
+      if (r.choice === 'join') p.leaderTrust = clamp(p.leaderTrust + R.revoltPunish, 0, 100);
+      if (r.choice === 'back') p.leaderTrust = clamp(p.leaderTrust + 10, 0, 100);
+      adjustRapport(state, r.ringleader, r.choice === 'join' ? 10 : -5);
+      text = fillText(RV.lost, { leader: leader ? fullName(leader) : 'The leader' });
+    }
+  } else {
+    text = won ? RV.whipWon : RV.whipLost;
+    if (won) queueStop(state, { kind: 'career', event: 'revolted', important: true, needsChoice: true, text: data().career.revolted.intro, options: [{ id: 'stay', label: data().career.revolted.stay, note: data().career.revolted.stayNote, enabled: true }, { id: 'retire', label: data().career.revolted.retire, note: data().career.revolted.retireNote, enabled: true }] });
+    else p.caucusSupport = clamp(p.caucusSupport + 10, 0, 100);
+  }
+  r.won = won;
+  r.outcome = text;
+  log(state, text, 'caucus');
+  return { won, text };
+}
+
+export function caucusRevolt(state, choice) {
+  const c = state.caucus;
+  if (!c?.revolt || c.revolt.choice) return null;
+  c.revolt.choice = choice;
+  if (choice === 'join') addStyle(state, 'conscience');
+  if (choice === 'back') addStyle(state, 'loyalist');
+  return { ok: true };
+}
+
 export function endCaucus(state) {
   const c = state.caucus;
   if (!c) return;
+  if (c.revolt && !c.revolt.resolved) withRng(state, (rng) => resolveRevolt(state, rng));
   if (c.billId) {
     const b = state.bills[c.billId];
     log(state, `Caucus: the line on ${b.title} is ${c.line.line === 'whipped' ? `whipped ${c.line.position.toUpperCase()}` : 'a free vote'}.`, 'caucus');
@@ -187,7 +251,7 @@ hooks.caucus.push((state, rng) => {
   if (!c) return null;
   const me = state.mps[state.player.mpId];
   const own = c.billId && (state.player.forceDilemma === c.billId || dilemmaFor(state, state.bills[c.billId], baseScore, tuning().pacing));
-  const stop = state.date.absWeek === 0 || (own && state.player.pacing.stopFor.includes('ownVote')) || (c.mood === 'angry' && state.player.pacing.stopFor.includes('caucusFight'));
+  const stop = state.date.absWeek === 0 || !!c.revolt || (own && state.player.pacing.stopFor.includes('ownVote')) || (c.mood === 'angry' && state.player.pacing.stopFor.includes('caucusFight'));
   if (!stop || !me) {
     endCaucus(state);
     return null;
@@ -202,6 +266,7 @@ function act(state, fn) {
 }
 
 registerActions({
+  caucusRevolt: (state, a) => caucusRevolt(state, a.choice),
   caucusListen: (state) => act(state, (rng) => caucusListen(state, rng)),
   caucusSpeak: (state, a) => act(state, (rng) => caucusSpeak(state, rng, a.stance)),
   caucusWhisper: (state, a) => act(state, (rng) => caucusWhisper(state, rng, a.mpId)),

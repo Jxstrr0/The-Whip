@@ -549,6 +549,18 @@ blockquote.line {
   }
 }
 
+/* ---- The record: the last page of a career ----------------------------------------------------------- */
+
+.record-sheet .kvs {
+  margin-top: 10px;
+}
+.record-sheet .stamp.big {
+  font-size: 24px;
+}
+blockquote.line.revolt {
+  border-left-color: var(--red);
+}
+
 /* ---- The Book: the whip's working list, a full-height ledger ------------------------------------------ */
 
 .book {
