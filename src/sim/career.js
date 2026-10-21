@@ -170,6 +170,23 @@ export function setupFirstWeek(state, { week = 0, guided = true } = {}) {
 
 // ---------- acts: being noticed, the rival, the vacancy ----------
 
+// Office evenings by act. The tuning list starts at Act 1, so Act n reads entry n - 1.
+export function slotsForAct(act, fallback) {
+  return tuning().meetings.slotsByAct?.[act - 1] ?? fallback;
+}
+
+// Back on the backbench: the whip's office still knows your name, but the next contest weighs what you do
+// from here. Notice earned in the whip's office doesn't pile up into an easier climb each time you fall.
+export function startBackbench(p) {
+  p.actProgress.noticed = Math.min(p.actProgress.noticed, tuning().career.noticedForAct2);
+}
+
+// A fresh row for an assistant whip: the carries that earn Act 4 count from this stint, not an earlier one.
+export function startRow(p) {
+  p.actProgress.rowVotesCarried = 0;
+  p.rowStats = null;
+}
+
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
 const fill = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
 const whipOf = (state) => state.parties[state.mps[state.player.mpId].party]?.chiefWhip;
@@ -195,7 +212,7 @@ function graduateAct1(state) {
   p.actStart = state.date.absWeek;
   p.reputation = p.actProgress.rebellions >= C.usefulTroubleRebellions ? 'usefulTrouble' : 'reliable';
   p.rival = pickRival(state);
-  p.slots = tuning().meetings.slotsByAct?.[2] ?? p.slots;
+  p.slots = slotsForAct(2, p.slots);
   const rival = p.rival ? state.mps[p.rival] : null;
   log(state, `Act 2. The whip's office has you down as ${p.reputation === 'reliable' ? 'reliable' : 'useful trouble'}.${rival ? ` ${fullName(rival)} wants the same things you do.` : ''}`, 'career');
   const M = data().memoir;
@@ -275,7 +292,8 @@ function decideVacancy(state, rng, choice) {
     p.actStart = state.date.absWeek;
     me.caucusRole = 'assistantWhip';
     party.assistantWhips.push(me.id);
-    p.slots = tuning().meetings.slotsByAct?.[3] ?? p.slots;
+    p.slots = slotsForAct(3, p.slots);
+    startRow(p);
     if (whip) adjustRapport(state, whip, 5);
     log(state, `The chair is yours. You're an assistant whip, with a row to answer for.`, 'career');
     remember(state, 'act3', { ctx: { whip: ctx.whip, rival: ctx.rival }, people: [person(state, p.rival, data().memoir.notes.lostToYou), person(state, whip, data().memoir.notes.whip)] });

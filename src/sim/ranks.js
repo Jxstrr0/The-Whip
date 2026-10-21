@@ -9,7 +9,7 @@ import { voteOf } from './vote.js';
 import { adjustRapport, addStyle, reputation } from './relationships.js';
 import { revealMany } from './knowledge.js';
 import { buildSeats } from '../chamber/layout.js';
-import { dilemmaFor } from './career.js';
+import { dilemmaFor, slotsForAct, startRow, startBackbench } from './career.js';
 import { prediction } from './count.js';
 import { nextVote, likelyAbsentees } from './tools.js';
 import { endCareer } from './record.js';
@@ -63,7 +63,9 @@ export function assignRank(state, act, role) {
     if (party.deputyWhip === m.id) party.deputyWhip = null;
   }
   m.caucusRole = role;
-  p.slots = tuning().meetings.slotsByAct?.[act] ?? p.slots;
+  p.slots = slotsForAct(act, p.slots);
+  if (act === 2) startBackbench(p);
+  if (act === 3) startRow(p);
 }
 
 function setRank(state, act, role, stopEvent, text, why = null) {
