@@ -7,6 +7,7 @@ import { placeModel } from '../models.js';
 import { t } from '../ui/text.js';
 import { createRidingCamera } from './ridingCamera.js';
 import { createConstituent, createCrowd } from './constituents.js';
+import { wardrobe } from '../figures.js';
 import { createFigure, poseFigure } from '../office/visitor.js';
 import { drawBoard } from '../office/officeScene.js';
 
@@ -292,7 +293,7 @@ export function create(ctx) {
   scene.add(outside);
   const streetLamp = lamp(scene, { color: '#ffd9a0', intensity: 14, distance: 9, x: 3.2, y: 4.6, z: D + 2.6 });
 
-  const me = createFigure(ctx.playerColor || '#555', 'player');
+  const me = createFigure(ctx.playerColor || '#555', 'player', wardrobe(ctx.playerId || 'player', ctx.playerColor || '#555'));
   me.setHeadVisible(false);
   me.group.position.set(0, 0, -1.8);
   poseFigure(me, 'cooperative', 1);
@@ -316,7 +317,7 @@ export function create(ctx) {
       visitor = null;
       if (old) old.leave(() => old.dispose());
       if (!v) return;
-      visitor = createConstituent(scene, { role: v.role, id: v.key, path: PATH, seat: VISITOR_SEAT, facing: VISITOR_FACING });
+      visitor = createConstituent(scene, { role: v.role, id: v.key, path: PATH, seat: VISITOR_SEAT, facing: VISITOR_FACING, partyColor: ctx.playerColor || '#555' });
       visitor.setMood(v.mood || 'cooperative');
     },
     // Cut outside to face the crowd on the pavement; the glass goes so the camera can stand in the street.
