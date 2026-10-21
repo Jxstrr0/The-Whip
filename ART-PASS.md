@@ -164,7 +164,28 @@ Kelbo's call (2026-10-21): don't wait for the playtest to start stages 5–9. Or
 
 ## 7. Asset shortlist
 
-Filled in from the asset survey (CC0 models and textures, OFL fonts), with sources, licences, sizes and what each is used for. Until it's filled in, treat the procedural kit as the plan.
+From the asset survey of 2026-10-21 (everything below was downloaded and inspected through this container's proxy; sizes are measured). All CC0 unless marked OFL. Every file that ships is listed in `assets/LICENSES.md` with its source URL and licence line.
+
+**Decisions**
+
+- **Figures stay procedural** (V1). The only CC0 rigged characters reachable are Kenney's Mini Characters (painted cartoon faces, 7-joint rig, two skinned meshes each): the wrong look for this game and 240 skinned draw calls for a full House. Quaternius's packs are no longer CC0 (a custom licence since 2026-08) and their downloads were quota-blocked, so they are out regardless.
+- **Furniture from Kenney's Furniture Kit 2.0**, retinted. Its GLBs have no textures, only flat `baseColorFactor` materials named `wood`, `woodDark`, `metal`, `carpet`, `lamp`, `plant` and so on, so a loader hook maps each name to a `look.js` token (oak, leather, brass). Scale is about 0.52 of real: multiply by 1.9. Flat-shaded, 60–600 triangles each.
+- **Street from KayKit City Builder Bits** (one shared 20 KB gradient atlas; scale about 1:5, multiply by 5). Mailbox, lectern and despatch box don't exist as CC0 GLBs anywhere reachable; they're rectilinear, so the kit builds them.
+- **Textures from ambientCG**, re-encoded to 512² JPEG (quality 80) before they go in the repo; the raw 1K files are 0.1–2.4 MB each and never ship. Leather037 and Metal034 have near-flat colour maps, so only their normal/roughness maps ship and the colour comes from the material. There is no green leather on ambientCG: brown leather normals tinted `#2f5a3c`.
+- **Type: Fraunces** (OFL, variable optical size and weight, 67 KB regular + 42 KB italic). Public Sans (27 KB) is available if a sans is ever needed, but the Order Paper is one serif.
+
+**Pick list** (about 1.5 MB in total)
+
+| Use | Source | Files | Size |
+| --- | --- | --- | --- |
+| Office | Kenney Furniture Kit 2.0, `kenney.nl/assets/furniture-kit` (zip `…/440e0608a4-1677580847/kenney_furniture-kit.zip`, 4.9 MB) | desk, chairDesk, loungeChair, bookcaseClosedWide, bookcaseOpen, books, lampRoundTable, pottedPlant, coatRackStanding, computerScreen, laptop, trashcan, paneling | ~160 KB |
+| Caucus | Furniture Kit + Kenney Food Kit (`…/83086fa91c-1719418518/kenney_food-kit.zip`) + Kenney Castle Kit (`…/a395102d20-1711543616/kenney_castle-kit.zip`) | tableCross (stretched), chairCushion (instanced), kitchenCoffeeMachine; bottle-oil as a carafe, glass, cup-coffee, cup-saucer (+ 11 KB colormap); flag (+ 7.5 KB colormap) | ~90 KB |
+| Chamber | Furniture Kit | paneling tiles for the wainscot, loungeSofa / loungeSofaLong instanced as benches (retinted leather), lampWall sconces, loungeChairRelax as the Speaker's chair; despatch boxes, Mace and bar procedural | ~30 KB |
+| Street | KayKit City Builder Bits, `github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits` (fetch via `raw.githubusercontent.com/…/main/addons/kaykit_city_builder_bits/Assets/gltf/<name>.gltf` + `.bin` + `citybits_texture.png`) | streetlight, bench, car_sedan, firehydrant, trash_A, bush; Kenney Fantasy Town `lantern.glb` for an older lamp if wanted | ~125 KB |
+| Textures | ambientCG, `ambientcg.com/get?file=<ID>_1K-JPG.zip` | Wood049 (oak), Wood051 (walnut), Leather037 (normal + roughness only, tinted), Fabric033 (baize), Carpet016, Plaster001, Tiles143 (stone blocks), Metal034 (brass, maps only) | ~600 KB at 512² |
+| Fonts | Google Fonts (OFL; `raw.githubusercontent.com/google/fonts/main/ofl/fraunces/OFL.txt`) | Fraunces regular + italic woff2, latin subset (fetch the CSS with a Chrome user agent to get woff2 URLs) | 110 KB |
+
+**Gotchas recorded by the survey:** scale differs per pack (Furniture Kit 0.52×, Food Kit 2.4×, KayKit 1:5), so one scale constant per pack in the loader. Kenney's textured GLBs reference `Textures/colormap.png` by relative path and use `KHR_texture_transform` (fine in r160): keep the folder beside the GLB. Google's woff2 URLs change when a font is re-released: fetch once, commit, done. The downloaded packs are in the session scratchpad under `assets-candidates/` for the session that does V1–V6; a later session re-fetches from the URLs above.
 
 ## 8. What this pass does not do
 
