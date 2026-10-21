@@ -29,12 +29,12 @@ Decide once, then every room follows it. These are the calls; Kelbo can overturn
 - **Light.** Warm key from the windows, cool fill, warm chandeliers. Shading comes from baked vertex ambient occlusion and soft contact shadows, not real-time shadow maps. The rooms should feel like late afternoon in an old building.
 - **Figures.** Stylised and faceless, with a readable silhouette: shoulders, a neck, a head with a hair cap, a white collar wedge, a suit in the party colour, a lap when seated. Think boardroom chess pieces, not dolls. No faces: at this polygon and texture budget they fall into the uncanny valley, and expression already lives in pose and in the mood pill in the UI. Variation per MP (skin, hair, suit shade, height) comes from the id hash, so it's stable across sessions and costs nothing.
 - **Camera.** The backbench feel: in Acts 1 and 2 the chamber opens from your own seat, low, looking across the aisle. An overview is one tap away. Every other room frames the person you're dealing with in the top 40 % of a portrait screen, above the sheet.
-- **Type.** Serif for display (`Georgia, "Iowan Old Style", "Times New Roman", serif`, all system fonts), sans for body. Gold means "the thing that matters now": one primary action per sheet, the bells, the result. Everything else is neutral.
+- **The UI is "The Order Paper."** Kelbo picked this over a dark ledger and a broadcast look. Every sheet, card and menu is a piece of printed parliamentary paper laid over the dark room: cream paper, ink, thin ruled lines, letterspaced small caps for section labels, a serif throughout, rubber stamps for outcomes (CARRIED in green ink, DEFEATED in red, ABSENT in grey, each set down with a thump). The green-leather colour of the benches is the one primary action per sheet; brass is for rules and the bells; party colours are ink swatches beside names. Longlight's studio colours (Kelbo is sending them) are reserved for the brand: the menu masthead, the loading mark, the weekly review's header. Nothing on screen should look like a generic phone app panel: no grey glass, no gold-on-charcoal buttons, no native selects. The full spec is in step V3.
 - **Motion.** Small, constant and cheap: head turns, a lean to a neighbour, a camera that eases on every state change, a 250 ms fade between rooms. Nothing that needs a skeleton or a physics step.
 
 ## 3. Rules for this pass
 
-- All hard constraints in `CLAUDE.md`: no build step, Three.js `0.160.0` only, no other external resources. **Procedural first**: textures are drawn on canvases at load (`paintedTexture` in `src/kit3d.js`), geometry is built from the kit. A committed CC0 model or texture under `assets/` is allowed only where a step below says so, and the cold load stays under 10 MB. Nothing is fetched from anywhere else.
+- All hard constraints in `CLAUDE.md`: no build step, Three.js `0.160.0` only, nothing fetched at runtime from anywhere but the repo and the Three.js CDN. **Real assets are in**: Kelbo wants the four rooms to look stunning, so CC0 models (GLB), CC0 PBR textures (1K JPG) and OFL fonts (woff2) are committed under `assets/` and loaded from there with `GLTFLoader` / `TextureLoader` from `three/addons`. Rules: CC0 or OFL only, with every source and licence listed in `assets/LICENSES.md`; the cold load stays under 10 MB (budget: models 4 MB, textures 3 MB, fonts 0.4 MB); nothing from a site that needs a login; the procedural kit stays as the fallback and for anything bespoke (the Speaker's chair, the Mace, the figures). The shortlist from the asset survey lives in section 7.
 - **No real-time shadows, no post-processing passes.** `EffectComposer` costs a full-screen pass per frame on a phone. A vignette is a CSS radial gradient on `#ui`, which is free.
 - **Budgets.** Chamber under 60 draw calls, other rooms under 40. Pixel ratio stays capped at 2. Canvas textures at most 1024² and few of them. 30 FPS or better on a mid-range phone; the headless browser's FPS is meaningless (software rendering), so judge frame cost by draw calls, triangle counts and `?debug=1` on a real phone.
 - **`src/sim/` is not touched** except in V2 (the own-seat camera reads the player's `seatId` from state, which already exists) and V7 (a routine-day "someone leaves and comes back" event, which is cosmetic and must not change any sim result or the Parliament hash).
@@ -82,18 +82,24 @@ Do them in this order. Each is one session or less; split a step if it runs long
 
 **Done when:** a new game opens on your own desk with your neighbours and the aisle in view, and "Overview" shows the whole House; the bells-to-result sequence reads as one piece of theatre in a 15 s screen recording; chamber < 60 draw calls (expected ~45 with window lights); no console errors; `tests.html` green; guided week plays through.
 
-### V3 · The UI skin
+### V3 · The UI: The Order Paper
 
-**Files:** `css/style.css`, `src/ui/text.js` (nothing structural), `src/main.js` (room fade), `src/ui/menus.js`.
+**Files:** `css/style.css` (rewrite), `src/ui/*.js` (markup classes, custom controls, stamps), `src/main.js` (room fade, top bar), `src/ui/menus.js`, `assets/fonts/`, `data/strings.en.json`.
 
-1. **Type.** Serif display for sheet titles, the day heading, the bill title, the menu title; sans for everything else; `font-variant-numeric: tabular-nums` on counts. Body stays 15–16 px, titles 20–22 px.
-2. **Surfaces.** Sheets: 14 px radius, a 1 px hairline top border at 12 % white, `backdrop-filter: blur(12px)` over a 92 % panel, a 160 ms slide-up when shown. Buttons: one gold primary per sheet, the rest outlined; a pressed state that actually darkens. Lists: 1 px separators at 8 % white, no boxes inside boxes.
-3. **The top bar.** The brand in serif with the gold W; the seed/hash line stays debug-only; the Book and the view toggle as icon-plus-label chips.
-4. **Toasts** move to just under the top bar, max two lines, 4 s, never over the figure's head in any room. Stack at most two.
-5. **Room fade.** A `#fade` div over everything; `rooms.show()` fades to black in 120 ms, swaps, fades in over 250 ms. The first frame of the new room renders before the fade-in starts.
-6. **The start menu** gets the chamber behind it: the real chamber scene at the overview, orbiting at 2°/s, under a 70 % dark gradient, with the seed's Parliament seated as soon as the seed field is valid. Form controls styled to match the sheets.
+The system, so every sheet agrees:
 
-**Done when:** every sheet screenshot in portrait and landscape; body text contrast ≥ 4.5:1; every tappable thing ≥ 44 px; the room switch never shows a frame of the old room's last state over the new one; the menu feels like the game, not a settings page.
+- **Paper.** Sheets are cream (`--paper: #f3ead8`, `--paper-shade: #e6dac2` for inset panels, `--ink: #1d1a16`, `--ink-faint: rgba(29,26,22,0.16)` for rules). A faint paper grain via an inline SVG `feTurbulence` data URI at 4 % opacity (inline, so not an external resource). Square-ish corners (4 px), a 2 px top rule in bench green (`--bench: #2f5a3c`) with a 1 px brass hairline under it (`--brass: #b8923a`), and a soft shadow so the paper sits *on* the room, not in it. The sheet handle is a short ink dash.
+- **Type.** One serif family for everything (the OFL serif picked in section 7, self-hosted woff2 in regular, italic and bold; `Georgia, "Iowan Old Style", serif` as fallback). Headings 22 px, body 16 px, metadata 12.5 px in letterspaced small caps (`font-variant-caps: all-small-caps; letter-spacing: 0.08em`). Numbers `tabular-nums`. The count board's big tally uses the same serif at 40 px, not a second family.
+- **Colour roles.** Ink for text. Bench green for the single primary action per sheet (solid green, cream text). Brass for the bells line, section rules and the "needed" marker on the count bars. Party colours only as ink swatches: a 4 px vertical bar beside an MP's name, a tinted stamp on a party line. Red (`#a8322d`) only for a DEFEATED stamp and a broken promise. Longlight's brand colours on the masthead and brand mark only.
+- **Stamps.** Outcomes are rubber stamps: an inline SVG rounded rectangle with the word in caps, rotated −6°, ink at 85 % with a slightly ragged edge (`feTurbulence` displacement at low scale). CARRIED / DEFEATED / ABSENT / PAIRED / DEAL / NO DEAL / LEAVE GRANTED. They thump in: scale 1.25 → 1 over 140 ms with a 60 ms overshoot. Used on the count board result, the meeting toast, the riding case list, the weekly review.
+- **Controls.** No native look anywhere a player sees. Buttons: bench-green primary, ink-outlined secondary, both 48 px tall with a 2 px press-down. Selects are custom: a ruled field that opens a paper list sheet. Text inputs are a ruled underline with the label in small caps above. Toggles are ink checkboxes with a tick. The Book's filter chips are small paper tags.
+- **Top bar.** No panel. A small cream tag with the masthead "THE WHIP" in small caps, the Book and view-toggle as paper tags, the ☰ as an ink glyph. The seed/hash line stays debug-only.
+- **Toasts** are paper slips that slide down from under the top bar (180 ms), hold 4 s, and slide away; two lines max, never over the figure's head.
+- **Motion.** Sheets are set down: translateY(24 px) + fade over 180 ms ease-out. Lists fade their rows in with a 20 ms stagger. The bells line pulses brass at 1 Hz. Room switches fade through ink-black over 120 ms out / 250 ms in via a `#fade` div; the first frame of the new room renders before the fade-in.
+- **The menu** is a title page: the chamber at the overview behind, orbiting at 2°/s under a 70 % dark gradient; a cream title page with "THE WHIP" as a masthead, a rule, "Dominion of Caledor · House of Commons", the tagline in italic, the new-career form as ruled fields, and the Longlight mark and studio name at the foot in the brand colours.
+- **The weekly review** is laid out like a front page: a masthead with the week, two columns in landscape, the stamps for each division, the whip's view as a pull quote.
+
+**Done when:** every sheet screenshot in portrait and landscape; body text contrast ≥ 7:1 on paper; every tappable thing ≥ 44 px; no native control visible in any screenshot; the fonts load from `assets/fonts` with no FOUT longer than one frame (preload links in `index.html`); the room switch never shows a frame of the old room over the new; someone shown the menu and a sheet cold would not guess the engine or the tooling.
 
 ### V4 · The office
 
@@ -147,11 +153,19 @@ Do them in this order. Each is one session or less; split a step if it runs long
 | Decision | Default used here | Alternative |
 | --- | --- | --- |
 | Faces | None; silhouette and pose only | Painted eyes/brows on a tiny texture (risk: uncanny at this budget) |
-| Real models | None; all procedural | A few small CC0 GLB props under `assets/` (desk lamp, carafe, Mace) if the procedural ones look thin, kept under 300 KB total |
-| Serif display type | System serif stack | Keep sans everywhere |
+| Real models | CC0 GLB props and textures under `assets/` (section 7), procedural for the bespoke pieces | All procedural, if the committed assets ever push the load past 10 MB |
+| Type | One self-hosted OFL serif throughout (the Order Paper) | A system serif stack, if the font files cost more than 400 KB |
 | Chamber default view | Your own seat in Acts 1–2 | The overview, as now |
 | Time of day | Window tint follows morning / evening in state | Fixed afternoon light |
 
-## 6. What this pass does not do
+## 6. After the art pass: build through the end
+
+Kelbo's call (2026-10-21): don't wait for the playtest to start stages 5–9. Order of work from here: V0–V8 of this pass first (the four rooms and the UI are the thing people will judge first), then HANDOFF stages 5, 6, 7, 8, 9 in order, each to its own checks, each keeping the look this pass sets. New screens in stages 5–9 (the ledger, the count board's marks, the record, scenarios, settings) are designed in the Order Paper system from the start, never as a quick panel to restyle later.
+
+## 7. Asset shortlist
+
+Filled in from the asset survey (CC0 models and textures, OFL fonts), with sources, licences, sizes and what each is used for. Until it's filled in, treat the procedural kit as the plan.
+
+## 8. What this pass does not do
 
 Audio (stage 9), the colour-blind setting (stage 9, though the icon shapes here anticipate it), the tier-2 corner office, the whip's count board marks (stage 5), scenarios and the daily seed (stage 9), and any change to the sim's behaviour.

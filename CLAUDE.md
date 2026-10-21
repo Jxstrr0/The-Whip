@@ -34,4 +34,4 @@ Kelbo's words: "remember this is a flagship game, let's do this right." The Whip
 
 ## Build plan status
 
-Stages 0–4b are done and merged. Stages 5–9 wait for Kelbo's playtest feedback on the 4b slice (see the end of `PROGRESS.md`). The next piece of work is the art pass in `ART-PASS.md`: one step per PR, in order, V0 first.
+Stages 0–4b are done and merged. Kelbo's call: build through the end. Order of work: the art pass in `ART-PASS.md` first (one step per PR, in order, V0 first; the UI is "The Order Paper", see V3), then HANDOFF stages 5–9 in order. Kelbo's playtest notes, when they come, go at the end of `PROGRESS.md` and may reorder this.
