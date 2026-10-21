@@ -29,6 +29,7 @@ The game saves automatically in your browser.
 | [`DESIGN.md`](DESIGN.md) | The design doc: what the game is. Source of truth for design. |
 | [`HANDOFF.md`](HANDOFF.md) | The build handoff: constraints, specs, data contracts and the stage plan, with finished checks ticked. |
 | [`PROGRESS.md`](PROGRESS.md) | The running log of what each build session finished, decisions made, and what needs Kelbo. |
+| [`CLAUDE.md`](CLAUDE.md) | Working rules for every build session: the flagship quality bar and the hard constraints. |
 | [`tests.html`](tests.html) | Browser-run sim tests. Open it on the live site to run them. |
 
 ## Running locally
