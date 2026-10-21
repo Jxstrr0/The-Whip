@@ -652,6 +652,22 @@ test('Persuade flips a member who already half agrees', () =>
     return `${m.name.first} ${m.name.last}: ${before} → ${after}`;
   }));
 
+test('No tool, call or invitation can be spent on yourself', () =>
+  quiet(() => {
+    const { s, b, me } = whipScenario(5);
+    const time = s.player.toolTime;
+    for (const tool of ['persuade', 'leverage', 'threatenNomination', 'qpSlot', 'ridingProject']) {
+      const r = ACTIONS.useTool(s, { tool, mpId: me.id, billId: b.id, give: true });
+      assert(!r.ok && r.reason === 'self', `${tool} on yourself should be refused: ${JSON.stringify(r)}`);
+    }
+    assert(s.player.toolTime === time, 'House time spent on yourself');
+    const o = toOffice('TEST-1');
+    const used = o.evening.used;
+    assert(ACTIONS.call(o, { mpId: o.player.mpId }) == null && ACTIONS.invite(o, { mpId: o.player.mpId }) == null, 'calling or inviting yourself should be refused');
+    assert(o.evening.used === used, 'an evening slot spent on yourself');
+    return 'tools, phone calls and invitations all refuse your own name';
+  }));
+
 test('A chase during the bells puts an absent member in their seat', () =>
   quiet(() => {
     const { s, b, me } = whipScenario(3);

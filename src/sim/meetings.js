@@ -535,7 +535,7 @@ export function meetingSummary(state, mt) {
 export function phoneCall(state, rng, mpId) {
   const e = state.evening;
   const cost = tuning().meetings.phoneCallCost;
-  if (!e || e.used + cost > e.slots) return null;
+  if (!e || e.used + cost > e.slots || mpId === state.player.mpId) return null;
   e.used += cost;
   e.called.push(mpId);
   touch(state, mpId);

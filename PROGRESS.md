@@ -867,3 +867,13 @@ Kelbo sent a phone shot of the "A pair before a confidence vote" sheet. The date
 
 - Only layout, styles and the bar's wording changed. Nothing about how the game plays.
 - Checked at phone size in portrait and landscape: the morning order paper, the office, the division, the weekend paper, a career choice, the caucus, the riding and an MP card. No sheet overlaps the bar. `tests.html` shows 88 passed, 0 failed, with no console errors.
+
+## 2026-10-21 · No spending your own time on yourself
+
+Kelbo asked if we could stop the player spending time on themselves by accident. The MP card already hid every action when you opened your own card, but one hole was left. The office's **Call** button opens the book so you can choose someone, and you were in that list too. Picking yourself spent half an evening slot phoning your own number ("You phoned … They sounded …"). Picking yourself after **Invite** did nothing at all, so the tap was dead.
+
+**What changed**
+
+- **The book leaves you out when it's choosing someone.** Opened from Invite or Call, it lists everyone but you, and the count reads "119 of 119 members". Opened as the plain book, it still shows you with the "You" badge.
+- **The game refuses as well.** A phone call, an invitation or any whip's tool aimed at you is turned down before it spends anything: no evening slot, no House time, no favour. So even if a future screen offers you by mistake, nothing is lost.
+- A new test in `tests.html` tries every office tool, a call and an invitation on yourself and checks that none of them spend anything.

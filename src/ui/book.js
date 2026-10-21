@@ -44,6 +44,8 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
   function rows(state) {
     const q = ui.q.trim().toLowerCase();
     let list = Object.values(state.mps).filter((m) => {
+      // As a picker (whom to invite or call) the book leaves you out: an evening slot is never spent on yourself.
+      if (title && m.id === state.player.mpId) return false;
       const v = cardView(state, m.id);
       if (q && !`${mpName(m)} ${m.riding.name} ${m.riding.province}`.toLowerCase().includes(q)) return false;
       if (ui.party && m.party !== ui.party) return false;
@@ -68,7 +70,7 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
     if (!state) return;
     const o = options(state);
     const list = rows(state);
-    const total = Object.keys(state.mps).length;
+    const total = Object.keys(state.mps).length - (title ? 1 : 0);
     el.innerHTML = `
       <header class="book-head">
         <h2>${esc(title || t('book.title'))}</h2>
