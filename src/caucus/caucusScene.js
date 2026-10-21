@@ -150,6 +150,7 @@ export function create(ctx) {
     seats,
     read: (fn) => figures.read(fn),
     showPairs: (pairs) => figures.showPairs(pairs),
+    empty: (mpId) => figures.empty(mpId),
     focusHead: (on) => cam.focusHead(on),
     update(dt) {
       cam.update(dt);

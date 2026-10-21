@@ -1,7 +1,10 @@
-// The caucus room UI: the leader's line, grievances, and the player's three moves (listen, speak, whisper).
+// The caucus room UI: the leader's line, grievances, the player's three moves (listen, speak, whisper), and
+// from Act 5 the Chief Whip's business: free a whipped vote, or put a member out of caucus.
 import { t, esc, mpName, jobLine } from './text.js';
-import { data } from '../sim/config.js';
 import { neighbours, fillStance } from '../sim/caucus.js';
+import { canUse, canRelease, expelCandidates } from '../sim/tools.js';
+import { data, tuning } from '../sim/config.js';
+import { openPaperList } from './picker.js';
 
 export function createCaucusUI(root, { getState, dispatch, getRoom }) {
   const sheet = document.createElement('section');
@@ -9,12 +12,14 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
   root.appendChild(sheet);
   let open = null;
   let lastNote = null;
+  let expelling = null;
 
   function render(state) {
     if (state.flow.pending?.kind !== 'caucus' || !state.caucus) {
       sheet.classList.add('hidden');
       open = null;
       lastNote = null;
+      expelling = null;
       return;
     }
     const c = state.caucus;
@@ -39,8 +44,9 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
         ${open === 'speak' ? stances.map((s) => `<button class="btn sub" data-stance="${s.id}">${esc(fillStance(state, s.text))}</button>`).join('') : ''}
         <button class="btn" data-act="whisper" ${c.actions < 1 || !nb.length ? 'disabled' : ''}>${t('caucus.whisper')}</button>
         ${open === 'whisper' ? nb.map((id) => `<button class="btn sub" data-whisper="${id}">${esc(t('caucus.whisperTo', { name: mpName(state.mps[id]) }))}</button>`).join('') : ''}
-        <button class="btn primary" data-act="leave">${t('caucus.leave')}</button>
       </div>
+      ${chiefHtml(state, c, bill)}
+      <div class="choices"><button class="btn primary" data-act="leave">${t('caucus.leave')}</button></div>
       <p class="hint">${t('caucus.hint')}</p>`;
     const on = (sel, fn) => sheet.querySelector(sel)?.addEventListener('click', fn);
     on('[data-act="listen"]', () => {
@@ -85,6 +91,57 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
       })
     );
     on('[data-act="leave"]', () => dispatch({ type: 'resolve' }));
+    on('[data-chief="release"]', () => {
+      const r = dispatch({ type: 'useTool', tool: 'freeVote', billId: c.billId });
+      lastNote = r?.ok ? t('caucus.released', { bill: bill.title }) : null;
+      render(getState());
+    });
+    on('[data-chief="expel"]', () => {
+      const s = getState();
+      openPaperList({
+        title: t('caucus.expelTitle'),
+        options: expelCandidates(s).map((x) => ({
+          value: x.mpId,
+          label: mpName(s.mps[x.mpId]),
+          note: t(x.rebellions > 1 ? 'caucus.expelRebel' : x.rebellions === 1 ? 'caucus.expelRebelOne' : 'caucus.expelClean', { n: x.rebellions, loyalty: x.loyalty }),
+        })),
+        value: null,
+        onPick(o) {
+          expelling = o.value;
+          render(getState());
+        },
+      });
+    });
+    on('[data-chief="keep"]', () => {
+      expelling = null;
+      render(getState());
+    });
+    on('[data-chief="confirm"]', () => {
+      const name = mpName(getState().mps[expelling]);
+      const r = dispatch({ type: 'useTool', tool: 'expel', mpId: expelling });
+      if (r?.ok) {
+        getRoom?.()?.empty?.(expelling);
+        lastNote = t('caucus.expelled', { name });
+      }
+      expelling = null;
+      render(getState());
+    });
+  }
+
+  // From Act 5: free the week's whipped line, or put a member out of caucus (with a confirm, since it can't
+  // be undone). Each shows only when it can be used, or says why not.
+  function chiefHtml(state, c, bill) {
+    if (state.player.act < 5) return '';
+    const rows = [];
+    if (bill && canRelease(state, bill.id) && canUse(state, 'freeVote').ok) rows.push(`<div class="choices"><button class="btn" data-chief="release">${esc(t('caucus.release', { bill: bill.title }))}</button></div><p class="muted small">${t('caucus.releaseNote')}</p>`);
+    const ex = canUse(state, 'expel');
+    if (c.expelled) rows.push(`<p class="muted small">${t('caucus.expelOnce')}</p>`);
+    else if (!ex.ok && ex.reason === 'leader') rows.push(`<p class="muted small">${esc(t('caucus.expelNeedsLeader', { need: tuning().tools.expelLeaderTrust, have: Math.round(state.player.leaderTrust) }))}</p>`);
+    else if (ex.ok && expelling && state.mps[expelling]) {
+      const name = mpName(state.mps[expelling]);
+      rows.push(`<p class="note">${esc(t('caucus.expelConfirm', { name }))}</p><div class="choices"><button class="btn" data-chief="confirm">${esc(t('caucus.expelYes', { name }))}</button><button class="btn primary" data-chief="keep">${t('caucus.expelNo')}</button></div>`);
+    } else if (ex.ok) rows.push(expelCandidates(state).length ? `<div class="choices"><button class="btn" data-chief="expel">${t('caucus.expel')}</button></div>` : `<p class="muted small">${t('caucus.expelNobody')}</p>`);
+    return rows.length ? `<h3>${t('caucus.chief')}</h3>${rows.join('')}` : '';
   }
   return { render };
 }

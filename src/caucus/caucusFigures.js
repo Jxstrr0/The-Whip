@@ -70,6 +70,7 @@ export function createCaucusFigures(seats) {
   group.add(ring);
 
   const reads = new Array(n).fill(null);
+  const gone = new Set();
   const m = new THREE.Matrix4();
   const pos = new THREE.Vector3();
   const one = new THREE.Vector3(1, 1, 1);
@@ -121,7 +122,7 @@ export function createCaucusFigures(seats) {
       seats.forEach((s, i) => {
         const r = readFor(s.mpId) || {};
         crowd.dress(i, { ...base[i].look, ...wardrobe(s.mpId || 'x', r.color || '#555'), face: r.face });
-        reads[i] = r.mood && MOODS.includes(r.mood) ? r.mood : null;
+        reads[i] = !gone.has(i) && r.mood && MOODS.includes(r.mood) ? r.mood : null;
         if (r.me) {
           ring.visible = true;
           ring.position.set(s.x, 0.02, s.z);
@@ -132,7 +133,16 @@ export function createCaucusFigures(seats) {
     // Two people lean toward each other for a moment: what "keeps leaning over to" looks like.
     showPairs(pairs) {
       const idx = new Map(seats.map((s, i) => [s.mpId, i]));
-      leaning = { pairs: pairs.map(([a, b]) => [idx.get(a), idx.get(b)]).filter(([a, b]) => a != null && b != null), t: 0 };
+      leaning = { pairs: pairs.map(([a, b]) => [idx.get(a), idx.get(b)]).filter(([a, b]) => a != null && b != null && !gone.has(a) && !gone.has(b)), t: 0 };
+    },
+    // Someone has been put out of caucus: their chair is empty for the rest of the meeting.
+    empty(mpId) {
+      const i = seats.findIndex((s) => s.mpId === mpId);
+      if (i < 0) return;
+      gone.add(i);
+      reads[i] = null;
+      crowd.show(i, false);
+      crowd.commit();
     },
     update(dt, camera) {
       crowd.update(dt);
