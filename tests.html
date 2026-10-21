@@ -443,6 +443,15 @@ test('A meeting with a scripted choice sequence produces the expected ledger ent
   return `${mt.talk.turns.length} turns, ledger ${mine.id} and ${theirs.id}`;
 });
 
+test("A riding on a card you receive is yours; one you give is theirs", () => {
+  const s = newGame({ seed: 'CARDS-1' });
+  assert(meetings.cardLabel(s, 'ridingMention', true) === 'A mention of your riding', 'whip giving you a mention');
+  assert(meetings.cardLabel(s, 'ridingMention') === 'A mention of their riding', 'you giving a mention');
+  assert(meetings.cardLabel(s, 'ridingProject', true) === 'A project for your riding', 'whip giving you a project');
+  assert(meetings.cardLabel(s, 'ridingProject') === 'A project for their riding', 'you giving a project');
+  return 'ok';
+});
+
 test('Mood changes the available lines', () => {
   const lines = data().dialogueLines.lines.filter((l) => l.speaker === 'mp' && l.situation === 'introduction' && l.turn === 1);
   const byMood = Object.fromEntries(['cooperative', 'angry'].map((m) => [m, lines.filter((l) => l.mood.includes(m)).map((l) => l.id)]));
