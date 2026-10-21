@@ -74,6 +74,8 @@
   "agenda.skip": "Skip ahead",
   "agenda.skipHint": "to the next thing that matters",
   "agenda.date": "{day} {date} {month} · Week {week}, Year {year}",
+  "agenda.day": "{day} {date} {month}",
+  "agenda.week": "Week {week}",
   "agenda.constituency": "Constituency week",
   "agenda.orderPaper": "Today's order paper",
   "agenda.noVotes": "No votes today.",
