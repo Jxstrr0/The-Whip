@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { createFigure, poseFigure, stride } from '../office/visitor.js';
 import { createFigureCrowd, lookFor, wardrobe } from '../figures.js';
 import { faceOf } from '../faces.js';
-import { GEOMETRY as G } from './layout.js';
+import { GEOMETRY as G, walkerPath } from './layout.js';
 import { box, cylinder, merge, vertexMaterial } from '../kit3d.js';
 import { tuning } from '../sim/config.js';
 
@@ -42,17 +42,6 @@ export function createChamberLife({ scene, seats, figures, getState, colorOf }) 
   let timer = tuning().look.walkerEvery * 0.6;
   const away = new Map(); // seatId -> mpId, for members who are out of the chamber
   let onFeet = null; // { seatId, f, t }: the member on their feet in Question Period
-
-  function pathFor(s, out) {
-    const aisleX = (s.side === 'gov' ? -1 : 1) * (G.aisleWidth / 2 + 0.7);
-    const pts = [
-      [s.x, s.y, s.z],
-      [aisleX, 0, s.z],
-      [aisleX, 0, L - 0.9],
-      [aisleX * 0.5, 0, L + 0.8],
-    ];
-    return out ? pts : pts.slice().reverse();
-  }
 
   function makeWalker(mpId, pts, onDone) {
     const state = getState();
@@ -92,14 +81,14 @@ export function createChamberLife({ scene, seats, figures, getState, colorOf }) 
     if (!state) return;
     const candidates = seats.records.filter((s) => {
       const id = figures.mpAt(s.seatId);
-      return id && id !== state.player.mpId && s.seatId !== homeSeatId && s.seatId !== onFeet?.seatId && !away.has(s.seatId) && s.row >= 2;
+      return id && id !== state.player.mpId && s.seatId !== homeSeatId && s.seatId !== onFeet?.seatId && !away.has(s.seatId) && walkerPath(s, true);
     });
     if (!candidates.length) return;
     const s = candidates[Math.floor(Math.random() * candidates.length)];
     const mpId = figures.mpAt(s.seatId);
     away.set(s.seatId, mpId);
     figures.setPresent(s.seatId, false);
-    walker = makeWalker(mpId, pathFor(s, true), () => {
+    walker = makeWalker(mpId, walkerPath(s, true), () => {
       walker.dispose();
       walker = null;
     });
@@ -108,7 +97,7 @@ export function createChamberLife({ scene, seats, figures, getState, colorOf }) 
   function startReturn() {
     const [seatId, mpId] = [...away.entries()][Math.floor(Math.random() * away.size)];
     const s = seats.byId.get(seatId);
-    walker = makeWalker(mpId, pathFor(s, false), () => {
+    walker = makeWalker(mpId, walkerPath(s, false), () => {
       walker.dispose();
       walker = null;
       away.delete(seatId);
