@@ -6,7 +6,7 @@
 import { tuning, data } from './config.js';
 import { registerActions } from './actions.js';
 import { hooks, log, isSittingWeek } from './pacing.js';
-import { withRng } from './rng.js';
+import { withRng, createRng } from './rng.js';
 import { baseScore, scoreToVote } from './mp.js';
 import { adjustRapport, addStyle } from './relationships.js';
 import { isKnown, reveal, touch } from './knowledge.js';
@@ -121,34 +121,127 @@ function persuade(state, rng, { mpId, billId, side }) {
   return { ok: true, moved, open, note };
 }
 
-function chase(state, rng, { mpId, billId }) {
-  const T = tuning().tools;
-  const m = state.mps[mpId];
-  const bill = state.bills[billId];
-  const where = weightedPick(rng, T.chaseWhere);
-  const found = rng.next() < T.chaseOdds[where];
-  if (found) {
-    state.chased ||= {};
-    state.chased[billId] ||= {};
-    state.chased[billId][mpId] = true;
-  }
-  reveal(state, mpId, 'attendance', 'tools');
-  const PLACE = { lobby: 'in the lobby', office: 'in their office', airport: 'on the way to the airport' };
-  const note = found ? `You found ${fullName(m)} ${PLACE[where]} and got them into the chamber for ${bill.title}.` : `${fullName(m)} was ${PLACE[where]}. You ran out of bells.`;
-  ledgerAdd(state, { from: state.player.mpId, to: mpId, kind: 'tool', what: `chase:${billId}`, note, kept: found });
-  log(state, note, 'tool');
-  return { ok: true, found, where, note };
-}
+// ---------- the bells ----------
+// When the bells ring on a whipped vote of ours (from act 3), the whip's office knows who isn't in the
+// building and roughly where they are. That list comes from a hash of the seed, the bill and the stage, never
+// the game's RNG, and it *is* the attendance for our side on this division: everyone else of ours is here.
+// Staff runners fetch members against the bells clock; a trip that can't beat the doors can't be started.
 
-function weightedPick(rng, table) {
+const PLACES = ['lobby', 'office', 'airport'];
+
+function pickWeighted(r, table) {
   const entries = Object.entries(table);
-  let r = rng.next() * entries.reduce((a, [, w]) => a + w, 0);
+  let x = r * entries.reduce((a, [, w]) => a + w, 0);
   for (const [k, w] of entries) {
-    r -= w;
-    if (r <= 0) return k;
+    x -= w;
+    if (x <= 0) return k;
   }
   return entries[entries.length - 1][0];
 }
+
+// How many staff the player can send at once, by rank.
+export function runners(state) {
+  const list = tuning().tools.chase.runnersByAct;
+  return list[Math.min(state.player.act, list.length - 1)] || 0;
+}
+
+// Who of ours is away for this division, and where. Members past the map's limit are away but unaccounted for.
+export function bellsAway(state, bill, stage) {
+  const T = tuning().tools.chase;
+  const V = tuning().vote;
+  const party = me(state).party;
+  const paired = new Set(state.pairs.filter((p) => !p.broken && (!p.bill || p.bill === bill.id)).flatMap((p) => [p.a, p.b]));
+  const h = createRng(`${state.seed}:${bill.id}:${stage}:bells`);
+  const spots = data().hill.places;
+  const away = {};
+  let shown = 0;
+  const caucus = Object.values(state.mps)
+    .filter((m) => m.party === party && m.id !== state.player.mpId && m.caucusRole !== 'speaker')
+    .sort((a, b) => (a.id < b.id ? -1 : 1));
+  for (const m of caucus) {
+    // Draw every number for every member, so one member's leave can't shift where the next one is.
+    const [rAway, rBlocked, rWhere, rLeave, rTrip, rSpot] = [h.next(), h.next(), h.next(), h.next(), h.next(), h.next()];
+    if (paired.has(m.id)) continue;
+    const leave = state.leaves?.[bill.id]?.[m.id];
+    let attend = m.attendance;
+    if (bill.lines[party] === 'whipped') attend += V.attendanceWhippedBoost;
+    if (bill.confidence) attend += V.attendanceConfidenceBoost;
+    if (bill.scheduled) attend += V.attendanceScheduledBoost;
+    const isAway = leave === 'granted' || rAway * 100 >= attend || (leave === 'blocked' && rBlocked < tuning().tools.blockedNoShow);
+    if (!isAway) continue;
+    if (shown >= T.shown) {
+      away[m.id] = { where: null };
+      continue;
+    }
+    shown++;
+    const where = leave === 'granted' && rLeave < T.leaveAirport ? 'airport' : pickWeighted(rWhere, Object.fromEntries(PLACES.map((k) => [k, T.places[k].weight])));
+    const P = T.places[where];
+    const trip = Math.max(1, P.trip + Math.round((rTrip * 2 - 1) * P.spread));
+    const spot = Math.floor(rSpot * spots[where].spots.length);
+    away[m.id] = { where, trip, spot };
+  }
+  return away;
+}
+
+// The bells open on a division the player will vote in. Chases are per division, so last stage's are cleared.
+export function openBells(state, bill, stage, secs) {
+  const key = `${bill.id}:${stage}`;
+  if (state.bells?.key === key) return state.bells;
+  state.bells = null;
+  if (state.player.act < TOOLS.chase.act || bill.lines[me(state).party] !== 'whipped') return null;
+  state.chased ||= {};
+  state.chased[bill.id] = {};
+  state.bells = { key, billId: bill.id, stage, party: me(state).party, secs, away: bellsAway(state, bill, stage), runs: [] };
+  return state.bells;
+}
+
+// A staffer goes for a member. `secsLeft` is the bells clock when they leave; the trip there and back has to
+// fit in it. Whether the member is where the office thought is settled now; the player sees it when the
+// staffer gets back.
+function chase(state, rng, { mpId, billId, secsLeft = null }) {
+  const T = tuning().tools.chase;
+  const bells = state.bells;
+  if (!bells || bells.billId !== billId) return { ok: false, reason: 'bells' };
+  const a = bells.away[mpId];
+  if (!a) return { ok: false, reason: 'here' };
+  if (!a.where) return { ok: false, reason: 'unknown' };
+  if (bells.runs.some((r) => r.mpId === mpId)) return { ok: false, reason: 'sent' };
+  const s = clamp(secsLeft ?? bells.secs, 0, bells.secs);
+  if (a.trip > s + 0.05) return { ok: false, reason: 'far' };
+  const out = bells.runs.filter((r) => r.back < s - 0.05).length;
+  if (out >= runners(state)) return { ok: false, reason: 'runners' };
+  const found = rng.next() < T.places[a.where].odds;
+  const line = chaseLine(state, mpId, found, rng);
+  bells.runs.push({ mpId, at: s, back: s - a.trip, found, line });
+  if (found) state.chased[billId][mpId] = true;
+  reveal(state, mpId, 'attendance', 'tools');
+  return { ok: true, found, where: a.where, trip: a.trip, back: s - a.trip, line };
+}
+
+function chaseLine(state, mpId, found, rng) {
+  const a = state.bells.away[mpId];
+  const H = data().hill;
+  const list = found ? H.found : H.missed[a.where];
+  return rng.pick(list).replace('{name}', fullName(state.mps[mpId])).replace('{spot}', H.places[a.where].spots[a.spot].text);
+}
+
+// The doors close: every run goes in the ledger, and the bells get one line in the log.
+function closeBells(state) {
+  const bells = state.bells;
+  if (!bells?.runs.length) return;
+  const bill = state.bills[bells.billId];
+  for (const r of bells.runs) ledgerAdd(state, { from: state.player.mpId, to: r.mpId, kind: 'tool', what: `chase:${bells.billId}`, note: r.line, kept: r.found });
+  const L = data().hill.log;
+  const n = bells.runs.length;
+  const k = bells.runs.filter((r) => r.found).length;
+  const name = fullName(state.mps[bells.runs[0].mpId]);
+  const tpl = n === 1 ? (k ? L.oneIn : L.oneOut) : k === n ? L.allIn : k ? L.someIn : L.noneIn;
+  log(state, tpl.replace('{name}', name).replace('{bill}', bill.title).replace('{n}', NUMBER[n] || n).replace('{k}', NUMBER[k] || k), 'tool');
+}
+const NUMBER = ['none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+
+hooks.bells.push((state, item, bill, secs) => openBells(state, bill, item.stage, secs));
+hooks.doorsClose.push((state) => closeBells(state));
 
 // Who on our side is likely to be away for a vote: leave granted, or a poor attender.
 export function likelyAbsentees(state, billId) {

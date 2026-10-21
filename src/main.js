@@ -224,7 +224,7 @@ function buildWorld() {
   });
   // A soft paper tick on every button, once sound is open.
   ui.addEventListener('click', (e) => {
-    if (e.target.closest('.btn, .switch')) audio.tap();
+    if (e.target.closest('.btn, .switch, .pip')) audio.tap();
   });
   hud = createHud(ui, {
     buttons: [

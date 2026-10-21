@@ -1,9 +1,10 @@
 // The count board: the bells and your choice during a division, then the standing count ticking up by party.
 import { t, esc, stamp, partyShort, partyColor, mpName, countLine, firstWeekHint } from './text.js';
-import { tuning } from '../sim/config.js';
+import { tuning, data } from '../sim/config.js';
 import { stageLabel, questionText } from '../sim/vote.js';
 import { prediction } from '../sim/count.js';
-import { canUse, likelyAbsentees, budget } from '../sim/tools.js';
+import { budget, runners } from '../sim/tools.js';
+import { createHillMap, hillHeader } from './hillMap.js';
 
 function feeling(v) {
   const a = Math.abs(v);
@@ -20,15 +21,17 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
   const board = document.createElement('section');
   board.className = 'count-board hidden';
   root.appendChild(board);
-  let bellTimer = null;
+  let raf = null;
+  let map = null;
   let shownResult = null;
   let shownChoice = null;
 
   function stopBells() {
-    if (bellTimer) clearInterval(bellTimer);
-    bellTimer = null;
+    if (raf) cancelAnimationFrame(raf);
+    raf = null;
   }
 
+  // The bells sheet. From act 3, on a whipped vote of ours, it carries the map of the Hill and the chase.
   function showChoice(p) {
     const state = getState();
     const bill = state.bills[p.billId];
@@ -37,27 +40,36 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
     const other = pos === 'yea' ? 'nay' : 'yea';
     const lineText = p.line === 'whipped' ? t('div.lineWhipped', { pos: t('vote.' + pos).toUpperCase() }) : t('div.lineFree');
     const d = p.dilemma;
-    let secs = p.bells;
-    // From act 3 the bells are the whip's window: the count, and the members who aren't in the building yet.
+    const total = p.bells;
     const T = tuning().tools;
-    const count = state.player.act >= T.officeFilesFromAct && p.line === 'whipped' ? countLine(prediction(state, p.billId)) : '';
-    const canChase = canUse(state, 'chase').ok;
-    const absentees = canChase ? likelyAbsentees(state, p.billId).filter((m) => !state.chased?.[p.billId]?.[m.id]).slice(0, 3) : [];
-    const b = budget(state);
-    const chase = absentees.length
-      ? `<h3>${t('tool.chaseTitle')}</h3><p class="muted budget">${esc(t('tool.budget', { min: b.time, fav: b.favors }))}</p><ul class="book-list" data-chase-list>${absentees
-          .map((m) => `<li data-row="${m.id}"><span class="bar" style="background:${partyColor(state, m)}"></span><span class="main"><b>${esc(mpName(m))}</b><small>${esc(t('tool.attendance', { n: m.attendance }))}</small></span><button class="btn" data-chase="${m.id}">${t('tool.chase')}</button></li>`)
-          .join('')}</ul><p class="note" data-chase-note></p>`
-      : '';
+    const countHtml = () => (state.player.act >= T.officeFilesFromAct && p.line === 'whipped' ? countLine(prediction(getState(), p.billId)) : '');
+    const bells = state.bells?.key === `${p.billId}:${p.stage}` ? state.bells : null;
+    const shown = bells ? Object.values(bells.away).filter((a) => a.where).length : 0;
+    const budgetLine = () => esc(t('tool.budget', { min: budget(getState()).time, fav: budget(getState()).favors }));
+    const hill = !bells
+      ? ''
+      : shown
+        ? `<section class="hill">
+            <div class="hill-head"><h3>${t('hill.title')}</h3><span data-staff>${hillHeader(bells, runners(state), runners(state))}</span></div>
+            <p class="muted hill-help">${t('hill.help')}</p>
+            <div class="hill-map" data-hill></div>
+            <p class="note hill-note" data-chase-note aria-live="polite"></p>
+            <p class="muted budget" data-budget>${budgetLine()}</p>
+          </section>`
+        : `<p class="note good">${t('hill.allHere')}</p>`;
     sheet.innerHTML = `
       <div class="sheet-handle"></div>
-      <p class="bells">🔔 ${t('div.bells')} · <span data-bells>${t('div.doorsClose', { s: secs })}</span></p>
+      <div class="bells-head">
+        <p class="bells">🔔 ${t('div.bells')} · <span data-bells>${t('div.doorsClose', { s: total })}</span></p>
+        <div class="bells-bar" aria-hidden="true"><i data-bells-bar></i></div>
+      </div>
       <h2>${esc(bill.title)}</h2>
       <p class="muted">${esc(questionText(bill, p.stage))} · ${esc(stageLabel(p.stage))}</p>
+      ${hill}
+      <div data-count>${countHtml()}</div>
       <p>${esc(bill.summary || '')}</p>
       ${bill.confidence ? `<p class="warn">${t('div.confidence')}</p>` : ''}
       ${p.reason === 'ownBill' ? `<p class="tutorial">${t('div.ownBill')}</p>` : firstWeekHint(state, 'tutorial.bells')}
-      ${count}
       <div class="kvs">
         <div class="kv"><span class="k">${t('div.line', { line: '' }).replace(': ', '')}</span><span class="v">${esc(lineText)}</span></div>
         ${d ? `<div class="kv"><span class="k">${esc(me.riding.name)}</span><span class="v">${esc(feeling(d.ridingPull))}</span></div>
@@ -67,50 +79,82 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
         <button class="btn primary" data-c="line">${t('div.choose.line', { pos: t('vote.' + pos) })}</button>
         ${p.line === 'whipped' && pos !== 'abstain' ? `<button class="btn" data-c="rebel">${t('div.choose.rebel', { pos: t('vote.' + other) })}</button>` : ''}
         <button class="btn" data-c="absent">${t('div.choose.absent')}</button>
-      </div>
-      ${chase}`;
+      </div>`;
     sheet.classList.remove('hidden');
+    sheet.scrollTop = 0;
     getRoom()?.setBells?.(true);
-    // A chase: found, and they're in their seat; not found, and the bells have run out on you.
-    sheet.querySelectorAll('[data-chase]').forEach((btn) => {
-      btn.onclick = () => {
-        const r = dispatch?.({ type: 'useTool', tool: 'chase', mpId: btn.dataset.chase, billId: p.billId });
-        const note = sheet.querySelector('[data-chase-note]');
-        if (note) {
-          note.textContent = r?.note || '';
-          note.className = `note ${r?.found ? 'good' : 'bad'}`;
-        }
-        sheet.querySelector(`[data-row="${btn.dataset.chase}"]`)?.remove();
-        if (r?.ok && !r.found) {
-          stopBells();
-          const el = sheet.querySelector('[data-bells]');
-          if (el) el.textContent = t('div.doorsClose', { s: 0 });
-          setTimeout(() => {
-            getRoom()?.setBells?.(false);
-            onChoose('line');
-          }, 1400);
-        }
-      };
-    });
+
+    const t0 = performance.now();
+    const left = () => Math.max(0, total - (performance.now() - t0) / 1000);
+    // The doors close, on the clock or because the player has voted. Runs still out were settled when they left.
+    const doors = (choice) => {
+      stopBells();
+      map?.close();
+      getRoom()?.setBells?.(false);
+      onChoose(choice);
+    };
+    const note = sheet.querySelector('[data-chase-note]');
+    const say = (text, kind = '') => {
+      if (!note) return;
+      note.textContent = text;
+      note.className = `note hill-note ${kind}`;
+    };
+    const refresh = () => {
+      const st = getState();
+      const staff = sheet.querySelector('[data-staff]');
+      if (staff && map) staff.innerHTML = hillHeader(bells, runners(st) - map.busy(), runners(st));
+      const b = sheet.querySelector('[data-budget]');
+      if (b) b.innerHTML = budgetLine();
+    };
+    map = null;
+    const host = sheet.querySelector('[data-hill]');
+    if (host) {
+      map = createHillMap(host, {
+        getState,
+        bells,
+        onSend(mpId, secsLeft) {
+          const r = dispatch?.({ type: 'useTool', tool: 'chase', mpId, billId: p.billId, secsLeft });
+          const m = getState().mps[mpId];
+          const name = `${m.name.first} ${m.name.last}`;
+          if (r?.ok) {
+            const a = bells.away[mpId];
+            say(t('hill.sent', { name, spot: data().hill.places[a.where].spots[a.spot].text, s: a.trip }));
+          } else if (r?.reason === 'runners') say(t('hill.busy'), 'bad');
+          else if (r?.reason === 'time') say(t('hill.noTime'), 'bad');
+          else if (r?.reason === 'far') say(t('hill.far', { name }), 'bad');
+          queueMicrotask(refresh);
+          return r;
+        },
+      });
+      map.onArrive((r) => {
+        say(r.line, r.found ? 'good' : 'bad');
+        const c = sheet.querySelector('[data-count]');
+        if (c) c.innerHTML = countHtml();
+        refresh();
+      });
+    }
     sheet.querySelectorAll('[data-c]').forEach((b) => {
-      b.onclick = () => {
-        stopBells();
-        getRoom()?.setBells?.(false);
-        onChoose(b.dataset.c);
-      };
+      b.onclick = () => doors(b.dataset.c);
     });
     stopBells();
     // The bells ring in real seconds. When the doors close you're in your seat, voting with your party.
-    bellTimer = setInterval(() => {
-      secs--;
-      const el = sheet.querySelector('[data-bells]');
-      if (el) el.textContent = t('div.doorsClose', { s: Math.max(0, secs) });
-      if (secs <= 0) {
-        stopBells();
-        getRoom()?.setBells?.(false);
-        onChoose('line');
+    const label = sheet.querySelector('[data-bells]');
+    const bar = sheet.querySelector('[data-bells-bar]');
+    let lastShown = total;
+    const tick = () => {
+      const l = left();
+      const s = Math.ceil(l);
+      if (s !== lastShown) {
+        lastShown = s;
+        label.textContent = t('div.doorsClose', { s });
+        sheet.classList.toggle('bells-late', s <= 5);
       }
-    }, 1000);
+      bar.style.transform = `scaleX(${(l / total).toFixed(4)})`;
+      map?.frame(l, total);
+      if (l <= 0) return doors('line');
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
   }
 
   function partyRows(state, result, counts) {
