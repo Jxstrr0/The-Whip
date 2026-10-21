@@ -46,6 +46,9 @@ import { exportSave, importSave } from './src/save.js';
 import * as tools from './src/sim/tools.js';
 import * as count from './src/sim/count.js';
 import * as rivals from './src/sim/rivals.js';
+import * as career from './src/sim/career.js';
+import * as pmb from './src/sim/pmb.js';
+import * as lifeEvents from './src/sim/lifeEvents.js';
 
 const sections = [];
 let current = null;
@@ -759,6 +762,178 @@ test('A free vote releases the caucus; expulsion makes an independent and reseat
   assert(r.ok && m.party === 'ind' && s.parties[me.party].seats === seatsBefore - 1, 'expel: ' + JSON.stringify(r));
   assert(m.seatId && s.seats[m.seatId]?.mpId === m.id, 'expelled member should still have a seat');
   return `${m.name.first} ${m.name.last} now sits as an independent; ${me.party} down to ${s.parties[me.party].seats}`;
+});
+
+
+// ---------- Stage 6: the career, Acts 1 and 2, and the riding ----------
+section('Stage 6 · The career, Acts 1 and 2, and the riding');
+
+const runHooks6 = (list, s, rng) => { for (const fn of list) { const p = fn(s, rng); if (p) return p; } return null; };
+
+test('A new player starts in Act 1 in any party with a mentor, a cohort and a real dilemma vote', () => {
+  const out = [];
+  for (const party of ['p1', 'p2', 'p3', 'p4']) {
+    const s = newGame({ seed: 'TEST-1', party, guided: true });
+    const me = s.mps[s.player.mpId];
+    assert(s.player.act === 1 && me.party === party, 'act 1 in ' + party);
+    assert(s.player.mentor && s.mps[s.player.mentor].party === party, 'mentor in own party');
+    // Your cohort is everyone elected with you, across the House; a small party may have no other rookie.
+    const cohort = Object.values(s.mps).filter((m) => m.cohort === me.cohort && m.id !== me.id);
+    assert(cohort.length >= 1, 'a cohort');
+    const b = s.bills[s.player.forceDilemma];
+    assert(b && b.lines[party] === 'whipped', 'a whipped dilemma bill');
+    assert(career.pickRival(s), 'a rival can be picked from the cohort');
+    out.push(`${party}: mentor ${s.mps[s.player.mentor].name.last}, ${cohort.length} cohort-mates, rival ${s.mps[career.pickRival(s)].name.last}`);
+  }
+  return out.join(' · ');
+});
+
+test('Rebelling and toeing the line both change the whip\'s file, riding standing and standing with the whip', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2', guided: true });
+  const b = s.bills[s.player.forceDilemma];
+  const me = s.mps[s.player.mpId];
+  const whip = s.parties[me.party].chiefWhip;
+  const d = career.dilemmaFor(s, b, (st, m, bl) => intentions(st, bl, { normal: () => 0, next: () => 0 })[m.id] ? { parts: intentions(st, bl, { normal: () => 0, next: () => 0 })[m.id].parts } : { parts: {} }, tuning().pacing);
+  assert(d, 'the first week is a dilemma');
+  const T = tuning().player;
+  const r0 = s.mps[whip].rapport;
+  const s0 = s.player.ridingStanding;
+  career.applyPlayerVote(s, b, 'rebel', d, T);
+  const rebelFile = s.player.whipFile.length;
+  const rebelWhip = s.mps[whip].rapport - r0;
+  const rebelRiding = s.player.ridingStanding - s0;
+  const s2 = newGame({ seed: 'TEST-1', party: 'p2', guided: true });
+  const b2 = s2.bills[s2.player.forceDilemma];
+  const w2 = s2.parties[s2.mps[s2.player.mpId].party].chiefWhip;
+  const d2 = { ...d };
+  const r1 = s2.mps[w2].rapport;
+  const t0 = s2.player.ridingStanding;
+  career.applyPlayerVote(s2, b2, 'line', d2, T);
+  const lineWhip = s2.mps[w2].rapport - r1;
+  const lineRiding = s2.player.ridingStanding - t0;
+  assert(rebelFile === 1 && s2.player.whipFile.length === 0, 'only the rebel gets a file');
+  assert(rebelWhip < 0 && lineWhip > 0, `whip rapport: rebel ${rebelWhip}, line ${lineWhip}`);
+  assert(rebelRiding > lineRiding, `riding: rebel ${rebelRiding}, line ${lineRiding}`);
+  return `rebel: file 1, whip ${rebelWhip}, riding ${rebelRiding > 0 ? '+' : ''}${rebelRiding} · line: file 0, whip +${lineWhip}, riding ${lineRiding}`;
+});
+
+test('Friday leave must be granted while the House sits; a cross whip keeps you in Ottawa', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2' });
+  s.date.absWeek = 3;
+  s.date.dayOfWeek = tuning().calendar.ridingDay;
+  const whip = s.parties['p2'].chiefWhip;
+  s.mps[whip].rapport = -60;
+  s.player.leaveGranted = false;
+  const refused = runHooks6(pacing.hooks.riding, s, createRng('leave'));
+  const kept = s.log.some((l) => /wants you in Ottawa/.test(l.text));
+  assert(!refused && kept, 'should be refused leave');
+  s.player.leaveGranted = true;
+  s.player.lastRidingWeek = -99;
+  const went = runHooks6(pacing.hooks.riding, s, createRng('leave'));
+  assert(went?.kind === 'riding', 'with leave you go home');
+  return 'refused at rapport -60; granted leave opens the riding';
+});
+
+test('A private member\'s bill can be drawn, chosen, asked for across the aisle, questioned by the whip, and voted on', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2', act: 2 });
+  const rng = createRng('pmb');
+  // Reach a sitting Monday so the bill can be scheduled against the calendar.
+  for (let i = 0; i < 200 && !(pacing.isSittingWeek(s) && s.date.dayOfWeek === 1 && s.date.absWeek >= 1); i++) { const p = pacing.next(s); if (p) pacing.resolve(s, p.kind === 'division' ? 'line' : null); }
+  const draw = pmb.drawLottery(s, rng);
+  assert(draw.event === 'lottery' && draw.options.length === 3, 'three bills to choose from');
+  const bill = pmb.chooseBill(s, rng, draw.options[0].id);
+  assert(bill.sponsor === s.player.mpId && bill.status === 'active' && bill.nextVote != null, 'the bill is the player\'s and scheduled');
+  const seen = [];
+  let asked = 0;
+  for (let i = 0; i < 6000; i++) {
+    const p = pacing.next(s);
+    if (!p) continue;
+    if (p.kind === 'career') {
+      seen.push(p.event);
+      if (p.event === 'crossAisle' && asked < 2 && p.options[0].id !== 'done') { asked++; pacing.resolve(s, p.options[0].id); continue; }
+      pacing.resolve(s, p.event === 'crossAisle' ? 'done' : p.event === 'whipQuestion' ? 'explain' : null);
+      continue;
+    }
+    if (p.kind === 'division') { pacing.resolve(s, p.reason === 'ownBill' ? 'yea' : 'line'); continue; }
+    if (p.kind === 'dissolved') break;
+    pacing.resolve(s, null);
+    if (s.player.pmb?.settled) break;
+  }
+  assert(seen.includes('crossAisle'), 'the cross-aisle asks: ' + seen.join(','));
+  assert(seen.includes('whipQuestion'), 'the whip asks why');
+  assert(s.player.pmb.settled, 'the bill came to a vote');
+  const d = Object.values(s.divisions).find((x) => x.billId === bill.id) || null;
+  const line = s.log.find((l) => /passed second reading|was defeated/.test(l.text));
+  assert(line, 'a result was logged');
+  return `${bill.title}: asked ${asked} across the aisle, whip questioned; ${line.text}${d ? ` (${d.yeas.length}–${d.nays.length})` : ''}`;
+});
+
+test('Act 1 graduates to Act 2 by being noticed, with a reputation and a rival', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2' });
+  s.date.absWeek = tuning().career.act1MinWeeks;
+  s.player.actProgress.noticed = tuning().career.noticedForAct2;
+  const p = runHooks6(pacing.hooks.weekend, s, createRng('g'));
+  assert(p?.event === 'act2' && s.player.act === 2 && s.player.reputation === 'reliable' && s.player.rival, 'act 2 as reliable');
+  const s2 = newGame({ seed: 'TEST-1', party: 'p2' });
+  s2.date.absWeek = tuning().career.act1MinWeeks;
+  s2.player.actProgress.noticed = tuning().career.noticedForAct2;
+  s2.player.actProgress.rebellions = tuning().career.usefulTroubleRebellions;
+  runHooks6(pacing.hooks.weekend, s2, createRng('g'));
+  assert(s2.player.reputation === 'usefulTrouble', 'rebels graduate as useful trouble');
+  const s3 = newGame({ seed: 'TEST-1', party: 'p2' });
+  s3.date.absWeek = 30;
+  s3.player.actProgress.noticed = 1;
+  runHooks6(pacing.hooks.weekend, s3, createRng('g'));
+  assert(s3.player.act === 1, 'nobody noticed: still act 1 at week 30');
+  return `reliable vs useful trouble; rival ${s.mps[s.player.rival].name.last}; the unnoticed drift`;
+});
+
+test('Act 2 ends with a vacancy contest against the rival: win it and you are an assistant whip, lose it and you choose what next', () => {
+  const setup = (seed) => {
+    const s = newGame({ seed, party: 'p2', act: 2 });
+    s.player.actStart = 0;
+    s.date.absWeek = tuning().career.act2MinWeeks + 1;
+    s.player.vacancyDue = s.date.absWeek;
+    s.player.rival = career.pickRival(s);
+    return s;
+  };
+  const w = setup('TEST-1');
+  w.mps[w.parties.p2.chiefWhip].rapport = 100;
+  w.player.actProgress.noticed = 40;
+  w.mps[w.player.rival].loyalty = 0;
+  w.mps[w.player.rival].ambition = 0;
+  const v = runHooks6(pacing.hooks.weekend, w, createRng('v'));
+  assert(v?.event === 'vacancy' && v.options.length === 3, 'a vacancy opens');
+  w.flow.pending = v;
+  pacing.resolve(w, 'askMentor');
+  const after = pacing.next(w);
+  assert(after?.event === 'act3' && w.player.act === 3 && w.mps[w.player.mpId].caucusRole === 'assistantWhip' && w.parties.p2.assistantWhips.includes(w.player.mpId), 'won the chair');
+  const l = setup('TEST-1');
+  l.mps[l.parties.p2.chiefWhip].rapport = -80;
+  l.player.actProgress.rebellions = 6;
+  l.mps[l.player.rival].loyalty = 100;
+  l.mps[l.player.rival].ambition = 100;
+  const v2 = runHooks6(pacing.hooks.weekend, l, createRng('v'));
+  l.flow.pending = v2;
+  pacing.resolve(l, 'letItRun');
+  const lost = pacing.next(l);
+  assert(lost?.event === 'lost' && l.player.act === 2 && l.mps[l.player.rival].caucusRole === 'assistantWhip', 'the rival got it');
+  pacing.resolve(l, 'committeeChair');
+  assert(l.mps[l.player.mpId].caucusRole === 'committeeChair' && l.player.vacancyDue > l.date.absWeek, 'took the chair and waits for the next vacancy');
+  return `won ${after.score[0]} to ${after.score[1]} as assistant whip; lost ${lost.score[0]} to ${lost.score[1]}, took the committee chair`;
+});
+
+test('A life event asks you to show up for someone, and showing up is remembered', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2' });
+  const me = s.mps[s.player.mpId];
+  const m = Object.values(s.mps).find((x) => x.party === me.party && x.id !== me.id);
+  const e = lifeEvents.newLifeEvent(s, createRng('life'), m);
+  assert(e && m.lifeEvents.includes(e) && e.text.includes(m.name.first), 'event created with text');
+  const r0 = m.rapport;
+  s.flow.pending = { kind: 'career', event: 'lifeEvent', mpId: m.id, eventId: e.id, text: e.text, options: [] };
+  pacing.resolve(s, 'showUp');
+  assert(e.resolvedBy === me.id && m.rapport > r0 && (m.relations[me.id] || 0) > 0, 'showing up resolves it and builds the bond');
+  return `${m.name.first} ${m.name.last}: ${e.kind}; rapport ${r0} → ${m.rapport}`;
 });
 
 async function run() {

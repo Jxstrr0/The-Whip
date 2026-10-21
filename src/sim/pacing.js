@@ -15,7 +15,7 @@ export const hooks = { morning: [], caucus: [], house: [], office: [], riding: [
 const MOODS = ['cooperative', 'guarded', 'angry', 'anxious'];
 
 export function initFlow(state) {
-  state.flow = { step: 'morning', pending: null, queue: [], day: null, week: { log: [], stops: 0, start: snapshot(state) }, choices: {} };
+  state.flow = { step: 'morning', pending: null, queue: [], queued: [], day: null, week: { log: [], stops: 0, start: snapshot(state) }, choices: {} };
   state.divisions ||= {};
   return state.flow;
 }
@@ -25,6 +25,12 @@ function snapshot(state) {
   const me = state.mps[p.mpId];
   const whip = state.parties[me.party]?.chiefWhip;
   return { ridingStanding: p.ridingStanding, whipRapport: whip ? state.mps[whip].rapport : 0, rebellions: p.actProgress.rebellions, noticed: p.actProgress.noticed, votes: 0 };
+}
+
+// A stop raised by a hook or a resolver (a career moment, a life event): it's shown before the day goes on.
+export function queueStop(state, p) {
+  if (!p) return;
+  (state.flow.queued ||= []).push(p);
 }
 
 export function log(state, text, kind = 'info') {
@@ -52,6 +58,7 @@ function stopForItem(state, item) {
   const bill = state.bills[item.billId];
   const stopFor = state.player.pacing.stopFor;
   const dilemma = dilemmaFor(state, bill, baseScore, tuning().pacing);
+  if (bill.sponsor === state.player.mpId) return { reason: 'ownBill', dilemma: null };
   if (dilemma && stopFor.includes('ownVote')) return { reason: 'ownVote', dilemma };
   if (bill.confidence && stopFor.includes('ownVote')) return { reason: 'confidence', dilemma: null };
   return null;
@@ -74,7 +81,7 @@ function startDay(state, rng) {
   const stops = items.map((it) => stopForItem(state, it));
   state.flow.queue = items.map((it, i) => ({ ...it, stop: stops[i] }));
   state.flow.day = { matters: stops.some(Boolean) || !!state.flow.forceWatch, results: [] };
-  for (const fn of hooks.morning) fn(state, rng);
+  for (const fn of hooks.morning) queueStop(state, fn(state, rng));
   state.orderPaper = items.map((it) => it.billId);
   const note = state.date.absWeek === 0 ? `tutorial.d${d.dayOfWeek}` : null;
   if (state.flow.day.matters) return { kind: 'morning', note, items: state.flow.queue.map(({ billId, stage, stop }) => ({ billId, stage, stop: stop?.reason || null })) };
@@ -187,7 +194,7 @@ function houseStep(state, rng) {
 const keyOf = (item) => `${item.billId}:${item.stage}`;
 
 function endDay(state, rng) {
-  for (const fn of hooks.fallout) fn(state, rng);
+  for (const fn of hooks.fallout) queueStop(state, fn(state, rng));
   const d = state.date;
   if (d.dayOfWeek >= 5) {
     state.flow.step = 'weekend';
@@ -206,7 +213,7 @@ function weekend(state, rng) {
   p.ridingStanding = Math.round(p.ridingStanding + ((p.ridingBase ?? 55) - p.ridingStanding) * P.ridingRegression);
   // Polls drift; nobody knows why.
   for (const id of Object.keys(state.polling)) state.polling[id] = Math.max(0.5, Math.round((state.polling[id] + rng.normal(0, P.pollDriftSd)) * 10) / 10);
-  for (const fn of hooks.weekend) fn(state, rng);
+  for (const fn of hooks.weekend) queueStop(state, fn(state, rng));
   const w = state.flow.week;
   const summary = weekSummary(state);
   const pending = w.stops > 0 ? { kind: 'weekSummary', important: false, summary } : null;
@@ -242,6 +249,11 @@ export function weekSummary(state) {
 export function next(state) {
   const flow = state.flow;
   if (flow.pending) return flow.pending;
+  if (flow.queued?.length) {
+    flow.pending = flow.queued.shift();
+    flow.week.stops++;
+    return flow.pending;
+  }
   if (flow.step === 'dissolved') return flow.pending;
   if (parliamentOver(state) && flow.step === 'morning') {
     flow.step = 'dissolved';

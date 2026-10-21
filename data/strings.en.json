@@ -248,5 +248,19 @@
   "ledger.broken": "Broken",
   "ledger.honoured": "Honoured",
   "ledger.reneged": "Reneged",
-  "menu.ledger": "The ledger"
+  "menu.ledger": "The ledger",
+  "career.act": "Act {n}",
+  "career.act2Title": "Act 2 · A name",
+  "career.act3Title": "Act 3 · Assistant Whip",
+  "career.vacancyTitle": "A vacancy in the whip's office",
+  "career.lostTitle": "The chair went to {rival}",
+  "career.lotteryTitle": "The private members' lottery",
+  "career.crossAisleTitle": "Across the aisle",
+  "career.whipQuestionTitle": "A word from the whip",
+  "career.lifeEventTitle": "Something's happened",
+  "career.continue": "Continue",
+  "career.rival": "Your rival",
+  "week.act": "Act {n} · the whip's file has {n2} entries · noticed {noticed}",
+  "div.ownBill": "This is your own bill. Your party has a free vote; you'll need the other side.",
+  "career.passedOver": "Passed over"
 }

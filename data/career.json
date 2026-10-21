@@ -1,0 +1,64 @@
+{
+  "act2": {
+    "reliable": "The whip's office has you down as reliable. Nobody says so, but the lines reach you a day earlier now, you get a question in the House, and your mentor stops introducing you as 'the new one'. You have a name. Act 2 is about making it stick.",
+    "usefulTrouble": "The whip's office has you down as trouble, the useful kind. You've voted against the line and lived, and people have noticed who stands up to the office. Your mentor says it's a reputation you can spend once. You have a name. Act 2 is about making it stick."
+  },
+  "rival": "{rival} came in with you, wants what you want, and has been counting the same vacancies. The whip's office has one assistant whip's chair to fill eventually. Only one of you gets it.",
+  "vacancy": {
+    "open": "{outgoing} is leaving the whip's office. There's a chair at the table and two names on the whip's desk: yours and {rival}'s. {whip} decides by the weekend. Your mentor and your clique will be asked.",
+    "askMentor": "Ask your mentor to speak for you",
+    "askMentorNote": "They'll spend some of what they have with the whip on you. They'll expect it back.",
+    "askClique": "Ask your clique to make the case",
+    "askCliqueNote": "The clique weighs in as a bloc. It costs you something with each of them.",
+    "letItRun": "Let the record speak",
+    "letItRunNote": "No favours called in. The whip reads the file and decides.",
+    "won": "{whip} calls you in and keeps it short: the chair is yours. You answer for a row of fifteen now, and {rival} will remember that it wasn't them.",
+    "lost": "{whip} calls you in and keeps it short: it's {rival}'s. 'Next time,' they say, which is what they say. You can wait for the next vacancy, find a clique that will push harder for you, or take the committee chair the office is offering instead.",
+    "wait": "Wait for the next vacancy",
+    "waitNote": "Keep your head down and your record clean. There will be another.",
+    "changeClique": "Change cliques",
+    "changeCliqueNote": "Join the caucus that likes you most. They'll push for you next time, and your old crowd will notice.",
+    "committeeChair": "Take the committee chair",
+    "committeeChairNote": "A title, a staff and a say in what gets studied. The whip's office keeps your name on the list."
+  },
+  "act3": "You have a row. Fifteen members, some of whom you drank with as rookies, and a deputy whip who grades you on whether they turn up. Act 3 is about delivering people you don't outrank.",
+  "lottery": {
+    "intro": "The Clerk draws the private members' lottery and your name comes up. You get one bill of your own this Parliament. It needs a majority, which means votes from across the aisle, and the whip will want to know why you're talking to them.",
+    "pick": "Choose your bill"
+  },
+  "crossAisle": {
+    "intro": "{bill} comes to a vote next week. Your own side will mostly let it through, but it needs opposition votes to pass. These three might be persuaded. You have time to ask {n} of them.",
+    "ask": "Ask {name}",
+    "done": "That's enough asking"
+  },
+  "whipQuestion": {
+    "intro": "{whip} stops you in the lobby. 'I hear you've been across the aisle about your bill. Twice.' They wait.",
+    "explain": "Explain yourself",
+    "explainNote": "It's your bill and it needs the votes. The whip won't like it, but they'll understand it.",
+    "dropIt": "Drop it",
+    "dropItNote": "Withdraw the asks. The whip nods. The bill is probably dead."
+  },
+  "lifeEvent": {
+    "ambition": [
+      "{name} is running for the committee chair and has started counting heads. They mention, twice, that they'd remember who was with them.",
+      "{name} has been told the leader is watching them. They're trying to decide whether that's good news."
+    ],
+    "crisis": [
+      "{name}'s spouse is in hospital in {riding}. They're flying back and forth and missing votes, and the whip's office has started to notice.",
+      "{name}'s family business has gone under. The paper hasn't got it yet. They've told almost nobody."
+    ],
+    "ridingTrouble": [
+      "{name}'s riding association has called a meeting about them that they weren't invited to.",
+      "A plant in {riding} is closing and the town blames {name} for not stopping it."
+    ],
+    "retirement": [
+      "{name} is sixty-seven and has started saying 'one more Parliament' in a way that sounds like a question."
+    ],
+    "showUp": "Show up for them",
+    "showUpNote": "An evening of yours, spent on them. They'll remember it.",
+    "sendNote": "Send a note",
+    "sendNoteNote": "The decent minimum.",
+    "ignore": "Let it pass",
+    "ignoreNote": "You have your own week. They'll notice you didn't."
+  }
+}

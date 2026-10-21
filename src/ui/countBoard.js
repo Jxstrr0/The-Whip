@@ -56,6 +56,7 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
       <p class="muted">${esc(questionText(bill, p.stage))} · ${esc(stageLabel(p.stage))}</p>
       <p>${esc(bill.summary || '')}</p>
       ${bill.confidence ? `<p class="warn">${t('div.confidence')}</p>` : ''}
+      ${p.reason === 'ownBill' ? `<p class="tutorial">${t('div.ownBill')}</p>` : ''}
       ${count}
       <div class="kvs">
         <div class="kv"><span class="k">${t('div.line', { line: '' }).replace(': ', '')}</span><span class="v">${esc(lineText)}</span></div>
