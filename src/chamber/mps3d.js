@@ -1,5 +1,6 @@
 // Instanced MP figures (a capsule torso and a sphere head for all 120: two draw calls) and the selection outline.
 import * as THREE from 'three';
+import { figureMaterial } from '../kit3d.js';
 
 const SKIN = ['#f1c8a5', '#e0ac85', '#c68d63', '#a26b45', '#7c4f31', '#5b3a24', '#efd2b8', '#d6a07a'];
 const TORSO_Y = 0.85;
@@ -17,8 +18,8 @@ export function createMpFigures(records) {
   const n = records.length;
   const torsoGeo = new THREE.CapsuleGeometry(0.19, 0.36, 4, 10);
   const headGeo = new THREE.SphereGeometry(0.125, 14, 10);
-  const torsos = new THREE.InstancedMesh(torsoGeo, new THREE.MeshStandardMaterial({ roughness: 0.75 }), n);
-  const heads = new THREE.InstancedMesh(headGeo, new THREE.MeshStandardMaterial({ roughness: 0.6 }), n);
+  const torsos = new THREE.InstancedMesh(torsoGeo, figureMaterial({ roughness: 0.75 }), n);
+  const heads = new THREE.InstancedMesh(headGeo, figureMaterial({ roughness: 0.6 }), n);
   const outline = new THREE.Mesh(torsoGeo.clone().scale(1.18, 1.1, 1.18), new THREE.MeshBasicMaterial({ color: '#f2c14e', side: THREE.BackSide }));
   outline.visible = false;
   const group = new THREE.Group();
