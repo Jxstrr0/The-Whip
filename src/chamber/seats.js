@@ -1,7 +1,8 @@
 // Instanced desks and chairs for all 120 seats, an invisible pick box per seat, and the selection ring.
 import * as THREE from 'three';
 import { buildSeats, deskPairOffset } from './layout.js';
-import { box, merge, vertexMaterial } from '../kit3d.js';
+import { box, merge, worldUVs } from '../kit3d.js';
+import { surface } from '../textures.js';
 
 const DESK_AHEAD = 0.55; // how far the desk sits in front of the chair, toward the aisle
 
@@ -29,8 +30,8 @@ export function createSeats() {
   const group = new THREE.Group();
   const n = records.length;
 
-  const chairs = new THREE.InstancedMesh(chairGeometry(), vertexMaterial(), n);
-  const desks = new THREE.InstancedMesh(deskGeometry(), vertexMaterial(), n);
+  const chairs = new THREE.InstancedMesh(worldUVs(chairGeometry()), surface('leather', { roughness: 0.6 }), n);
+  const desks = new THREE.InstancedMesh(worldUVs(deskGeometry()), surface('oak', { roughness: 0.55 }), n);
   const pickMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.9, 1.5, 1.4), new THREE.MeshBasicMaterial(), n);
   pickMesh.visible = false;
 
