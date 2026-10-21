@@ -24,7 +24,7 @@
 // Browser-run sim checks. Each stage adds a section; everything here runs without the 3D renderer.
 import { loadData } from './src/loadData.js';
 import { setData, tuning } from './src/sim/config.js';
-import { newGame } from './src/sim/modes.js';
+import { newGame, scenarioGame, dailyGame, sharedGame, scenarioList, dailySeed } from './src/sim/modes.js';
 import { parliamentHash } from './src/sim/generate.js';
 import { cardView, HIDDEN_FIELDS, reveal, decayKnowledge } from './src/sim/knowledge.js';
 import { buildSeats } from './src/chamber/layout.js';
@@ -42,7 +42,10 @@ import * as caucusSim from './src/sim/caucus.js';
 window.__caucus = caucusSim;
 import './src/sim/riding.js';
 import { botAct } from './src/sim/bot.js';
-import { exportSave, importSave } from './src/save.js';
+import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo } from './src/save.js';
+import { getSettings, setSetting } from './src/settings.js';
+import { partyColor } from './src/ui/text.js';
+import { createAudio } from './src/audio.js';
 import * as tools from './src/sim/tools.js';
 import * as count from './src/sim/count.js';
 import * as rivals from './src/sim/rivals.js';
@@ -831,7 +834,7 @@ test('Rebelling and toeing the line both change the whip\'s file, riding standin
   return `rebel: file 1, whip ${rebelWhip}, riding ${rebelRiding > 0 ? '+' : ''}${rebelRiding} · line: file 0, whip +${lineWhip}, riding ${lineRiding}`;
 });
 
-test('Friday leave must be granted while the House sits; a cross whip keeps you in Ottawa', () => {
+test('Friday leave must be granted while the House sits; a cross whip keeps you in Ostrava', () => {
   const s = newGame({ seed: 'TEST-1', party: 'p2' });
   s.date.absWeek = 3;
   s.date.dayOfWeek = tuning().calendar.ridingDay;
@@ -839,7 +842,7 @@ test('Friday leave must be granted while the House sits; a cross whip keeps you 
   s.mps[whip].rapport = -60;
   s.player.leaveGranted = false;
   const refused = runHooks6(pacing.hooks.riding, s, createRng('leave'));
-  const kept = s.log.some((l) => /wants you in Ottawa/.test(l.text));
+  const kept = s.log.some((l) => /wants you in Ostrava/.test(l.text));
   assert(!refused && kept, 'should be refused leave');
   s.player.leaveGranted = true;
   s.player.lastRidingWeek = -99;
@@ -1324,6 +1327,135 @@ test('A minority government signs confidence and supply, the partner is whipped 
   confidence.breakAgreement(s, a, 'partner');
   assert(a.broken && !confidence.activeAgreement(s) && /walks away/.test(s.log.at(-1).text), 'broken and reported');
   return `${s.parties[partner].name} for ${a.category}, then walked`;
+});
+
+section('Stage 9 · Modes and polish');
+
+test('Three scenarios start correctly: the right act, role, week, bill and count', () => {
+  const notes = [];
+  for (const sc of scenarioList()) {
+    const s = scenarioGame(sc.id);
+    const me = s.mps[s.player.mpId];
+    assert(s.mode.kind === 'scenario' && s.mode.id === sc.id && s.mode.brief, `${sc.id} has a brief`);
+    assert(s.date.absWeek === sc.week && s.date.dayOfWeek === (sc.day || 1), `${sc.id} opens on its day`);
+    assert(s.player.act === sc.act && (!sc.role || me.caucusRole === sc.role), `${sc.id} rank`);
+    const bill = s.bills[s.mode.billId];
+    assert(bill && bill.nextVote === sc.week * 5 + 3, `${sc.id} bill is Thursday`);
+    assert(s.flow.forceWatch, `${sc.id} stops every morning`);
+    if (sc.minority) assert(s.house.minority, `${sc.id} is a minority`);
+    if (sc.short) assert(count.prediction(s, bill.id).short === sc.short, `${sc.id} is ${sc.short} short`);
+    if (sc.setup === 'revolt') assert(s.forceRevolt, `${sc.id} revolt is loaded`);
+    const p = pacing.advance(s);
+    assert(p?.kind === 'morning' && s.date.dayOfWeek === (sc.day || 1), `${sc.id} first stop is the morning`);
+    notes.push(`${sc.id}: ${bill.title}`);
+  }
+  let threw = false;
+  try { scenarioGame('nope'); } catch (e) { threw = /Unknown scenario/.test(e.message); }
+  assert(threw, 'unknown id throws');
+  return notes.join(' · ');
+});
+
+test('A scenario week ends in a verdict (the revolt scenario, played by the bot)', () => {
+  const s = scenarioGame('roomTurns');
+  const rng = createRng('bot:s9');
+  pacing.advance(s);
+  for (let i = 0; i < 400 && !s.mode.verdict && !s.ending; i++) {
+    const p = s.flow.pending;
+    if (!p) pacing.advance(s);
+    else if (p.needsChoice) botAct(s, rng);
+    else pacing.advance(s);
+  }
+  assert(s.mode.verdict && ['held', 'ousted'].includes(s.mode.verdict.key), 'verdict is held or ousted');
+  assert(s.player.lastRevolt?.week === s.mode.startWeek, 'the revolt happened in the scenario week');
+  return `${s.mode.verdict.key}: ${s.mode.verdict.text}`;
+});
+
+test('A shared seed gives two players the same Parliament; the daily seed is one Parliament per calendar day', () => {
+  const a = sharedGame({ seed: 'FRIEND-7', party: 'p1' });
+  const b = newGame({ seed: 'FRIEND-7', party: 'p1' });
+  assert(a.mode.kind === 'shared' && parliamentHash(a) === parliamentHash(b), 'shared equals the same seed');
+  const d1 = dailyGame({ date: new Date('2026-10-21T12:00:00Z') });
+  const d2 = dailyGame({ date: new Date('2026-10-21T23:30:00Z') });
+  const d3 = dailyGame({ date: new Date('2026-10-22T01:00:00Z') });
+  assert(d1.mode.kind === 'daily' && d1.mode.id === '2026-10-21' && d1.seed === dailySeed(new Date('2026-10-21T12:00:00Z')), 'daily seed from the date');
+  assert(parliamentHash(d1) === parliamentHash(d2) && d1.player.background === d2.player.background, 'same day, same game');
+  assert(parliamentHash(d1) !== parliamentHash(d3), 'next day differs');
+  return `${d1.seed} · ${d1.parties[d1.mps[d1.player.mpId].party].short} ${d1.player.background}`;
+});
+
+test('A version 1 save migrates to version 2 (mode and last revolt) and a bad save is refused', () => {
+  const s = newGame({ seed: 'MIG-1', party: 'p1' });
+  const old = JSON.parse(JSON.stringify(s));
+  old.version = 1;
+  delete old.mode;
+  delete old.player.lastRevolt;
+  const m = migrate(old);
+  assert(m.version === 2 && m.mode.kind === 'career' && m.player.lastRevolt === null, 'migrated fields');
+  let refused = 0;
+  for (const bad of ['', 'not base64 at all', btoa('{"version":99}'), btoa('{"hello":1}')]) {
+    try { importSave(bad); } catch { refused++; }
+  }
+  assert(refused === 4, 'four bad imports refused');
+  return 'v1 → v2';
+});
+
+test('Saves go to a slot and come back with their slot, time and a one-line description', () => {
+  const s = newGame({ seed: 'SLOT-9', party: 'p2' });
+  const rng = createRng('slot');
+  for (let i = 0; i < 60; i++) botAct(s, rng);
+  const ok = saveGame(s, 'test');
+  if (!ok) return 'no storage here; skipped';
+  try {
+    const back = loadGame('test');
+    assert(back.slot === 'test' && back.savedAt > 0 && back.seed === 'SLOT-9', 'slot and time on the way back');
+    assert(JSON.stringify(back.mps) === JSON.stringify(s.mps) && back.date.absWeek === s.date.absWeek, 'same game');
+    const info = saveInfo('test');
+    assert(info.name.includes(s.mps[s.player.mpId].name.last) && info.mode === 'career' && info.act === s.player.act && info.week === s.date.week, 'description');
+  } finally {
+    deleteSave('test');
+  }
+  assert(loadGame('test') === null, 'deleted');
+  return 'slot test written, read, described and deleted';
+});
+
+test('Settings persist under whip:settings and the colour-blind palette swaps every party colour', () => {
+  const before = { ...getSettings() };
+  try {
+    const s = newGame({ seed: 'CB-1', party: 'p1' });
+    const mps = Object.values(s.mps);
+    const sample = ['p1', 'p2', 'p3', 'p4', 'p5', 'ind'].map((pid) => mps.find((m) => m.party === pid)).filter(Boolean);
+    assert(sample.length >= 5, 'one MP from each bench');
+    setSetting('colourBlind', false);
+    const normal = sample.map((m) => partyColor(s, m));
+    setSetting('colourBlind', true);
+    const cb = sample.map((m) => partyColor(s, m));
+    assert(JSON.parse(localStorage.getItem('whip:settings')).colourBlind === true, 'stored');
+    assert(document.documentElement.classList.contains('cb'), 'html.cb set');
+    assert(cb.every((c, i) => c !== normal[i]), 'every party changed colour');
+    assert(new Set(cb).size === cb.length, 'all distinct');
+    assert(cb.every((c) => /^#[0-9A-Fa-f]{6}$/.test(c)), 'hex colours');
+    setSetting('volume', 1.7);
+    assert(getSettings().volume === 1, 'volume clamped');
+    setSetting('sound', 'yes');
+    assert(getSettings().sound === before.sound, 'wrong type ignored');
+    return `${cb.length} benches recoloured`;
+  } finally {
+    for (const k of Object.keys(before)) setSetting(k, before[k]);
+  }
+});
+
+test('Audio is synthesised, not fetched, and is safe to drive before any gesture', () => {
+  const a = createAudio({ sound: true, volume: 0.5 });
+  const fetched = performance.getEntriesByType('resource').filter((r) => /\.(mp3|ogg|wav|m4a)(\?|$)/i.test(r.name));
+  assert(fetched.length === 0, 'no audio files requested');
+  a.room('chamber');
+  a.room('office');
+  a.gavel();
+  a.tap();
+  a.bells(false);
+  a.configure({ sound: false, volume: 0.2 });
+  assert(a.running === false, 'nothing runs before a tap');
+  return 'room, gavel, tap, bells and configure all no-ops before the first gesture';
 });
 
 async function run() {

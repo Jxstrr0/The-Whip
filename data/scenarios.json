@@ -1,0 +1,64 @@
+{
+  "scenarios": [
+    {
+      "id": "threeShort",
+      "title": "Three short",
+      "when": "Act 4 · Deputy whip · A minority government",
+      "blurb": "The budget is Thursday. The party that was propping the government up walked out of the deal on Friday. The count on your desk says the government loses by three.",
+      "seed": "SHORT",
+      "act": 4,
+      "role": "deputyWhip",
+      "minority": true,
+      "setup": "minorityBudget",
+      "short": 3,
+      "week": 82,
+      "day": 1,
+      "background": "councillor",
+      "brief": "{bill} comes to a vote on Thursday and it is confidence. {partner} tore up the agreement on Friday and every other bench is whipped against. The count this morning: {ours} for, {theirs} against, {short} short of carrying it. {away} You have four days, the pair book, the leave book and the bells.",
+      "outcomes": {
+        "won": "Carried by {margin}. The leader won't say thank you; the leader will say nothing at all, which is the same thing.",
+        "lost": "Lost by {margin}. A supply vote. The House has no confidence in the government, and the government, this morning, has none in its whips.",
+        "noVote": "Thursday came and went without the division. The budget sits on the Order Paper and so does the question of who let it slip.",
+        "fell": "The government fell. Nobody in the whip's office will say the word election out loud yet."
+      }
+    },
+    {
+      "id": "roomTurns",
+      "title": "The room turns",
+      "when": "Act 5 · Chief Whip · Wednesday morning",
+      "blurb": "Caucus meets at ten. There is a bill the benches hate, a ringleader with a list, and a leader who would rather it were your name on it than theirs.",
+      "seed": "TURNS",
+      "act": 5,
+      "role": "chiefWhip",
+      "setup": "revolt",
+      "week": 2,
+      "day": 3,
+      "background": "union",
+      "brief": "{bill} is Thursday, whipped, and half the caucus has ridings that will hate them for it. {ringleader} has been round the lobbies since Monday with a list of names. Caucus is at ten. It isn't the leader they're after.",
+      "outcomes": {
+        "held": "You're still the whip. Some of the names on that list will need a reason to forget they signed it.",
+        "ousted": "The room turned and it took you with it. Whoever counts the votes on Thursday, it won't be you.",
+        "noRevolt": "The room grumbled and settled. Whatever was on the list stayed on it."
+      }
+    },
+    {
+      "id": "homeTruths",
+      "title": "Home truths",
+      "when": "Act 1 · Rookie · Your riding versus the line",
+      "blurb": "Thursday's bill does real harm to the people who sent you. The whip wants you in the lobby with the party. The riding association president wants a word.",
+      "seed": "HOME",
+      "act": 1,
+      "setup": "ridingDilemma",
+      "week": 2,
+      "day": 1,
+      "background": "farmer",
+      "ridingType": "rural",
+      "brief": "{bill} is whipped {position} and comes to a vote on Thursday. At home it is the only thing anyone is talking about, and they are not talking about it kindly. Your mentor knows how this goes; the whip knows how it ends. Friday you go home either way.",
+      "outcomes": {
+        "riding": "You voted with the riding. Standing at home {standing}. The whip's office has a file with your name on it now, and a column marked useful trouble.",
+        "party": "You toed the line. Standing at home {standing}. The whip nodded once in the lobby, which from this whip is a parade.",
+        "noVote": "The vote never came. The riding is still waiting to find out who you are."
+      }
+    }
+  ]
+}

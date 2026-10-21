@@ -35,7 +35,9 @@ export function rowOf(state) {
   return party.sort((a, b) => Number(a.seatId?.slice(1) || 0) - Number(b.seatId?.slice(1) || 0)).slice(0, 15);
 }
 
-function setRank(state, act, role, stopEvent, text) {
+// Put the player in a rank: act, caucus role, the party's whip lists and the meeting slots that come with it.
+// Scenarios use it to start mid-career; the career uses setRank, which adds the stop.
+export function assignRank(state, act, role) {
   const p = state.player;
   const m = me(state);
   const party = partyOf(state);
@@ -60,6 +62,10 @@ function setRank(state, act, role, stopEvent, text) {
   }
   m.caucusRole = role;
   p.slots = tuning().meetings.slotsByAct?.[act] ?? p.slots;
+}
+
+function setRank(state, act, role, stopEvent, text) {
+  assignRank(state, act, role);
   return { kind: 'career', event: stopEvent, important: true, needsChoice: true, text };
 }
 

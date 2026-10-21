@@ -61,7 +61,9 @@ hooks.morning.push((state, rng) => {
   const C = tuning().confidence;
   const gov = state.parties[state.house.government];
   const a = activeAgreement(state);
-  if (!a && rng.chance(C.agreementOdds)) signAgreement(state, rng);
+  // Nobody signs again the week after a deal collapsed; both sides need to be seen to sulk.
+  const sulking = (gov.agreements || []).some((x) => x.broken && x.brokenWeek >= state.date.absWeek - C.agreementCooldown);
+  if (!a && !sulking && rng.chance(C.agreementOdds)) signAgreement(state, rng);
   const live = activeAgreement(state);
   if (live) {
     const partner = state.parties[live.with];

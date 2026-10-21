@@ -401,7 +401,8 @@
     "pressureRebellion": 3,
     "pressurePlayerRebel": 6,
     "pressureDecay": 2,
-    "pressureReplaced": 100
+    "pressureReplaced": 100,
+    "agreementCooldown": 8
   },
   "election": {
     "swingWeight": 1.1,
