@@ -100,20 +100,22 @@ export function caucusListen(state, rng) {
   const sample = rng.shuffle([...c.seats.filter((id) => id !== state.player.mpId)]).slice(0, 6);
   for (const id of sample) revealMany(state, id, ['mood'], 'caucus');
   const pairs = [];
+  const pairIds = [];
   for (const id of sample.slice(0, 3)) {
     const m = state.mps[id];
     const friend = Object.entries(m.relations).filter(([oid, v]) => v > 30 && state.mps[oid]?.party === m.party).sort((a, b) => b[1] - a[1])[0];
     if (friend) {
       revealMany(state, id, ['clique'], 'caucus');
       pairs.push(`${fullName(m)} keeps leaning over to ${fullName(state.mps[friend[0]])}.`);
+      pairIds.push([id, friend[0]]);
     }
   }
   const moods = sample.map((id) => state.mps[id].mood);
   const angry = moods.filter((m) => m === 'angry').length;
   const note = `You listen. ${angry ? `${angry} of the six you watch look angry.` : 'Nobody near you looks angry.'} ${pairs.join(' ')}`;
-  c.heard.push({ ids: sample, note });
+  c.heard.push({ ids: sample, note, pairs: pairIds });
   log(state, note, 'caucus');
-  return { note, ids: sample };
+  return { note, ids: sample, pairs: pairIds };
 }
 
 export function caucusSpeak(state, rng, stanceId) {

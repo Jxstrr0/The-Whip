@@ -11,6 +11,9 @@ const BASE = new URL('../assets/models/', import.meta.url).href;
 const loader = new GLTFLoader();
 const templates = new Map();
 
+// The hue each textured surface takes on a kit prop: the grain maps are grey, so the colour comes from here.
+const TINTS = { wood: '#6e4a2b', woodDark: '#3b2616', carpet: '#2f5a3c' };
+
 // One material per Kenney name, shared by every prop (so twenty props cost twenty draw calls, not sixty).
 let mats = null;
 function materials() {
@@ -36,6 +39,7 @@ function materials() {
 export const PACKS = {
   furniture: { scale: 1.9, ext: 'glb', retint: true },
   street: { scale: 5, ext: 'gltf', retint: false },
+  food: { scale: 0.42, ext: 'glb', retint: false },
 };
 
 // Fetch and prepare a template once: swap materials by name, give every mesh UVs in metres (after scale) and
@@ -56,11 +60,29 @@ async function template(pack, name) {
         o.material.envMapIntensity = 0.4;
         return;
       }
-      const n = o.material?.name || '';
-      o.material = M[n] || M.wood;
+      // Swap each material by name (a chair has two: frame and seat), and paint the vertices of each
+      // group the hue its surface needs.
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      const groups = o.geometry.groups.length ? o.geometry.groups : [{ start: 0, count: o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count, materialIndex: 0 }];
       worldUVs(o.geometry);
       const count = o.geometry.attributes.position.count;
-      o.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(count * 3).fill(1), 3));
+      const colors = new Float32Array(count * 3).fill(1);
+      const tint = new THREE.Color();
+      const idx = o.geometry.index;
+      for (const grp of groups) {
+        const name = mats[grp.materialIndex]?.name || '';
+        if (!TINTS[name]) continue;
+        tint.set(TINTS[name]);
+        for (let k = grp.start; k < grp.start + grp.count; k++) {
+          const v = idx ? idx.getX(k) : k;
+          colors[v * 3] = tint.r;
+          colors[v * 3 + 1] = tint.g;
+          colors[v * 3 + 2] = tint.b;
+        }
+      }
+      o.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      const swapped = mats.map((mm) => M[mm?.name] || M.wood);
+      o.material = Array.isArray(o.material) ? swapped : swapped[0];
     });
     // Bake the pack scale into the geometry so callers place props in metres.
     root.traverse((o) => {
@@ -70,6 +92,42 @@ async function template(pack, name) {
   });
   templates.set(key, p);
   return p;
+}
+
+export const loadTemplate = template;
+
+// Many copies of one prop as a single instanced mesh (chairs round a table, glasses along it). The group is
+// returned at once and fills itself when the model has loaded. placements: [{ x, y, z, rotY, scale }].
+export function instancedModel(parent, name, placements, { pack = 'furniture', onReady } = {}) {
+  const holder = new THREE.Group();
+  parent.add(holder);
+  let alive = true;
+  holder.userData.cancel = () => (alive = false);
+  template(pack, name).then((root) => {
+    if (!alive) return;
+    root.updateMatrixWorld(true);
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const up = new THREE.Vector3(0, 1, 0);
+    const p = new THREE.Vector3();
+    const s = new THREE.Vector3();
+    root.traverse((o) => {
+      if (!o.isMesh) return;
+      const geo = o.geometry.clone().applyMatrix4(o.matrixWorld);
+      const inst = new THREE.InstancedMesh(geo, o.material, placements.length);
+      placements.forEach((pl, i) => {
+        q.setFromAxisAngle(up, pl.rotY || 0);
+        p.set(pl.x || 0, pl.y || 0, pl.z || 0);
+        s.setScalar(pl.scale || 1);
+        m.compose(p, q, s);
+        inst.setMatrixAt(i, m);
+      });
+      inst.instanceMatrix.needsUpdate = true;
+      holder.add(inst);
+    });
+    onReady?.(holder);
+  }).catch((e) => console.warn('model failed', name, e));
+  return holder;
 }
 
 // Place a prop. Returns a group added at once (so disposal and visibility work immediately); the model
