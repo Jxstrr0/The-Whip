@@ -1,6 +1,7 @@
 // Which room is live. One renderer, four scenes: only the active one exists; leaving a room disposes it.
 export function createRooms({ factories, ctx, onChange }) {
   let name = null;
+  let variant = null;
   let room = null;
   let size = [1, 1];
   return {
@@ -11,9 +12,11 @@ export function createRooms({ factories, ctx, onChange }) {
       return room;
     },
     show(next, extra = {}) {
-      if (next === name && room) return room;
+      // A room only rebuilds when its name or its variant (the office by rank) changes.
+      if (next === name && room && extra.variant === variant) return room;
       room?.dispose();
       name = next;
+      variant = extra.variant;
       room = factories[next].create({ ...ctx, ...extra });
       room.resize(...size);
       onChange?.(name, room);
