@@ -35,6 +35,8 @@ export function touch(state, mpId) {
   const e = state.player.knowledge[mpId];
   state.player.contact ||= {};
   state.player.contact[mpId] = weekOf(state);
+  state.player.talks ||= {};
+  state.player.talks[mpId] = (state.player.talks[mpId] || 0) + 1;
   if (!e) return;
   for (const f of Object.values(e)) {
     if (f.known) {
@@ -42,6 +44,22 @@ export function touch(state, mpId) {
       f.asOf = weekOf(state);
     }
   }
+}
+
+// How well the player knows a face, 0–3: never spoken to (faceless in the rooms), a face, a feature you'd
+// pick out across the floor, someone you'd know anywhere. Talking to someone is what puts a face on them,
+// talking again gives them the feature, and the last step needs both time and what you've learned. Saves from
+// before talks were counted treat any contact as one talk. `talksAgo` asks how well you knew them that many
+// talks back (the office uses it to let a face come into focus as the meeting starts).
+export function familiarity(state, mpId, talksAgo = 0) {
+  if (mpId === state.player.mpId) return 3;
+  const talks = (state.player.talks?.[mpId] ?? (state.player.contact?.[mpId] != null ? 1 : 0)) - talksAgo;
+  if (talks <= 0) return 0;
+  const T = tuning().faces;
+  const fields = Object.values(state.player.knowledge[mpId] || {}).filter((f) => f.known).length;
+  if (talks >= T.signatureTalks && fields >= T.signatureFields) return 3;
+  if (talks >= T.featureTalks) return 2;
+  return 1;
 }
 
 // Weekly: fields learned long ago with no contact since go stale and render faded.
