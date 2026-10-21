@@ -15,7 +15,7 @@ function pickName(list) {
 
 // The title page. One sheet, read top to bottom: continue the latest game, pick a slot, then start something
 // (a career, a scenario, today's seed, a friend's seed) or manage the saved games.
-export function createStartMenu(root, { saves, latest, scenarios, onContinue, onNew, onScenario, onDaily, onShared, onImport, onDelete, onExport, onSeed }) {
+export function createStartMenu(root, { saves, latest, scenarios, onContinue, onNew, onScenario, onDaily, onShared, onImport, onDelete, onExport, onSeed, onSettings }) {
   const D = data();
   const el = document.createElement('section');
   el.className = 'start-menu';
@@ -85,6 +85,7 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
         <button class="btn wide" data-act="import">${esc(t('menu.importInto', { n: slot }))}</button>
       </details>
       <p class="status muted" aria-live="polite"></p>
+      <div class="choices"><button class="btn" data-act="settings">${t('menu.settings')}</button></div>
       <footer class="colophon"><span class="mark">W</span>${t('menu.studio')}</footer>
     </div>`;
     wire();
@@ -101,6 +102,7 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
   const confirmReplace = () => !saves[slot - 1] || confirm(t('menu.confirmReplace', { name: saves[slot - 1].name }));
 
   function wire() {
+    el.querySelector('[data-act="settings"]').onclick = () => onSettings?.();
     const blurb = () => {
       const p = parties.find((x) => x.id === el.querySelector('[name="party"]').value);
       el.querySelector('.party-blurb').innerHTML = `<span class="chip small" style="background:${p.color}"></span> ${esc(p.home)}`;
@@ -190,7 +192,7 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
   return el;
 }
 
-export function createGameMenu(root, { getState, onQuit, onLedger, onRetire, onCross }) {
+export function createGameMenu(root, { getState, onQuit, onLedger, onRetire, onCross, onSettings }) {
   const el = document.createElement('section');
   el.className = 'sheet game-menu hidden';
   root.appendChild(el);
@@ -200,7 +202,7 @@ export function createGameMenu(root, { getState, onQuit, onLedger, onRetire, onC
       const career = s.player.act >= tuning().ranks.retireFromAct && !s.ending && s.flow.pending?.kind !== 'ending';
       el.innerHTML = `<div class="sheet-handle"></div><h2>${t('menu.menu')}</h2>
         <p class="muted">Seed ${esc(s.seed)} · ${t('menu.save')}</p>
-        <div class="choices"><button class="btn" data-act="ledger">${t('menu.ledger')}</button>${career ? `<button class="btn" data-act="cross">${t('menu.cross')}</button><button class="btn" data-act="retire">${t('menu.retire')}</button>` : ''}<button class="btn" data-act="close">${t('menu.close')}</button><button class="btn" data-act="quit">${t('menu.quit')}</button></div>`;
+        <div class="choices"><button class="btn" data-act="ledger">${t('menu.ledger')}</button>${career ? `<button class="btn" data-act="cross">${t('menu.cross')}</button><button class="btn" data-act="retire">${t('menu.retire')}</button>` : ''}<button class="btn" data-act="settings">${t('menu.settings')}</button><button class="btn" data-act="close">${t('menu.close')}</button><button class="btn" data-act="quit">${t('menu.quit')}</button></div>`;
       // Crossing the floor asks which bench, then asks again; it isn't a thing to do by accident.
       el.querySelector('[data-act="cross"]')?.addEventListener('click', () => {
         const mine = s.mps[s.player.mpId].party;
@@ -222,7 +224,44 @@ export function createGameMenu(root, { getState, onQuit, onLedger, onRetire, onC
         onLedger?.();
       };
       el.querySelector('[data-act="quit"]').onclick = onQuit;
+      el.querySelector('[data-act="settings"]').onclick = () => {
+        el.classList.add('hidden');
+        onSettings?.();
+      };
       el.classList.remove('hidden');
     },
+  };
+}
+
+// The settings sheet: sound, volume, colour-blind colours, larger text. get() returns the current settings,
+// set(key, value) stores one. Opens over the title page or the game.
+export function createSettingsSheet(root, { get, set }) {
+  const el = document.createElement('section');
+  el.className = 'sheet settings hidden';
+  root.appendChild(el);
+  const toggle = (key, label, note) => `<div class="setting"><div class="what"><b>${t(label)}</b>${note ? `<small>${t(note)}</small>` : ''}</div><button class="switch" role="switch" aria-checked="${get()[key]}" aria-label="${t(label)}" data-k="${key}"><i></i></button></div>`;
+  function render() {
+    const s = get();
+    el.innerHTML = `<div class="sheet-handle"></div><h2>${t('settings.title')}</h2>
+      ${toggle('sound', 'settings.sound', 'settings.soundNote')}
+      <label class="setting"><div class="what"><b>${t('settings.volume')}</b></div><input type="range" name="volume" min="0" max="1" step="0.05" value="${s.volume}" aria-label="${t('settings.volume')}"${s.sound ? '' : ' disabled'}></label>
+      ${toggle('colourBlind', 'settings.colourBlind', 'settings.colourBlindNote')}
+      ${toggle('largeText', 'settings.largeText', 'settings.largeTextNote')}
+      <div class="choices"><button class="btn primary" data-act="close">${t('settings.done')}</button></div>`;
+    el.querySelectorAll('.switch').forEach((b) => {
+      b.onclick = () => {
+        set(b.dataset.k, !get()[b.dataset.k]);
+        render();
+      };
+    });
+    el.querySelector('[name="volume"]').oninput = (e) => set('volume', Number(e.target.value));
+    el.querySelector('[data-act="close"]').onclick = () => el.classList.add('hidden');
+  }
+  return {
+    open() {
+      render();
+      el.classList.remove('hidden');
+    },
+    close: () => el.classList.add('hidden'),
   };
 }

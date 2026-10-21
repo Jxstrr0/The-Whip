@@ -43,6 +43,9 @@ window.__caucus = caucusSim;
 import './src/sim/riding.js';
 import { botAct } from './src/sim/bot.js';
 import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo } from './src/save.js';
+import { getSettings, setSetting } from './src/settings.js';
+import { partyColor } from './src/ui/text.js';
+import { createAudio } from './src/audio.js';
 import * as tools from './src/sim/tools.js';
 import * as count from './src/sim/count.js';
 import * as rivals from './src/sim/rivals.js';
@@ -831,7 +834,7 @@ test('Rebelling and toeing the line both change the whip\'s file, riding standin
   return `rebel: file 1, whip ${rebelWhip}, riding ${rebelRiding > 0 ? '+' : ''}${rebelRiding} · line: file 0, whip +${lineWhip}, riding ${lineRiding}`;
 });
 
-test('Friday leave must be granted while the House sits; a cross whip keeps you in Ottawa', () => {
+test('Friday leave must be granted while the House sits; a cross whip keeps you in Ostrava', () => {
   const s = newGame({ seed: 'TEST-1', party: 'p2' });
   s.date.absWeek = 3;
   s.date.dayOfWeek = tuning().calendar.ridingDay;
@@ -839,7 +842,7 @@ test('Friday leave must be granted while the House sits; a cross whip keeps you 
   s.mps[whip].rapport = -60;
   s.player.leaveGranted = false;
   const refused = runHooks6(pacing.hooks.riding, s, createRng('leave'));
-  const kept = s.log.some((l) => /wants you in Ottawa/.test(l.text));
+  const kept = s.log.some((l) => /wants you in Ostrava/.test(l.text));
   assert(!refused && kept, 'should be refused leave');
   s.player.leaveGranted = true;
   s.player.lastRidingWeek = -99;
@@ -1413,6 +1416,46 @@ test('Saves go to a slot and come back with their slot, time and a one-line desc
   }
   assert(loadGame('test') === null, 'deleted');
   return 'slot test written, read, described and deleted';
+});
+
+test('Settings persist under whip:settings and the colour-blind palette swaps every party colour', () => {
+  const before = { ...getSettings() };
+  try {
+    const s = newGame({ seed: 'CB-1', party: 'p1' });
+    const mps = Object.values(s.mps);
+    const sample = ['p1', 'p2', 'p3', 'p4', 'p5', 'ind'].map((pid) => mps.find((m) => m.party === pid)).filter(Boolean);
+    assert(sample.length >= 5, 'one MP from each bench');
+    setSetting('colourBlind', false);
+    const normal = sample.map((m) => partyColor(s, m));
+    setSetting('colourBlind', true);
+    const cb = sample.map((m) => partyColor(s, m));
+    assert(JSON.parse(localStorage.getItem('whip:settings')).colourBlind === true, 'stored');
+    assert(document.documentElement.classList.contains('cb'), 'html.cb set');
+    assert(cb.every((c, i) => c !== normal[i]), 'every party changed colour');
+    assert(new Set(cb).size === cb.length, 'all distinct');
+    assert(cb.every((c) => /^#[0-9A-Fa-f]{6}$/.test(c)), 'hex colours');
+    setSetting('volume', 1.7);
+    assert(getSettings().volume === 1, 'volume clamped');
+    setSetting('sound', 'yes');
+    assert(getSettings().sound === before.sound, 'wrong type ignored');
+    return `${cb.length} benches recoloured`;
+  } finally {
+    for (const k of Object.keys(before)) setSetting(k, before[k]);
+  }
+});
+
+test('Audio is synthesised, not fetched, and is safe to drive before any gesture', () => {
+  const a = createAudio({ sound: true, volume: 0.5 });
+  const fetched = performance.getEntriesByType('resource').filter((r) => /\.(mp3|ogg|wav|m4a)(\?|$)/i.test(r.name));
+  assert(fetched.length === 0, 'no audio files requested');
+  a.room('chamber');
+  a.room('office');
+  a.gavel();
+  a.tap();
+  a.bells(false);
+  a.configure({ sound: false, volume: 0.2 });
+  assert(a.running === false, 'nothing runs before a tap');
+  return 'room, gavel, tap, bells and configure all no-ops before the first gesture';
 });
 
 async function run() {

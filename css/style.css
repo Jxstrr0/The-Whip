@@ -29,6 +29,8 @@
   --bench-2: #3a6a48;
   --brass: #b8923a;
   --red: #a8322d;
+  --yea: var(--bench);
+  --nay: var(--red);
   --grey: #6b6f76;
   --amber: #c98f2a;
   --brand: #2f5a3c; /* Longlight's colours go here when Kelbo sends them */
@@ -537,9 +539,9 @@ blockquote.line {
   padding: 2px 14px;
 }
 .stamp.yea,
-.stamp.good { color: var(--bench); }
+.stamp.good { color: var(--yea); }
 .stamp.nay,
-.stamp.bad { color: var(--red); }
+.stamp.bad { color: var(--nay); }
 .stamp.grey { color: var(--grey); }
 .stamp.brass { color: var(--brass); }
 @keyframes stamp-in {
@@ -794,10 +796,10 @@ input::placeholder {
   transition: width 120ms linear;
 }
 .bar i.yea {
-  background: var(--bench);
+  background: var(--yea);
 }
 .bar i.nay {
-  background: var(--red);
+  background: var(--nay);
 }
 .bar em {
   position: absolute;
@@ -815,10 +817,10 @@ input::placeholder {
   font-weight: 600;
 }
 .verdict.yea {
-  color: var(--bench);
+  color: var(--yea);
 }
 .verdict.nay {
-  color: var(--red);
+  color: var(--nay);
 }
 
 .tutorial.brief {
@@ -920,7 +922,7 @@ input::placeholder {
 /* ---- The start menu: a title page ---------------------------------------------------------------------- */
 
 /* While the title page is up, the game's own bars and panels stay out of sight behind it. */
-#ui:has(.start-menu) > :not(.start-menu) {
+#ui:has(.start-menu) > :not(.start-menu, .sheet.settings) {
   visibility: hidden;
 }
 
@@ -1158,4 +1160,106 @@ details.import textarea {
   min-height: 20px;
   margin: 8px 0 0;
   font-size: 14px;
+}
+
+/* ---- Settings: the two accessibility switches and the sheet itself ---- */
+/* Colour-blind: Okabe-Ito blue for yea, vermilion for nay (party colours swap in partyColor). */
+html.cb {
+  --yea: #0072b2;
+  --nay: #d55e00;
+}
+/* Larger text: the whole Order Paper layer scales up a notch; the rooms behind it don't. */
+html.large #ui {
+  zoom: 1.12;
+}
+.sheet.settings {
+  z-index: 30; /* above the title page as well as the game */
+}
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ink-4);
+}
+.setting .what {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.setting .what small {
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.switch {
+  flex: none;
+  position: relative;
+  width: 54px;
+  height: 32px;
+  padding: 0;
+  border: 1.5px solid var(--ink);
+  border-radius: 16px;
+  background: var(--paper-2);
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+.switch i {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: var(--ink);
+  transition: transform 160ms ease, background 160ms ease;
+}
+.switch[aria-checked="true"] {
+  background: var(--bench);
+  border-color: var(--bench);
+}
+.switch[aria-checked="true"] i {
+  background: var(--paper);
+  transform: translateX(22px);
+}
+.setting input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  max-width: 55%;
+  height: 32px;
+  margin: 0;
+  background: transparent;
+}
+.setting input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px;
+  background: var(--ink-3);
+  border-radius: 2px;
+}
+.setting input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 26px;
+  height: 26px;
+  margin-top: -11.5px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 7px var(--bench);
+}
+.setting input[type="range"]::-moz-range-track {
+  height: 3px;
+  background: var(--ink-3);
+  border-radius: 2px;
+}
+.setting input[type="range"]::-moz-range-thumb {
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 7px var(--bench);
+}
+.setting input[type="range"]:disabled {
+  opacity: 0.4;
 }
