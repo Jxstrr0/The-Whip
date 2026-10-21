@@ -1,0 +1,69 @@
+{
+  "broadcaster": "Dominion Broadcasting",
+  "signs": ["{LAST}", "{short} · {Last}", "{Last}!", "Vote {Last}"],
+  "venues": ["the {town} Legion hall", "the curling club in {town}", "the {town} community centre", "a rented storefront on {town}'s main street"],
+  "count": {
+    "trailing": [
+      "{rival} leads by {lead} with {polls} polls in. Someone at the back says the advance polls haven't been counted yet.",
+      "Still behind, by {lead}. Your agent stops refreshing the page and starts refreshing it faster.",
+      "{town} reports and {rival} stretches it to {lead}. The coffee urn has gone quiet.",
+      "Down {lead}. Your mother asks whether this is normal. Your agent says it is, which may even be true."
+    ],
+    "leading": [
+      "You're up {lead} with {polls} polls in. Nobody says anything that might jinx it.",
+      "{town} comes in for you. The lead is {lead} and the room has started to believe it.",
+      "Up {lead}. Your agent writes the number on the whiteboard and underlines it twice.",
+      "The lead holds at {lead}. A volunteer opens the good crackers.",
+      "{polls} polls in, {lead} to the good. Someone starts a chant and is gently stopped."
+    ],
+    "flip": [
+      "{town} turns it. You lead by {lead}, and the room hears itself shout.",
+      "There it is: the lead changes hands. You're ahead by {lead}.",
+      "The polls from {town} finally land, and with them the lead: {lead} your way."
+    ],
+    "firstBehind": [
+      "The first polls are in from {town}, and they are not yours. {rival} is up {lead}.",
+      "{polls} polls in, all from {town}, and {rival} has {lead} on you. Your agent says {town} always comes in first and always comes in wrong."
+    ],
+    "firstAhead": [
+      "The first box from {town} is yours, by {lead}. Nobody trusts it yet.",
+      "First polls from {town}: you by {lead}. The canvassers who knocked those doors are insufferable already."
+    ],
+    "safe": [
+      "{polls} polls in and it's {lead} to the good. {party} has held this seat before and means to hold it again.",
+      "Early, but it's {lead} your way. The canvassers are already arguing about where to have the party."
+    ],
+    "call": [
+      "{broadcaster} projects a {kind} {gov} government. The room turns to look at the television, then back at your numbers.",
+      "At {time}, {broadcaster} calls it nationally: a {kind} {gov} government. Your race is still on the board."
+    ],
+    "concede": [
+      "{rival} calls to concede. It is short and gracious, and you will remember every word of it.",
+      "{rival}'s campaign manager rings your agent. Then {rival} comes on the line to say well run.",
+      "{rival} concedes on a local radio station before calling you. You decide not to mind."
+    ],
+    "declare": "{officer}, the returning officer, reads the result at {venue}: {name}, {party}, {votes} votes. Elected."
+  },
+  "walk": {
+    "door": [
+      "Opening day of the {nth} Parliament. The Sergeant-at-Arms holds the door at the bar, and you go through it.",
+      "The {nth} Parliament opens. A page holds the door at the bar and says your name as if they've practised it."
+    ],
+    "chair": [
+      "{speaker} is in the chair. The Mace is on the table, and the green carpet runs further than it looked on television.",
+      "{speaker} watches the new members come in over half-moon glasses. The Clerks don't look up."
+    ],
+    "seat": "Your seat: the {row} row, {where}, on the {side} side.",
+    "mentor": [
+      "{mentor} catches your eye from {mentorWhere} and nods once. {mentorFirst} has sat here {tenure} years.",
+      "{mentor}, {tenure} years in this room, raises a hand from {mentorWhere}. It is the first friendly face you've found."
+    ],
+    "close": [
+      "Your benches thump their desks for the new members. Monday is your first sitting day, and the whip's office already has your number.",
+      "The desks drum for the class of new members. On Monday the votes start, and the whip will be counting yours."
+    ],
+    "rows": ["front", "second", "third", "back"],
+    "where": ["near the Speaker's chair", "halfway down", "near the bar"],
+    "sides": { "government": "government", "opposition": "opposition" }
+  }
+}

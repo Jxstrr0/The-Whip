@@ -26,6 +26,7 @@ const PATH = [DOOR, [2.4, 1.4], [1.0, 0.7], [0.3, 0.35], VISITOR_SEAT];
 // ground, bare trees, a grey sky when the week is wet. The near layer is real props outside the glass.
 function paintStreet(type, wx = DEFAULT_WEATHER) {
   return (g, w, h) => {
+    const lit = [];
     const grey = GREY_SKIES.has(wx.kind) ? 0.7 : 0;
     const winter = wx.season === 'winter' ? 0.5 : 0;
     const sky = g.createLinearGradient(0, 0, 0, h * 0.6);
@@ -53,7 +54,11 @@ function paintStreet(type, wx = DEFAULT_WEATHER) {
         g.fillRect(x, h * 0.6 - bh - 3, bw, 4);
       }
       g.fillStyle = grey || wx.dark > 0.7 ? '#f5ecc0' : '#d9d2b8';
-      for (let r = 0; r < Math.floor(bh / 26); r++) for (let i = 0; i < Math.floor(bw / 22); i++) g.fillRect(x + 6 + i * 22, h * 0.6 - bh + 8 + r * 26, 9, 12);
+      for (let r = 0; r < Math.floor(bh / 26); r++)
+        for (let i = 0; i < Math.floor(bw / 22); i++) {
+          g.fillRect(x + 6 + i * 22, h * 0.6 - bh + 8 + r * 26, 9, 12);
+          if ((r * 7 + i * 3 + Math.round(x)) % 4) lit.push([x + 6 + i * 22, h * 0.6 - bh + 8 + r * 26]);
+        }
     };
     // A round tree: green, turning, or bare twigs with snow on the boughs.
     const tree = (cx, cy, r) => {
@@ -123,7 +128,106 @@ function paintStreet(type, wx = DEFAULT_WEATHER) {
       g.fillStyle = 'rgba(205,210,218,0.5)';
       g.fillRect(0, 0, w, h);
     }
+    if (wx.night) paintNight(g, w, h, type, lit, grey);
   };
+}
+
+// After dark: the whole view sinks into blue, the windows come on, a moon over the roofs and, away from
+// the city's glow, a scatter of stars.
+function paintNight(g, w, h, type, lit, grey) {
+  g.globalCompositeOperation = 'multiply';
+  g.fillStyle = grey ? '#3a4152' : '#2c3550';
+  g.fillRect(0, 0, w, h);
+  g.globalCompositeOperation = 'source-over';
+  const glow = g.createLinearGradient(0, h * 0.3, 0, h * 0.6);
+  glow.addColorStop(0, 'rgba(255,170,90,0)');
+  glow.addColorStop(1, type === 'urban' ? 'rgba(255,170,90,0.22)' : 'rgba(255,170,90,0.08)');
+  g.fillStyle = glow;
+  g.fillRect(0, h * 0.3, w, h * 0.3);
+  for (const [x, y] of lit) {
+    g.fillStyle = (x + y) % 3 ? '#f2cf7e' : '#e8b866';
+    g.fillRect(x, y, 9, 12);
+  }
+  if (grey) return;
+  if (type !== 'urban')
+    for (let k = 0; k < 70; k++) {
+      g.fillStyle = `rgba(235,240,255,${0.35 + ((k * 29) % 10) / 20})`;
+      const sz = k % 9 ? 1.5 : 2.5;
+      g.fillRect((k * 137.5) % w, (((k * 53) % 97) / 97) * h * 0.24, sz, sz);
+    }
+  const mx = w * 0.82;
+  const my = h * 0.1;
+  const halo = g.createRadialGradient(mx, my, 6, mx, my, 60);
+  halo.addColorStop(0, 'rgba(240,236,214,0.35)');
+  halo.addColorStop(1, 'rgba(240,236,214,0)');
+  g.fillStyle = halo;
+  g.fillRect(mx - 60, my - 60, 120, 120);
+  g.fillStyle = '#efe9d4';
+  g.beginPath();
+  g.arc(mx, my, 13, 0, Math.PI * 2);
+  g.fill();
+}
+
+// Election night's dressing on the street: a run of pennants in the party's colour and paper, a string of
+// bulbs along the same line, and two lawn signs with the candidate's name, all facing the doorway.
+function buildCampaign(ctx) {
+  const group = new THREE.Group();
+  const color = ctx.playerColor || '#555';
+  const from = new THREE.Vector3(-3.8, 3.75, D + 2.5);
+  const to = new THREE.Vector3(3.2, 3.75, D + 2.5);
+  const sag = 0.55;
+  const at = (u) => new THREE.Vector3().lerpVectors(from, to, u).add(new THREE.Vector3(0, -sag * 4 * u * (1 - u), 0));
+  const pos = [];
+  const col = [];
+  const c1 = new THREE.Color(color);
+  const c2 = new THREE.Color('#ece6d6');
+  const N = 22;
+  for (let k = 0; k < N; k++) {
+    const a = at((k + 0.1) / N);
+    const b = at((k + 0.9) / N);
+    const tip = at((k + 0.5) / N).add(new THREE.Vector3(0, -0.32, 0.02));
+    pos.push(a.x, a.y, a.z, tip.x, tip.y, tip.z, b.x, b.y, b.z);
+    const c = k % 2 ? c2 : c1;
+    for (let v = 0; v < 3; v++) col.push(c.r, c.g, c.b);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  geo.computeVertexNormals();
+  group.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, side: THREE.DoubleSide })));
+  const line = new THREE.BufferGeometry().setFromPoints(Array.from({ length: 40 }, (_, k) => at(k / 39)));
+  group.add(new THREE.Line(line, new THREE.LineBasicMaterial({ color: '#2a2622' })));
+  const bulbs = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffd38a', toneMapped: false }), N + 1);
+  const m = new THREE.Matrix4();
+  for (let k = 0; k <= N; k++) bulbs.setMatrixAt(k, m.makeTranslation(at(k / N).add(new THREE.Vector3(0, -0.05, 0))));
+  group.add(bulbs);
+  const last = (ctx.playerName || '').split(' ').slice(-1)[0].toUpperCase();
+  const sign = paintedTexture(512, 360, (g, w, h) => {
+    g.fillStyle = color;
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = '#ece6d6';
+    g.fillRect(0, h * 0.62, w, h * 0.22);
+    g.fillStyle = '#ffffff';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    let size = 150;
+    g.font = `900 ${size}px "Arial Black", "Helvetica Neue", Arial, sans-serif`;
+    while (g.measureText(last).width > w - 50 && size > 40) g.font = `900 ${(size -= 6)}px "Arial Black", "Helvetica Neue", Arial, sans-serif`;
+    g.fillText(last, w / 2, h * 0.33);
+    g.fillStyle = color;
+    g.font = `700 52px "Helvetica Neue", Arial, sans-serif`;
+    g.fillText(ctx.partyShort || '', w / 2, h * 0.735);
+  });
+  for (const [x, z, ry] of [[-4.4, D + 1.5, 0.35], [4.6, D + 1.9, -0.4], [-1.9, D + 4.2, 0.15]]) {
+    const s = new THREE.Group();
+    s.add(new THREE.Mesh(merge([box(0.035, 0.75, 0.035, -0.3, 0.37, 0, '#7a7368'), box(0.035, 0.75, 0.035, 0.3, 0.37, 0, '#7a7368')]), vertexMaterial({ metalness: 0.4, roughness: 0.5 })));
+    s.add(texturedPanel(0.86, 0.6, sign, { y: 0.98, rotY: Math.PI }));
+    s.position.set(x, 0, z);
+    s.rotation.y = ry;
+    group.add(s);
+  }
+  group.visible = false;
+  return group;
 }
 
 // Six local photos: a ribbon cutting, the rink, a field, a parade, the plant gate, the school.
@@ -368,6 +472,10 @@ export function create(ctx) {
   outside.add(hall);
   scene.add(outside);
   const streetLamp = lamp(scene, { color: '#ffd9a0', intensity: 14, distance: 9, x: 3.2, y: 4.6, z: D + 2.6 });
+  // Election night: the campaign's street dressing, and a warm light from the open door onto the crowd.
+  const campaign = buildCampaign(ctx);
+  outside.add(campaign);
+  const doorLight = lamp(scene, { color: '#ffd9a8', intensity: 0, distance: 11, x: 0.4, y: 2.9, z: D + 0.6 });
 
   const me = createFigure(ctx.playerColor || '#555', 'player', wardrobe(ctx.playerId || 'player', ctx.playerColor || '#555'));
   me.setHeadVisible(false);
@@ -381,6 +489,8 @@ export function create(ctx) {
   let visitor = null;
   let visitorKey = null;
   let townHall = false;
+  let night = false;
+  let lastWx = DEFAULT_WEATHER;
 
   return {
     name: 'riding',
@@ -413,9 +523,28 @@ export function create(ctx) {
       streetLamp.intensity = on ? 22 : 14;
       cam.shot(on ? 'townHall' : 'desk', true);
     },
+    // Election night outside the campaign office: dark, the street dressed, the crowd holding your signs.
+    // `mood` leans them in as the count goes your way; `cheer` (0–1) has them on their toes.
+    setElectionNight(on, { mood = 50, signs = [], cheer = 0 } = {}) {
+      if (on !== night) {
+        night = on;
+        this.setTownHall(on, mood, on ? signs : []);
+        campaign.visible = on;
+        crowd.raiseSigns(on ? signs.length : null);
+        if (on) cam.shot('electionNight', true);
+        weatherKey = null;
+        this.setWeather(lastWx);
+      }
+      if (!on) return crowd.setCheer(0);
+      crowd.setPlacards(signs);
+      crowd.setMood(mood);
+      crowd.setCheer(cheer);
+    },
     // The time of year, from the sim's calendar: the view, the ground, what's falling, the light, the coats.
     setWeather(wx) {
-      const key = `${wx.season}:${wx.kind}:${wx.snow}:${wx.wet}:${wx.temp}`;
+      lastWx = wx;
+      if (night) wx = { ...wx, night: 1 };
+      const key = `${wx.season}:${wx.kind}:${wx.snow}:${wx.wet}:${wx.temp}:${night}`;
       if (key === weatherKey) return;
       weatherKey = key;
       const c = street.userData.canvas;
@@ -432,7 +561,16 @@ export function create(ctx) {
       rig.key.color.set(mix(mix('#fff6e8', '#e4ecf8', winter * 0.8), '#e9edf3', grey * 0.6));
       rig.hemi.intensity = 0.6 + grey * 0.2;
       scene.background.set(mix(mix('#9fb6c9', '#868c95', grey * 0.8), '#c4d2de', winter * 0.5));
-      crowd.setCoats(wx.temp < 2 || wx.snow > 0.3 ? 2 : wx.temp < 12 || wx.kind === 'rain' ? 1 : 0);
+      crowd.setCoats(wx.temp < 2 || wx.snow > 0.3 ? 2 : wx.temp < 12 || wx.kind === 'rain' || night ? 1 : 0);
+      // After dark the sky goes, the street lamps and the open door carry the scene.
+      doorLight.intensity = night ? 26 : 0;
+      streetLamp.intensity = night ? 34 : townHall ? 22 : 14;
+      if (night) {
+        rig.key.intensity *= 0.16;
+        rig.key.color.set('#9fb0d8');
+        rig.hemi.intensity = 0.2;
+        scene.background.set('#0c1322');
+      }
     },
     update(dt) {
       visitor?.update(dt);

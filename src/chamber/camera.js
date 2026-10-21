@@ -104,7 +104,7 @@ export function createChamberCamera(camera, el) {
     }
     if (pointers.size === 1) {
       if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > TAP_MOVE) down.moved = true;
-      if (down && !down.moved) return;
+      if ((down && !down.moved) || mode === 'walk') return;
       const h = el.clientHeight || 800;
       if (mode === 'home') {
         home.gYaw += (dx / h) * 1.8;
@@ -149,8 +149,14 @@ export function createChamberCamera(camera, el) {
   el.addEventListener('wheel', onWheel, { passive: false });
 
   const look = new THREE.Vector3();
+  // The first walk in (see walkIn): a path, where the eyes go along it, and how far along we are.
+  let walk = null;
   function apply() {
-    if (mode === 'home') {
+    if (mode === 'walk' && walk) {
+      camera.position.copy(walk.pos);
+      camera.lookAt(walk.look);
+      camera.fov = homeFov;
+    } else if (mode === 'home') {
       camera.position.copy(home.pos);
       const cp = Math.cos(home.pitch - aimDrop);
       look.set(home.pos.x + Math.sin(home.yaw) * cp, home.pos.y + Math.sin(home.pitch - aimDrop), home.pos.z + Math.cos(home.yaw) * cp);
@@ -227,7 +233,71 @@ export function createChamberCamera(camera, el) {
         home.gYaw = home.yaw = home.yaw0;
       }
     },
+    // The first time in: through the doors at the bar, down the aisle on your side past the Clerks' table,
+    // then into your row and down into your seat. Eyes on the Speaker's chair until the turn, then across the
+    // aisle as you sit, ending exactly on the home view. A slight step in the walk until you're seated.
+    walkIn(seat, seconds = 12, onDone = null) {
+      this.setHome(seat);
+      const side = seat.x < 0 ? -1 : 1;
+      const ax = side * 1.3;
+      const eye = 1.68;
+      const pts = [new THREE.Vector3(0, eye, 12.8), new THREE.Vector3(side * 0.4, eye, 10.2)];
+      const turnZ = seat.z + 0.9;
+      if (turnZ < 8.6) pts.push(new THREE.Vector3(ax, eye, Math.min(8.4, (10.2 + turnZ) / 2)));
+      pts.push(new THREE.Vector3(ax, eye, Math.min(9.4, turnZ)));
+      const turnAt = pts.length - 1;
+      pts.push(new THREE.Vector3((ax + home.pos.x) / 2, Math.max(eye, seat.y + 1.95), seat.z + 0.25));
+      pts.push(home.pos.clone());
+      const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+      const lens = curve.getLengths(400);
+      const total = lens[lens.length - 1];
+      // Arc-length fraction of the turn point, to know when the eyes leave the chair.
+      let turnLen = 0;
+      for (let k = 1; k <= turnAt; k++) turnLen += pts[k].distanceTo(pts[k - 1]);
+      const turnU = Math.min(0.9, turnLen / pts.reduce((a, p, k) => (k ? a + p.distanceTo(pts[k - 1]) : 0), 0));
+      const cp = Math.cos(-0.1 - aimDrop);
+      const endLook = home.pos.clone().add(new THREE.Vector3(Math.sin(home.yaw0) * cp, Math.sin(-0.1 - aimDrop), Math.cos(home.yaw0) * cp).multiplyScalar(6));
+      walk = { curve, total, turnU, endLook, chair: new THREE.Vector3(0, 2.1, -11), last: null, t: 0, seconds, onDone, pos: pts[0].clone(), look: new THREE.Vector3(0, 2.1, -11), toChair: new THREE.Vector3() };
+      auto = false;
+      mode = 'walk';
+      modeCbs.forEach((cb) => cb(mode));
+      apply();
+    },
+    get walking() {
+      return mode === 'walk';
+    },
+    // Skip the rest of the walk: straight into the seat.
+    finishWalk() {
+      if (!walk) return;
+      walk.t = walk.seconds;
+    },
     update(dt) {
+      if (walk) {
+        // The clock starts on the first frame drawn (the room swap can hitch), and one slow frame moves the walk
+        // on a little rather than jumping it ahead.
+        const now = performance.now();
+        if (walk.last != null) walk.t = Math.min(walk.seconds, walk.t + Math.min(0.25, (now - walk.last) / 1000));
+        walk.last = now;
+        const x = walk.t / walk.seconds;
+        const u = (1 - Math.cos(Math.PI * x)) / 2;
+        walk.pos.copy(walk.curve.getPointAt(u));
+        walk.pos.y += Math.sin(u * walk.total * 2 * Math.PI / 1.5) * 0.014 * Math.min(1, (1 - u) * 6);
+        const k = clamp((u - walk.turnU * 0.85) / (1 - walk.turnU * 0.85), 0, 1);
+        // Eyes on the chair, tipped down so the benches sit above the caption sheet (more so in portrait).
+        const c = walk.chair;
+        const yaw = Math.atan2(c.x - walk.pos.x, c.z - walk.pos.z);
+        const pitch = Math.atan2(c.y - walk.pos.y, Math.hypot(c.x - walk.pos.x, c.z - walk.pos.z)) - (aimDrop ? 0.34 : 0.06);
+        const cp = Math.cos(pitch);
+        walk.toChair.set(walk.pos.x + Math.sin(yaw) * cp * 6, walk.pos.y + Math.sin(pitch) * 6, walk.pos.z + Math.cos(yaw) * cp * 6);
+        walk.look.lerpVectors(walk.toChair, walk.endLook, k * k * (3 - 2 * k));
+        if (walk.t >= walk.seconds) {
+          const done = walk.onDone;
+          walk = null;
+          mode = 'overview';
+          setMode('home');
+          done?.();
+        }
+      }
       if (auto) {
         autoT += dt;
         goal.azimuth = Math.sin(autoT * 0.1) * 0.55;
