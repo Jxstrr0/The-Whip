@@ -2,14 +2,45 @@
 import { t, esc, mpName, partyColor, partyShort } from './text.js';
 import { fillLine } from '../sim/meetings.js';
 import { renderDealTable } from './dealTable.js';
+import { tuning } from '../sim/config.js';
+import { prediction } from '../sim/count.js';
+import { canUse, likelyAbsentees, budget, nextVote } from '../sim/tools.js';
+import { countLine } from './text.js';
 
-export function createOfficeUI(root, { getState, dispatch, pickMp }) {
+export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
   const sheet = document.createElement('section');
   sheet.className = 'sheet office-sheet hidden';
   root.appendChild(sheet);
   let local = null;
   let localFor = null;
   let lastNote = null;
+  let deskNote = null;
+
+  // The other side's whip you pair through: the biggest caucus that isn't yours.
+  function oppositeParty(state) {
+    const mine = state.mps[state.player.mpId].party;
+    return Object.values(state.parties).filter((p) => p.id !== mine && p.chiefWhip).sort((a, b) => b.seats - a.seats)[0] || null;
+  }
+
+  // From act 3 the desk shows the count; from act 4, who's asking for leave and who needs pairing.
+  function whipsDesk(state) {
+    const T = tuning().tools;
+    const bill = nextVote(state);
+    if (!bill || state.player.act < T.officeFilesFromAct) return '';
+    const b = budget(state);
+    let html = `<h3>${t('count.title')} · ${esc(bill.title)}</h3>${countLine(prediction(state, bill.id))}<p class="muted budget">${esc(t('tool.budget', { min: b.time, fav: b.favors }))}</p>`;
+    if (deskNote) html += `<p class="note good">${esc(deskNote)}</p>`;
+    if (canUse(state, 'leave').ok || canUse(state, 'pair').ok) {
+      const reqs = (state.leaveRequests || []).filter((r) => r.billId === bill.id);
+      const paired = new Set(state.pairs.filter((x) => !x.broken && (!x.bill || x.bill === bill.id)).flatMap((x) => [x.a, x.b]));
+      const away = likelyAbsentees(state, bill.id).filter((m) => !paired.has(m.id)).slice(0, 4);
+      const opp = oppositeParty(state);
+      html += `<h3>${t('tool.pairsTitle')}</h3>`;
+      if (reqs.length) html += `<p class="muted">${t('tool.leaveRequests')}</p><ul class="book-list">${reqs.map((r) => { const m = state.mps[r.mpId]; return `<li><span class="bar" style="background:${partyColor(state, m)}"></span><span class="main"><b>${esc(mpName(m))}</b><small>${esc(t('tool.leaveReason', { reason: r.reason, bill: bill.title }))}</small></span><button class="btn" data-leave="${m.id}" data-grant="1">${t('tool.grant')}</button><button class="btn" data-leave="${m.id}" data-grant="0">${t('tool.refuse')}</button></li>`; }).join('')}</ul>`;
+      if (opp && canUse(state, 'pair').ok) html += away.length ? `<p class="muted">${t('tool.absentees')}</p><ul class="book-list">${away.map((m) => `<li><span class="bar" style="background:${partyColor(state, m)}"></span><span class="main"><b>${esc(mpName(m))}</b><small>${esc(t('tool.attendance', { n: m.attendance }))}</small></span><button class="btn" data-pair="${m.id}">${esc(t('tool.pair', { party: opp.short }))}</button></li>`).join('')}</ul>` : `<p class="muted">${t('tool.nobody')}</p>`;
+    }
+    return html;
+  }
 
   function slotDots(e) {
     const full = Math.floor(e.slots - e.used);
@@ -40,11 +71,22 @@ export function createOfficeUI(root, { getState, dispatch, pickMp }) {
       <header class="card-head"><div class="who"><h2>${t('office.title')}</h2><p>${t('office.slots')}: <span class="slots">${slotDots(e)}</span></p></div></header>
       ${whip}
       <h3>${t('office.walkIns')}</h3><ul class="book-list">${rows}</ul>
+      ${whipsDesk(state)}
       <div class="choices">
         <button class="btn" data-act="invite" ${left < 1 ? 'disabled' : ''}>${t('office.invite')}</button>
         <button class="btn" data-act="call" ${left < 0.5 ? 'disabled' : ''}>${t('office.call')}</button>
+        <button class="btn" data-act="ledger">${t('tool.ledger')}</button>
         <button class="btn primary" data-act="end">${t('office.end')}</button>
       </div>`;
+    const bill = nextVote(state);
+    sheet.querySelectorAll('[data-leave]').forEach((b) => (b.onclick = () => {
+      deskNote = dispatch({ type: 'useTool', tool: 'leave', mpId: b.dataset.leave, billId: bill.id, grant: b.dataset.grant === '1' })?.note || null;
+    }));
+    sheet.querySelectorAll('[data-pair]').forEach((b) => (b.onclick = () => {
+      const r = dispatch({ type: 'useTool', tool: 'pair', mpId: b.dataset.pair, billId: bill.id, withParty: oppositeParty(state).id });
+      deskNote = r?.note || (r?.reason === 'favor' ? 'No favours left to call in this week.' : null);
+    }));
+    sheet.querySelector('[data-act="ledger"]').onclick = () => onLedger?.();
     sheet.querySelector('[data-act="whip"]')?.addEventListener('click', () => dispatch({ type: 'meet', whipCall: true }));
     sheet.querySelectorAll('[data-meet]').forEach((b) => (b.onclick = () => dispatch({ type: 'meet', mpId: b.dataset.meet })));
     sheet.querySelector('[data-act="invite"]').onclick = () => pickMp(t('office.pickInvite'), (id) => dispatch({ type: 'invite', mpId: id }));

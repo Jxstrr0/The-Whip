@@ -428,3 +428,32 @@ The art pass (`ART-PASS.md`) is done: nine steps, nine merged PRs, all on the li
 **Left alone on purpose:** audio (stage 9), the colour-blind setting (stage 9; the shaped marks and icons already read without colour), the tier-2 corner office (stage 7), lettering on placards, a fully custom dropdown list.
 
 Next: HANDOFF stage 5, the whip's tools, the count board's marks, pairing and rival whips.
+
+---
+
+## 2026-10-21 · Stage 5: whip tools, the count and rival whips
+
+**What was built**
+
+- **The whip's tools** (`src/sim/tools.js`), gated by act exactly as the design doc's table says: *make the case* (act 1), *chase attendance during the bells* (act 3), *pair* and *grant or refuse leave* (act 4), *committee seats*, *Question Period slots*, *riding projects* (government only), *a word about their nomination*, *a free vote* and *expulsion* (act 5, expulsion with the leader behind you), and *leverage* (any act, once you know a secret). Each costs House time or a favour from a weekly budget (90 minutes and 2 favours, in `tuning.tools`), pushes on the member's decision the way the design doc describes, carries its risk (a refused slot can leak, leverage can get out, a nomination threat raises the floor-crossing risk), and lands in the ledger with a line in the feed.
+- **The count board's marks** (`src/sim/count.js`). From act 3 the whip's office files mark your caucus every sitting morning: firm, leaning, lost or away for each upcoming vote, against the number needed. Marks go stale after ten sitting days and fall out of the count, so a whip who hasn't checked lately sees "unmarked" and knows to go and find out. The count shows on the morning order paper, on the bells sheet and at your desk in the office.
+- **Rival whips** (`src/sim/rivals.js`). Every other party's chief whip has a style (fixer, enforcer or operator, set by the seed) and a weekly budget scaled by caucus size. Each Monday they work your caucus: poach the wobbliest member before a whipped vote, leak to the paper when you've given them something to use, dig for your skeleton (two to six weeks depending on how bad it is), and test whether the pairs you've made with them hold. Everything they do is in the feed and the ledger, so you can see who's working you.
+- **The ledger** (`src/ui/ledger.js`): what you owe, what you're owed, pairs, the pressure you've applied, the other whips' moves and settled promises with KEPT and BROKEN stamps. From the ☰ menu, the office, or an MP's card (filtered to them).
+- **In the rooms:** the bells sheet lists who isn't in the chamber yet with a *Chase* button (found: they're in their seat; not found: the doors close on you and you vote the line); the office evening shows the count, leave requests to grant or refuse, likely absentees to pair through the biggest other party's whip, and your remaining budget; the MP card offers whichever tools the act allows; the deal table lets you put leave (act 4) and QP slots, committee seats and projects (act 5) on the table yourself.
+- `?act=N` starts a debug game in a later act, so the tools can be tried without playing three Parliaments first.
+
+**Checks** (HANDOFF stage 5, all five)
+
+- Each tool flips at least one MP in a set scenario: persuade, chase, pair, leave, leverage, nomination threat, riding project, QP slot, free vote and expulsion all have a test. Gating by act has a test.
+- Every favour, promise, pair and threat shows in the ledger from both sides (yours and the rival whips').
+- The count board's prediction matched the division exactly (48–69) when every mark was current, within the two-vote allowance.
+- Rival whips act every week: in a ten-week scenario a poach, a leak and a pair test all happened and all reached the feed.
+- `tests.html`: 43 of 43. The guided first week still plays through the real buttons with no console errors; an act-4 and an act-5 game walked to the office, the ledger and the bells with no console errors.
+
+**Things to know / decisions I made**
+
+- **Nudges, not mind control.** Tools add to the "pressure" term of the decision model (the design doc's X), so a member who is far gone stays gone unless you use leverage or a nomination threat, which are weighted to flip anyone and cost accordingly.
+- **The prediction uses the marks' direction at full weight** and shows "leaning" separately as the uncertainty. That keeps the arithmetic honest when the marks are fresh and makes stale marks the thing to worry about.
+- **Rival moves are visible but don't stop you yet.** `rivalMove` is in the pacing stop list; wiring a stop for the big ones (a found skeleton, a broken pair before a confidence vote) belongs with stage 8's consequences.
+- **The first week is a honeymoon:** rivals don't work a rookie in week one, so the guided week is unchanged.
+- Files beyond the handoff's layout: `src/sim/count.js` (the marks and the prediction; the handoff had them inside the count board UI).

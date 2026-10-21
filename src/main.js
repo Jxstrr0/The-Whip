@@ -26,6 +26,8 @@ import { createOfficeUI } from './ui/talk.js';
 import { createCaucusUI } from './ui/caucusUI.js';
 import { createRidingUI } from './ui/ridingUI.js';
 import { createStartMenu, createGameMenu } from './ui/menus.js';
+import { createLedger } from './ui/ledger.js';
+import { canUse, nextVote } from './sim/tools.js';
 import { t, partyColor } from './ui/text.js';
 import { stageLabel } from './sim/vote.js';
 
@@ -136,28 +138,60 @@ function buildWorld() {
     book.open({ title });
   };
 
+  let ledger;
+  let toast;
   card = createMpCard(ui, {
     getState,
     onClose: () => chamberRoom()?.select(null),
     actions(mpId) {
       const state = getState();
-      const e = state.evening;
-      if (state.flow.pending?.kind !== 'office' || !e || mpId === state.player.mpId) return [];
-      const left = e.slots - e.used;
+      if (mpId === state.player.mpId) return [];
       const out = [];
-      if (left >= 1) out.push({ label: t('card.invite'), primary: true, run: () => (card.hide(), dispatch({ type: 'invite', mpId })) });
-      if (left >= 0.5) out.push({ label: t('card.call'), run: () => (card.hide(), dispatch({ type: 'call', mpId })) });
+      const kind = state.flow.pending?.kind;
+      const e = state.evening;
+      if (kind === 'office' && e) {
+        const left = e.slots - e.used;
+        if (left >= 1) out.push({ label: t('card.invite'), primary: true, run: () => (card.hide(), dispatch({ type: 'invite', mpId })) });
+        if (left >= 0.5) out.push({ label: t('card.call'), run: () => (card.hide(), dispatch({ type: 'call', mpId })) });
+      }
+      // The whip's tools, where the act allows and there's a vote to work on.
+      const m = state.mps[mpId];
+      const own = m.party === state.mps[state.player.mpId].party;
+      const bill = nextVote(state);
+      const tool = (id, label, extra = {}) => {
+        if (!canUse(state, id, mpId).ok) return;
+        out.push({
+          label,
+          run: () => {
+            card.hide();
+            const r = dispatch({ type: 'useTool', tool: id, mpId, billId: bill?.id, ...extra });
+            if (r?.note) toast.show(r.note);
+          },
+        });
+      };
+      if (own && bill && kind !== 'meeting') tool('persuade', t('tool.persuade'));
+      if (own && bill && kind === 'office') {
+        tool('leverage', t('tool.leverage'));
+        tool('threatenNomination', t('tool.threatenNomination'));
+        tool('qpSlot', t('tool.qpSlot'), { give: true });
+        const c = Object.values(state.committees).find((x) => x.interests.some((i) => m.interests.includes(i)));
+        if (c) tool('committeeSeat', t('tool.committeeSeat'), { give: true, committeeId: c.id });
+        tool('ridingProject', t('tool.ridingProject'));
+      }
+      out.push({ label: t('tool.ledger'), run: () => (card.hide(), ledger.open(mpId)) });
       return out;
     },
   });
 
-  const toast = createToast(ui);
+  toast = createToast(ui);
+  ledger = createLedger(ui, { getState });
   const gameMenu = createGameMenu(ui, {
     getState,
     onQuit: () => {
       saveGame(getState());
       location.href = location.pathname;
     },
+    onLedger: () => ledger.open(),
   });
   hud = createHud(ui, {
     buttons: [
@@ -190,11 +224,12 @@ function buildWorld() {
   });
   const countBoard = createCountBoard(ui, {
     getState,
+    dispatch,
     getRoom: chamberRoom,
     onChoose: (choice) => dispatch({ type: 'resolve', choice }),
     onContinue: () => dispatch({ type: 'advance' }),
   });
-  const officeUI = createOfficeUI(ui, { getState, dispatch, pickMp });
+  const officeUI = createOfficeUI(ui, { getState, dispatch, pickMp, onLedger: () => ledger.open() });
   const caucusUI = createCaucusUI(ui, { getState, dispatch, getRoom: () => (rooms.name === 'caucus' ? rooms.room : null) });
   const ridingUI = createRidingUI(ui, { getState, dispatch });
 
@@ -249,6 +284,7 @@ function buildWorld() {
     ridingUI.render(state);
     card.refresh();
     book.refresh();
+    ledger.refresh();
     // Meeting outcomes, calls and deliveries show briefly as a toast.
     const fresh = state.log.slice(lastLog).filter((l) => l.kind === 'meeting' || l.kind === 'career');
     lastLog = state.log.length;
@@ -347,7 +383,7 @@ async function boot() {
   const seed = params.get('seed');
   if (seed) {
     // Debug and shared-seed starts skip the menu; ?guided=1 adds the first-week walkthrough.
-    return startGame(newGame({ seed, party: params.get('party') || undefined, guided: params.get('guided') === '1' }));
+    return startGame(newGame({ seed, party: params.get('party') || undefined, guided: params.get('guided') === '1', act: params.get('act') }));
   }
   const menu = createStartMenu(document.getElementById('ui'), {
     info: saveInfo(1),

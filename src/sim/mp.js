@@ -50,7 +50,8 @@ export function baseScore(state, mp, bill) {
     R: ridingBenefit(state, mp, bill),
     D: ledgerTerm(state, mp, bill, lineSign),
     Q: 0,
-    X: state.leverage?.[mp.id]?.[bill.id] || 0,
+    // Pressure from outside the MP's own reasons: leverage used on them, and the nudges of whips (yours and rivals').
+    X: (state.leverage?.[mp.id]?.[bill.id] || 0) + (state.nudges?.[mp.id]?.[bill.id] || 0),
     C: voterCost(mp, bill),
   };
   const q = mp.clique && state.cliques[mp.clique];
@@ -99,6 +100,12 @@ export function intentions(state, bill, rng, overrides = {}) {
     let vote = scoreToVote(score, b.abstainLine);
     // Abstainers who have a choice usually find a reason to be elsewhere.
     if (vote === 'abstain') present = false;
+    // The whip's work: a member chased down during the bells is in their seat; one given leave is not;
+    // one refused leave sometimes doesn't turn up anyway.
+    const leave = state.leaves?.[bill.id]?.[m.id];
+    if (state.chased?.[bill.id]?.[m.id]) present = true;
+    else if (leave === 'granted') present = false;
+    else if (leave === 'blocked' && rng.next() < tuning().tools.blockedNoShow) present = false;
     if (overrides[m.id]) {
       vote = overrides[m.id] === 'absent' ? 'abstain' : overrides[m.id];
       present = overrides[m.id] !== 'absent';
