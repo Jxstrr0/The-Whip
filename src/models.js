@@ -31,20 +31,33 @@ function materials() {
   return mats;
 }
 
+// Each pack: its scale to metres, its file type, and whether its materials are swapped for the game's
+// surfaces (Kenney's flat colours) or kept (KayKit's painted atlas).
+export const PACKS = {
+  furniture: { scale: 1.9, ext: 'glb', retint: true },
+  street: { scale: 5, ext: 'gltf', retint: false },
+};
+
 // Fetch and prepare a template once: swap materials by name, give every mesh UVs in metres (after scale) and
 // vertex colours of white so the textured materials tint correctly.
-async function template(pack, name, scale) {
+async function template(pack, name) {
   const key = `${pack}/${name}`;
   if (templates.has(key)) return templates.get(key);
-  const p = loader.loadAsync(`${BASE}${pack}/${name}.glb`).then((gltf) => {
+  const { scale, ext, retint } = PACKS[pack];
+  const p = loader.loadAsync(`${BASE}${pack}/${name}.${ext}`).then((gltf) => {
     const root = gltf.scene;
     const M = materials();
     root.traverse((o) => {
       if (!o.isMesh) return;
-      const n = o.material?.name || '';
-      o.material = M[n] || M.wood;
       o.geometry = o.geometry.clone();
       o.geometry.scale(scale, scale, scale);
+      if (!retint) {
+        o.material.roughness = 0.85;
+        o.material.envMapIntensity = 0.4;
+        return;
+      }
+      const n = o.material?.name || '';
+      o.material = M[n] || M.wood;
       worldUVs(o.geometry);
       const count = o.geometry.attributes.position.count;
       o.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(count * 3).fill(1), 3));
@@ -59,8 +72,6 @@ async function template(pack, name, scale) {
   return p;
 }
 
-export const PACKS = { furniture: 1.9 };
-
 // Place a prop. Returns a group added at once (so disposal and visibility work immediately); the model
 // appears inside it when loaded. `onReady` gets the group, for anything that needs the loaded size.
 export function placeModel(parent, name, { pack = 'furniture', x = 0, y = 0, z = 0, rotY = 0, scale = 1, onReady } = {}) {
@@ -71,7 +82,7 @@ export function placeModel(parent, name, { pack = 'furniture', x = 0, y = 0, z =
   parent.add(holder);
   let alive = true;
   holder.userData.cancel = () => (alive = false);
-  template(pack, name, PACKS[pack] || 1).then((root) => {
+  template(pack, name).then((root) => {
     if (!alive) return;
     const inst = root.clone(true);
     holder.add(inst);

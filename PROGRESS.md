@@ -343,3 +343,25 @@ The first step of `ART-PASS.md`. Nothing in the rooms was redesigned yet; this i
 
 - The visitor still walks in from the door, which takes about two seconds; the whip, in the reversal, is already seated when you arrive.
 - The tier-2 corner office (Acts 4–5) still builds but isn't dressed; that comes with stage 7.
+
+---
+
+## 2026-10-21 · Art pass V5: the riding
+
+**What changed**
+
+- **The person is the subject.** The visitor's chair now sits at an open three-quarter angle so you see them, not a chair back; the reporter stays on their feet. The camera looks over your desk with the visitor's head in the top third of a portrait screen.
+- **A real storefront.** The glass is glass now: a faint pane with the riding's name and "Constituency office · walk-ins welcome" lettered on it, read from the street (so mirrored from your desk), in an oak frame with mullions, a stall riser, a fascia and a glass door with a brass handle. Daylight comes in through it.
+- **A street outside**, in two layers: real props on a pavement with a kerb and a road (two street lights, a bench, a hydrant, a bin, bushes, a parked sedan, from KayKit's City Builder Bits, CC0, 136 KB, listed in `assets/LICENSES.md`), and a painted skyline far behind that changes with the riding type: a downtown block, a suburb with trees, a prairie town with elevators, a northern settlement with spruce.
+- **Inside**, the desk and chairs and four waiting chairs from the Kenney kit, a bookcase with a coffee machine on it, a plant by the door, a notice board with local notices, and a wall of six local photos: a ribbon cutting, the rink, a field, a parade, the plant gate, the school.
+- **The town hall** happens on the pavement in front of the office, under the street light. The crowd lean in when they're with you, hang back when they're not, and below 35 four of them raise blank placards.
+
+**Checks**
+
+- Guided week through the real buttons in a headless phone browser: no console errors. `tests.html`: 33 of 33.
+- The desk shot and the town hall checked in portrait and landscape, at a friendly and a hostile crowd mood.
+
+**Things to know**
+
+- Placards are blank boards on purpose; what the crowd is saying is in the sheet. Lettering them is a later flourish if you want it.
+- The street props keep KayKit's own painted colours; the furniture is retinted to the game's palette. Both read as one set under the same light.
