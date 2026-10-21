@@ -64,7 +64,7 @@ export function aimDetail(state) {
   };
   const either = a.act === 4 ? `<p class="muted small">${t('aim.either')}</p>` : '';
   const counters = a.act === 4 ? `${a.counters.slice(0, 2).map(row).join('')}${either}${a.counters.slice(2).map(row).join('')}` : a.counters.map(row).join('');
-  return `<p class="aim-goal">${esc(t('aim.' + a.act))}</p>${counters}${a.waiting ? `<p class="note">${esc(t('aim.wait.' + a.act))}</p>` : ''}<p class="aim-how">${esc(t('aim.how.' + a.act, vars))}</p>`;
+  return `<p class="aim-goal">${esc(t('aim.' + a.act))}</p>${counters}${a.waiting ? `<p class="note">${esc(t('aim.wait.' + a.act))}</p>` : ''}${a.fell ? `<p class="note">${esc(t('aim.fell'))}</p>` : ''}<p class="aim-how">${esc(t('aim.how.' + a.act, vars))}</p>`;
 }
 
 export function esc(s) {
