@@ -485,7 +485,18 @@ async function boot() {
   showPreview(menu.querySelector('[name="seed"]').value.trim());
 }
 
-boot().catch((err) => {
-  console.error(err);
-  document.getElementById('ui').innerHTML = `<div class="fatal">Something went wrong starting the game.<br><small>${String(err.message || err)}</small></div>`;
-});
+// The loading screen is plain HTML so it shows before any script runs; it fades once there is something behind it.
+function ready() {
+  const el = document.getElementById('loading');
+  if (!el) return;
+  el.classList.add('off');
+  setTimeout(() => el.remove(), 500);
+}
+
+boot()
+  .then(ready)
+  .catch((err) => {
+    console.error(err);
+    ready();
+    document.getElementById('ui').innerHTML = `<div class="fatal">Something went wrong starting the game.<br><small>${String(err.message || err)}</small></div>`;
+  });
