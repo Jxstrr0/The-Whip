@@ -1,8 +1,8 @@
 // The articulated figure for the office and the riding: the crowds' silhouette with elbows, knees, hands and
 // shoes on pivots, so it can walk in, sit, and hold a pose that says how the meeting is going.
 import * as THREE from 'three';
-import { blobMaterial, figureMaterial } from '../kit3d.js';
-import { lookFor, shade, HEAD_R } from '../figures.js';
+import { blobMaterial, figureMaterial, merge } from '../kit3d.js';
+import { lookFor, shade, HEAD_R, tieParts, pinPart } from '../figures.js';
 
 const HIP = 0.86;
 const THIGH = 0.39;
@@ -20,10 +20,12 @@ function hanging(r, len, mat) {
   return m;
 }
 
-export function createFigure(color, mpId = 'x') {
+// `outfit` is a wardrobe() result: its suit replaces `color`, and its tie and pin are worn; without one the
+// figure is a plain suit (the player seen from behind, a constituent).
+export function createFigure(color, mpId = 'x', outfit = null) {
   const look = lookFor(mpId);
   const mats = {
-    suit: figureMaterial({ color: shade(color, mpId), roughness: 0.82 }),
+    suit: figureMaterial({ color: outfit?.suit || shade(color, mpId), roughness: 0.82 }),
     skin: figureMaterial({ color: look.skin, roughness: 0.6 }),
     hair: figureMaterial({ color: look.hair, roughness: 0.95 }),
     shirt: figureMaterial({ color: '#e9e3d8', roughness: 0.7 }),
@@ -55,6 +57,14 @@ export function createFigure(color, mpId = 'x') {
   cap.visible = look.hairStyle > 0;
   head.add(skull, cap);
   body.add(torso, shoulders, collar, neck, head);
+  if (outfit?.tie) {
+    mats.tie = figureMaterial({ color: outfit.tie, roughness: 0.55 });
+    body.add(new THREE.Mesh(merge(tieParts(SHOULDER_H)), mats.tie));
+  }
+  if (outfit?.pin) {
+    mats.pin = figureMaterial({ color: outfit.pin, roughness: 0.3, metalness: 0.6 });
+    body.add(new THREE.Mesh(pinPart(SHOULDER_H), mats.pin));
+  }
 
   const arms = [-1, 1].map((s) => {
     const sh = new THREE.Group();
@@ -153,8 +163,8 @@ export function stride(f, t) {
 }
 
 // A visitor that follows waypoints from the door to a chair. update(dt) animates; `seated` tells the camera.
-export function createVisitor(scene, { color, mpId, path, seat, facing }) {
-  const f = createFigure(color, mpId);
+export function createVisitor(scene, { color, mpId, path, seat, facing, outfit = null }) {
+  const f = createFigure(color, mpId, outfit);
   scene.add(f.group);
   let phase = 'entering';
   let mood = 'cooperative';

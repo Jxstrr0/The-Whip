@@ -3,7 +3,7 @@
 // touches the sim.
 import * as THREE from 'three';
 import { createFigure, poseFigure, stride } from '../office/visitor.js';
-import { createFigureCrowd, lookFor } from '../figures.js';
+import { createFigureCrowd, lookFor, wardrobe } from '../figures.js';
 import { GEOMETRY as G } from './layout.js';
 import { box, cylinder, merge, vertexMaterial } from '../kit3d.js';
 import { tuning } from '../sim/config.js';
@@ -54,7 +54,7 @@ export function createChamberLife({ scene, seats, figures, getState, colorOf }) 
 
   function makeWalker(mpId, pts, onDone) {
     const state = getState();
-    const f = createFigure(colorOf(state.mps[mpId]), mpId);
+    const f = createFigure(colorOf(state.mps[mpId]), mpId, wardrobe(mpId, colorOf(state.mps[mpId]), { bench: true }));
     poseFigure(f, 'walking', 1);
     f.group.position.set(...pts[0]);
     scene.add(f.group);
