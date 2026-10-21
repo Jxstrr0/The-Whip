@@ -13,7 +13,7 @@ function pickName(list) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
-export function createStartMenu(root, { info, onContinue, onNew }) {
+export function createStartMenu(root, { info, onContinue, onNew, onSeed }) {
   const D = data();
   const el = document.createElement('section');
   el.className = 'start-menu';
@@ -47,6 +47,7 @@ export function createStartMenu(root, { info, onContinue, onNew }) {
   };
   el.querySelector('[name="party"]').onchange = blurb;
   blurb();
+  el.querySelector('[name="seed"]').addEventListener('input', (e) => onSeed?.(e.target.value.trim()));
   el.querySelector('[data-act="continue"]')?.addEventListener('click', () => {
     el.remove();
     onContinue();
