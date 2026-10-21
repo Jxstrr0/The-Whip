@@ -546,3 +546,32 @@ Next: HANDOFF stage 5, the whip's tools, the count board's marks, pairing and ri
 - **Campaigns are one choice, not a mini-game.** Five weeks of campaign are a sheet and a consequence. The numbers (standing, trust, support) are in `data/tuning.json` under `election.campaign`.
 - **Handover window** is 26 weeks (`confidence.handoverWeeks`); agreements last 60 weeks; the pressure meter replaces you at 100. All in `data/tuning.json` under `confidence`, `media` and `election`.
 - **Kelbo's note on the target phone:** it has headroom, so the stage 9 performance pass keeps the visual budget up rather than trimming figures, shadows or textures.
+
+## 2026-10-21 · Stage 9: modes and polish
+
+The last HANDOFF stage. The game now has a title page worth landing on, three ways in besides a career, saves that survive anything, sound, settings, and a measured performance budget. With this merged, every stage in `HANDOFF.md` and `ART-PASS.md` is done.
+
+**What was built**
+
+- **Three scenarios** (`src/sim/modes.js`, `data/scenarios.json`). *Three short*: Act 4, deputy whip in a minority, the party that was propping the government up walked out on Friday and the confidence bill on Thursday is three votes short, with two of ours away. Four days to find them with the tools you have (persuade, chase at the bells, pairs and leave). *The room turns*: Act 5, Chief Whip, a Wednesday caucus in open revolt; hold the room or lose the leader. *Home truths*: Act 1, a rookie whose riding hates the Monday bill. Each opens on a brief (a brass-ruled paragraph on the morning sheet) and closes on a verdict with its own stamp on the weekly review or, if the government falls first, on the dissolution sheet. The headless bot loses *Three short* on its own, which is right: it's a whip's squeeze, not a free week.
+- **Shared seed and daily seed.** The title page takes a seed from a friend (same seed, same Parliament, same week, proven by the Parliament hash) and offers today's Parliament, one per calendar day, the same for everyone. Both play as careers in whatever slot you pick.
+- **Three save slots, export and import** (`src/save.js`). Every game lives in a slot and autosaves there; the title page shows who's in each slot, their act and week, and offers Load, Export (to the clipboard, or into a text box if the clipboard is refused) and Delete with a confirm. Paste an export into the Import box to carry a game between phones. Saves are versioned (now 2); older saves migrate on load, and anything that isn't a save is refused with a plain message.
+- **The guided first week** reads as one. Besides the walkthrough notes from Stage 4b, the evening sheet, the division sheet and the Friday riding visit each carry a short hint in week 1 of a new career (not in scenarios). A naive walker that only ever presses the most obvious button gets through the first week with zero stalls on three seeds.
+- **Sound** (`src/audio.js`). Everything is synthesised in WebAudio, so no audio file is ever downloaded: a room tone for each room (the chamber's benches with the odd swell, the smaller caucus room, the office with a clock ticking, the riding's wind with a car going by and the odd bird), the division bells (an electric bell, hammered, every 1.1 s while the doors are open), the Speaker's gavel (two knocks) and a paper tick on every button. It starts on the first tap, follows room changes, pauses when the tab is hidden and never reads game state. Levels live in one table at the top of the file.
+- **Settings** (`src/settings.js`, the Settings sheet from the title page and the game menu). Sound on/off, volume, **colour-blind party colours** (the Okabe-Ito palette from `data/parties.json`, plus blue/vermilion for the yea/nay marks; the room you're in redraws at once) and **larger text** (the whole Order Paper layer scales up by 12%). Stored under `whip:settings`, bad values ignored.
+- **Performance pass, visuals kept.** Nothing was trimmed. Measured instead: cold load is 1.4 MB of our own files (106 requests: 529 KB of code, 472 KB of textures, 229 KB of data, 108 KB of fonts) plus Three.js from the CDN, which the browser caches. Cycling office → caucus → riding → chamber four times leaves the renderer at exactly the same geometry, texture and program counts each lap (41 / 19 / 15), so leaving a room frees it. Draw calls per room: office 47, riding 45, chamber 36, caucus 23.
+
+**Checks** (HANDOFF stage 9, all four)
+
+- A save survives closing and reopening the browser: a new career in slot 2 was played one stop in, the tab was closed, a fresh tab showed *Continue · Week 1, Year 1 · Career* and resumed on the same seed, day and stop.
+- A new player finishes the first week without help: the naive walker reached week 2 with zero stalls on three seeds, hints showing at the office, the bells and the riding.
+- Cold load under 10 MB; switching rooms frees the previous scene: see the numbers above.
+- Three scenarios, shared-seed entry and the daily seed all start correctly: each scenario opens on the right act, role, week, bill and count and settles to a verdict; the same seed twice gives the same Parliament hash; the daily seed changes only with the calendar day. `tests.html`: 69 of 69. Title page, settings sheet, scenario brief and verdict, and the saves list were checked at phone size in portrait and landscape with no console errors.
+
+**Things to know / decisions I made**
+
+- **"Ottawa" slipped into four lines** (two riding buttons, one hint, one whip's note). Renamed to the game's capital, Ostrava, which the content has used since Stage 4. Ostrava is also a real city in Czechia; if that bothers you, it's one name in `data/world.json` and a handful of content lines.
+- **Sound can't be heard in the headless checks**, so it was rendered offline and measured: room tones sit between -30 and -36 dBFS, bells peak at 0.31, the gavel at 0.35, nothing clips. Worth a listen on the phone; the table at the top of `src/audio.js` is the place to turn anything up or down.
+- **Larger text uses CSS `zoom` on the UI layer**, which every current phone browser supports. The rooms behind don't scale.
+- **The colour-blind palette** is the Okabe-Ito set: blue, vermilion, yellow, bluish green, reddish purple for a fifth party, grey for independents. The paper's own green stays as it is.
+- **Still owed by you:** the phone frame-rate check with `?debug=1`, a listen to the sound, and Longlight's colours for `--brand`.
