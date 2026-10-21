@@ -2,7 +2,12 @@
 // in-game menu.
 import { t, esc } from './text.js';
 import { data } from '../sim/config.js';
-import { randomSeed } from '../sim/modes.js';
+
+// A fresh seed for the form. The seed may come from anywhere (this is UI, not sim); everything after it is deterministic.
+function randomSeed() {
+  const n = Math.floor(Math.random() * 9000) + 1000;
+  return `CALEDOR-${n}`;
+}
 
 function pickName(list) {
   return list[Math.floor(Math.random() * list.length)];

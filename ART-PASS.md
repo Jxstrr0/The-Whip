@@ -1,0 +1,157 @@
+# The Whip: the art pass
+
+The plan for taking the four rooms from whitebox to the look the design doc asks for: **"semi-realistic oak, green leather and stone under baked lighting."** It is written for the next build sessions (Opus 5.5). Read `CLAUDE.md` first; everything there still applies. This file says *what to build, in what order, and how to know each step is done*.
+
+The sim is finished for this slice and is not touched by this pass except where a step says so. The game must stay playable on `main` after every step.
+
+---
+
+## 1. Where we are
+
+Diagnosis from playing the live build at phone size (390 × 844 portrait and landscape):
+
+| Area | What's wrong now |
+| --- | --- |
+| Materials | Every surface is a flat vertex colour under three lights. No grain, no shading variation, no contact shadows. The rooms read as a greybox with colours. |
+| Lighting | One point light makes a bright hotspot on the chamber ceiling. The office and caucus are evenly lit and flat. Nothing is "baked". |
+| Figures | A capsule and a sphere. No shoulders, neck, hair or collar. Crowds have one skin tone per hash but no other variation, so 120 MPs look like 120 pegs. Moods in the office rely on arm angles that are hard to read at phone size. |
+| Framing | The chamber opens on a map view from above the bar, so your own seat means nothing and MPs are 4 px tall. The office "host" shot is mostly window and chair backs. In the riding, the visitor chair's back fills the middle of the frame. The player's own head pokes into the bottom corner in the office and riding. |
+| Motion | Hard cuts between rooms. Nobody moves unless a visitor is walking in. The division is the one choreographed moment and it needs more weight. |
+| UI | Competent but generic: system sans, grey panels, gold used for everything from the primary button to toasts. Toasts cover the figure you are talking to. |
+
+What's right and must be kept: one renderer, instancing, tiny draw counts (chamber ~16 of 60), rooms disposed on leave, one-thumb sheets, vote icons as well as colour, the stable count board.
+
+## 2. The look
+
+Decide once, then every room follows it. These are the calls; Kelbo can overturn any of them (note it in `PROGRESS.md`).
+
+- **Palette.** One module, `src/look.js`, exports the tokens every room uses: oak (`#6e4a2b` mid, `#8a5f38` light, `#3f2a17` dark), green leather (`#2f5a3c`, `#3a6a48`), stone (`#b9b0a0`, `#8f877a`), brass (`#c9a24a`), paper (`#ece6d6`), baize, cloth. Party colours stay in `data/parties.json` and are never restyled.
+- **Light.** Warm key from the windows, cool fill, warm chandeliers. Shading comes from baked vertex ambient occlusion and soft contact shadows, not real-time shadow maps. The rooms should feel like late afternoon in an old building.
+- **Figures.** Stylised and faceless, with a readable silhouette: shoulders, a neck, a head with a hair cap, a white collar wedge, a suit in the party colour, a lap when seated. Think boardroom chess pieces, not dolls. No faces: at this polygon and texture budget they fall into the uncanny valley, and expression already lives in pose and in the mood pill in the UI. Variation per MP (skin, hair, suit shade, height) comes from the id hash, so it's stable across sessions and costs nothing.
+- **Camera.** The backbench feel: in Acts 1 and 2 the chamber opens from your own seat, low, looking across the aisle. An overview is one tap away. Every other room frames the person you're dealing with in the top 40 % of a portrait screen, above the sheet.
+- **Type.** Serif for display (`Georgia, "Iowan Old Style", "Times New Roman", serif`, all system fonts), sans for body. Gold means "the thing that matters now": one primary action per sheet, the bells, the result. Everything else is neutral.
+- **Motion.** Small, constant and cheap: head turns, a lean to a neighbour, a camera that eases on every state change, a 250 ms fade between rooms. Nothing that needs a skeleton or a physics step.
+
+## 3. Rules for this pass
+
+- All hard constraints in `CLAUDE.md`: no build step, Three.js `0.160.0` only, no other external resources. **Procedural first**: textures are drawn on canvases at load (`paintedTexture` in `src/kit3d.js`), geometry is built from the kit. A committed CC0 model or texture under `assets/` is allowed only where a step below says so, and the cold load stays under 10 MB. Nothing is fetched from anywhere else.
+- **No real-time shadows, no post-processing passes.** `EffectComposer` costs a full-screen pass per frame on a phone. A vignette is a CSS radial gradient on `#ui`, which is free.
+- **Budgets.** Chamber under 60 draw calls, other rooms under 40. Pixel ratio stays capped at 2. Canvas textures at most 1024² and few of them. 30 FPS or better on a mid-range phone; the headless browser's FPS is meaningless (software rendering), so judge frame cost by draw calls, triangle counts and `?debug=1` on a real phone.
+- **`src/sim/` is not touched** except in V2 (the own-seat camera reads the player's `seatId` from state, which already exists) and V7 (a routine-day "someone leaves and comes back" event, which is cosmetic and must not change any sim result or the Parliament hash).
+- **Verify, don't assume.** Each step ends with: `tests.html` green, no console errors, portrait and landscape screenshots of every screen the step touched (keep them in the scratchpad, not the repo), draw-call count per room logged in the `PROGRESS.md` entry, and a run of the guided week through the real buttons.
+- **One PR per step**, merged when its checks pass. A `PROGRESS.md` entry per step in plain language for Kelbo, with before/after notes. Don't start the next step on an unmerged one.
+- **Data stays data.** Any new copy (board titles, poster text, photo captions) goes in `data/strings.en.json`. Any new timing or size that someone might want to tune goes in `data/tuning.json` under a `look` key.
+
+## 4. Steps
+
+Do them in this order. Each is one session or less; split a step if it runs long, but merge only halves that pass their checks.
+
+### V0 · Foundation: materials, light, shading
+
+**Files:** new `src/look.js`; `src/kit3d.js`; `src/main.js` (renderer); every `*Scene.js` (swap in the shared helpers, no redesign yet).
+
+1. **Tone mapping.** In `main.js`: `renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0` (tune by eye, keep in `tuning.look.exposure`). Output stays sRGB. Re-check every room: the flat colours will shift and the hotspot will get worse until step 3 fixes the lights.
+2. **Tile textures.** `tileTexture(kind, size = 256)` in `kit3d.js` draws a repeating greyscale grain (`wood`, `carpet`, `stone`, `leather`, `cloth`, `paper`) on a canvas, `wrapS = wrapT = RepeatWrapping`. Values stay in 0.75–1.0 so the vertex colour still carries the hue and the texture only adds grain. `vertexMaterial({ map })` multiplies them. For consistent grain density, `box()` and `slab()` scale each face's UVs by that face's world size (`uvScale` option, default 1 unit = 1 repeat). One material per texture kind per room, so draw calls rise by at most four per room.
+3. **Lights.** Replace `addSoftLights` with `roomLights(scene, { key, fill, hemi, lamps })` that uses `decay = 2` point lights (physically correct in r160) with sane intensities, and emissive geometry for anything that should look lit (window panes, lamp shades, chandeliers). Kill the chamber ceiling hotspot: three chandeliers (an emissive disc plus a point light each, `distance` 14) instead of one light at 30.
+4. **Baked AO.** `bakeAO(geo, { floorY, bounds, strength })` darkens vertex colours by closeness to the floor and to the walls (a cheap analytic occlusion: `1 - strength * max(0, 1 - d / 0.6)` for each of floor and nearest wall). Run it on every merged shell before it becomes a mesh. Corners and the undersides of desks go darker; the room stops floating.
+5. **Contact shadows.** `contactShadows(points, { radius, opacity })` returns one `InstancedMesh` of radial-gradient planes 1 cm above the floor, `depthWrite: false`. Under every chair, desk pair, visitor and crowd figure. One draw call per room.
+6. **Vignette.** `#ui::after` with a radial gradient from transparent to `rgba(0,0,0,0.35)` at the edges, `pointer-events: none`.
+
+**Done when:** all four rooms render with grain, AO and contact shadows; no ceiling hotspot; chamber ≤ 24 draw calls, others ≤ 16; the colour of a government bench, a desk and a wall in a screenshot is within sight of the palette tokens (no neon, no mud); exposure feels right in both the dark chamber and the bright riding office; screenshots before/after for all four rooms.
+
+### V1 · Figures
+
+**Files:** new `src/figures.js` (shared builder); `src/chamber/mps3d.js`, `src/caucus/caucusFigures.js`, `src/riding/constituents.js` (instanced crowds); `src/office/visitor.js` (the articulated figure).
+
+1. **The seated silhouette**, one function `seatedFigureParts()` returning four geometries: `suit` (torso with shoulders: a capsule scaled 1.35 wide at the top, a lap box, upper arms resting), `skin` (neck cylinder + head sphere), `hair` (a cap: the top 55 % of a slightly larger sphere, with 3 variants: full, receding, none), `shirt` (a white collar wedge and a shirt-front strip). A standing variant for crowds and walkers. Keep the whole figure under 600 triangles.
+2. **Four instanced meshes per crowd**, not two: suit, skin, hair, shirt. Suit colour = party colour through `instanceColor`; skin from 8 tones and hair from 6 (black, dark brown, brown, auburn, grey, white) by id hash; suit lightness jittered ±6 %; height 0.94–1.06; a small random lean and head yaw. Shirt has no instance colour. The selection outline becomes a gold rim on the suit part only.
+3. **The articulated figure** (`visitor.js`) is rebuilt from the same parts plus forearms, hands (small spheres) and shoes. Re-pose the four moods so they read in a 300 px tall viewport: *cooperative* upright, hands on knees; *guarded* arms genuinely crossed over the chest (the forearms must overlap); *angry* leaning in with both hands flat on the desk edge; *anxious* shoulders in, hands clasped in the lap, head down. The walk-in shortens to 1.4 s and the legs swing from the hip, not the knee.
+4. **The player's own figure** uses the player's party colour and hides its head in any over-the-shoulder shot (the shoulder at the frame edge is the point; a skin-coloured blob in the corner isn't).
+5. **Idle life**, cheap: every ~2 s one random visible MP turns their head 20° toward a neighbour and back over 0.8 s (update two instance matrices, flag `needsUpdate`). Nothing else moves yet.
+
+**Done when:** at the default chamber camera a head is ≥ 6 px tall on a 390 px wide screen and parties still read as blocks; the four moods are distinguishable in a blind screenshot test at portrait size; chamber ≤ 30 draw calls; the town hall crowd no longer looks like one person copied 28 times.
+
+### V2 · The chamber
+
+**Files:** `src/chamber/scene.js`, `src/chamber/camera.js`, `src/chamber/voteLights.js`, `src/main.js` (top bar buttons), `data/strings.en.json` (already has `btn.myseat`, `btn.overview`).
+
+1. **Your seat is the default view in Acts 1–2** (HANDOFF §5, never built). `camera.js` gains a `home(seat)` mode: position 1.1 m behind and 1.45 m above your seat, looking across the aisle at the opposite front bench; orbit limits become relative to that view (±50° sideways, no looking behind you); pinch zooms 3–14 m. The top bar gets one toggle: **Overview** ↔ **My seat** (the strings exist). "Reset view" is replaced by that toggle. Double-tap party framing works from both. The Book's "fly to MP" uses the overview.
+2. **The division choreography.** When the bells ring, the camera eases to a three-quarter overview that shows both sides (so the sweep of lights reads), the hemisphere light dims to 0.8× and every seat lamp pulses slow amber. On the count, each yea/nay lights its lamp and a short vertical glow quad (an additive plane, 0.3 × 0.6 m) above the seat for 0.4 s, then settles to the icon. The result holds until Continue, then the camera returns home. Timings in `tuning.look.division`.
+3. **The shell.** Oak wainscot with recessed panel lines (thin dark strips every 1.2 m); carpet grain; stone with block lines; windows as emissive pale-gold panes with dark mullions, each throwing a soft wash on the wall below (a point light, `distance` 6, only on the seven on each side nearest the camera: 14 max, or four wider ones if draw/light cost bites); gallery front rail with posts, and a dozen static spectator figures in grey in the galleries; the Speaker's chair with a taller carved back and a canopy crest; the Clerk's table with a green cloth runner and the Mace resting on brackets; the bar with its two posts and a short brass rail along the bar-end doors.
+4. **Row shadows.** One long gradient strip under each row of desks (8 strips) instead of 240 blobs.
+
+**Done when:** a new game opens on your own desk with your neighbours and the aisle in view, and "Overview" shows the whole House; the bells-to-result sequence reads as one piece of theatre in a 15 s screen recording; chamber < 60 draw calls (expected ~45 with window lights); no console errors; `tests.html` green; guided week plays through.
+
+### V3 · The UI skin
+
+**Files:** `css/style.css`, `src/ui/text.js` (nothing structural), `src/main.js` (room fade), `src/ui/menus.js`.
+
+1. **Type.** Serif display for sheet titles, the day heading, the bill title, the menu title; sans for everything else; `font-variant-numeric: tabular-nums` on counts. Body stays 15–16 px, titles 20–22 px.
+2. **Surfaces.** Sheets: 14 px radius, a 1 px hairline top border at 12 % white, `backdrop-filter: blur(12px)` over a 92 % panel, a 160 ms slide-up when shown. Buttons: one gold primary per sheet, the rest outlined; a pressed state that actually darkens. Lists: 1 px separators at 8 % white, no boxes inside boxes.
+3. **The top bar.** The brand in serif with the gold W; the seed/hash line stays debug-only; the Book and the view toggle as icon-plus-label chips.
+4. **Toasts** move to just under the top bar, max two lines, 4 s, never over the figure's head in any room. Stack at most two.
+5. **Room fade.** A `#fade` div over everything; `rooms.show()` fades to black in 120 ms, swaps, fades in over 250 ms. The first frame of the new room renders before the fade-in starts.
+6. **The start menu** gets the chamber behind it: the real chamber scene at the overview, orbiting at 2°/s, under a 70 % dark gradient, with the seed's Parliament seated as soon as the seed field is valid. Form controls styled to match the sheets.
+
+**Done when:** every sheet screenshot in portrait and landscape; body text contrast ≥ 4.5:1; every tappable thing ≥ 44 px; the room switch never shows a frame of the old room's last state over the new one; the menu feels like the game, not a settings page.
+
+### V4 · The office
+
+**Files:** `src/office/officeScene.js`, `src/office/officeCamera.js`, `src/office/visitor.js` (poses only if V1 left gaps).
+
+1. **Framing.** `host`: camera (0.55, 1.45, 1.35) looking at the visitor's head (−0.5, 1.1, −1.0), FOV 50 in landscape; in portrait the head sits ~30 % from the top, above the sheet. The player's shoulder is visible bottom-left on purpose. `hostDeal` pushes in 0.3 m. `empty` shows the room with the door in frame so a walk-in enters from the right place.
+2. **The room.** A desk lamp with a warm pool (emissive shade + point light `distance` 3), window blinds (slats as thin boxes) with the lawn repainted: horizon, layered trees, the tower, a sky gradient that changes with the time of day already in state (morning / evening tint); a bookshelf with varied spine heights and colours; papers and a folder on the desk; a framed map on the wall; the count board as a corkboard with pinned cards (the existing `drawBoard`, restyled); a proper door frame; carpet grain and AO from V0.
+3. **The reversal**: the whip's office is a different room, not the same one with the chairs swapped. Darker wood, a bigger desk, a flag on a pole behind the chair, two lamps, no window view (blinds closed). `create(ctx)` takes `tier` already; add `variant: 'whip'`.
+4. **Tier 2** (Acts 4–5) only needs to still build; don't polish it in this pass.
+
+**Done when:** < 40 draw calls; the visitor's head and both hands are visible in portrait in all four moods; the reversal is recognisable as "their room" in a single screenshot.
+
+### V5 · The riding
+
+**Files:** `src/riding/ridingScene.js`, `src/riding/ridingCamera.js`, `src/riding/constituents.js`.
+
+1. **Framing.** The visitor chair turns to an open three-quarter angle with a lower back (0.45 m) so it stops blocking the shot; camera (0.55, 1.5, −2.0) looking at (0.1, 1.05, −0.1). The reporter stands (with a notebook: a small box in one hand); the association president and constituents sit.
+2. **The storefront.** Mullions and a glass door in the +z wall; the riding's name painted backwards on the glass (it's read from outside); a daylight wash into the room from the window (a wide, low-intensity point light); the street repainted per type in two layers (far: skyline or horizon; near: a parked car, a lamp post, a bench, a mailbox) so the four types are unmistakable in one glance; the photo wall with six real compositions drawn on canvas (a ribbon cutting, a rink, a field, a parade, a plant gate, a school); a coffee maker, a plant, a noticeboard with pinned flyers.
+3. **The town hall.** The crowd stands on the sidewalk in front of the storefront with the lamp post lit; V1 figures with height variation and contact shadows; when the room's mood is under 35, four of them hold signs (blank boards, the text is in the UI). Mood also shows in posture: leaning in above 60, arms crossed below 40.
+
+**Done when:** < 40 draw calls; screenshots of all four riding types; the visitor reads in portrait; the town hall looks like a place, not a sky.
+
+### V6 · The caucus room
+
+**Files:** `src/caucus/caucusScene.js`, `src/caucus/caucusCamera.js`, `src/caucus/caucusFigures.js`, `src/ui/caucusUI.js` (the listen read only).
+
+1. **Camera** at seated eye height behind your chair (y ≈ 1.75), looking along the table; "Speak" eases to frame the head of the table; drag still pans.
+2. **The room.** A green baize runner down the table, water carafes and glasses every third seat, papers squared up; chairs with proper backs from V1's kit; the leader's chair taller with arms; oak panelling to 1.2 m then plaster; a party-colour banner behind the head of the table (the colour from `data/parties.json`) and two portraits; three pendant lamps over the table as emissive discs with warm lights.
+3. **The read.** Mood no longer recolours the suit (the room must still read as your party). Instead: a soft coloured glow on the chair back and a small coloured dot above the head, with the dot shape per mood (circle, square, triangle, diamond) so it reads without colour. "Who leans to whom" is shown: for two seconds after Listen the two figures lean toward each other.
+
+**Done when:** < 40 draw calls; the six watched MPs can be found in a screenshot from the UI's text alone; the mood marks read in greyscale.
+
+### V7 · Motion and life
+
+**Files:** the room files touched above; `src/sim/pacing.js` only for a cosmetic hook (see rules).
+
+1. **Chamber.** During a routine sitting day, one MP leaves their seat, walks up the aisle and out, and another comes back, every ~20 s (instanced figures don't walk: swap the seat's instance to hidden and run one articulated walker from `visitor.js`). The Speaker's gavel drops on a result (a 0.3 s rotation of a small box). The Clerk stands during the count.
+2. **Everywhere.** A camera micro-ease on every state change (0.3 m push or a 2° tilt), so the picture never snaps. Idle head turns from V1 run in every room.
+3. **A 60 s soak** in each room on a phone: FPS must not sag, memory must not climb (watch `performance.memory` where available, and the renderer's `info.memory.geometries` must be flat).
+
+**Done when:** a 30 s screen recording of the chamber on a sitting day has visible life; nothing in the sim changed (the Parliament hash for `TEST-1` is identical before and after).
+
+### V8 · Phone verification and the entry for Kelbo
+
+1. Run the full guided week on a real phone in portrait and landscape with `?debug=1`: log FPS per room, draw calls per room, cold-load size (DevTools network, cache disabled), and memory after switching rooms ten times.
+2. Tick HANDOFF stage 1's "smooth on Kelbo's phone" only if Kelbo says so.
+3. Write the `PROGRESS.md` entry: before/after for each room in one sentence each, the numbers above, the decisions made in section 2 for Kelbo to confirm or overturn, and a short list of what the art pass deliberately left alone (faces, audio, tier-2 office, real models).
+
+## 5. Open decisions (for Kelbo)
+
+| Decision | Default used here | Alternative |
+| --- | --- | --- |
+| Faces | None; silhouette and pose only | Painted eyes/brows on a tiny texture (risk: uncanny at this budget) |
+| Real models | None; all procedural | A few small CC0 GLB props under `assets/` (desk lamp, carafe, Mace) if the procedural ones look thin, kept under 300 KB total |
+| Serif display type | System serif stack | Keep sans everywhere |
+| Chamber default view | Your own seat in Acts 1–2 | The overview, as now |
+| Time of day | Window tint follows morning / evening in state | Fixed afternoon light |
+
+## 6. What this pass does not do
+
+Audio (stage 9), the colour-blind setting (stage 9, though the icon shapes here anticipate it), the tier-2 corner office, the whip's count board marks (stage 5), scenarios and the daily seed (stage 9), and any change to the sim's behaviour.
