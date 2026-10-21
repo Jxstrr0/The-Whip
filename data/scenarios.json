@@ -4,7 +4,7 @@
       "id": "threeShort",
       "title": "Three short",
       "when": "Act 4 · Deputy whip · A minority government",
-      "blurb": "The budget is Thursday. The Compact walked out of the deal on Friday. The count on your desk says the government loses by three.",
+      "blurb": "The budget is Thursday. The party that was propping the government up walked out of the deal on Friday. The count on your desk says the government loses by three.",
       "seed": "SHORT",
       "act": 4,
       "role": "deputyWhip",

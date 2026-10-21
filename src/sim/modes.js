@@ -21,7 +21,7 @@ import './record.js';
 import './media.js';
 import './election.js';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export function reseat(state) {
   const seats = assignSeats(state);
