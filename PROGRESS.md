@@ -921,3 +921,45 @@ Three things turned up while building the aim strip, and Kelbo asked for all thr
   - As Chief Whip, a restless room now stops you for caucus, not only an angry one, so these tools turn up when they matter. The "caucus fights" pause setting still covers it.
 
 Checked at phone size: portrait (expel, the confirm step, a free vote in week 3) and landscape (short of the leader's trust). No console errors. `tests.html`: 96 passed, 0 failed (two new tests, one rewritten).
+
+## 2026-10-21 · Your four calls on the caucus tools: 1A, 2A, 3A, 4A
+
+I pitched three ways to handle each of the four judgment calls from the last round, and Kelbo picked the first option every time.
+
+- **1A · Anyone but the leader and the Speaker can be expelled, and the cost rises with rank.**
+  - **Backbenchers** cost what they did before.
+  - **The front bench** (ministers, shadow ministers, the House Leader, the deputy and assistant whips):
+    - The leader's trust has to be at least 70, against 50 for a backbencher.
+    - The expulsion costs you 10 of that trust.
+    - Morale takes a bigger hit (16 instead of 10).
+    - It makes the papers. A new "expelled" story with five headlines and two decks can lead the weekend front page, with your photo.
+  - Below 70 the list leaves front-benchers off and says why. Front-benchers on the list show their role.
+- **2A · No cap on expulsions, but each one in the same morning costs more.**
+  - The first frightens the room into line: everyone left gains a little loyalty.
+  - The second costs double the morale, costs caucus support, and can turn the room. The chance of a revolt against you is 45%, and if a revolt is already standing it gains hands.
+  - The confirm step warns you before the second one.
+  - A revolt against *you* now offers "Face them down" or "Let the room decide". Before, it showed the leader-revolt buttons ("Back the leader", "Join the revolt"). Joining a revolt against yourself is refused in the sim too.
+- **3A · A restless room stops you only when there's Chief Whip business at the table.** Business means one of two things:
+  - A whipped line that at least five members at the table mean to break, so it's worth freeing.
+  - A member at the table who has broken the line three or more times this Parliament, at least once in the last two weeks.
+  
+  Without either, a restless room leaves a one-line note in the log (four lines, picked at random) and doesn't stop you.
+  - First try: counting any whipped line, or any repeat rebel, still stopped you in almost every restless room.
+  - Now, in 12 headless Act 5 runs, a restless room stops you 24 times and leaves a note 19 times. Most stops come from a fresh rebel at the table.
+  - An angry room still always stops you.
+- **4A · Falling back to the backbench halves your noticed count, and the game says so.**
+  - On a fall from the whip's office, "noticed" is capped at the Act 2 bar (8) and then halved, so at most 4 carries over.
+  - Your first office evening back says "Back on the backbench. They remember you; that cuts both ways."
+  - The aim sheet explains the halving while you're in that Act 2.
+  - A first climb into Act 2, or a scenario that starts there, isn't a fall and keeps its count.
+
+**Things to know**
+
+- All the new numbers are in `data/tuning.json`:
+  - `tools.expelFront*`, `expelEscalate`, `expelFearLoyalty`, `expelSupport`, `expelRevoltOdds`, `expelRevoltSupport`
+  - `expelBusinessRebellions`, `expelRecentWeeks`, `freeVoteBusinessRebels`
+  - `career.backbenchNoticedKeep`
+- `data/headlines.json` already had duplicate ids (h066 to h070 are used twice). Nothing reads the ids, so I left them alone. The new headlines are h077 to h081.
+- **Checked:**
+  - Phone size, portrait and landscape: the front-bench lock at trust 60, expelling a minister (the confirm, then the headline), a second expulsion that turned the room, and the revolt-against-you buttons. No console errors.
+  - `tests.html`: three new tests (the cost per expulsion, front-bench rules and the front page, when a restless room stops you), plus checks added to the backbench test.

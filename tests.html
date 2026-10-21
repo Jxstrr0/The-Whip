@@ -946,19 +946,106 @@ test('A free vote releases the caucus; expulsion makes an independent and reseat
   return `${m.name.first} ${m.name.last} now sits as an independent; ${me.party} down to ${s.parties[me.party].seats}`;
 });
 
-test('In caucus the Chief Whip can expel once, and the chair empties', () => {
+test('In caucus each expulsion costs more than the last, and the chair empties', () => {
   const s = newGame({ seed: 'EXPEL-1', party: 'p2', act: 5 });
   const rng = createRng('expel');
   caucusSim.startCaucus(s, rng);
   s.player.leaderTrust = 80;
-  const [a, b2] = tools.expelCandidates(s).filter((x) => s.caucus.seats.includes(x.mpId));
-  assert(a && b2, 'need two candidates at the table');
-  const size = s.caucus.revolt?.size;
+  s.caucus.revolt = null;
+  const party = s.parties[s.mps[s.player.mpId].party];
+  const [a, b2] = tools.expelCandidates(s).filter((x) => !x.front && s.caucus.seats.includes(x.mpId));
+  assert(a && b2, 'need two backbench candidates at the table');
+  const T = tuning().tools;
+  party.morale = 70;
+  const support = s.player.caucusSupport;
+  const loyal = s.mps[b2.mpId].loyalty;
   assert(ACTIONS.useTool(s, { tool: 'expel', mpId: a.mpId }).ok, 'first expulsion');
-  assert(!s.caucus.seats.includes(a.mpId) && s.caucus.expelled === a.mpId, 'they leave the table');
-  if (size) assert(s.caucus.revolt.size === size - 1, 'one fewer in the room for the revolt');
-  assert(ACTIONS.useTool(s, { tool: 'expel', mpId: b2.mpId }).reason === 'once', 'one expulsion a morning');
-  return `${s.mps[a.mpId].name.last} out; ${s.caucus.seats.length} left at the table`;
+  assert(!s.caucus.seats.includes(a.mpId) && s.caucus.expelled[0] === a.mpId, 'they leave the table');
+  assert(party.morale === 70 + T.expelMorale, 'the first costs the base: ' + party.morale);
+  assert(s.mps[b2.mpId].loyalty === Math.min(100, loyal + T.expelFearLoyalty), 'the first frightens the room into line');
+  assert(s.player.caucusSupport === support, 'the first costs no support');
+  // The second always turns the room here: a revolt against you, with its ringleader still at the table.
+  const odds = T.expelRevoltOdds;
+  T.expelRevoltOdds = 1;
+  party.morale = 70;
+  let r;
+  try {
+    r = ACTIONS.useTool(s, { tool: 'expel', mpId: b2.mpId });
+  } finally {
+    T.expelRevoltOdds = odds;
+  }
+  assert(r.ok, 'no hard cap on a second expulsion');
+  assert(party.morale === 70 + T.expelMorale * (1 + T.expelEscalate), 'the second costs more: ' + party.morale);
+  assert(s.player.caucusSupport === Math.max(0, support + T.expelSupport), 'the second costs support');
+  assert(r.turned && s.caucus.revolt?.target === 'whip' && s.caucus.seats.includes(s.caucus.revolt.ringleader), 'the room turns on you: ' + JSON.stringify(s.caucus.revolt));
+  assert(goals.sceneJob(s, 'caucus', { revolt: s.caucus.revolt }).key === 'job.caucus.revoltYou', 'the job line follows the revolt');
+  assert(!caucusSim.caucusRevolt(s, 'join') && !s.caucus.revolt.choice, 'nobody joins a revolt against themselves');
+  return `${s.caucus.expelled.length} out; morale ${party.morale}; ${s.caucus.revolt.support} of ${s.caucus.revolt.size} against you`;
+});
+
+test('Anyone but the leader and the Speaker can be expelled; the front bench needs the leader and makes the papers', () => {
+  const s = newGame({ seed: 'EXPEL-2', party: 'p1', act: 5 });
+  const me = s.mps[s.player.mpId];
+  const party = s.parties[me.party];
+  const minister = Object.values(s.mps).find((m) => m.party === me.party && ['cabinet', 'shadowCabinet'].includes(m.caucusRole));
+  assert(minister, 'need a minister');
+  assert(!tools.canExpel(s, party.leader), 'never the leader');
+  const speaker = Object.values(s.mps).find((m) => m.caucusRole === 'speaker');
+  if (speaker) {
+    const was = speaker.party;
+    speaker.party = me.party;
+    assert(!tools.canExpel(s, speaker.id), 'never the Speaker');
+    speaker.party = was;
+  }
+  const T = tuning().tools;
+  s.player.leaderTrust = T.expelFrontLeaderTrust - 5;
+  const row = tools.expelCandidates(s).find((x) => x.mpId === minister.id);
+  assert(row?.front && row.locked, 'a minister is listed but locked below the trust bar');
+  assert(ACTIONS.useTool(s, { tool: 'expel', mpId: minister.id }).reason === 'front', 'refused below the bar');
+  s.player.leaderTrust = 85;
+  party.morale = 70;
+  const r = ACTIONS.useTool(s, { tool: 'expel', mpId: minister.id });
+  assert(r.ok && r.front, 'a minister goes with the leader behind you');
+  assert(s.player.leaderTrust === 85 + T.expelFrontTrust, 'it costs the leader\'s trust: ' + s.player.leaderTrust);
+  assert(party.morale === 70 + T.expelFrontMorale, 'and more morale: ' + party.morale);
+  const story = (s.press || []).at(-1);
+  assert(story?.event === 'expelled' && story.text.length && !/\{/.test(story.text) && story.you, 'front page: ' + JSON.stringify(story));
+  assert(media.FRONT_PRIORITY.includes('expelled'), 'it can lead the weekend paper');
+  return story.text;
+});
+
+test('A restless Act 5 caucus stops you only when there is Chief Whip business', () => {
+  const s = newGame({ seed: 'EXPEL-3', party: 'p2', act: 5 });
+  const rng = createRng('restless');
+  caucusSim.startCaucus(s, rng);
+  const c = s.caucus;
+  s.player.leaderTrust = 80;
+  c.billId = null;
+  // Nobody at the table has broken the line: no business.
+  s.divisions = {};
+  assert(!caucusSim.chiefBusiness(s, c), 'no business with no line to free and no rebels');
+  // A whipped line on the table is business.
+  const { b } = whipScenario(5, 'EXPEL-3');
+  s.bills[b.id] = b;
+  b.lines[s.mps[s.player.mpId].party] = 'whipped';
+  b.confidence = false;
+  c.billId = b.id;
+  assert(caucusSim.chiefBusiness(s, c), 'a whipped line is business');
+  c.billId = null;
+  // A repeat rebel at the table is business only while the breaks are fresh.
+  const party = s.mps[s.player.mpId].party;
+  const rebel = c.seats.find((id) => id !== s.player.mpId && tools.canExpel(s, id) && !tools.isFrontBench(s.mps[id]));
+  b.positions[party] = 'yea';
+  const n = tuning().tools.expelBusinessRebellions;
+  const now = s.date.absWeek * 5;
+  const old = now - (tuning().tools.expelRecentWeeks + 2) * 5;
+  const breaks = (lastDay) => Object.fromEntries(Array.from({ length: n }, (_, i) => ['d' + i, { recorded: true, billId: b.id, day: i === n - 1 ? lastDay : old, yeas: [], nays: [rebel] }]));
+  s.divisions = breaks(old);
+  assert(!caucusSim.chiefBusiness(s, c), 'old rebellions are not business');
+  s.divisions = breaks(now);
+  assert(caucusSim.chiefBusiness(s, c), 'a repeat rebel with a fresh break is business');
+  assert(!caucusSim.chiefBusiness({ ...s, player: { ...s.player, act: 4 } }, c), 'not before Act 5');
+  return 'stops for a line to free or a rebel at the table';
 });
 
 test('Meeting slots follow the act, and each act counts its own progress', () => {
@@ -981,8 +1068,17 @@ test('Meeting slots follow the act, and each act counts its own progress', () =>
   // Back to the backbench: notice earned higher up doesn't make the next contest easier.
   s.player.actProgress.noticed = 90;
   ranks.assignRank(s, 2, 'backbencher');
-  assert(s.player.actProgress.noticed === tuning().career.noticedForAct2, 'notice capped on the backbench: ' + s.player.actProgress.noticed);
+  const C = tuning().career;
+  assert(s.player.actProgress.noticed === C.noticedForAct2 * C.backbenchNoticedKeep, 'notice halved on the backbench: ' + s.player.actProgress.noticed);
   assert(s.player.slots === S[1], 'backbench slots');
+  assert(goals.actAim(s).fell && goals.sceneJob(s, 'office').key === 'job.office.fell', 'the aim and the office say you fell');
+  s.date.absWeek += 2;
+  assert(goals.sceneJob(s, 'office').key === 'job.office', 'the office stops saying so after the first week');
+  // Starting in Act 2 isn't a fall.
+  const fresh = newGame({ seed: 'SLOTS-1', party: 'p2' });
+  fresh.player.actProgress.noticed = 6;
+  ranks.assignRank(fresh, 2, 'backbencher');
+  assert(fresh.player.actProgress.noticed === 6 && !goals.actAim(fresh).fell, 'a first climb keeps its notice');
   return `slots ${got.join(' · ')}`;
 });
 
@@ -1847,7 +1943,7 @@ test('The weekend paper: a lead with a deck, the polls on the record, a quiet we
   assert(JSON.stringify(q.rng) === before, 'the quiet lead does not draw on the RNG');
   // Every deck, byline and caption uses only the keys a headline can fill.
   const H = data().headlines;
-  const keys = new Set(['name', 'riding', 'party', 'leader', 'paper', 'bill', 'yeas', 'nays', 'count', 'opposition', 'minister', 'issue']);
+  const keys = new Set(['name', 'riding', 'party', 'leader', 'paper', 'bill', 'yeas', 'nays', 'count', 'opposition', 'minister', 'issue', 'member', 'role']);
   let decks = 0;
   for (const [event, list] of Object.entries(H.decks)) {
     assert(H.headlines.some((h) => h.event === event), 'decks for a known event: ' + event);

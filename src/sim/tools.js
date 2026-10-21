@@ -12,6 +12,7 @@ import { adjustRapport, addStyle } from './relationships.js';
 import { isKnown, reveal, touch } from './knowledge.js';
 import { lineFor } from './bills.js';
 import { reseat } from './modes.js';
+import { headline } from './media.js';
 
 const SIGN = { yea: 1, nay: -1 };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -421,63 +422,111 @@ function freeVote(state, rng, { billId }) {
   return { ok: true, note };
 }
 
-// Who a Chief Whip can put out of caucus: a member of your own party below the front bench. The leader,
-// cabinet and the whip's office go by other means; the Speaker belongs to the House.
-const PROTECTED = ['leader', 'cabinet', 'shadowCabinet', 'houseLeader', 'chiefWhip', 'deputyWhip', 'assistantWhip', 'speaker'];
+// Who a Chief Whip can put out of caucus: anyone in your own party but the leader and the Speaker, who
+// belongs to the House. The front bench goes harder: the leader has to trust you more, it costs some of
+// that trust, and it makes the papers.
+const FRONT = ['cabinet', 'shadowCabinet', 'houseLeader', 'deputyWhip', 'assistantWhip'];
+export const isFrontBench = (m) => FRONT.includes(m.caucusRole);
 export function canExpel(state, mpId) {
   const m = state.mps[mpId];
-  return !!m && mpId !== state.player.mpId && m.party === me(state).party && !PROTECTED.includes(m.caucusRole) && state.parties[m.party]?.leader !== mpId;
+  return !!m && mpId !== state.player.mpId && m.party === me(state).party && !['leader', 'speaker'].includes(m.caucusRole) && state.parties[m.party]?.leader !== mpId;
+}
+
+// A front-bencher the leader won't let you put out yet.
+export function expelLocked(state, mpId) {
+  const m = state.mps[mpId];
+  return !!m && isFrontBench(m) && state.player.leaderTrust < tuning().tools.expelFrontLeaderTrust;
 }
 
 // Members you could expel, the most rebellious first: how often each has voted against a whipped line in
-// this Parliament's recorded divisions, then loyalty.
+// this Parliament's recorded divisions (and how many of those in the last few weeks), then loyalty.
+// Front-benchers are marked, and locked while the leader's trust is short.
 export function expelCandidates(state) {
   const party = me(state).party;
+  const since = (state.date.absWeek - tuning().tools.expelRecentWeeks) * 5;
   const rebels = {};
+  const recent = {};
   for (const d of Object.values(state.divisions || {})) {
     const bill = d.recorded && state.bills[d.billId];
     if (!bill || bill.lines?.[party] !== 'whipped') continue;
     const against = bill.positions[party] === 'yea' ? d.nays : bill.positions[party] === 'nay' ? d.yeas : null;
-    for (const id of against || []) rebels[id] = (rebels[id] || 0) + 1;
+    for (const id of against || []) {
+      rebels[id] = (rebels[id] || 0) + 1;
+      if (d.day >= since) recent[id] = (recent[id] || 0) + 1;
+    }
   }
   return Object.values(state.mps)
     .filter((m) => canExpel(state, m.id))
-    .map((m) => ({ mpId: m.id, rebellions: rebels[m.id] || 0, loyalty: Math.round(m.loyalty) }))
+    .map((m) => ({ mpId: m.id, rebellions: rebels[m.id] || 0, recent: recent[m.id] || 0, loyalty: Math.round(m.loyalty), role: m.caucusRole, front: isFrontBench(m), locked: expelLocked(state, m.id) }))
     .sort((a, b) => b.rebellions - a.rebellions || a.loyalty - b.loyalty || a.mpId.localeCompare(b.mpId));
+}
+
+// The room after a second expulsion in one morning: hands go up behind a revolt that's already standing,
+// or, by the odds, one starts against you. The ringleader is whoever at the table thinks least of you.
+function roomTurns(state, rng, c, before) {
+  const T = tuning().tools;
+  if (c.revolt) {
+    if (!c.revolt.resolved) c.revolt.support = Math.min(c.revolt.size, c.revolt.support + T.expelRevoltSupport);
+    return false;
+  }
+  if (!rng.chance(Math.min(1, T.expelRevoltOdds * before))) return false;
+  const room = c.seats.filter((id) => id !== state.player.mpId).map((id) => state.mps[id]);
+  if (!room.length) return false;
+  const ringleader = [...room].sort((a, b) => a.rapport - b.rapport || a.id.localeCompare(b.id))[0];
+  const against = room.filter((m) => m.rapport < 0).length + T.expelRevoltSupport;
+  c.revolt = { target: 'whip', ringleader: ringleader.id, support: Math.min(room.length, against), size: room.length, text: data().career.revolt.whip.replace('{ringleader}', fullName(ringleader)), choice: null, resolved: false, sparked: true };
+  return true;
 }
 
 function expel(state, rng, { mpId }) {
   const T = tuning().tools;
   if (!canExpel(state, mpId)) return { ok: false, reason: 'protected' };
-  if (state.caucus?.expelled) return { ok: false, reason: 'once' };
+  if (expelLocked(state, mpId)) return { ok: false, reason: 'front' };
   const m = state.mps[mpId];
-  const party = state.parties[m.party];
+  const partyId = m.party;
+  const party = state.parties[partyId];
+  const role = m.caucusRole;
+  const front = isFrontBench(m);
+  const c = state.caucus;
+  // Each expulsion in the same morning costs more than the last. The first frightens the room into line;
+  // the next makes everyone at the table wonder who's after them.
+  const before = c?.expelled?.length || 0;
+  const scale = 1 + before * T.expelEscalate;
   party.seats = Math.max(0, party.seats - 1);
-  party.morale = clamp((party.morale ?? 60) + T.expelMorale, 0, 100);
+  party.morale = clamp((party.morale ?? 60) + (front ? T.expelFrontMorale : T.expelMorale) * scale, 0, 100);
+  if (front) state.player.leaderTrust = clamp(state.player.leaderTrust + T.expelFrontTrust, 0, 100);
+  if (party.houseLeader === mpId) party.houseLeader = null;
+  if (party.deputyWhip === mpId) party.deputyWhip = null;
+  party.assistantWhips = (party.assistantWhips || []).filter((id) => id !== mpId);
   m.party = 'ind';
   m.caucusRole = 'backbencher';
   if (m.clique && state.cliques?.[m.clique]) state.cliques[m.clique].members = state.cliques[m.clique].members.filter((id) => id !== mpId);
   m.clique = null;
   m.mood = 'angry';
   adjustRapport(state, mpId, -60);
+  if (before === 0) {
+    for (const x of Object.values(state.mps)) if (x.party === partyId) x.loyalty = clamp(x.loyalty + T.expelFearLoyalty, 0, 100);
+  } else state.player.caucusSupport = clamp(state.player.caucusSupport + T.expelSupport * before, 0, 100);
   state.player.record.expelled++;
   addStyle(state, 'enforcer');
   reseat(state);
   // In the room, the chair empties: one fewer voice at the table, and one fewer behind a revolt.
-  const c = state.caucus;
+  let turned = false;
   if (c) {
-    c.expelled = mpId;
+    c.expelled = [...(c.expelled || []), mpId];
     c.seats = c.seats.filter((id) => id !== mpId);
     c.grievances = c.grievances.filter((g) => g.mpId !== mpId);
     if (c.revolt && !c.revolt.resolved) {
       c.revolt.size = Math.max(1, c.revolt.size - 1);
       c.revolt.support = Math.max(0, c.revolt.support - 1);
     }
+    if (before > 0) turned = roomTurns(state, rng, c, before);
   }
+  if (front) headline(state, rng, 'expelled', { member: fullName(m), role: data().headlines.roles?.[role] || 'front-bencher', party: party.name });
   const note = `${fullName(m)} has been expelled from caucus and sits as an independent.`;
   ledgerAdd(state, { from: state.player.mpId, to: mpId, kind: 'threat', what: 'expelled', note });
   log(state, note, 'tool');
-  return { ok: true, note };
+  return { ok: true, note, front, turned, ringleader: turned ? c.revolt.ringleader : null };
 }
 
 const HANDLERS = { persuade, chase, pair, leave, committeeSeat, qpSlot, ridingProject, threatenNomination, leverage, freeVote, expel };
