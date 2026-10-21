@@ -390,5 +390,8 @@
   "menu.importPlaceholder": "Paste the save text",
   "menu.importInto": "Import into slot {n}",
   "menu.needImport": "Paste a save first.",
-  "menu.importFailed": "That isn't a save this version can read."
+  "menu.importFailed": "That isn't a save this version can read.",
+  "tutorial.office": "Evenings are yours: two blocks of time. If the whip's office is calling, go. Otherwise invite someone in or make a call; both cost a block, and nothing you learn is wasted.",
+  "tutorial.bells": "The bells are ringing and the doors close in a minute. The party's line is on the left; how the riding and your conscience feel are under it. Pick a lobby. Everyone will see which.",
+  "tutorial.riding": "Friday at home. People bring you things. Carrying a case to Ottawa costs you there and buys standing here; saying no is free this week and remembered."
 }
