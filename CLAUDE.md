@@ -18,6 +18,7 @@ Kelbo's words: "remember this is a flagship game, let's do this right." The Whip
 
 - `DESIGN.md` decides what the game is. `HANDOFF.md` decides how it's built. Note any contradiction in `PROGRESS.md`.
 - `PROGRESS.md` is the running log for Kelbo, in plain language. Add an entry at the end of every stage.
+- `ART-PASS.md` is the plan for the visual pass: the look, the rules, and the steps V0–V8 in order, each with its own done-when checks.
 
 ## Hard constraints (from HANDOFF.md)
 
@@ -33,4 +34,4 @@ Kelbo's words: "remember this is a flagship game, let's do this right." The Whip
 
 ## Build plan status
 
-Stages 0–4b are done and merged. Stages 5–9 wait for Kelbo's playtest feedback on the 4b slice (see the end of `PROGRESS.md`).
+Stages 0–4b are done and merged. Stages 5–9 wait for Kelbo's playtest feedback on the 4b slice (see the end of `PROGRESS.md`). The next piece of work is the art pass in `ART-PASS.md`: one step per PR, in order, V0 first.
