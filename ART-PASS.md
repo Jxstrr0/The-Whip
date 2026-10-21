@@ -6,6 +6,8 @@ The sim is finished for this slice and is not touched by this pass except where 
 
 ---
 
+**Status (2026-10-21):** V0–V8 are done and merged, one PR each (#11, #13–#19, and the V8 numbers below). What's left for Kelbo: the frame rate on a real phone, and Longlight's colours for the masthead. Section 6 says what comes next.
+
 ## 1. Where we are
 
 Diagnosis from playing the live build at phone size (390 × 844 portrait and landscape):
@@ -147,6 +149,20 @@ The system, so every sheet agrees:
 1. Run the full guided week on a real phone in portrait and landscape with `?debug=1`: log FPS per room, draw calls per room, cold-load size (DevTools network, cache disabled), and memory after switching rooms ten times.
 2. Tick HANDOFF stage 1's "smooth on Kelbo's phone" only if Kelbo says so.
 3. Write the `PROGRESS.md` entry: before/after for each room in one sentence each, the numbers above, the decisions made in section 2 for Kelbo to confirm or overturn, and a short list of what the art pass deliberately left alone (faces, audio, tier-2 office, real models).
+
+### V8 · Numbers from the headless pass (a real phone still needed)
+
+Measured on the merged V7 build in a headless phone viewport, `?seed=TEST-1`:
+
+| | Draw calls | Triangles | Geometries | Textures |
+| --- | --- | --- | --- | --- |
+| Chamber (at rest) | 36 | 355k | 41 | 17 |
+| Office | 47 | 5k | 46 | 17 |
+| Caucus | 22 | 135k | 28 | 22 |
+| Riding (desk) | 45 | 5k | 44 | 22 |
+| Riding (town hall) | 19 | 83k | 53 | 22 |
+
+Cold load: **1.15 MB** over 87 requests (budget 10 MB). After ten room switches the chamber comes back to the same 41 geometries and 36 draw calls it started with: rooms dispose cleanly. The office and riding sit above the handoff's 40-call guide because each jointed figure is 19 small meshes and the kit props are one call each; their triangle counts are tiny, so the phone frame rate decides whether merging the figures' fixed parts is worth doing.
 
 ## 5. Open decisions (for Kelbo)
 

@@ -34,4 +34,4 @@ Kelbo's words: "remember this is a flagship game, let's do this right." The Whip
 
 ## Build plan status
 
-Stages 0–4b are done and merged. Kelbo's call: build through the end. Order of work: the art pass in `ART-PASS.md` first (one step per PR, in order, V0 first; the UI is "The Order Paper", see V3), then HANDOFF stages 5–9 in order. Kelbo's playtest notes, when they come, go at the end of `PROGRESS.md` and may reorder this.
+Stages 0–4b and the art pass (`ART-PASS.md`, V0–V8) are done and merged. Kelbo's call: build through the end. Next: HANDOFF stages 5–9 in order, each in the Order Paper system and the look the art pass set (`src/look.js`, `src/kit3d.js`, `src/figures.js`, `src/models.js`, `src/textures.js`). Kelbo's playtest notes, when they come, go at the end of `PROGRESS.md` and may reorder this. Still owed by Kelbo: a phone frame-rate check with `?debug=1`, and Longlight's colours for `--brand` in `css/style.css`.
