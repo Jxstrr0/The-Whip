@@ -997,3 +997,31 @@ Kelbo found Fraunces's Y and J hard to read. Fraunces's capital J sits on the ba
 - Newsreader's weights stop at 800 and its optical size at 72, so the masthead uses 800 and opsz 72 (it was 900 and 144).
 - The two files total about 280 KB, against 110 KB for Fraunces. That is still small next to the textures and models.
 - **Checked:** `tests.html` is 99 of 99. The front page, the office evening and an MP card render in Newsreader at phone size with no console errors.
+
+## Playtest fix: what an ask means at home, less scrolling, colour that means something
+
+Kelbo's notes: when the whip (or anyone) asks you to vote a certain way or asks a favour, it should show what that does to your riding, and how much. Also: no unnecessary scrolling, and colour-code the important numbers (vote counts and the like) so they read at a glance.
+
+**What changed**
+
+- **Riding impact is on the screen before you agree.** Every number comes from the rules the vote itself runs on, so what the screen says is what you get.
+  - **The whip's call and a recruiter's ask:** a panel says which way your riding leans on the bill (mildly, firmly or strongly), then what each way of voting does: riding standing and the whip's view of you. For Prentiss–Long Lake on the first week's bill: voting yea is −5 riding, +2 whip; breaking the line is +4 riding, −8 whip. The evening board carries a one-line version of the same thing.
+  - **The deal table:** each card that touches home says so. A promised vote shows its riding cost, a mention of your riding shows +1, a project for your riding +6, a Friday of leave says it's a Friday at home. A total under the two columns adds up what the deal does for your riding once it plays out.
+  - **The bells sheet:** the three buttons (with the party, break with the line, be somewhere else) each carry their riding and whip numbers. Your riding's lean is shown whenever it has one, not only when it's a dilemma.
+  - **Co-sponsoring is no longer free.** Putting your name to someone's bill now moves your riding standing by what the card shows: up to ±2, depending on whether home likes the bill. Before, it did nothing.
+- **Less scrolling.** I measured every sheet at phone size by walking the game and comparing each sheet's content to its height.
+  - Office, caucus, riding and bells sheets were capped at 54% of the screen in portrait and ran 250 to 500 px over. They now take up to 70%, the weekend paper and the morning order paper up to 80%. The room is still visible above them.
+  - The buttons that finish a sheet (the vote buttons on the bells sheet, Propose and Leave on the deal table, the end-evening row, Close and Continue) stay pinned at the bottom while the rest scrolls under them.
+  - The whip's call on the evening board is one line, not a panel. Cards no longer carry "when you vote" tags that wrapped.
+  - Office meetings that overflowed by 240 to 340 px now overflow by 0 to 205 px, and the buttons that matter are always in reach. The weekend front page is still a page you scroll: it's a newspaper.
+- **Colour that means something**, always with a sign or a shape as well so it works in the colour-blind palette (the good and bad colours follow it).
+  - The whip's count: green with a tick when you're safe, amber with a half-dot when you're a few short, red with a cross when you're further short. Firm, leaning, lost and away each have their own colour.
+  - The tallies on the division board and the party rows (yeas green, nays red); riding standing and the town hall crowd bars (red under 35, amber under 48, green above 62, the same cuts the riding president's mood uses); the arrows on the front page; how well an MP rates you on their card.
+
+**Tuning:** `stakes` is new (how strong a lean reads, how close "a few short" is, the standing cuts), `player.ridingMentionStanding` and `ridingProjectStanding` (the 1 and 6 that were hard-coded), `meetings.cosponsorRiding`.
+
+**Things to know**
+
+- A free vote still moves nothing: no riding change and no whip score. The panel says so rather than showing zeros.
+- The first-week hints and the job line still take room on a phone. I made the job line a little tighter; say if you'd rather lose it after the first week.
+- **Checked:** `tests.html`, with four new tests (the numbers shown for each way of voting are exactly what the vote then does; a free vote moves nothing; what each deal card says; the co-sponsor number). Portrait and landscape at phone size, no console errors.
