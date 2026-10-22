@@ -2851,7 +2851,7 @@ body.cold-open .topbar {
 
 /* The buttons that finish a sheet stay in reach while its content scrolls under them. */
 .sheet .card-actions,
-.office-sheet > .choices:last-child,
+.office-sheet > .choices:last-child:not(.talk-choices),
 .division-sheet > .choices:last-child {
   position: sticky;
   bottom: -16px;
@@ -3064,14 +3064,25 @@ body.cold-open .topbar {
 }
 
 /* The evening board's four buttons sit two by two, so pinning them leaves room for the evening above. */
-.office-sheet > .choices:last-child {
+.office-sheet > .choices:last-child:not(.talk-choices) {
   grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
-.office-sheet > .choices:last-child .btn {
+.office-sheet > .choices:last-child:not(.talk-choices) .btn {
   min-height: 44px;
   padding: 6px 10px;
   font-size: 15px;
+}
+
+/* What you say back in a meeting is the content, not a closing button: one column, read in order, never pinned over the line. */
+.talk-choices {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+.talk-choices .btn {
+  padding: 8px 14px;
+  font-size: 16px;
+  line-height: 1.35;
 }
 
 /* On the bells sheet each choice is one short row: the words, then what it does at home and with the whip. */
