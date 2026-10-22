@@ -72,6 +72,7 @@ import * as coldOpen from './src/sim/coldOpen.js';
 import * as memoir from './src/sim/memoir.js';
 import * as goals from './src/sim/goals.js';
 import * as stakes from './src/sim/stakes.js';
+import * as rowSim from './src/sim/row.js';
 import { t as uiText } from './src/ui/text.js';
 
 const sections = [];
@@ -2297,6 +2298,39 @@ test('Signing on to a bill moves riding standing by exactly what the card showed
   assert(s.player.ridingStanding === Math.max(0, Math.min(100, r0 + shown.riding)), 'standing moved by it');
   assert(Math.abs(shown.riding) <= tuning().meetings.cosponsorRiding, 'bounded by tuning');
   return `riding ${shown.riding >= 0 ? '+' : ''}${shown.riding} for ${sponsor.title}`;
+});
+
+
+test('Your row: the report lists exactly the row, friends are flagged, and the marks add up', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2', guided: true });
+  ranks.assignRank(s, 3, 'assistantWhip');
+  const row = ranks.rowOf(s);
+  const r = rowSim.rowReport(s);
+  assert(r.members.length === row.length && row.length > 0 && row.length <= 15, `row of ${row.length}`);
+  const me = s.mps[s.player.mpId];
+  for (const m of r.members) {
+    assert(s.mps[m.id].party === me.party && m.id !== me.id, 'same party, never you');
+    assert(['firm', 'leaning', 'lost', 'absent', 'unmarked'].includes(m.mark), 'a known mark');
+  }
+  assert(Object.values(r.counts).reduce((a, b) => a + b, 0) === r.members.length, 'counts cover everyone');
+  const order = r.members.map((m) => rowSim.ROW_ORDER.indexOf(m.mark));
+  assert(order.every((v, i) => i === 0 || order[i - 1] <= v), 'the ones needing attention come first');
+  assert(rowSim.rowIds(s).size === row.length, 'rowIds matches rowOf');
+  const some = r.members.find((m) => m.friend);
+  if (some) assert(s.mps[some.id].cohort === me.cohort || (s.mps[some.id].relations[me.id] || 0) > 30 || s.mps[some.id].rapport > 25, 'friend means what the row\'s set piece means');
+  return `${row.length} in the row · ${JSON.stringify(r.counts)}`;
+});
+
+test('Your row picks up marks from the count board for the next vote', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2', guided: true });
+  ranks.assignRank(s, 3, 'assistantWhip');
+  const bill = Object.values(s.bills).find((b) => b.status === 'active' && b.nextVote != null);
+  if (!bill) return 'no vote scheduled at the start';
+  const first = ranks.rowOf(s)[0];
+  count.setMark(s, first.id, bill.id, 'lost');
+  const r = rowSim.rowReport(s);
+  assert(r.bill.id === rowSim.rowReport(s).bill.id, 'a bill is named');
+  if (r.bill.id === bill.id) assert(r.members.find((m) => m.id === first.id).mark === 'lost', 'the mark shows');
 });
 
 async function run() {
