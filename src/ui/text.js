@@ -2,6 +2,9 @@
 import { data, tuning } from '../sim/config.js';
 import { getSettings } from '../settings.js';
 import { isGuidedWeek, actAim, sceneJob } from '../sim/goals.js';
+import { rowReport } from '../sim/row.js';
+
+export const ROW_GLYPH = { firm: '\u2714', leaning: '\u25D0', lost: '\u2716', absent: '\u25CB', unmarked: '\u2013' };
 
 export function t(key, vars = {}) {
   const s = data().strings[key] ?? key;
@@ -24,6 +27,20 @@ export function countLine(pr) {
   const mk = (k) => `<span class="mk ${k}">${pr[k === 'away' ? 'absent' : k]}</span>`;
   const marks = t('count.marks', { firm: mk('firm'), leaning: mk('leaning'), lost: mk('lost'), absent: mk('away'), unmarked: pr.unmarked });
   return `<p class="count-line tone-${tone}"><b>${t('count.title')}</b> · <span class="cnt"><i aria-hidden="true">${glyph}</i> ${esc(stand)}</span><br><small>${marks}</small></p>`;
+}
+
+// Four seated figures in a line: the mark for your row, here and on the top bar.
+export const rowIcon = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="4.5" cy="8" r="2.2"/><circle cx="10" cy="8" r="2.2"/><circle cx="15.5" cy="8" r="2.2"/><circle cx="21" cy="8" r="2.2"/><path d="M2 20v-4a2.5 2.5 0 0 1 5 0v4M7.5 20v-4a2.5 2.5 0 0 1 5 0v4M13 20v-4a2.5 2.5 0 0 1 5 0v4M18.5 20v-4a2.5 2.5 0 0 1 5 0v4"/></svg>';
+
+// Your row's part of the count, one tappable line under the whip's count: from the whip's office on, where the
+// members you answer for stand on this vote. Tapping it opens the row screen for the same vote.
+export function rowLine(state, billId) {
+  if (state.player.act < tuning().tools.officeFilesFromAct) return '';
+  const { members, counts } = rowReport(state, billId);
+  if (!members.length) return '';
+  const part = (k, n) => (n ? `<span class="row-mark ${k}"><i aria-hidden="true">${ROW_GLYPH[k]}</i> ${n} ${esc(t('row.mark.' + k))}</span>` : '');
+  const tally = ['firm', 'leaning', 'lost', 'absent', 'unmarked'].map((k) => part(k, counts[k])).join('');
+  return `<button type="button" class="row-line" data-open-row="${esc(billId)}">${rowIcon}<b>${esc(t('row.title'))}</b><span class="tally">${tally}</span><span class="chev" aria-hidden="true">\u203A</span></button>`;
 }
 
 // A rubber stamp for an outcome: CARRIED, DEFEATED, DEAL, LEAVE GRANTED. kind: yea | nay | grey | brass.
