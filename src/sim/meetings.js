@@ -9,7 +9,7 @@ import { dilemmaFor } from './career.js';
 import { baseScore } from './mp.js';
 import { dayIndex, sittingDayAfter } from './bills.js';
 import { remember, person } from './memoir.js';
-import { applyCosponsor } from './stakes.js';
+import { applyCosponsor, voteStakes } from './stakes.js';
 
 const MOODS = ['cooperative', 'guarded', 'angry', 'anxious'];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -322,8 +322,12 @@ function initialTable(state, mt, m) {
   const pos = mt.billId ? state.bills[mt.billId].positions[me(state).party] : null;
   const against = pos === 'yea' ? 'nay' : 'yea';
   switch (mt.situation) {
-    case 'whipCall':
+    case 'whipCall': {
+      // When toeing the line will cost you at home, the whip comes with something to take home.
+      const cost = -voteStakes(state, state.bills[mt.billId], pos).riding;
+      if (cost >= tuning().meetings.whipSweetenCost) return { offers: [`vote:${mt.billId}:${pos}`], asks: state.house.government === me(state).party ? ['ridingProject'] : ['qpSlot', 'ridingMention'] };
       return { offers: [`vote:${mt.billId}:${pos}`], asks: [m.rapport > 10 ? 'qpSlot' : 'ridingMention'] };
+    }
     case 'rebelRecruit':
       return { offers: [`vote:${mt.billId}:${against}`], asks: ['favor'] };
     case 'favorAsk': {

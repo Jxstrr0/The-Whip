@@ -159,7 +159,7 @@
     "absentWhipRapport": -3,
     "noticedPerRebellion": 1,
     "noticedPerLoyalVote": 0.25,
-    "ridingMentionStanding": 1,
+    "ridingMentionStanding": 3,
     "ridingProjectStanding": 6
   },
   "meetings": {
@@ -181,6 +181,7 @@
       "rebelRecruit": 0.35
     },
     "introductionWeeks": 6,
+    "whipSweetenCost": 3,
     "whipCallDaysAhead": 3,
     "goodRead": 4,
     "badRead": -4,

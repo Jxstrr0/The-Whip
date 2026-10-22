@@ -953,6 +953,32 @@ test('Rival whips act every week: a poach, a leak and a pair test are all observ
     return `moves ${[...seen].join(', ')} · whips ${styles.join(' ')}`;
   }));
 
+test('A whip call that will cost you at home comes with something to take home', () =>
+  quiet(() => {
+    const { s, me, rng } = whipScenario(4, 'SWEET-1');
+    const whip = meetings.whipOf(s);
+    const bill = Object.values(s.bills).find((b) => b.status === 'active' && b.lines[me.party] === 'whipped' && ['yea', 'nay'].includes(b.positions[me.party]));
+    assert(whip && bill, 'needs a whip and a whipped bill');
+    const M = tuning().meetings;
+    const was = M.whipSweetenCost;
+    const asksFor = (cost) => {
+      M.whipSweetenCost = cost;
+      s.meeting = null;
+      const mt = meetings.startMeeting(s, rng, { mpId: whip, situation: 'whipCall', billId: bill.id, reversal: true });
+      return mt.deal.asks;
+    };
+    try {
+      const plain = asksFor(999);
+      assert(plain.length === 1 && ['qpSlot', 'ridingMention'].includes(plain[0]), 'an easy line gets the usual ask: ' + plain);
+      const governing = s.house.government === me.party;
+      const sweet = asksFor(-999);
+      assert(governing ? sweet.includes('ridingProject') : sweet.includes('qpSlot') && sweet.includes('ridingMention'), 'a costly line should come sweetened: ' + sweet);
+    } finally {
+      M.whipSweetenCost = was;
+    }
+    assert(tuning().player.ridingMentionStanding >= 3, 'a mention should be worth the line');
+  }));
+
 test('A leak spends something fresh about you, once, and the papers run one a week', () =>
   quiet(() => {
     const { s, me, rng } = whipScenario(4, 'LEAK-1');
