@@ -21,7 +21,8 @@ import * as caucus from './caucus/caucusScene.js';
 import * as riding from './riding/ridingScene.js';
 import { createHud, createTuningPanel, createToast } from './ui/hud.js';
 import { createMpCard } from './ui/mpCard.js';
-import { createBook } from './ui/book.js';
+import { createBook, rowIcon } from './ui/book.js';
+import { createRowSheet } from './ui/rowSheet.js';
 import { createAgenda } from './ui/agenda.js';
 import { pressPhoto } from './pressPhoto.js';
 import { faceOf } from './faces.js';
@@ -108,6 +109,7 @@ function buildWorld() {
 
   let card;
   let hud = null;
+  let lastRowShown = null;
   const rooms = createRooms({
     factories: { chamber, office, caucus, riding },
     ctx: {
@@ -154,6 +156,19 @@ function buildWorld() {
         picking = null;
         return cb(mpId);
       }
+      const mp = getState().mps[mpId];
+      const room = chamberRoom();
+      if (room && mp.seatId) {
+        room.select(mp.seatId);
+        room.focusSeat(mp.seatId);
+      }
+      card.show(mpId);
+    },
+  });
+  // Your row: opened from the icon on the top bar once you're an assistant whip, or from the book.
+  const rowSheet = createRowSheet(ui, {
+    getState,
+    onPick(mpId) {
       const mp = getState().mps[mpId];
       const room = chamberRoom();
       if (room && mp.seatId) {
@@ -250,6 +265,7 @@ function buildWorld() {
           hud.render();
         },
       },
+      { label: t('row.open'), icon: rowIcon, show: () => (getState()?.player.act ?? 0) >= 3, run: () => (rowSheet.isOpen ? rowSheet.close() : rowSheet.open()) },
       { label: '☰', run: () => gameMenu.open() },
     ],
     debugText: DEBUG ? () => (getState() ? `${getState().seed} · ${t('debug.hash', { hash: parliamentHash(getState()) })}` : '') : null,
@@ -350,6 +366,13 @@ function buildWorld() {
     coldOpenUI.render(state);
     card.refresh();
     book.refresh();
+    rowSheet.refresh();
+    // The row icon appears when the player reaches the whip's office.
+    const rowShown = state.player.act >= 3;
+    if (rowShown !== lastRowShown) {
+      lastRowShown = rowShown;
+      hud?.render();
+    }
     ledger.refresh();
     // Meeting outcomes, calls and deliveries show briefly as a toast.
     const fresh = state.log.slice(lastLog).filter((l) => l.kind === 'meeting' || l.kind === 'career');

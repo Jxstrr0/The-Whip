@@ -2832,7 +2832,7 @@ body.cold-open .topbar {
 .count-line.tone-bad { background: color-mix(in srgb, var(--bad) 13%, transparent); }
 .count-line .cnt i {
   font-style: normal;
-  font-size: 12px;
+  font-size: 13px;
 }
 .count-line .mk {
   font-weight: 600;
@@ -2914,4 +2914,102 @@ body.cold-open .topbar {
   .sheet h3 {
     margin: 8px 0 4px;
   }
+}
+
+/* ---- Your row: the icon, the filter chip, the tag, and the sheet ---- */
+.topbar .btn.icon-only {
+  width: 44px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+}
+.topbar .btn.icon-only .ico,
+.chip-toggle .ico,
+.row-tag .ico {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.topbar .btn.icon-only .ico circle {
+  fill: currentColor;
+  stroke: none;
+}
+.chip-toggle .ico circle,
+.row-tag .ico circle {
+  fill: currentColor;
+  stroke: none;
+}
+.chip-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  margin: 6px 0 2px;
+  padding: 0 14px;
+  border: 1px solid var(--ink-3);
+  border-radius: 999px;
+  background: var(--fill);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+}
+.chip-toggle.on {
+  background: var(--bench);
+  border-color: var(--bench);
+  color: var(--paper);
+  font-weight: 600;
+}
+.row-tag {
+  display: inline-flex;
+  vertical-align: middle;
+  color: var(--brass-ink);
+}
+.row-tag .ico {
+  width: 20px;
+  height: 14px;
+}
+.badge.row {
+  background: color-mix(in srgb, var(--brass) 22%, transparent);
+  color: var(--brass-ink);
+}
+.row-sheet {
+  max-height: 70dvh;
+  z-index: 6; /* above whichever room sheet is open, like the book */
+}
+.row-bill {
+  margin: 4px 0 2px;
+  font-weight: 600;
+}
+.row-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin: 4px 0 6px;
+}
+.row-mark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.row-mark i {
+  font-style: normal;
+  font-size: 13px;
+}
+.row-mark.firm { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+.row-mark.leaning { color: var(--warn-ink); background: color-mix(in srgb, var(--amber) 22%, transparent); }
+.row-mark.lost { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
+.row-mark.absent, .row-mark.unmarked { color: var(--grey); background: var(--ink-4); font-weight: 500; }
+.row-mark.stale { opacity: 0.7; }
+.row-sheet .book-list li {
+  cursor: pointer;
 }

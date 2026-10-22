@@ -2,9 +2,13 @@
 import { cardView, HIDDEN_FIELDS } from '../sim/knowledge.js';
 import { t, esc, mpName, partyColor, partyShort, partyName, roleName, ordinal } from './text.js';
 import { pickerHtml, wirePickers } from './picker.js';
+import { rowIds } from '../sim/row.js';
 
 // The riding types are written for mid-sentence use; as a field's value they take a capital.
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+// Four seated figures in a line: the mark for your row, here and on the top bar.
+export const rowIcon = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="4.5" cy="8" r="2.2"/><circle cx="10" cy="8" r="2.2"/><circle cx="15.5" cy="8" r="2.2"/><circle cx="21" cy="8" r="2.2"/><path d="M2 20v-4a2.5 2.5 0 0 1 5 0v4M7.5 20v-4a2.5 2.5 0 0 1 5 0v4M13 20v-4a2.5 2.5 0 0 1 5 0v4M18.5 20v-4a2.5 2.5 0 0 1 5 0v4"/></svg>';
 
 const FILTERS = ['party', 'clique', 'cohort', 'type'];
 
@@ -12,7 +16,7 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
   const el = document.createElement('section');
   el.className = 'sheet book hidden';
   root.appendChild(el);
-  const ui = { q: '', party: '', clique: '', cohort: '', type: '', sort: 'seat' };
+  const ui = { q: '', party: '', clique: '', cohort: '', type: '', sort: 'seat', row: false };
   let title = null;
 
   function knownCount(state, id) {
@@ -43,7 +47,9 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
 
   function rows(state) {
     const q = ui.q.trim().toLowerCase();
+    const row = ui.row ? rowIds(state) : null;
     let list = Object.values(state.mps).filter((m) => {
+      if (row && !row.has(m.id)) return false;
       // As a picker (whom to invite or call) the book leaves you out: an evening slot is never spent on yourself.
       if (title && m.id === state.player.mpId) return false;
       const v = cardView(state, m.id);
@@ -70,6 +76,7 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
     if (!state) return;
     const o = options(state);
     const list = rows(state);
+    const myRow = rowIds(state);
     const total = Object.keys(state.mps).length - (title ? 1 : 0);
     el.innerHTML = `
       <header class="book-head">
@@ -77,6 +84,7 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
         <button class="btn icon" data-act="close" aria-label="${t('btn.close')}">✕</button>
       </header>
       <input class="search" type="search" placeholder="${t('book.search')}" value="${esc(ui.q)}" autocomplete="off">
+      <button class="chip-toggle${ui.row ? ' on' : ''}" data-act="row" aria-pressed="${ui.row}">${rowIcon} ${t('book.myRow')}</button>
       <div class="filters">
         ${[...FILTERS, 'sort'].map((f) => pickerHtml({ name: f, options: o[f], value: ui[f], title: t('book.pick.' + f), compact: true })).join('')}
       </div>
@@ -88,7 +96,7 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
             const risk = riskOf && ui.sort === 'risk' ? `<span class="risk">${esc(riskOf(state, m.id, true) ?? '')}</span>` : '';
             return `<li data-id="${m.id}">
               <span class="bar" style="background:${partyColor(state, m)}"></span>
-              <span class="main"><b>${esc(mpName(m))}</b>${m.id === state.player.mpId ? ` <span class="badge you">${t('card.you')}</span>` : ''}<small>${esc(partyShort(state, m))} · ${esc(m.riding.name)}${m.caucusRole !== 'backbencher' ? ' · ' + esc(roleName(state, m)) : ''}</small></span>
+              <span class="main"><b>${esc(mpName(m))}</b>${m.id === state.player.mpId ? ` <span class="badge you">${t('card.you')}</span>` : myRow.has(m.id) ? ` <span class="row-tag" title="${t('row.tag')}">${rowIcon}</span>` : ''}<small>${esc(partyShort(state, m))} · ${esc(m.riding.name)}${m.caucusRole !== 'backbencher' ? ' · ' + esc(roleName(state, m)) : ''}</small></span>
               ${risk}<span class="known" title="fields known">${'●'.repeat(Math.min(5, Math.ceil(known / 2)))}${'○'.repeat(5 - Math.min(5, Math.ceil(known / 2)))}</span>
             </li>`;
           })
@@ -96,6 +104,10 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
       </ul>
     `;
     el.querySelector('[data-act="close"]').onclick = api.close;
+    el.querySelector('[data-act="row"]').onclick = () => {
+      ui.row = !ui.row;
+      render();
+    };
     const search = el.querySelector('.search');
     search.oninput = () => {
       ui.q = search.value;
