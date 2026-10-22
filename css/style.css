@@ -3058,3 +3058,14 @@ body.cold-open .topbar {
   color: var(--ink-2);
   font-size: 20px;
 }
+
+/* The evening board's four buttons sit two by two, so pinning them leaves room for the evening above. */
+.office-sheet > .choices:last-child {
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.office-sheet > .choices:last-child .btn {
+  min-height: 44px;
+  padding: 6px 10px;
+  font-size: 15px;
+}
