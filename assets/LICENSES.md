@@ -18,7 +18,7 @@ All from **ambientCG** (https://ambientcg.com), licence **CC0 1.0 Universal** (h
 
 ## Fonts (`assets/fonts/`)
 
-**Fraunces** by Undercase Type, from Google Fonts, licence **SIL Open Font License 1.1** (https://raw.githubusercontent.com/google/fonts/main/ofl/fraunces/OFL.txt: "This Font Software is licensed under the SIL Open Font License, Version 1.1."). `Fraunces-Regular.woff2` and `Fraunces-Italic.woff2` are the variable latin subsets served by Google Fonts (optical size and weight axes), fetched once and committed.
+**Newsreader** by Production Type, from Google Fonts, licence **SIL Open Font License 1.1** (https://raw.githubusercontent.com/google/fonts/main/ofl/newsreader/OFL.txt: "This Font Software is licensed under the SIL Open Font License, Version 1.1."). `Newsreader-Regular.woff2` and `Newsreader-Italic.woff2` are the variable latin subsets served by Google Fonts (optical size and weight axes), fetched once and committed. It replaced Fraunces after playtesting, because Fraunces's Y and J were hard to read on a phone.
 
 ## Models (`assets/models/`)
 

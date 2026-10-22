@@ -988,3 +988,12 @@ Kelbo's notes: some artifacting in the one-on-one meeting room, and members walk
 
 - I can't reproduce phone-GPU flicker in the headless browser (it has a deeper depth buffer). If you still see artifacting in the office, tell me where in the room it is and I'll chase it.
 - **Checked:** `tests.html` is 99 of 99. The offices (Acts 1 to 5, with and without a visitor) and the chamber render at phone size with no console errors, and a walker was followed down the gangway and the steps at the end of the bench.
+
+## Playtest fix: a new typeface
+
+Kelbo found Fraunces's Y and J hard to read. Fraunces's capital J sits on the baseline and reads like a hooked I, and its Y is close behind it. I set four OFL serifs side by side in the game's own sizes, and Kelbo picked **Newsreader** (Production Type): a newspaper serif with a capital J that drops below the line.
+
+- It replaces Fraunces everywhere: the Order Paper UI, the front page, and the signs drawn in the office and on the riding. The files are `assets/fonts/Newsreader-*.woff2` (the variable latin subsets, with optical size and weight axes), committed, so nothing is fetched at runtime. The licence is noted in `assets/LICENSES.md`.
+- Newsreader's weights stop at 800 and its optical size at 72, so the masthead uses 800 and opsz 72 (it was 900 and 144).
+- The two files total about 280 KB, against 110 KB for Fraunces. That is still small next to the textures and models.
+- **Checked:** `tests.html` is 99 of 99. The front page, the office evening and an MP card render in Newsreader at phone size with no console errors.
