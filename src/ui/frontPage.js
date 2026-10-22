@@ -67,7 +67,7 @@ export function renderFrontPage(state, p, photoUrl) {
   const byline = H.bylines[week % H.bylines.length];
   const caption = fill(H.captions[(week * 3 + 1) % H.captions.length], ctx);
   const photo = photoUrl && lead?.you ? `<figure class="press-photo"><img src="${photoUrl}" alt="" width="150" height="190"><figcaption>${esc(caption)}</figcaption></figure>` : '';
-  const delta = ([a, b]) => `${a} → <b>${b}</b>${b > a ? ' ▲' : b < a ? ' ▼' : ''}`;
+  const delta = ([a, b]) => `${a} → <b class="tone-${b > a ? 'good' : b < a ? 'bad' : 'plain'}">${b}${b > a ? ' ▲' : b < a ? ' ▼' : ''}</b>`;
   // The paper is dated the Saturday of the week just closed; the date has already moved on to Monday.
   const cal = calendarOf({ week: s.week, year: s.year, dayOfWeek: 6 });
   const wx = weatherOf(state, Math.max(0, state.date.absWeek - 1));

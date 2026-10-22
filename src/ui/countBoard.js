@@ -5,6 +5,13 @@ import { stageLabel, questionText } from '../sim/vote.js';
 import { prediction } from '../sim/count.js';
 import { budget, runners } from '../sim/tools.js';
 import { createHillMap, hillHeader } from './hillMap.js';
+import { delta } from './stakes.js';
+import { voteStakes } from '../sim/stakes.js';
+
+function leanText(lean) {
+  const dir = lean.side === 'yea' ? 'for it' : 'against it';
+  return lean.level === 'strong' ? `strongly ${dir}` : lean.level === 'firm' ? dir : `leaning ${lean.side === 'yea' ? 'for' : 'against'}`;
+}
 
 function feeling(v) {
   const a = Math.abs(v);
@@ -40,6 +47,11 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
     const other = pos === 'yea' ? 'nay' : 'yea';
     const lineText = p.line === 'whipped' ? t('div.lineWhipped', { pos: t('vote.' + pos).toUpperCase() }) : t('div.lineFree');
     const d = p.dilemma;
+    const stkLine = voteStakes(state, bill, pos);
+    const stkRebel = voteStakes(state, bill, other);
+    const stkAbsent = voteStakes(state, bill, 'absent');
+    // What each way of voting does at home and with the whip, under the button that does it (whipped votes only).
+    const impact = (st) => (st.whipped ? `<small class="stake-line">${delta(st.riding, t('stake.riding'))}${delta(st.whip, t('stake.whip'))}</small>` : '');
     const total = p.bells;
     const T = tuning().tools;
     const countHtml = () => (state.player.act >= T.officeFilesFromAct && p.line === 'whipped' ? countLine(prediction(getState(), p.billId)) : '');
@@ -73,13 +85,13 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
       ${p.reason === 'ownBill' ? `<p class="tutorial">${t('div.ownBill')}</p>` : firstWeekHint(state, 'tutorial.bells')}
       <div class="kvs">
         <div class="kv"><span class="k">${t('div.line', { line: '' }).replace(': ', '')}</span><span class="v">${esc(lineText)}</span></div>
-        ${d ? `<div class="kv"><span class="k">${esc(me.riding.name)}</span><span class="v">${esc(feeling(d.ridingPull))}</span></div>
-        <div class="kv"><span class="k">${t('div.conscience', { feeling: '' }).replace(': ', '')}</span><span class="v">${esc(feeling(d.conscience))}</span></div>` : ''}
+        ${stkLine.lean ? `<div class="kv"><span class="k">${esc(me.riding.name)}</span><span class="v">${esc(leanText(stkLine.lean))}</span></div>` : ''}
+        ${d ? `<div class="kv"><span class="k">${t('div.conscience', { feeling: '' }).replace(': ', '')}</span><span class="v">${esc(feeling(d.conscience))}</span></div>` : ''}
       </div>
       <div class="choices">
-        <button class="btn primary" data-c="line">${t('div.choose.line', { pos: t('vote.' + pos) })}</button>
-        ${p.line === 'whipped' && pos !== 'abstain' ? `<button class="btn" data-c="rebel">${t('div.choose.rebel', { pos: t('vote.' + other) })}</button>` : ''}
-        <button class="btn" data-c="absent">${t('div.choose.absent')}</button>
+        <button class="btn primary" data-c="line">${t('div.choose.line', { pos: t('vote.' + pos) })}${impact(stkLine)}</button>
+        ${p.line === 'whipped' && pos !== 'abstain' ? `<button class="btn" data-c="rebel">${t('div.choose.rebel', { pos: t('vote.' + other) })}${impact(stkRebel)}</button>` : ''}
+        <button class="btn" data-c="absent">${t('div.choose.absent')}${impact(stkAbsent)}</button>
       </div>`;
     sheet.classList.remove('hidden');
     sheet.scrollTop = 0;
@@ -170,7 +182,7 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
       }
     }
     return Object.entries(rows)
-      .map(([k, v]) => `<span class="pr"><b>${esc(k)}</b> ✔${v.y} ✖${v.n}</span>`)
+      .map(([k, v]) => `<span class="pr"><b>${esc(k)}</b> <span class="y">✔${v.y}</span> <span class="n">✖${v.n}</span></span>`)
       .join('');
   }
 
