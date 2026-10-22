@@ -160,7 +160,11 @@
     "noticedPerRebellion": 1,
     "noticedPerLoyalVote": 0.25,
     "ridingMentionStanding": 3,
-    "ridingProjectStanding": 6
+    "ridingProjectStanding": 6,
+    "caseReferStanding": 1,
+    "staleCaseWeeks": 8,
+    "staleCaseCost": 1,
+    "staleCaseMinWeight": 3
   },
   "meetings": {
     "slotsByAct": [
@@ -220,6 +224,7 @@
         "concede": 3
       }
     },
+    "context": { "odds": 0.6, "recentWeeks": 4, "loyalAfterWeeks": 6, "pressure": 60 },
     "turnsBySituation": {
       "whipCall": 3,
       "rebelRecruit": 3,
