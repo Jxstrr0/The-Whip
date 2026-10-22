@@ -1156,3 +1156,23 @@ Kelbo asked for more dialogue, with the mentor and in the home riding at least.
 - `tests.html` 115 of 115, with four new tests: dialogue coverage in every act, the mentor's context lines, the three ways to take a case plus the call-back, and the president's replies.
 - Twelve headless Parliaments against the base: riding standing ends about where it did.
 - Played a riding visit at phone size, portrait and landscape: referral, reporter, president reply, wrap-up. A normal visit fits portrait without scrolling, except a few pixels after a referral. The guided first week scrolls a little because of its tutorial note. No console errors.
+
+## Playtest: deal or no deal after a one-to-one
+
+Kelbo asked for a clear verdict after each office meeting. When a one-to-one ends, the sheet now turns into a verdict card before you're back at the office desk:
+
+- **A rubber stamp.** DEAL is green with a soft thump; NO DEAL is red with a lower one. Under it, one line saying how it went: "Ellis shook on it.", "Lorna walked out.", "You walked away from their counter.", "The whip wouldn't pay your price."
+- **Their parting line.** 62 new lines (`partings` in `data/dialogue-lines.json`), for each outcome and the visitor's mood. Lines tied to the meeting's reason are picked first: a rebel you recruited, a favour asked, a complaint, an introduction, gossip, the mentor. They don't repeat within a run of meetings.
+- **The terms you settled.** On a deal, what you give and what you get, with the table total.
+- **What changed.** How far rapport moved, what you learned about them and the people they know, and a ledger button when something is owed.
+
+**Small calls:**
+- Meetings that end politely with nothing on the table ("Just talk", or "You left it there") get a grey NO DEAL, not a red one. Only a walk-out or a refusal is red.
+- A visitor who walked out leaves the chair empty behind the card. Anyone else stays seated until you tap "Back to the office".
+- No toast while the card is up, because the card already says it. The log entry is still written.
+- Partings sit in their own data array, so the dialogue coverage tests stay as they were.
+- The card only shows things. Booking, inviting or calling someone closes it, and nothing in the sim waits on it.
+
+**Checked:**
+- `tests.html` 116 of 116. The new test covers a deal, a walk-out, closing the card, and at least two partings for every speaker, outcome and mood, with no repeats.
+- Played at phone size, portrait and landscape. The deal and walk-out cards both fit portrait without scrolling. In landscape the side sheet scrolls under its buttons like the other sheets. No console errors.

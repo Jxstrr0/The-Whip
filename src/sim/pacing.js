@@ -40,8 +40,9 @@ export function queueStop(state, p) {
   (state.flow.queued ||= []).push(p);
 }
 
-export function log(state, text, kind = 'info') {
-  state.log.push({ day: dayIndex(state.date), week: state.date.absWeek, text, kind });
+// extra: flags for the screen, e.g. { quiet: true } when a sheet already shows it and it needs no toast.
+export function log(state, text, kind = 'info', extra) {
+  state.log.push({ day: dayIndex(state.date), week: state.date.absWeek, text, kind, ...extra });
   if (state.log.length > 300) state.log.splice(0, state.log.length - 300);
   state.flow?.week.log.push(text);
 }

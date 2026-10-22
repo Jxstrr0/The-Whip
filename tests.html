@@ -479,6 +479,50 @@ test('A meeting with a scripted choice sequence produces the expected ledger ent
   return `${mt.talk.turns.length} turns, ledger ${mine.id} and ${theirs.id}`;
 });
 
+test('After a one-to-one the evening holds a verdict: deal or no deal, a parting line, and the rapport it moved', () => {
+  const s = toOffice('VERDICT-1');
+  const me = s.mps[s.player.mpId];
+  const pool = Object.values(s.mps).filter((m) => m.party === me.party && m.id !== me.id && m.caucusRole === 'backbencher');
+  const talkOut = (mt) => { for (let i = 0; i < 6 && mt.phase === 'talk'; i++) ACTIONS.talk(s, { index: Math.max(0, mt.talk.options.findIndex((o) => o.approach === 'listen')) }); };
+  // A fair trade with a friend: DEAL, the terms, a line with nothing left unfilled, and no toast for the log line.
+  s.evening.slots = 5;
+  ACTIONS.invite(s, { mpId: pool[0].id });
+  const mt = s.meetings[s.meeting];
+  talkOut(mt);
+  pool[0].rapport = 40;
+  const before = mt.rapportFrom;
+  ACTIONS.propose(s, { offers: ['ridingMention'], asks: ['favor'] });
+  assert(mt.outcome === 'deal' && s.evening.debrief === mt.id, `deal verdict: ${mt.outcome}, debrief ${s.evening.debrief}`);
+  assert(s.flow.pending.kind === 'office' && !s.meeting, 'the evening carries on under the card');
+  assert(mt.after.parting && !/[{}]/.test(mt.after.parting), 'parting line: ' + mt.after.parting);
+  assert(mt.after.rapport === Math.round(pool[0].rapport - before), 'rapport moved by what the card says');
+  assert(s.log.at(-1).quiet, 'the meeting line does not toast over the card');
+  // Seeing the next visitor closes the card; so does going back to the office, and the words are not saved.
+  ACTIONS.closeDebrief(s);
+  assert(!s.evening.debrief && !mt.after.parting, 'card closed and its words dropped');
+  // Asking far too much of someone who dislikes you: they walk out, and it's stamped NO DEAL.
+  ACTIONS.invite(s, { mpId: pool[1].id });
+  const mt2 = s.meetings[s.meeting];
+  talkOut(mt2);
+  pool[1].rapport = -60;
+  ACTIONS.propose(s, { offers: [], asks: ['favor', 'info'] });
+  if (mt2.deal.message === 'counter') ACTIONS.leaveMeeting(s);
+  assert(['theyWalked', 'youWalked'].includes(mt2.outcome) && s.evening.debrief === mt2.id, `walk verdict: ${mt2.outcome}`);
+  ACTIONS.invite(s, { mpId: pool[2].id });
+  assert(!s.evening.debrief, 'inviting the next one in closes the card');
+  // Every way a meeting can end has words for every mood, from colleagues and from the whip's office.
+  const P = data().dialogueLines.partings;
+  const ids = new Set();
+  for (const [speaker, outcomes] of [['mp', ['deal', 'theyWalked', 'youWalked', 'noDeal', 'talk']], ['whip', ['deal', 'youDeclined', 'refused']]]) {
+    for (const o of outcomes) for (const mood of ['cooperative', 'guarded', 'angry', 'anxious']) {
+      const n = P.filter((l) => l.speaker === speaker && l.outcome === o && !l.situation && (!l.mood || l.mood.includes(mood))).length;
+      assert(n >= 2, `${speaker} ${o} ${mood}: ${n} lines`);
+    }
+  }
+  for (const l of P) { assert(!ids.has(l.id) && !ids.has(l.text), 'repeated parting ' + l.id); ids.add(l.id); ids.add(l.text); }
+  return `deal, then ${mt2.outcome}`;
+});
+
 test("A riding on a card you receive is yours; one you give is theirs", () => {
   const s = newGame({ seed: 'CARDS-1' });
   assert(meetings.cardLabel(s, 'ridingMention', true) === 'A mention of your riding', 'whip giving you a mention');
