@@ -60,15 +60,28 @@ function parliamentOver(state) {
   return state.house.fallen || state.date.absWeek >= C.years * C.weeksPerYear;
 }
 
-// Does this vote need the player? (Their own dilemma, or a confidence vote.)
-function stopForItem(state, item) {
+// Does this vote need the player? (Their own dilemma, or a confidence vote that could go either way.)
+export function stopForItem(state, item) {
   const bill = state.bills[item.billId];
   const stopFor = state.player.pacing.stopFor;
   const dilemma = dilemmaFor(state, bill, baseScore, tuning().pacing);
   if (bill.sponsor === state.player.mpId) return { reason: 'ownBill', dilemma: null };
   if (dilemma && stopFor.includes('ownVote')) return { reason: 'ownVote', dilemma };
-  if (bill.confidence && stopFor.includes('ownVote')) return { reason: 'confidence', dilemma: null };
+  if (bill.confidence && stopFor.includes('ownVote') && (!state.player.seenConfidence || confidenceInDoubt(state, bill))) return { reason: 'confidence', dilemma: null };
   return null;
+}
+
+// The House as it stands this morning, everyone in their seat: is the government's margin thin enough to fall?
+// The first confidence vote always stops you, so you know what one is; a safe one after that goes through on the line.
+const STILL = { normal: () => 0, next: () => 0, chance: () => false, pick: (a) => a[0], shuffle: (a) => a, int: () => 0 };
+function confidenceInDoubt(state, bill) {
+  let yeas = 0;
+  let nays = 0;
+  for (const it of Object.values(intentions(state, bill, STILL))) {
+    if (it.vote === 'yea') yeas++;
+    else if (it.vote === 'nay') nays++;
+  }
+  return Math.abs(yeas - nays) <= tuning().pacing.confidenceStopMargin;
 }
 
 function startDay(state, rng) {
@@ -126,6 +139,7 @@ function decide(state, rng, item, choice, dilemma) {
   recordResult(state, result, rng);
   if (choice !== 'free') applyPlayerVote(state, bill, choice === 'yea' || choice === 'nay' ? 'line' : choice, dilemma, tuning().player);
   if (state.player.forceDilemma === bill.id) state.player.forceDilemma = null;
+  if (bill.confidence) state.player.seenConfidence = true;
   afterResult(state, result);
   state.flow.day.results.push(result.id);
   return result;

@@ -1070,3 +1070,39 @@ Kelbo opened the menu while the Clerk was reading the names. The count board cov
 
 - The menu now sits on the same layer as the book and the ledger, above the count board and every room sheet. It stays where you left it until you tap "Back to the game" (or pick something from it), whatever the vote does behind it.
 - **Checked:** at phone size in portrait, the menu was opened mid-division, checked over the count board, then checked again after the result and Continue had moved on to the evening. All seven buttons are on top and tappable both times. `tests.html` 107 of 107, no console errors.
+
+## Playtest fixes, batch 1: the line in meetings, caucus that fits the line, leaks, confidence stops
+
+Kelbo said the main loop is fun and asked what could be better. I listed nine things; Kelbo picked 1–4 as the first batch.
+
+**1. The line you're answering is never under the choices.** In a meeting, what the member just said could sit behind the pinned answer buttons, so you replied to a line you couldn't see. Answers in a meeting are now one column, read in order, and never pinned over the talk. After the first turn the job note and the full stakes panel fold down to one short stakes line, and each new turn opens scrolled to what they just said.
+
+**2. Caucus speaks to the line the party has actually taken.** The leader's opening always assumed you were voting a bill through, even on a whipped nay, a free vote or an abstention. There are now openings for each of those, in each leader's temper (controlling, hands-off, paranoid, loyal). The three things you can say (back the line, speak for the riding, challenge) are drawn from stances that fit the line. If the Chief Whip frees the vote before you speak, the words change to match.
+
+**3. Leaks no longer sink your riding.** Run headless over six Parliaments, rival leaks hit about 290 times each and cost about 580 riding standing, against about 190 won back by the weekend drift. Every player's riding ended in crisis whatever they did. Two causes:
+- Every rival whip could leak every week.
+- The "quiet talks" story about *other* members cost *you* standing, and it fired after nearly any poach.
+
+Now a leak has to spend something fresh about you: a whipped vote you broke in the last six weeks (`rivals.leakFreshWeeks`), or a broken promise not yet leaked. Each one leaks once, and the papers run one leak a week. A story about the party still runs, and costs you nothing at home.
+
+- The numbers now (six seeds):
+  - A player who toes the line and works the riding ends around 87.
+  - A rebel ends around 72.
+  - A line-toer who declines nearly every case spends 60% of weeks in crisis, and the nomination threat builds to 80.
+- So the riding matters again, and it rewards the work. I tried a stronger weekly drift back (0.08) and dropped it, because it hid neglect.
+
+**4. Confidence votes stop you when they matter.** Every confidence vote used to stop the player, most of them safe by twenty seats.
+- The first one still stops, so you learn what one is.
+- After that, one stops when the House as it stands this morning is within 10 seats (`pacing.confidenceStopMargin`).
+- A safe one goes through on the line and shows in the day's results.
+- Across six Parliaments: 19–40 confidence stops instead of ~160.
+- Every vote within five seats still stopped, and none of the ones waved through was lost.
+
+**Checked:** `tests.html` 110 of 110, with three new tests:
+- The leader's opening and your stances match the line in every case, for every temper, including a vote freed before you speak.
+- A leak spends a fresh fact once, one a week, and party stories cost nothing.
+- A confidence vote stops the first time, then only when close.
+
+Also checked at phone size, portrait and landscape: meetings over three turns, with the line always in view above the first answer. Played through to a caucus in the real UI. No console errors.
+
+Next: batch 2 (career reach into Acts 4–5, the rebel path, whip deals worth taking).

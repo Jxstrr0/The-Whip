@@ -138,7 +138,8 @@
     "pollDriftSd": 0.35,
     "defeatPollHit": 1.0,
     "moodChangeOdds": 0.35,
-    "ridingRegression": 0.04
+    "ridingRegression": 0.04,
+    "confidenceStopMargin": 10
   },
   "stakes": {
     "noLean": 0.2,
@@ -329,6 +330,7 @@
     "leakCost": 10,
     "leakStanding": -2,
     "leakOdds": 0.5,
+    "leakFreshWeeks": 6,
     "digCost": 15,
     "pairRenegeBase": 0.45,
     "pairTestCost": 5,
