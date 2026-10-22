@@ -3069,3 +3069,19 @@ body.cold-open .topbar {
   padding: 6px 10px;
   font-size: 15px;
 }
+
+/* On the bells sheet each choice is one short row: the words, then what it does at home and with the whip. */
+.division-sheet > .choices:last-child .btn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 8px;
+  min-height: 48px;
+  padding: 6px 12px;
+}
+.division-sheet > .choices:last-child .btn .stake-line {
+  display: inline-flex;
+  flex-wrap: wrap;
+  margin: 0;
+}
