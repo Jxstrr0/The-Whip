@@ -1106,3 +1106,22 @@ Now a leak has to spend something fresh about you: a whipped vote you broke in t
 Also checked at phone size, portrait and landscape: meetings over three turns, with the line always in view above the first answer. Played through to a caucus in the real UI. No console errors.
 
 Next: batch 2 (career reach into Acts 4–5, the rebel path, whip deals worth taking).
+
+## Playtest fixes, batch 2: the career reaches the top, the rebel path opens, whip deals pay
+
+**5. Acts 4 and 5 are reachable.** Headless, a player who never broke the whip reached Act 4 in two of six Parliaments and Act 5 in one. They kept getting demoted for other people's sins, and the pressure meter sat at the top. Changes:
+- An assistant whip answers for their own row, not the whole caucus. From the count on (Act 4), you answer for everyone.
+- One bad night is a story, not a sacking. A night's rebels add at most 20 pressure (`confidence.pressureRebellionCap`), each rebel adds 1 instead of 3, and pressure eases by 4 a week instead of 2.
+- A row that breaks once gets you a warning in the corridor ("Once is a bad night. Twice is a pattern."). Two failures demote (`ranks.rowFailuresForDemotion`). The count works the same way: two wrong counts, not one (`ranks.wrongCountsForFailure`).
+- The work earns what the top jobs need. Each vote your row carries adds 2 caucus support (`ranks.rowCarrySupport`). Each confidence vote the government survives on your count adds 3 leader trust (`ranks.confidenceCarriedTrust`).
+- Now, over twelve seeds, the loyal player reaches Act 4 in most runs and Act 5 in five. A perfect record still takes about two years of game time to reach Chief Whip. "Replaced" demotions fell from 18 to 5 across the six-seed runs.
+
+**6. The rebel path no longer dead-ends.** Every vacancy contest was lost, because each rebellion counted −2 for ever against a rival scoring about 50. Now only the first five count (`career.contest.rebellionCap`): past that, the whip has already filed you as trouble. Being noticed counts double (0.5). A rebel now reaches Act 3 in five of six Parliaments (was none). It takes them longer than a loyalist, which is right.
+
+**7. Whip deals are worth taking.** The line cost the riding about 2.7 and the whip's usual sweetener paid 1.
+- A mention of your riding is now worth +3 (`player.ridingMentionStanding`). That covers the line's cost in 83% of whip calls, up from 0%.
+- When the line costs you 3 or more at home (`meetings.whipSweetenCost`), the whip comes with more. In government, that's a project for the riding (+6, announced at home). In opposition, it's a Question Period slot and a mention.
+
+**Checked:** `tests.html` 111 of 111. The Act 3 test now covers the warning before the demotion. A new test checks that a costly whip call comes sweetened and an easy one doesn't. I played to the first whip call at phone size: the deal shows the project at +6 against the −5 line, netting +1 at home. No console errors.
+
+Next: Kelbo asked for more dialogue with the mentor and in the home riding. That's batch 3.

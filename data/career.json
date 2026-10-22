@@ -73,9 +73,13 @@
     "goNote": "Some votes aren't worth a friend. The deputy whip will notice the gap."
   },
   "demoted": {
-    "soft": "Your row went its own way on a vote that mattered, and the deputy whip has drawn the conclusion: you're soft. You're back on the backbench, with your friends and without the title.",
-    "bully": "Your row went its own way on a vote that mattered, and the deputy whip has drawn the conclusion: nobody follows a bully. You're back on the backbench, and the row isn't sorry to see you go.",
+    "soft": "Your row went its own way again on a vote that mattered, and the deputy whip has drawn the conclusion: you're soft. You're back on the backbench, with your friends and without the title.",
+    "bully": "Your row went its own way again on a vote that mattered, and the deputy whip has drawn the conclusion: nobody follows a bully. You're back on the backbench, and the row isn't sorry to see you go.",
     "wrongCount": "You said the count was safe. It wasn't, and the House knew it before the leader did. The Chief Whip has moved you sideways; you'll run a row again, if you can hold one."
+  },
+  "warned": {
+    "row": "{n} of your row went the other way on {bill}. The deputy whip stops you in the corridor: \u201cOnce is a bad night. Twice is a pattern.\u201d",
+    "count": "You had {bill} down as safe. It wasn't. The Chief Whip says nothing, which is worse. Another one like it and the count goes to someone else."
   },
   "confidencePair": {
     "intro": "{bill} is a confidence vote next week and {absent} can't be in the House for it. {opposite}, {party}'s whip, is offering a pair. If it holds, neither counts. If it doesn't, you find out when the bells stop.",
