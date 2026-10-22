@@ -1063,3 +1063,10 @@ Kelbo's screenshot showed "Your row · 9 firm · 2 leaning" and asked which way 
 - Marks you set by hand on the count board have no score behind them, so those members get the sentence and no dot.
 
 **Checked:** `tests.html` is 107 of 107 (new test: the report names the side needed, its scale matches the vote zones, firm, leaning and lost marks agree with their scores, and the row line says the side). Phone size in portrait: the order paper, the row sheet header, tally, legend and a leaning member's bar and caption. No console errors.
+
+## Playtest fix: the menu stays on top during a vote
+
+Kelbo opened the menu while the Clerk was reading the names. The count board covered its top, and once the vote finished the menu seemed to vanish before they could use it. It hadn't closed. The menu had no layer of its own, so whatever opened after it was drawn on top: first the count board, then the evening sheet the vote hands on to. It was still open underneath, out of reach.
+
+- The menu now sits on the same layer as the book and the ledger, above the count board and every room sheet. It stays where you left it until you tap "Back to the game" (or pick something from it), whatever the vote does behind it.
+- **Checked:** at phone size in portrait, the menu was opened mid-division, checked over the count board, then checked again after the result and Continue had moved on to the evening. All seven buttons are on top and tappable both times. `tests.html` 107 of 107, no console errors.
