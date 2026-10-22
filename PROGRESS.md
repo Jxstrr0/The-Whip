@@ -1125,3 +1125,34 @@ Next: batch 2 (career reach into Acts 4–5, the rebel path, whip deals worth ta
 **Checked:** `tests.html` 111 of 111. The Act 3 test now covers the warning before the demotion. A new test checks that a costly whip call comes sweetened and an easy one doesn't. I played to the first whip call at phone size: the deal shows the project at +6 against the −5 line, netting +1 at home. No console errors.
 
 Next: Kelbo asked for more dialogue with the mentor and in the home riding. That's batch 3.
+
+## Playtest fixes, batch 3: more to say to the mentor and at home
+
+Kelbo asked for more dialogue, with the mentor and in the home riding at least.
+
+**A bug first: from Act 3, office meetings went silent.** Every meeting line was tagged for Acts 1–2, so in the whip's office every visitor opened with "…". Lines are now tagged for every act, except the rookie ones. New introductions cover Acts 3–5: new members saying hello to the whip's office. A test now checks every situation, turn and mood in every act: someone speaks, and you have at least four ways to answer.
+
+**The mentor.** About 90 new lines.
+- Acts 1–2: a second line for each mood and turn, and a second answer for each approach.
+- Acts 3–5: a new set in which you outrank them. They knock anyway, warn you about the back rows, and tell you to keep a little of yourself for the riding.
+- They notice what you've done. A line tagged `when` plays only while it's true. That covers:
+  - a fresh rebellion
+  - a clean record (Acts 1–2)
+  - a bad patch or a good run at home
+  - your rival (Act 2)
+  - a new office
+  - a demotion
+  - the leader's office breathing down your neck
+- When something applies, it's remarked on 60% of the time (`meetings.context` in tuning). Otherwise the usual lines play.
+
+**The riding.**
+- **Cases have a third answer: pass it to the right office.** Each role has its own referral, for example "Send it to the labour board" or "Put them onto the farm office". What you told them stays on screen while the next person sits down. Passing a case on is worth +1 (`player.caseReferStanding`) and doesn't follow you to Ostrava.
+- **Big cases you carry come back if they never come up.** A weight-3 case not raised in Question Period within 8 weeks brings one call-back (−1, once). The mayor rings, or the steward tells the paper it "went to Ostrava and got lost there." I first had every carried case call back. In twelve-Parliament runs that doubled the weeks a loyal player spent in riding crisis (6% to 12%). With only the big cases (`player.staleCaseMinWeight`), it's back to 6%. Early weeks at home run a little tighter than before.
+- **The association president gets an answer.** "Thank them" is now three replies for each of their moods: apologise, explain or push back when they're angry; reassure, visit the donors or stand firm when they're guarded; and so on. Each reply moves riding standing, the nomination threat, and sometimes the whip. Their answer back shows at the end of the visit.
+- **Six more reporter questions** (14 in all): plant layoffs, a pensioner's unanswered letter, whether the whip decides your events, donors, a cabinet shuffle that skips the region, and whether you still live here.
+- The first-week tutorial now names all three ways to take a case.
+
+**Checked:**
+- `tests.html` 115 of 115, with four new tests: dialogue coverage in every act, the mentor's context lines, the three ways to take a case plus the call-back, and the president's replies.
+- Twelve headless Parliaments against the base: riding standing ends about where it did.
+- Played a riding visit at phone size, portrait and landscape: referral, reporter, president reply, wrap-up. A normal visit fits portrait without scrolling, except a few pixels after a referral. The guided first week scrolls a little because of its tutorial note. No console errors.

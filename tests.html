@@ -543,6 +543,128 @@ test('Mood changes the available lines', () => {
   assert(byMood.cooperative.every((id) => !byMood.angry.includes(id)), 'same lines for both moods');
 });
 
+test('Every meeting has a line and four answers in every act, and none falls back to "…"', () => {
+  const L = data().dialogueLines.lines;
+  const inAct = (l, a) => !l.act || l.act.includes(a);
+  const shapes = new Set(L.map((l) => `${l.situation}|${l.turn}`));
+  for (let a = 1; a <= 5; a++) {
+    for (const shape of shapes) {
+      const [sit, turn] = [shape.split('|')[0], Number(shape.split('|')[1])];
+      for (const mood of ['cooperative', 'guarded', 'angry', 'anxious']) {
+        if (sit === 'mentorAdvice' && mood === 'angry') continue;
+        const said = L.filter((l) => l.speaker !== 'player' && l.situation === sit && l.turn === turn && l.mood.includes(mood) && inAct(l, a) && !l.when);
+        assert(said.length, `act ${a} ${sit} turn ${turn} ${mood}: nobody speaks`);
+        const ways = new Set(L.filter((l) => l.speaker === 'player' && l.situation === sit && l.turn === turn && inAct(l, a) && (!l.mood || l.mood.includes(mood))).map((l) => l.approach));
+        assert(ways.size >= 4, `act ${a} ${sit} turn ${turn} ${mood}: ${ways.size} ways to answer`);
+      }
+    }
+  }
+  for (const act of [3, 4, 5]) {
+    const s = newGame({ seed: 'TALK-' + act, act });
+    const me = s.mps[s.player.mpId];
+    const other = Object.values(s.mps).find((m) => m.party === me.party && m.id !== me.id && m.caucusRole === 'backbencher');
+    s.player.mentor = other.id;
+    for (const situation of ['mentorAdvice', 'introduction', 'gossip', 'complaint']) {
+      s.meeting = null;
+      const mt = meetings.startMeeting(s, createRng(`talk:${act}:${situation}`), { mpId: other.id, situation });
+      assert(mt.talk.current.line && mt.talk.current.text !== '…', `act ${act} ${situation}: ${mt.talk.current.text}`);
+      assert(mt.talk.options.length >= 3, `act ${act} ${situation}: ${mt.talk.options.length} options`);
+    }
+  }
+});
+
+test('The mentor remarks on what you have done lately, and only when it is true', () => {
+  const K = tuning().meetings.context;
+  const was = K.odds;
+  K.odds = 1;
+  try {
+    const s = newGame({ seed: 'MENTOR-CTX', act: 2 });
+    const p = s.player;
+    p.ridingStanding = 50;
+    s.date.absWeek = 10;
+    const mentorLine = (seed) => {
+      s.meeting = null;
+      const mt = meetings.startMeeting(s, createRng(seed), { mpId: p.mentor, situation: 'mentorAdvice' });
+      return data().dialogueLines.lines.find((l) => l.id === mt.talk.current.line);
+    };
+    p.whipFile = [{ day: s.date.absWeek * 5 - 2, billId: 'x' }];
+    for (let i = 0; i < 4; i++) assert(mentorLine('ctx' + i).when === 'rebelled', 'a fresh rebellion gets mentioned');
+    p.whipFile = [];
+    p.ridingStanding = 20;
+    for (let i = 0; i < 4; i++) assert(mentorLine('low' + i).when === 'ridingLow', 'a bad week at home gets mentioned');
+    p.ridingStanding = 50;
+    p.recentLines = [];
+    for (let i = 0; i < 6; i++) assert(!mentorLine('none' + i).when, 'nothing to remark on, no remark');
+    // Context lines name people and places that exist.
+    for (const l of data().dialogueLines.lines.filter((x) => x.when)) assert(!/\{(?!rival|playerRiding)\w+\}/.test(l.text), 'unexpected placeholder: ' + l.text);
+  } finally {
+    K.odds = was;
+  }
+});
+
+test('At home a case can be carried, passed on or turned down, and a carried case nobody raises comes back once', () => {
+  const s = newGame({ seed: 'CASES-3' });
+  const rng = createRng('cases');
+  const p = s.player;
+  const C = data().constituents;
+  for (const c of C.cases) assert(C.refer[c.role] && C.callbacks[c.role], 'no referral or call-back for ' + c.role);
+  const visitWith = (caseId) => {
+    ridingSim.startVisit(s, rng);
+    s.ridingVisit.queue[0] = { kind: 'case', id: caseId, role: C.cases.find((c) => c.id === caseId).role };
+    s.ridingVisit.at = 0;
+  };
+  p.ridingStanding = 50;
+  visitWith('rc001');
+  const cases = s.ridingCases.length;
+  ridingSim.answerCase(s, 'refer');
+  assert(p.ridingStanding === 50 + tuning().player.caseReferStanding, 'passing it on is worth a little');
+  assert(s.ridingCases.length === cases, 'a referred case is not yours to raise');
+  assert(s.ridingVisit.lastWord?.who === 'you' && !/[{}]/.test(s.ridingVisit.lastWord.text), 'what you told them stays on screen');
+  ridingSim.endVisit(s);
+  visitWith('rc001');
+  ridingSim.answerCase(s, 'carry');
+  const carried = s.ridingCases[s.ridingCases.length - 1];
+  ridingSim.endVisit(s);
+  const weekend = () => { for (const h of pacing.hooks.weekend) h(s, rng); };
+  s.date.absWeek = carried.week + tuning().player.staleCaseWeeks - 1;
+  weekend();
+  assert(!carried.stale, 'not stale yet');
+  s.date.absWeek = carried.week + tuning().player.staleCaseWeeks;
+  const logged = s.log.length;
+  const standing = p.ridingStanding;
+  weekend();
+  assert(carried.stale && s.log.slice(logged).some((e) => /bridge/.test(e.text)), 'the mayor rings about the bridge');
+  assert(p.ridingStanding === standing - tuning().player.staleCaseCost, `a stale case costs ${tuning().player.staleCaseCost}: ${standing} to ${p.ridingStanding}`);
+  const after = p.ridingStanding;
+  weekend();
+  assert(p.ridingStanding === after, 'it only costs once');
+});
+
+test('The association president can be answered three ways, and each answer moves the executive', () => {
+  const C = data().constituents;
+  for (const mood of ['cooperative', 'guarded', 'angry', 'anxious']) {
+    assert(C.president.some((x) => x.mood === mood), 'no president line for ' + mood);
+    assert(C.presidentReplies[mood]?.length === 3, '3 replies for ' + mood);
+  }
+  assert(C.reporter.length >= 14, 'more reporter questions');
+  const s = newGame({ seed: 'PRES-3' });
+  const rng = createRng('pres');
+  const p = s.player;
+  const threats = [];
+  for (let i = 0; i < 3; i++) {
+    ridingSim.startVisit(s, rng);
+    const v = s.ridingVisit;
+    v.queue[v.queue.length - 1] = { kind: 'president', id: C.president.find((x) => x.mood === 'angry').id, role: 'associationPresident' };
+    v.at = v.queue.length - 1;
+    p.nominationThreat = 40;
+    ridingSim.answerPresident(s, i);
+    threats.push(p.nominationThreat - 40);
+    assert(v.phase === 'choose' && v.lastWord?.who === 'president' && !/[{}]/.test(v.lastWord.text), 'their answer stays on screen');
+    ridingSim.endVisit(s);
+  }
+  assert(threats[0] < 0 && threats[2] > 0, 'an apology calms them; pushing back does not: ' + threats);
+});
+
 test('Meetings reveal fields in the knowledge map', () => {
   const s = toOffice('TEST-2');
   const target = Object.values(s.mps).find((m) => m.id !== s.player.mpId && m.caucusRole === 'backbencher');
