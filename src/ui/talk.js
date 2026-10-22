@@ -7,7 +7,7 @@ import { billStakes } from '../sim/stakes.js';
 import { tuning } from '../sim/config.js';
 import { prediction } from '../sim/count.js';
 import { canUse, likelyAbsentees, budget, nextVote } from '../sim/tools.js';
-import { countLine } from './text.js';
+import { countLine, rowLine } from './text.js';
 
 export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
   const sheet = document.createElement('section');
@@ -30,7 +30,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
     const bill = nextVote(state);
     if (!bill || state.player.act < T.officeFilesFromAct) return '';
     const b = budget(state);
-    let html = `<h3>${t('count.title')} · ${esc(bill.title)}</h3>${countLine(prediction(state, bill.id))}<p class="muted budget">${esc(t('tool.budget', { min: b.time, fav: b.favors }))}</p>`;
+    let html = `<h3>${t('count.title')} · ${esc(bill.title)}</h3>${countLine(prediction(state, bill.id))}${rowLine(state, bill.id)}<p class="muted budget">${esc(t('tool.budget', { min: b.time, fav: b.favors }))}</p>`;
     if (deskNote) html += `<p class="note good">${esc(deskNote)}</p>`;
     if (canUse(state, 'leave').ok || canUse(state, 'pair').ok) {
       const reqs = (state.leaveRequests || []).filter((r) => r.billId === bill.id);

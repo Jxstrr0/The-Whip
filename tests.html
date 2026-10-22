@@ -73,7 +73,7 @@ import * as memoir from './src/sim/memoir.js';
 import * as goals from './src/sim/goals.js';
 import * as stakes from './src/sim/stakes.js';
 import * as rowSim from './src/sim/row.js';
-import { t as uiText } from './src/ui/text.js';
+import { t as uiText, rowLine } from './src/ui/text.js';
 
 const sections = [];
 let current = null;
@@ -2331,6 +2331,24 @@ test('Your row picks up marks from the count board for the next vote', () => {
   const r = rowSim.rowReport(s);
   assert(r.bill.id === rowSim.rowReport(s).bill.id, 'a bill is named');
   if (r.bill.id === bill.id) assert(r.members.find((m) => m.id === first.id).mark === 'lost', 'the mark shows');
+});
+
+
+test('Your row on the count board: the marks follow the vote asked for, and the line only shows from the whip\'s office on', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2', guided: true });
+  ranks.assignRank(s, 3, 'assistantWhip');
+  const bills = Object.values(s.bills).filter((b) => b.status === 'active');
+  if (bills.length < 2) return 'fewer than two live bills at the start';
+  const [a, b] = bills;
+  const m = ranks.rowOf(s)[0];
+  count.setMark(s, m.id, a.id, 'lost');
+  count.setMark(s, m.id, b.id, 'firm');
+  assert(rowSim.rowReport(s, a.id).members.find((x) => x.id === m.id).mark === 'lost', 'marks for the first bill');
+  assert(rowSim.rowReport(s, b.id).members.find((x) => x.id === m.id).mark === 'firm', 'marks for the second bill');
+  assert(rowSim.rowReport(s, a.id).bill.id === a.id, 'the report names the bill asked for');
+  assert(rowLine(s, a.id).includes(`data-open-row="${a.id}"`) && rowLine(s, a.id).includes('Your row'), 'the line names the vote it opens');
+  const low = newGame({ seed: 'TEST-1', party: 'p2', guided: true });
+  assert(rowLine(low, a.id) === '', 'no row line for a backbencher');
 });
 
 async function run() {

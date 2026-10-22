@@ -21,7 +21,7 @@ import * as caucus from './caucus/caucusScene.js';
 import * as riding from './riding/ridingScene.js';
 import { createHud, createTuningPanel, createToast } from './ui/hud.js';
 import { createMpCard } from './ui/mpCard.js';
-import { createBook, rowIcon } from './ui/book.js';
+import { createBook } from './ui/book.js';
 import { createRowSheet } from './ui/rowSheet.js';
 import { createAgenda } from './ui/agenda.js';
 import { pressPhoto } from './pressPhoto.js';
@@ -41,7 +41,7 @@ import { createRecordUI } from './ui/recordUI.js';
 import { createMemoir } from './ui/memoirUI.js';
 import { createElectionUI } from './ui/electionUI.js';
 import { canUse, nextVote } from './sim/tools.js';
-import { t, partyColor } from './ui/text.js';
+import { t, partyColor, rowIcon } from './ui/text.js';
 import { stageLabel } from './sim/vote.js';
 
 const params = new URLSearchParams(location.search);
@@ -242,6 +242,11 @@ function buildWorld() {
     onRetire: () => dispatch({ type: 'retire' }),
     onCross: (party) => dispatch({ type: 'crossFloor', party }),
     onSettings: openSettings,
+  });
+  // A row line on a count board (office, bells, order paper) opens the row screen for that vote.
+  ui.addEventListener('click', (e) => {
+    const line = e.target.closest('[data-open-row]');
+    if (line) rowSheet.open(line.dataset.openRow);
   });
   // A soft paper tick on every button, once sound is open.
   ui.addEventListener('click', (e) => {

@@ -3013,3 +3013,75 @@ body.cold-open .topbar {
 .row-sheet .book-list li {
   cursor: pointer;
 }
+
+/* Your row, as one line under the whip's count. Tap it for the list. */
+.row-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  width: 100%;
+  min-height: 44px;
+  margin: 4px 0 2px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--fill);
+  box-shadow: var(--lift);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+}
+.row-line .ico {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--brass-ink);
+}
+.row-line .ico circle {
+  fill: currentColor;
+  stroke: none;
+}
+.row-line .tally {
+  display: inline-flex;
+  flex-wrap: wrap;
+  flex: 1;
+  gap: 2px 4px;
+}
+.row-line .chev {
+  margin-left: auto;
+  color: var(--ink-2);
+  font-size: 20px;
+}
+
+/* The evening board's four buttons sit two by two, so pinning them leaves room for the evening above. */
+.office-sheet > .choices:last-child {
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.office-sheet > .choices:last-child .btn {
+  min-height: 44px;
+  padding: 6px 10px;
+  font-size: 15px;
+}
+
+/* On the bells sheet each choice is one short row: the words, then what it does at home and with the whip. */
+.division-sheet > .choices:last-child .btn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 8px;
+  min-height: 48px;
+  padding: 6px 12px;
+}
+.division-sheet > .choices:last-child .btn .stake-line {
+  display: inline-flex;
+  flex-wrap: wrap;
+  margin: 0;
+}
