@@ -15,8 +15,9 @@ export function isFriend(state, m) {
   return m.cohort === me.cohort || (m.relations[me.id] || 0) > 30 || m.rapport > 25;
 }
 
-export function rowReport(state) {
-  const bill = nextVote(state);
+// `billId` names the vote to read the marks for; without it, the next vote the House will take.
+export function rowReport(state, billId = null) {
+  const bill = (billId && state.bills[billId]) || nextVote(state);
   const members = rowOf(state).map((m) => {
     const k = bill ? markOf(state, m.id, bill.id) : null;
     return { id: m.id, mark: k && !k.stale ? k.mark : 'unmarked', stale: !!k?.stale, friend: isFriend(state, m) };

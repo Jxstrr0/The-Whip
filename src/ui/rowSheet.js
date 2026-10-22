@@ -1,19 +1,19 @@
 // Your row: the members you answer for, the ones needing attention first, each with where they stand on the next vote.
-import { t, esc, mpName, partyColor } from './text.js';
+import { t, esc, mpName, partyColor, ROW_GLYPH as GLYPH } from './text.js';
 import { rowReport } from '../sim/row.js';
 
-const GLYPH = { firm: '✔', leaning: '◐', lost: '✖', absent: '○', unmarked: '–' };
 
 export function createRowSheet(root, { getState, onPick }) {
   const el = document.createElement('section');
   el.className = 'sheet row-sheet hidden';
   root.appendChild(el);
   let open = false;
+  let forBill = null;
 
   function render() {
     const state = getState();
     if (!open || !state) return;
-    const { bill, members, counts } = rowReport(state);
+    const { bill, members, counts } = rowReport(state, forBill);
     const tally = Object.entries(counts)
       .filter(([, n]) => n)
       .map(([k, n]) => `<span class="row-mark ${k}"><i aria-hidden="true">${GLYPH[k]}</i> ${n} ${esc(t('row.mark.' + k))}</span>`)
@@ -40,8 +40,10 @@ export function createRowSheet(root, { getState, onPick }) {
     get isOpen() {
       return open;
     },
-    open() {
+    // `billId`: the vote the marks are for (from a count board line); none means the next vote.
+    open(billId = null) {
       open = true;
+      forBill = billId;
       el.classList.remove('hidden');
       render();
       el.scrollTop = 0;

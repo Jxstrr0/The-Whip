@@ -1,5 +1,5 @@
 // The count board: the bells and your choice during a division, then the standing count ticking up by party.
-import { t, esc, stamp, partyShort, partyColor, mpName, countLine, firstWeekHint, jobLine } from './text.js';
+import { t, esc, stamp, partyShort, partyColor, mpName, countLine, rowLine, firstWeekHint, jobLine } from './text.js';
 import { tuning, data } from '../sim/config.js';
 import { stageLabel, questionText } from '../sim/vote.js';
 import { prediction } from '../sim/count.js';
@@ -54,7 +54,7 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
     const impact = (st) => (st.whipped ? `<small class="stake-line">${delta(st.riding, t('stake.riding'))}${delta(st.whip, t('stake.whip'))}</small>` : '');
     const total = p.bells;
     const T = tuning().tools;
-    const countHtml = () => (state.player.act >= T.officeFilesFromAct && p.line === 'whipped' ? countLine(prediction(getState(), p.billId)) : '');
+    const countHtml = () => (state.player.act >= T.officeFilesFromAct && p.line === 'whipped' ? countLine(prediction(getState(), p.billId)) + rowLine(getState(), p.billId) : '');
     const bells = state.bells?.key === `${p.billId}:${p.stage}` ? state.bells : null;
     const shown = bells ? Object.values(bells.away).filter((a) => a.where).length : 0;
     const budgetLine = () => esc(t('tool.budget', { min: budget(getState()).time, fav: budget(getState()).favors }));

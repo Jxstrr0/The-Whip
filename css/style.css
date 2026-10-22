@@ -3013,3 +3013,48 @@ body.cold-open .topbar {
 .row-sheet .book-list li {
   cursor: pointer;
 }
+
+/* Your row, as one line under the whip's count. Tap it for the list. */
+.row-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  width: 100%;
+  min-height: 44px;
+  margin: 4px 0 2px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--fill);
+  box-shadow: var(--lift);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+}
+.row-line .ico {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--brass-ink);
+}
+.row-line .ico circle {
+  fill: currentColor;
+  stroke: none;
+}
+.row-line .tally {
+  display: inline-flex;
+  flex-wrap: wrap;
+  flex: 1;
+  gap: 2px 4px;
+}
+.row-line .chev {
+  margin-left: auto;
+  color: var(--ink-2);
+  font-size: 20px;
+}
