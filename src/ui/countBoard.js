@@ -78,8 +78,8 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
       <h2>${esc(bill.title)}</h2>
       <p class="muted">${esc(questionText(bill, p.stage))} · ${esc(stageLabel(p.stage))}</p>
       ${jobLine(state, 'division', { reason: p.reason, chase: shown > 0, dilemma: !!d, confidence: bill.confidence, line: p.line, pos: t('vote.' + pos) })}
-      ${hill}
       <div data-count>${countHtml()}</div>
+      ${hill}
       <p>${esc(bill.summary || '')}</p>
       ${bill.confidence ? `<p class="warn">${t('div.confidence')}</p>` : ''}
       ${p.reason === 'ownBill' ? `<p class="tutorial">${t('div.ownBill')}</p>` : firstWeekHint(state, 'tutorial.bells')}
