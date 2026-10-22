@@ -3085,3 +3085,85 @@ body.cold-open .topbar {
   flex-wrap: wrap;
   margin: 0;
 }
+
+/* Where each member should land: a NAY-to-YEA line, the needed end outlined, a tick where they turn firm. */
+.row-need {
+  margin: 4px 0 2px;
+  font-size: 17px;
+}
+.row-need b.yea, .row-line b.yea, .aim-cap b.yea { color: var(--yea); }
+.row-need b.nay, .row-line b.nay, .aim-cap b.nay { color: var(--nay); }
+.row-line .need {
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.row-list li {
+  flex-wrap: wrap;
+}
+.aim-wrap {
+  flex-basis: 100%;
+  padding: 4px 0 2px 24px;
+}
+.aim-track {
+  position: relative;
+  display: flex;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--paper-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.aim-track .z {
+  display: block;
+  height: 100%;
+}
+.aim-track .z.nay { background: color-mix(in srgb, var(--nay) 22%, transparent); }
+.aim-track .z.yea { background: color-mix(in srgb, var(--yea) 22%, transparent); }
+.aim-track .z.mid { background: var(--ink-4); }
+.aim-track .z.need { box-shadow: inset 0 0 0 2px currentColor; }
+.aim-track .z.nay.need { color: var(--nay); }
+.aim-track .z.yea.need { color: var(--yea); }
+.aim-track .tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--ink-2);
+  opacity: 0.55;
+}
+.aim-track .dot {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--ink-2);
+}
+.aim-track .dot.firm { background: var(--good); }
+.aim-track .dot.leaning { background: var(--amber); }
+.aim-track .dot.lost { background: var(--bad); }
+.aim-track .dot.absent { background: var(--grey); }
+.aim-ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+.aim-ends .need {
+  font-weight: 700;
+  color: var(--ink);
+}
+.aim-cap {
+  display: block;
+  margin-top: 1px;
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.3;
+}

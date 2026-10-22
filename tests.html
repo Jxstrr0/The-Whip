@@ -2351,6 +2351,29 @@ test('Your row on the count board: the marks follow the vote asked for, and the 
   assert(rowLine(low, a.id) === '', 'no row line for a backbencher');
 });
 
+
+test('Your row shows the side you need and where each member stands against it', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2', guided: true });
+  ranks.assignRank(s, 3, 'assistantWhip');
+  const bill = Object.values(s.bills).find((b) => b.status === 'active' && b.nextVote != null);
+  if (!bill) return 'no vote scheduled at the start';
+  count.refreshMarks(s, bill.id);
+  const r = rowSim.rowReport(s, bill.id);
+  assert(r.want === tools.wantedSide(s, bill), 'the report names the side the whip needs');
+  const V = tuning().vote;
+  assert(r.scale.lower === V.lower && r.scale.upper === V.upper, 'the zones are the vote\'s own');
+  assert(Math.sign(r.scale.firm) === (r.want === 'yea' ? 1 : -1), 'firm sits on the needed side');
+  const sign = r.want === 'yea' ? 1 : -1;
+  for (const m of r.members) {
+    if (m.score == null) continue;
+    if (m.mark === 'firm') assert(sign * m.score > Math.abs(r.scale.firm) - 1e-9, 'a firm mark is past the tick');
+    if (m.mark === 'lost') assert(sign * m.score <= V.lower + 1e-9, 'a lost mark is in the other side\'s zone');
+    if (m.mark === 'leaning') assert(sign * m.score > V.upper - 1e-9 && sign * m.score <= Math.abs(r.scale.firm) + 1e-9, 'a leaning mark is in our zone but short of firm');
+  }
+  assert(rowLine(s, bill.id).includes(r.want.toUpperCase()), 'the count line says which side');
+  return `need ${r.want} · ${JSON.stringify(r.counts)}`;
+});
+
 async function run() {
   setData(await loadData());
   const out = document.getElementById('out');

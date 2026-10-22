@@ -28,8 +28,10 @@ export function setMark(state, mpId, billId, mark = null) {
   if (!bill || !m) return null;
   state.countBoard ||= {};
   state.countBoard[billId] ||= {};
-  const value = mark || markFromScore(state, m, bill, baseScore(state, m, bill).score);
-  state.countBoard[billId][mpId] = { mark: value, asOf: dayIndex(state.date) };
+  // A mark read from the files keeps the score it came from (for the row screen's meter); one set by hand has none.
+  const score = mark ? null : baseScore(state, m, bill).score;
+  const value = mark || markFromScore(state, m, bill, score);
+  state.countBoard[billId][mpId] = { mark: value, score, asOf: dayIndex(state.date) };
   return value;
 }
 
@@ -37,7 +39,7 @@ export function markOf(state, mpId, billId) {
   const e = state.countBoard?.[billId]?.[mpId];
   if (!e) return null;
   const stale = dayIndex(state.date) - e.asOf > tuning().tools.markStaleDays;
-  return { mark: e.mark, stale };
+  return { mark: e.mark, score: e.score ?? null, stale };
 }
 
 // Mark the player's whole caucus for a bill (the office files), or everyone (a perfect count, for tests).
