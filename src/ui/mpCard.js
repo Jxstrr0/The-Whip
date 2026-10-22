@@ -52,7 +52,8 @@ export function createMpCard(root, { getState, onClose, actions = () => [] }) {
     const role = mp.caucusRole !== 'backbencher' ? `<span class="badge">${esc(roleName(state, mp))}</span>` : '';
     const rows = HIDDEN_FIELDS.map((f) => {
       const fv = v.fields[f];
-      const val = fv.known ? esc(fieldValue(state, mp, f, fv.value)) : `<span class="unknown">${t('card.unknown')}</span>`;
+      const tone = fv.known && f === 'rapport' ? (fv.value >= 20 ? 'good' : fv.value <= -20 ? 'bad' : 'plain') : '';
+      const val = fv.known ? `<span class="${tone ? 'tone-' + tone : ''}">${esc(fieldValue(state, mp, f, fv.value))}</span>` : `<span class="unknown">${t('card.unknown')}</span>`;
       return `<div class="kv${fv.stale ? ' stale' : ''}"><span class="k">${t('field.' + f)}</span><span class="v">${val}${fv.stale ? ` <em>(${t('card.stale')})</em>` : ''}</span></div>`;
     }).join('');
     const extra = actions(current)

@@ -1,5 +1,5 @@
 // The riding UI: who's in the chair, carrying cases, the reporter, the president, the town hall, standing.
-import { t, esc, firstWeekHint, jobLine } from './text.js';
+import { t, esc, firstWeekHint, jobLine, standingTone } from './text.js';
 import { data } from '../sim/config.js';
 import { fillRiding } from '../sim/riding.js';
 
@@ -9,7 +9,8 @@ export function createRidingUI(root, { getState, dispatch }) {
   root.appendChild(sheet);
 
   function bar(label, v) {
-    return `<div class="bar-row"><span>${label}</span><div class="bar"><i class="${v >= 50 ? 'yea' : 'nay'}" style="width:${v}%"></i><em style="left:50%"></em></div><b>${v}</b></div>`;
+    const tone = standingTone(v);
+    return `<div class="bar-row"><span>${label}</span><div class="bar"><i class="tone-${tone}" style="width:${v}%"></i><em style="left:50%"></em></div><b class="tone-${tone}">${v}</b></div>`;
   }
 
   function render(state) {
