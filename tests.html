@@ -1475,6 +1475,29 @@ test('Act 4: the count is yours (a wrong count costs the job), the pair before a
   return `paired ${s.mps[pair.mpId].name.last}; declined the car; Chief Whip at week ${R.act4MinWeeks}; exit and wrong-count both reachable`;
 });
 
+test('A confidence vote stops you the first time, and after that only when the margin could fall', () =>
+  quiet(() => {
+    const P = tuning().pacing;
+    const keep = P.confidenceStopMargin;
+    const { s, b } = whipScenario(2, 'CONF-STOP');
+    b.confidence = true;
+    s.player.forceDilemma = null;
+    const item = { billId: b.id, stage: b.stage };
+    const own = pacing.stopForItem(s, item);
+    if (own?.reason === 'ownVote') return 'skipped: this bill is the player\'s own dilemma';
+    try {
+      assert(own?.reason === 'confidence', 'the first confidence vote should stop you');
+      s.player.seenConfidence = true;
+      P.confidenceStopMargin = -1;
+      assert(pacing.stopForItem(s, item) === null, 'a safe confidence vote should go through on the line');
+      P.confidenceStopMargin = 999;
+      assert(pacing.stopForItem(s, item)?.reason === 'confidence', 'a close one should stop you');
+    } finally {
+      P.confidenceStopMargin = keep;
+    }
+    return `first stops; safe passes on the line; within ${keep} seats stops`;
+  }));
+
 test('Act 5: setting the line with the leader (whip it, free vote, confidence), and the fall', () => {
   const { s, b, me } = whipScenario(5);
   s.parties.p2.chiefWhip = s.player.mpId;
