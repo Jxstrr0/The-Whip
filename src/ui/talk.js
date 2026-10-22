@@ -1,15 +1,18 @@
 // The office UI: the evening board (slots, walk-ins, invite, call) and the meeting's talk phase.
-import { t, esc, mpName, partyColor, partyShort, firstWeekHint, jobLine } from './text.js';
-import { fillLine } from '../sim/meetings.js';
+import { t, esc, mpName, partyColor, partyShort, firstWeekHint, jobLine, stamp } from './text.js';
+import { fillLine, cardLabel } from '../sim/meetings.js';
 import { renderDealTable } from './dealTable.js';
-import { stakePanel, stakeBrief, delta } from './stakes.js';
+import { stakePanel, stakeBrief, delta, cardChip, tableTotal } from './stakes.js';
 import { billStakes } from '../sim/stakes.js';
 import { tuning } from '../sim/config.js';
 import { prediction } from '../sim/count.js';
 import { canUse, likelyAbsentees, budget, nextVote } from '../sim/tools.js';
 import { countLine, rowLine } from './text.js';
 
-export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
+// Which ink the verdict is stamped in: a deal is good news, a door slammed is bad, a polite no is neither.
+const INK = { deal: 'yea', theyWalked: 'nay', youDeclined: 'nay', refused: 'nay' };
+
+export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onVerdict }) {
   const sheet = document.createElement('section');
   sheet.className = 'sheet office-sheet hidden';
   root.appendChild(sheet);
@@ -17,6 +20,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
   let localFor = null;
   let lastNote = null;
   let deskNote = null;
+  let stamped = null;
 
   // The other side's whip you pair through: the biggest caucus that isn't yours.
   function oppositeParty(state) {
@@ -50,9 +54,44 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
     return '●'.repeat(full) + (half ? '◐' : '') + '○'.repeat(Math.max(0, Math.ceil(e.used)));
   }
 
+  // After a one-to-one: DEAL or NO DEAL in ink, their parting words, the terms, and what it did between you.
+  function verdict(state, mt) {
+    const m = state.mps[mt.mpId];
+    const o = mt.outcome;
+    const dealt = o === 'deal';
+    const terms = (list, label, toYou) => `<div class="deal-col"><h4>${label}</h4>${list.length ? list.map((c) => `<div class="card-chip settled"><span class="lbl">${esc(cardLabel(state, c, toYou))}</span>${cardChip(state, c, toYou ? 'get' : 'give', mt.mpId)}</div>`).join('') : `<p class="muted">${t('debrief.nothing')}</p>`}</div>`;
+    const theirs = mt.revealed.filter((f) => !f.includes('.') && f !== 'mood' && f !== 'rapport').length;
+    const others = new Set(mt.revealed.filter((f) => f.includes('.')).map((f) => f.split('.')[0])).size;
+    const learned = [theirs ? t(theirs === 1 ? 'debrief.learnedOne' : 'debrief.learned', { n: theirs }) : '', others ? t(others === 1 ? 'debrief.othersOne' : 'debrief.others', { n: others }) : ''].filter(Boolean).join(' ');
+    const r = mt.after?.rapport ?? 0;
+    const owed = dealt && [...mt.deal.offers, ...mt.deal.asks].some((c) => c !== 'info');
+    sheet.innerHTML = `<div class="sheet-handle"></div>
+      <header class="card-head"><span class="chip" style="background:${partyColor(state, m)}"></span>
+        <div class="who"><h2>${esc(mpName(m))}</h2><p>${esc(partyShort(state, m))}</p></div></header>
+      <div class="verdict-row">${stamp(t(dealt ? 'debrief.stamp.deal' : 'debrief.stamp.noDeal'), INK[o] || 'grey', true)}<p class="verdict-line">${esc(t('debrief.' + (dealt && mt.reversal ? 'dealWhip' : o), { first: m.name.first }))}</p></div>
+      ${mt.after?.parting ? `<blockquote class="line">${esc(mt.after.parting)}</blockquote>` : ''}
+      ${dealt ? `<div class="deal-cols">${terms(mt.deal.offers, t('deal.youGive'), false)}${terms(mt.deal.asks, t('deal.youGet'), true)}</div>${tableTotal(state, mt.deal, mt.mpId)}` : ''}
+      <p class="debrief-facts"><span class="k">${esc(t('debrief.rapport'))}</span> ${r ? delta(r, '') : `<span class="stake flat"><i aria-hidden="true">●</i> ${esc(t('stake.flat'))}</span>`}${learned ? ` <span class="muted">${esc(learned)}</span>` : ''}</p>
+      ${owed ? `<p class="hint">${t('debrief.ledger')}</p>` : ''}
+      <div class="choices">
+        ${owed ? `<button class="btn" data-act="ledger">${t('tool.ledger')}</button>` : ''}
+        <button class="btn primary" data-act="back">${t('debrief.back')}</button>
+      </div>`;
+    sheet.querySelector('[data-act="ledger"]')?.addEventListener('click', () => onLedger?.());
+    sheet.querySelector('[data-act="back"]').onclick = () => dispatch({ type: 'closeDebrief' });
+    sheet.scrollTop = 0;
+    // The thump plays once per card, not on every re-render behind it.
+    if (stamped !== mt.id) {
+      stamped = mt.id;
+      onVerdict?.(dealt);
+    }
+  }
+
   function evening(state) {
     const e = state.evening;
     if (!e) return;
+    const done = e.debrief && state.meetings[e.debrief];
+    if (done?.outcome) return verdict(state, done);
     const left = e.slots - e.used;
     const whip = e.whipCall
       ? `<div class="whip-call"><p><b>${t('office.whipCall')}</b></p><p>${esc(fillLine(state, e.whipCall.reason, { bill: e.whipCall.billId }))}</p>
