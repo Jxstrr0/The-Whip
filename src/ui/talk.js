@@ -103,15 +103,19 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
   function meeting(state) {
     const mt = state.meetings[state.meeting];
     const m = state.mps[mt.mpId];
+    // After the first turn the job and the full stakes have been read: keep one short stakes line so the talk has the room.
+    const later = mt.phase === 'talk' && mt.turn > 1;
+    const bill = ['whipCall', 'rebelRecruit'].includes(mt.situation) ? state.bills[mt.billId] : null;
+    const stakes = bill ? (later ? stakeBrief(state, bill) : stakePanel(state, bill)) : '';
     const head = `<div class="sheet-handle"></div>
       <header class="card-head"><span class="chip" style="background:${partyColor(state, m)}"></span>
         <div class="who"><h2>${esc(mpName(m))}</h2><p><span class="badge mood-${mt.mood}">${t('mood.' + mt.mood)}</span> ${mt.phase === 'talk' ? t('talk.turn', { n: mt.turn, max: mt.maxTurns }) : ''}</p></div></header>
-      ${jobLine(state, 'meeting', { situation: mt.situation, pos: mt.billId ? t('vote.' + state.bills[mt.billId]?.positions[state.mps[state.player.mpId].party]) : '' })}
-      ${['whipCall', 'rebelRecruit'].includes(mt.situation) && state.bills[mt.billId] ? stakePanel(state, state.bills[mt.billId]) : ''}`;
+      ${later ? '' : jobLine(state, 'meeting', { situation: mt.situation, pos: mt.billId ? t('vote.' + state.bills[mt.billId]?.positions[state.mps[state.player.mpId].party]) : '' })}
+      ${stakes}`;
     if (mt.phase === 'talk') {
       const note = lastNote ? `<p class="note ${lastNote}">${t(lastNote === 'good' ? 'talk.good' : lastNote === 'bad' ? 'talk.bad' : 'talk.ok')}</p>` : '';
       sheet.innerHTML = `${head}${note}<blockquote class="line">${esc(mt.talk.current.text)}</blockquote>
-        <div class="choices">${mt.talk.options.map((o, i) => `<button class="btn" data-i="${i}"><small class="approach">${t('approach.' + o.approach)}</small>${esc(o.text)}</button>`).join('')}</div>`;
+        <div class="choices talk-choices">${mt.talk.options.map((o, i) => `<button class="btn" data-i="${i}"><small class="approach">${t('approach.' + o.approach)}</small>${esc(o.text)}</button>`).join('')}</div>`;
       sheet.querySelectorAll('[data-i]').forEach((b) => {
         b.onclick = () => {
           const r = dispatch({ type: 'talk', index: Number(b.dataset.i) });
@@ -119,6 +123,10 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
           render(getState());
         };
       });
+      // Each new turn opens on what they just said: from the top if it's in view there, otherwise scrolled to it.
+      const said = sheet.querySelector('blockquote.line');
+      const fits = said.offsetTop + said.offsetHeight + 60 <= sheet.clientHeight;
+      sheet.scrollTop = later && !fits ? Math.max(0, (sheet.querySelector('.note') || said).offsetTop - 8) : 0;
       return;
     }
     if (localFor !== mt.id) {
