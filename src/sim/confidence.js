@@ -4,7 +4,7 @@ import { data, tuning } from './config.js';
 import { hooks, log } from './pacing.js';
 import { lineFor } from './bills.js';
 import { voteOf } from './vote.js';
-import { demoteToBackbench } from './ranks.js';
+import { demoteToBackbench, rowOf } from './ranks.js';
 import { headline } from './media.js';
 
 const SIGN = { yea: 1, nay: -1 };
@@ -99,8 +99,11 @@ hooks.fallout.push((state) => {
     const { line, position } = lineFor(bill, me.party);
     if (line !== 'whipped' || !SIGN[position]) continue;
     if (bill.confidence && !d.carried && state.house.government === me.party) add += C.pressureConfidenceLost;
-    const rebels = (position === 'yea' ? d.nays : d.yeas).filter((mid) => state.mps[mid]?.party === me.party && mid !== me.id).length;
-    if (state.player.act >= 3) add += rebels * C.pressureRebellion;
+    // An assistant whip answers for their row; from the count on, for the whole caucus.
+    const answerFor = state.player.act === 3 ? new Set(rowOf(state).map((r) => r.id)) : null;
+    const rebels = (position === 'yea' ? d.nays : d.yeas).filter((mid) => state.mps[mid]?.party === me.party && mid !== me.id && (!answerFor || answerFor.has(mid))).length;
+    // One bad night is a story; it takes a pattern to cost the office.
+    if (state.player.act >= 3) add += Math.min(rebels * C.pressureRebellion, C.pressureRebellionCap);
     const v = voteOf(d, me.id);
     if ((v === 'yea' || v === 'nay') && v !== position) add += C.pressurePlayerRebel;
   }

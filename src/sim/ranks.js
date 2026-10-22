@@ -107,10 +107,18 @@ hooks.fallout.push((state) => {
       }
     }
     p.rowStats ||= { carried: 0, rebels: 0, failures: 0 };
-    if (!rebels && atRisk) { p.actProgress.rowVotesCarried++; p.rowStats.carried++; }
+    // A row held when it was at risk: the deputy notices, and so does the caucus.
+    if (!rebels && atRisk) {
+      p.actProgress.rowVotesCarried++;
+      p.rowStats.carried++;
+      p.caucusSupport = clamp(p.caucusSupport + tuning().ranks.rowCarrySupport, 0, 100);
+    }
     p.rowStats.rebels += rebels;
     const mattered = bill.confidence || Math.abs(d.yeas.length - d.nays.length) <= tuning().pacing.closeVoteMargin;
-    if (rebels >= tuning().ranks.rowRebelsForFailure && mattered) p.rowStats.failures++;
+    if (rebels >= tuning().ranks.rowRebelsForFailure && mattered) {
+      p.rowStats.failures++;
+      if (p.rowStats.failures < tuning().ranks.rowFailuresForDemotion) log(state, fill(data().career.warned.row, { n: rebels, bill: bill.title }), 'career');
+    }
   }
   return null;
 });
@@ -171,7 +179,7 @@ hooks.morning.push((state) => {
 
 hooks.fallout.push((state) => {
   const p = state.player;
-  if (p.act !== 4) return null;
+  if (p.act < 4) return null;
   const m = me(state);
   for (const id of state.flow.day?.results || []) {
     const d = state.divisions[id];
@@ -179,9 +187,10 @@ hooks.fallout.push((state) => {
     const bill = state.bills[d.billId];
     const pos = lineFor(bill, m.party).position;
     const lost = (pos === 'yea') !== d.carried && SIGN[pos];
+    if (bill.confidence && !lost && SIGN[pos] && state.house.government === m.party) p.leaderTrust = clamp(p.leaderTrust + tuning().ranks.confidenceCarriedTrust, 0, 100);
     if (lost && (bill.confidence || bill.kind === 'government') && p.predicted?.[bill.id] === 0) {
       p.wrongCounts = (p.wrongCounts || 0) + 1;
-      log(state, `You had ${bill.title} down as safe. It wasn't.`, 'career');
+      log(state, p.act === 4 && p.wrongCounts < tuning().ranks.wrongCountsForFailure ? fill(data().career.warned.count, { bill: bill.title }) : `You had ${bill.title} down as safe. It wasn't.`, 'career');
     }
   }
   return null;
@@ -217,7 +226,7 @@ function act3Weekend(state) {
   const R = tuning().ranks;
   const p = state.player;
   const weeks = state.date.absWeek - (p.actStart ?? 0);
-  if ((p.rowStats?.failures || 0) >= 1 && weeks >= 2) {
+  if ((p.rowStats?.failures || 0) >= R.rowFailuresForDemotion && weeks >= 2) {
     const rep = reputation(p);
     const soft = rep === 'fixer' || rep === 'conscience' || rep === 'loyalist';
     p.reputation = soft ? 'soft' : 'bully';
