@@ -9,7 +9,9 @@ export function createHud(root, { buttons = [], debugText = null }) {
   status.className = 'status';
 
   function render() {
-    el.innerHTML = `<span class="brand">${t('title')}</span>${buttons.map((b, i) => `<button class="btn" data-i="${i}">${esc(b.label)}</button>`).join('')}`;
+    // A button may be icon-only (b.icon is its svg, b.label its spoken name) and may hide itself (b.show()).
+    const shown = buttons.map((b, i) => [b, i]).filter(([b]) => !b.show || b.show());
+    el.innerHTML = `<span class="brand">${t('title')}</span>${shown.map(([b, i]) => (b.icon ? `<button class="btn icon-only" data-i="${i}" aria-label="${esc(b.label)}">${b.icon}</button>` : `<button class="btn" data-i="${i}">${esc(b.label)}</button>`)).join('')}`;
     el.querySelectorAll('[data-i]').forEach((b) => (b.onclick = () => buttons[Number(b.dataset.i)].run()));
     if (debugText) {
       status.textContent = debugText();
