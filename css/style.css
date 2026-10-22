@@ -849,6 +849,10 @@ blockquote.line {
   max-height: none;
   z-index: 6; /* above whichever room sheet is open */
 }
+/* The game menu too: opened during a division, it stays on top of the count board and of the scene the vote hands on to. */
+.game-menu {
+  z-index: 6;
+}
 .ledger-sheet .book-list .main small {
   white-space: normal;
 }
