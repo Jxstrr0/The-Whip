@@ -1022,6 +1022,7 @@ Kelbo's notes: when the whip (or anyone) asks you to vote a certain way or asks 
 
 **Things to know**
 
+- **Landscape is still tight.** A phone on its side is only about 360 px tall, so the side sheet has about 300 px to work with. I widened it and tightened the spacing, which took 50 to 100 px off most meetings, but the longer ones still scroll there. The buttons that matter stay pinned. If landscape matters to you, the next step would be a two-column layout for meetings.
 - A free vote still moves nothing: no riding change and no whip score. The panel says so rather than showing zeros.
 - The first-week hints and the job line still take room on a phone. I made the job line a little tighter; say if you'd rather lose it after the first week.
 - **Checked:** `tests.html`, with four new tests (the numbers shown for each way of voting are exactly what the vote then does; a free vote moves nothing; what each deal card says; the co-sponsor number). Portrait and landscape at phone size, no console errors.
