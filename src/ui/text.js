@@ -8,11 +8,22 @@ export function t(key, vars = {}) {
   return s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? `{${k}}`));
 }
 
+// How a riding-standing style number reads: bad, warn, plain or good. The cuts are the ones the riding president's mood uses.
+export function standingTone(v) {
+  const S = tuning().stakes;
+  return v < S.standingLow ? 'bad' : v < S.standingMid ? 'warn' : v > S.standingHigh ? 'good' : 'plain';
+}
+
 // The whip's count for a vote, as one ruled line: where we stand against the number needed, and the marks.
+// Safe reads green, a few short amber, further short red; the glyph says the same without colour.
 export function countLine(pr) {
   if (!pr || !pr.needed) return '';
+  const tone = pr.short <= 0 ? 'good' : pr.short <= tuning().stakes.closeShort ? 'warn' : 'bad';
+  const glyph = { good: '\u2714', warn: '\u25D0', bad: '\u2716' }[tone];
   const stand = pr.short > 0 ? t('count.line', { ours: pr.ours, needed: pr.needed, short: pr.short }) : `${pr.ours} of ${pr.needed} · ${t('count.safe')}`;
-  return `<p class="count-line"><b>${t('count.title')}</b> · ${esc(stand)}<br><small>${esc(t('count.marks', { firm: pr.firm, leaning: pr.leaning, lost: pr.lost, absent: pr.absent, unmarked: pr.unmarked }))}</small></p>`;
+  const mk = (k) => `<span class="mk ${k}">${pr[k === 'away' ? 'absent' : k]}</span>`;
+  const marks = t('count.marks', { firm: mk('firm'), leaning: mk('leaning'), lost: mk('lost'), absent: mk('away'), unmarked: pr.unmarked });
+  return `<p class="count-line tone-${tone}"><b>${t('count.title')}</b> · <span class="cnt"><i aria-hidden="true">${glyph}</i> ${esc(stand)}</span><br><small>${marks}</small></p>`;
 }
 
 // A rubber stamp for an outcome: CARRIED, DEFEATED, DEAL, LEAVE GRANTED. kind: yea | nay | grey | brass.

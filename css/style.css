@@ -2701,3 +2701,146 @@ body.cold-open .topbar {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* ---- Stakes: what an ask means at home. Arrow and sign carry the meaning; colour backs them up. ---- */
+:root {
+  --good: var(--yea);
+  --bad: var(--nay);
+  --warn-ink: #8a5a0b;
+}
+.stake {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 2px 6px 2px 0;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.stake i {
+  font-style: normal;
+  font-size: 10px;
+}
+.stake.up {
+  color: var(--good);
+  background: color-mix(in srgb, var(--good) 14%, transparent);
+}
+.stake.down {
+  color: var(--bad);
+  background: color-mix(in srgb, var(--bad) 14%, transparent);
+}
+.stake.flat {
+  color: var(--grey);
+  background: var(--ink-4);
+  font-weight: 500;
+}
+.stake + .when {
+  color: var(--ink-2);
+  font-size: 12px;
+}
+.stakes {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--fill);
+  box-shadow: var(--lift);
+}
+.stake-lean {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+.stake-lean b,
+.stakes b.yea {
+  color: var(--yea);
+}
+.stake-lean b.nay,
+.stakes b.nay {
+  color: var(--nay);
+}
+.stake-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.stake-rows li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 8px;
+  padding: 3px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+.stake-rows .nums {
+  display: inline-flex;
+  flex-wrap: wrap;
+}
+.stake-line {
+  display: block;
+  margin-top: 2px;
+}
+.stake-line .stake {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.stake-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  border-radius: var(--r-md);
+  background: var(--fill);
+  box-shadow: var(--lift);
+  font-size: 14px;
+}
+.card-chip .lbl {
+  display: block;
+}
+.card-chip:has(.stake) {
+  border-radius: var(--r-md);
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.card-chip .stake {
+  margin: 0 6px 0 0;
+  font-size: 12px;
+}
+.btn .stake-line {
+  font-weight: 400;
+}
+
+/* ---- Colour that means something: green for good, amber for close, red for bad. Always with a glyph or sign too. ---- */
+.tone-good { color: var(--good); }
+.tone-warn { color: var(--warn-ink); }
+.tone-bad { color: var(--bad); }
+.bar i.tone-good { background: var(--good); }
+.bar i.tone-warn { background: var(--amber); }
+.bar i.tone-bad { background: var(--bad); }
+.bar i.tone-plain { background: var(--ink-2); }
+.count-line .cnt {
+  font-weight: 600;
+}
+.count-line.tone-good { background: color-mix(in srgb, var(--good) 13%, transparent); }
+.count-line.tone-warn { background: color-mix(in srgb, var(--amber) 20%, transparent); }
+.count-line.tone-bad { background: color-mix(in srgb, var(--bad) 13%, transparent); }
+.count-line .cnt i {
+  font-style: normal;
+  font-size: 12px;
+}
+.count-line .mk {
+  font-weight: 600;
+}
+.count-line .mk.firm { color: var(--good); }
+.count-line .mk.leaning { color: var(--warn-ink); }
+.count-line .mk.lost { color: var(--bad); }
+.count-line .mk.away { color: var(--grey); }
+.count-board [data-n="yea"], .pr .y { color: var(--yea); }
+.count-board [data-n="nay"], .pr .n { color: var(--nay); }
+.pr b { color: var(--ink); }

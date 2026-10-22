@@ -2,6 +2,8 @@
 import { t, esc, mpName, partyColor, partyShort, firstWeekHint, jobLine } from './text.js';
 import { fillLine } from '../sim/meetings.js';
 import { renderDealTable } from './dealTable.js';
+import { stakePanel, delta } from './stakes.js';
+import { billStakes } from '../sim/stakes.js';
 import { tuning } from '../sim/config.js';
 import { prediction } from '../sim/count.js';
 import { canUse, likelyAbsentees, budget, nextVote } from '../sim/tools.js';
@@ -54,6 +56,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
     const left = e.slots - e.used;
     const whip = e.whipCall
       ? `<div class="whip-call"><p><b>${t('office.whipCall')}</b></p><p>${esc(fillLine(state, e.whipCall.reason, { bill: e.whipCall.billId }))}</p>
+         ${stakePanel(state, state.bills[e.whipCall.billId])}
          <button class="btn primary" data-act="whip" ${left < 1 ? 'disabled' : ''}>${t('office.go')}</button></div>`
       : '';
     const rows = e.walkIns.length
@@ -61,8 +64,9 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
           .map((w) => {
             const m = state.mps[w.mpId];
             const seen = e.met.includes(w.mpId);
+            const asked = w.situation === 'rebelRecruit' && state.bills[w.billId] ? billStakes(state, state.bills[w.billId]).rebel : null;
             return `<li${seen ? ' class="done"' : ''}><span class="bar" style="background:${partyColor(state, m)}"></span>
-              <span class="main"><b>${esc(mpName(m))}</b><small>${esc(partyShort(state, m))} · ${esc(fillLine(state, w.reason, { bill: w.billId }))}</small></span>
+              <span class="main"><b>${esc(mpName(m))}</b><small>${esc(partyShort(state, m))} · ${esc(fillLine(state, w.reason, { bill: w.billId }))}</small>${asked ? `<small class="stake-line">${delta(asked.riding, t('stake.riding'))}${delta(asked.whip, t('stake.whip'))}</small>` : ''}</span>
               ${seen ? `<span class="muted">${t('office.seen')}</span>` : `<button class="btn" data-meet="${w.mpId}" ${left < 1 ? 'disabled' : ''}>${t('office.go')}</button>`}</li>`;
           })
           .join('')
@@ -102,7 +106,8 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
     const head = `<div class="sheet-handle"></div>
       <header class="card-head"><span class="chip" style="background:${partyColor(state, m)}"></span>
         <div class="who"><h2>${esc(mpName(m))}</h2><p><span class="badge mood-${mt.mood}">${t('mood.' + mt.mood)}</span> ${mt.phase === 'talk' ? t('talk.turn', { n: mt.turn, max: mt.maxTurns }) : ''}</p></div></header>
-      ${jobLine(state, 'meeting', { situation: mt.situation, pos: mt.billId ? t('vote.' + state.bills[mt.billId]?.positions[state.mps[state.player.mpId].party]) : '' })}`;
+      ${jobLine(state, 'meeting', { situation: mt.situation, pos: mt.billId ? t('vote.' + state.bills[mt.billId]?.positions[state.mps[state.player.mpId].party]) : '' })}
+      ${['whipCall', 'rebelRecruit'].includes(mt.situation) && state.bills[mt.billId] ? stakePanel(state, state.bills[mt.billId]) : ''}`;
     if (mt.phase === 'talk') {
       const note = lastNote ? `<p class="note ${lastNote}">${t(lastNote === 'good' ? 'talk.good' : lastNote === 'bad' ? 'talk.bad' : 'talk.ok')}</p>` : '';
       sheet.innerHTML = `${head}${note}<blockquote class="line">${esc(mt.talk.current.text)}</blockquote>
