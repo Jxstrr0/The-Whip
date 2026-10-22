@@ -258,6 +258,13 @@ export function createAudio({ sound = true, volume = 0.7 } = {}) {
     }
   }
 
+  // A rubber stamp coming down on the verdict: one dull thump, a touch brighter for a deal.
+  function stampThump(deal) {
+    const t0 = ctx.currentTime;
+    burst(master, { freq: deal ? 900 : 600, q: 0.8, level: LEVELS.gavel * 0.7, decay: 0.06, at: t0 });
+    tone(master, { freq: 140, to: 50, level: LEVELS.gavel * 0.8, attack: 0.002, decay: 0.12, at: t0 });
+  }
+
   // The benches react to a question: desks thumped in a ragged volley, and the voices swell with it. A hit
   // gets the whole side on its feet; a lob a dutiful few.
   function benches(kind = 'lob') {
@@ -344,6 +351,9 @@ export function createAudio({ sound = true, volume = 0.7 } = {}) {
     },
     cheer(big) {
       if (ctx && wanted.sound) cheer(big);
+    },
+    stamp(deal) {
+      if (ctx && wanted.sound) stampThump(deal);
     },
     tap() {
       if (ctx && wanted.sound) burst(master, { freq: 3400, q: 1.5, level: LEVELS.tap, decay: 0.03 });

@@ -1612,6 +1612,38 @@ input::placeholder {
   box-shadow: none;
   color: var(--ink-2);
 }
+/* The verdict after a one-to-one: the stamp, what it came to, the terms as settled cards. */
+.verdict-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 2px 0 8px;
+}
+.verdict-row .stamp {
+  flex: none;
+  margin: 4px 0;
+}
+.verdict-line {
+  margin: 0;
+  font-weight: 600;
+}
+.card-chip.settled {
+  box-sizing: border-box;
+  min-height: 0;
+  box-shadow: none;
+}
+.debrief-facts {
+  margin: 8px 0 4px;
+  font-size: 14px;
+}
+.debrief-facts .k {
+  font-weight: 600;
+  margin-right: 2px;
+}
+.debrief-facts .muted {
+  display: block;
+  margin-top: 2px;
+}
 .palette {
   margin: 6px 0;
 }

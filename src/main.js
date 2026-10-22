@@ -289,7 +289,7 @@ function buildWorld() {
     onChoose: (choice) => dispatch({ type: 'resolve', choice }),
     onContinue: () => dispatch({ type: 'advance' }),
   });
-  const officeUI = createOfficeUI(ui, { getState, dispatch, pickMp, onLedger: () => ledger.open() });
+  const officeUI = createOfficeUI(ui, { getState, dispatch, pickMp, onLedger: () => ledger.open(), onVerdict: (deal) => audio.stamp(deal) });
   const careerUI = createCareerUI(ui, { getState, dispatch });
   const recordUI = createRecordUI(ui, { getState, onNewGame: () => (location.href = location.pathname), onPerson: (mpId) => card.show(mpId) });
   const electionUI = createElectionUI(ui, { getState, dispatch });
@@ -316,7 +316,9 @@ function buildWorld() {
         nextBills(state, 5).map((b) => ({ text: `${b.title} · ${stageLabel(b.stage)} · ${(b.positions[me.party] || '').toUpperCase()}`, color: b.positions[me.party] === 'yea' ? '#1f6f40' : '#8a2a25' })),
         'Coming up'
       );
-      const mt = state.meeting && state.meetings[state.meeting];
+      // While the verdict card is up they're still in the chair, unless they walked out on you.
+      const done = state.evening?.debrief && state.meetings[state.evening.debrief];
+      const mt = (state.meeting && state.meetings[state.meeting]) || (done?.outcome !== 'theyWalked' && done);
       if (mt) {
         // Their face as you knew it walking in, and as you know them now: the difference comes into focus.
         room.setVisitor({ mpId: mt.mpId, mood: mt.mood, color: colorOf(state.mps[mt.mpId]), reversal: mt.reversal, face: faceOf(state, mt.mpId), faceFrom: faceOf(state, mt.mpId, 1).tier });
@@ -380,7 +382,7 @@ function buildWorld() {
     }
     ledger.refresh();
     // Meeting outcomes, calls and deliveries show briefly as a toast.
-    const fresh = state.log.slice(lastLog).filter((l) => l.kind === 'meeting' || l.kind === 'career');
+    const fresh = state.log.slice(lastLog).filter((l) => (l.kind === 'meeting' || l.kind === 'career') && !l.quiet);
     lastLog = state.log.length;
     // The cold open tells its own story; its log line is for the record, not a toast over the walk in.
     if (fresh.length && state.flow.pending?.kind !== 'coldOpen') toast.show(fresh.map((l) => l.text).join(' '));
