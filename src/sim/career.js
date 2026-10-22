@@ -248,7 +248,8 @@ export function contestScore(state, choice) {
   const p = state.player;
   const me = state.mps[p.mpId];
   const whip = whipOf(state);
-  let s = (whip ? state.mps[whip].rapport : 0) * C.whipRapport + p.actProgress.noticed * C.noticed + p.actProgress.rebellions * C.rebellion;
+  let s = (whip ? state.mps[whip].rapport : 0) * C.whipRapport + p.actProgress.noticed * C.noticed + Math.min(p.actProgress.rebellions, C.rebellionCap) * C.rebellion;
+  // Past a handful, more rebellions don't make you worse company; the whip has already filed you as trouble.
   if (p.mentor) s += (state.mps[p.mentor].rapport / 4 + state.mps[p.mentor].tenure / 2) * C.mentor;
   if (me.clique && state.cliques[me.clique]) {
     const mates = state.cliques[me.clique].members.filter((id) => id !== me.id).map((id) => state.mps[id].rapport);
