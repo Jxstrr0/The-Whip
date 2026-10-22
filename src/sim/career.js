@@ -76,6 +76,9 @@ export function createPlayer(state, opts = {}) {
   });
 }
 
+// How hard home pulls on a bill: positive toward yea, negative toward nay. Material benefit against what voters will say.
+export const homePull = (parts) => 0.6 * parts.R - 0.9 * parts.C;
+
 // How the player's own riding and conscience pull on a bill, ignoring the party line.
 // A dilemma is a whipped vote where that pull points the other way, hard enough to hurt.
 export function dilemmaFor(state, bill, baseScore, tuningPacing) {
@@ -85,7 +88,7 @@ export function dilemmaFor(state, bill, baseScore, tuningPacing) {
   if (line !== 'whipped' || !['yea', 'nay'].includes(position)) return null;
   const { parts } = baseScore(state, me, bill);
   const lineSign = position === 'yea' ? 1 : -1;
-  let ridingPull = 0.6 * parts.R - 0.9 * parts.C;
+  let ridingPull = homePull(parts);
   const conscience = 0.8 * parts.I;
   // The first week's set piece is always a real dilemma: the riding pulls hard against the line.
   const forced = state.player.forceDilemma === bill.id;
@@ -93,6 +96,25 @@ export function dilemmaFor(state, bill, baseScore, tuningPacing) {
   const pull = ridingPull + (forced ? 0 : conscience);
   if (Math.sign(pull) === lineSign || Math.abs(pull) < tuningPacing.dilemmaThreshold) return null;
   return { line: position, against: position === 'yea' ? 'nay' : 'yea', ridingPull, conscience, strength: Math.abs(pull), ridingSide: Math.abs(ridingPull) >= Math.abs(conscience) };
+}
+
+// What a vote does to the player, before clamping: riding standing, the whip's rapport and how noticed they are.
+// The bells sheet and the asks in the office read this too, so what the screen says is what the vote delivers.
+export function voteEffects(bill, choice, dilemma, T) {
+  const fx = { riding: 0, whip: 0, noticed: 0 };
+  if (choice === 'rebel') {
+    fx.whip = T.rebelWhipRapport * (bill.confidence ? 2 : 1);
+    fx.noticed = T.noticedPerRebellion;
+    if (dilemma) fx.riding = T.rebelRiding * (dilemma.ridingSide ? 1 : 0.5) + dilemma.strength * 2;
+  } else if (choice === 'absent') {
+    fx.whip = T.absentWhipRapport;
+    if (dilemma) fx.riding = -1;
+  } else {
+    fx.whip = T.toeLineWhipRapport;
+    fx.noticed = T.noticedPerLoyalVote;
+    if (dilemma) fx.riding = T.toeLineRiding - (dilemma.ridingSide ? dilemma.strength * T.dilemmaRidingScale : 0);
+  }
+  return fx;
 }
 
 // The player's vote lands: the whip's office keeps score, the riding notices, and the House notices you.
@@ -105,24 +127,15 @@ export function applyPlayerVote(state, bill, choice, dilemma, T) {
     if (id && state.mps[id]) state.mps[id].rapport = Math.max(-100, Math.min(100, state.mps[id].rapport + d));
   };
   const clampP = (v) => Math.max(0, Math.min(100, Math.round(v)));
+  const fx = voteEffects(bill, choice, dilemma, T);
+  adjust(whip, fx.whip);
+  p.actProgress.noticed += fx.noticed;
+  if (dilemma) p.ridingStanding = clampP(p.ridingStanding + fx.riding);
   if (choice === 'rebel') {
     p.whipFile.push({ bill: bill.id, vote: position === 'yea' ? 'nay' : 'yea', line: position, day: state.date.absWeek * 5 + state.date.dayOfWeek - 1 });
     p.actProgress.rebellions++;
-    p.actProgress.noticed += T.noticedPerRebellion;
-    adjust(whip, T.rebelWhipRapport * (bill.confidence ? 2 : 1));
-    if (dilemma) p.ridingStanding = clampP(p.ridingStanding + T.rebelRiding * (dilemma.ridingSide ? 1 : 0.5) + dilemma.strength * 2);
     p.style.conscience++;
-  } else if (choice === 'absent') {
-    adjust(whip, T.absentWhipRapport);
-    if (dilemma) p.ridingStanding = clampP(p.ridingStanding - 1);
-  } else {
-    adjust(whip, T.toeLineWhipRapport);
-    p.actProgress.noticed += T.noticedPerLoyalVote;
-    if (dilemma) {
-      p.ridingStanding = clampP(p.ridingStanding + T.toeLineRiding - (dilemma.ridingSide ? dilemma.strength * T.dilemmaRidingScale : 0));
-      p.style.loyalist++;
-    }
-  }
+  } else if (choice !== 'absent' && dilemma) p.style.loyalist++;
 }
 
 // Act 1, week one: a mentor, the first dilemma (a bill your riding hates, whipped the other way,

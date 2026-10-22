@@ -140,6 +140,15 @@
     "moodChangeOdds": 0.35,
     "ridingRegression": 0.04
   },
+  "stakes": {
+    "noLean": 0.2,
+    "firm": 0.45,
+    "strong": 0.9,
+    "closeShort": 3,
+    "standingLow": 35,
+    "standingMid": 48,
+    "standingHigh": 62
+  },
   "player": {
     "rebelWhipRapport": -8,
     "rebelRiding": 3,
@@ -148,7 +157,9 @@
     "dilemmaRidingScale": 4,
     "absentWhipRapport": -3,
     "noticedPerRebellion": 1,
-    "noticedPerLoyalVote": 0.25
+    "noticedPerLoyalVote": 0.25,
+    "ridingMentionStanding": 1,
+    "ridingProjectStanding": 6
   },
   "meetings": {
     "slotsByAct": [
@@ -224,7 +235,8 @@
     "brokenPromiseHit": 12,
     "keptPromiseRapport": 4,
     "whipNeed": 6,
-    "promiseDueWeeks": 2
+    "promiseDueWeeks": 2,
+    "cosponsorRiding": 2
   },
   "look": {
     "exposure": 0.9,

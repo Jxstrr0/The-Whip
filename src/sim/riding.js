@@ -56,7 +56,8 @@ export function startVisit(state, rng) {
     if (!picked.some((p) => p.role === c.role)) picked.push(c);
   }
   const p = state.player;
-  const presMood = p.nominationThreat > 40 || p.ridingStanding < 35 ? 'angry' : p.ridingStanding < 48 ? 'anxious' : p.ridingStanding > 62 ? 'cooperative' : 'guarded';
+  const S = tuning().stakes;
+  const presMood = p.nominationThreat > 40 || p.ridingStanding < S.standingLow ? 'angry' : p.ridingStanding < S.standingMid ? 'anxious' : p.ridingStanding > S.standingHigh ? 'cooperative' : 'guarded';
   const pres = rng.pick(C.president.filter((x) => x.mood === presMood));
   state.ridingVisit = {
     week: state.date.absWeek,
@@ -175,7 +176,7 @@ export function announceProject(state) {
   const p = state.player;
   if (!p.pendingProject || !state.ridingVisit) return null;
   p.pendingProject = false;
-  p.ridingStanding = clamp(p.ridingStanding + 6, 0, 100);
+  p.ridingStanding = clamp(p.ridingStanding + tuning().player.ridingProjectStanding, 0, 100);
   log(state, `You announce new funding for ${state.ridingVisit.town}. The local paper puts it on the front page.`, 'riding');
   state.ridingVisit.announced = true;
   return {};
