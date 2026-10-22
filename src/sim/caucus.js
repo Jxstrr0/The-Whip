@@ -60,6 +60,14 @@ function roomMood(state, partyId, heat) {
   return 'calm';
 }
 
+// The leader opens on the week's bill in their own temper, and says what the line actually is.
+function openingPool(C, party, line, position) {
+  const byTemper = (set) => set[party.leaderPersonality] || set.controlling;
+  if (line === 'free') return byTemper(C.leaderOpeningsFree);
+  if (position === 'abstain') return C.leaderOpeningsAbstain;
+  return byTemper(position === 'nay' ? C.leaderOpeningsNay : C.leaderOpenings);
+}
+
 export function startCaucus(state, rng) {
   const C = data().caucus;
   const me = state.mps[state.player.mpId];
@@ -95,7 +103,7 @@ export function startCaucus(state, rng) {
     const RV = data().career.revolt;
     revolt = { target, ringleader: sore[0][0].id, support: against, size: caucus.length, text: fill(RV[target], { ringleader: fullName(sore[0][0]) }), choice: null, resolved: false };
   }
-  const opening = bill ? fill(rng.pick(C.leaderOpenings[party.leaderPersonality] || C.leaderOpenings.controlling)) : `${leader ? fullName(leader) : 'The leader'} runs through the week's business. Nothing contentious.`;
+  const opening = bill ? fill(rng.pick(openingPool(C, party, bill.lines[me.party], bill.positions[me.party]))) : `${leader ? fullName(leader) : 'The leader'} runs through the week's business. Nothing contentious.`;
   state.caucus = {
     week: state.date.absWeek,
     billId: bill?.id || null,
@@ -108,13 +116,29 @@ export function startCaucus(state, rng) {
     seats: rest,
     revolt,
     actions: 3,
-    // Three things you could say: back the line, speak for the riding, or challenge.
-    stanceOptions: ['support', 'riding', 'challenge'].map((k) => rng.pick(C.stances.filter((x) => x.kind === k)).id),
+    stanceRolls: STANCE_KINDS.map(() => rng.float(0, 1)),
     spoke: null,
     heard: [],
     whispers: [],
   };
+  state.caucus.stanceOptions = stanceChoices(state);
   return state.caucus;
+}
+
+// Three things you could say: back the line, speak for the riding, or challenge. Each fits the line as it
+// stands, so the words change if the Chief Whip frees the vote before you speak.
+const STANCE_KINDS = ['support', 'riding', 'challenge'];
+export function stanceChoices(state) {
+  const c = state.caucus;
+  if (!c?.stanceRolls) return c?.stanceOptions || [];
+  const ctx = !c.line ? null : c.line.line === 'free' ? 'free' : c.line.position;
+  const all = data().caucus.stances;
+  return STANCE_KINDS.map((k, i) => {
+    const kind = all.filter((x) => x.kind === k);
+    const fits = kind.filter((x) => !ctx || !x.when || x.when.includes(ctx));
+    const pool = fits.length ? fits : kind;
+    return pool[Math.min(pool.length - 1, Math.floor(c.stanceRolls[i] * pool.length))].id;
+  });
 }
 
 // The two members either side of the player at the table.

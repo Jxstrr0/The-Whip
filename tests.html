@@ -1048,6 +1048,42 @@ test('Anyone but the leader and the Speaker can be expelled; the front bench nee
   return story.text;
 });
 
+test('The leader opens caucus on the line the party has actually taken', () => {
+  const C = data().caucus;
+  const reEsc = (x) => x.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
+  // Names stand for anything; the bill must be the bill's own title.
+  const matches = (pool, text, title) => pool.some((tpl) => new RegExp('^' + tpl.split('{bill}').map((part) => part.split(/\{\w+\}/).map(reEsc).join('.+')).join(reEsc(title)) + '$').test(text));
+  const cases = [['whipped', 'yea', (x) => C.leaderOpenings[x]], ['whipped', 'nay', (x) => C.leaderOpeningsNay[x]], ['free', 'yea', (x) => C.leaderOpeningsFree[x]], ['whipped', 'abstain', () => C.leaderOpeningsAbstain]];
+  let n = 0;
+  for (const temper of data().parties.leaderPersonalities) {
+    for (const [line, position, pool] of cases) {
+      assert(pool(temper)?.length >= 3, `openings for ${temper} ${line} ${position}`);
+      const { s, b: bill } = whipScenario(1, 'OPEN-1');
+      const party = s.parties[s.mps[s.player.mpId].party];
+      party.leaderPersonality = temper;
+      s.player.forceDilemma = bill.id;
+      bill.lines[party.id] = line;
+      bill.positions[party.id] = position;
+      const { opening } = caucusSim.startCaucus(s, createRng('open-' + n++));
+      assert(matches(pool(temper), opening, bill.title), `${temper} ${line} ${position}: ${opening}`);
+      assert(!/\{/.test(opening) && opening.includes(bill.title), 'filled in: ' + opening);
+      for (const [l2, p2, other] of cases) if (other(temper) !== pool(temper)) assert(!matches(other(temper), opening, bill.title), `not from the ${l2} ${p2} set: ${opening}`);
+      // What you can say back fits the same line.
+      const ctx = line === 'free' ? 'free' : position;
+      const said = caucusSim.stanceChoices(s).map((id) => C.stances.find((x) => x.id === id));
+      assert(said.length === 3 && said.every((x) => !x.when || x.when.includes(ctx)), `${ctx} stances: ${said.map((x) => x.id)}`);
+    }
+  }
+  // Freed before you speak, the stances follow the free vote.
+  const { s } = whipScenario(5, 'OPEN-2');
+  s.player.forceDilemma = Object.keys(s.bills).at(-1);
+  caucusSim.startCaucus(s, createRng('free'));
+  s.caucus.line = { line: 'free', position: 'yea' };
+  const freed = caucusSim.stanceChoices(s).map((id) => C.stances.find((x) => x.id === id));
+  assert(freed.every((x) => !x.when || x.when.includes('free')) && !freed.some((x) => /free vote\. Ask for a show/.test(x.text)), 'free stances: ' + freed.map((x) => x.id));
+  return `${n} openings and their stances checked`;
+});
+
 test('A restless Act 5 caucus stops you only when there is Chief Whip business', () => {
   const s = newGame({ seed: 'EXPEL-3', party: 'p2', act: 5 });
   const rng = createRng('restless');

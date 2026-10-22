@@ -29,6 +29,64 @@
       "{leader} sets the line on {bill} and promises to visit every riding that pays a price for it. A few people write that down."
     ]
   },
+  "leaderOpeningsNay": {
+    "controlling": [
+      "{leader} doesn't sit. “We're voting against {bill}. All of us. I'd like that to be the shortest item on today's agenda.”",
+      "{leader} hands round a single page headed {bill}. Under it, one word: “No.” “Those are the words,” {leader} says. “Please use that word.”",
+      "“I've read {bill}, and the amendments, and the amendments to the amendments,” {leader} says. “We oppose it as written and as rewritten.”",
+      "{leader} taps the table twice. “{bill}: whipped against. {whip} will be taking attendance, and so will I.”",
+      "“Nobody in this room is voting for {bill},” {leader} says, “and nobody is having a dental appointment that night either.”"
+    ],
+    "handsOff": [
+      "{leader} reads the agenda aloud, reaches {bill}, and looks at {whip}. “I gather we're against this. Any thoughts?”",
+      "“I'm not going to tell you how to feel about {bill},” {leader} says. “{whip} will tell you how to vote, and it's no.”",
+      "{leader} arrives four minutes late with a coffee. “{bill}. We're against it, on balance. Let's hear from the room.”",
+      "“I trust this caucus,” {leader} says, which everyone knows means {whip} has already counted the nays on {bill}.",
+      "{leader} leans back. “The line on {bill} is oppose. If that's a problem for anyone, talk to {whip}, not the press.”"
+    ],
+    "paranoid": [
+      "{leader} closes the door personally and checks it. “Someone told the gallery we might go soft on {bill}. We are not going soft. We're voting no.”",
+      "“The other side thinks they can peel four of you off on {bill},” {leader} says. “I'd like to know which four they have in mind.”",
+      "{leader} looks down the table one face at a time. “I'll know who's against {bill} with me by Thursday night.”",
+      "“Phones in the basket,” {leader} says. {whip} walks the basket around. Then: “Now. We're voting down {bill}.”",
+      "{leader} says the line on {bill} is no, then adds, to no one in particular, that the government keeps a list of who it can talk to."
+    ],
+    "loyal": [
+      "{leader} stands. “Some of you like parts of {bill}. So do I. We're still voting against it, and I'll explain why at every riding that asks.”",
+      "“Some of your ridings would take {bill} tomorrow,” {leader} says. “When they ask why you didn't, send them to me.”",
+      "{leader} thanks the caucus for the last vote, by name, before turning to {bill}. “We're against this one. Let's hold together on it.”",
+      "“I've never asked this caucus for more than it could give,” {leader} says. “I'm asking for a no on {bill}.”",
+      "{leader} sets the line against {bill} and promises to visit every riding that pays a price for it. A few people write that down."
+    ]
+  },
+  "leaderOpeningsFree": {
+    "controlling": [
+      "{leader} says {bill} is a free vote in the tone of someone reading out a parking ticket. “Vote your conscience. I'll be watching which way it points.”",
+      "“{bill} is not whipped,” {leader} says. “That is not the same as not noticed.”",
+      "{leader} announces a free vote on {bill}, then spends ten minutes explaining which way a sensible member would use it."
+    ],
+    "handsOff": [
+      "“{bill} is a free vote,” {leader} says. “I mean it. {whip} has the afternoon off.” {whip} does not look like someone with the afternoon off.",
+      "{leader} shrugs at {bill}. “Free vote. Talk to your ridings, not to me.”",
+      "“No line on {bill},” {leader} says, and moves on to the seating plan for the summer barbecue."
+    ],
+    "paranoid": [
+      "“{bill} is a free vote,” {leader} says, “so I'll find out what you actually think. Some of you, I've been wondering.”",
+      "{leader} frees the vote on {bill} and asks, quite casually, for everyone to say now which way they're leaning. Nobody does.",
+      "“Free vote on {bill},” {leader} says. “Which means nobody gets to tell the paper I forced them. Remember that.”"
+    ],
+    "loyal": [
+      "“{bill} is a conscience vote, and I won't pretend otherwise,” {leader} says. “Vote the way you can defend at home. We'll all still be here Monday.”",
+      "{leader} says {bill} is a free vote and that nobody will be thanked or punished for how they cast it. Several people look at {whip} to check.",
+      "“I know where I'll be on {bill},” {leader} says. “I'm not asking you to be there with me. It's free.”"
+    ]
+  },
+  "leaderOpeningsAbstain": [
+    "{leader} reaches {bill} and tells the room the party will sit this one out. “We're abstaining. Stay in your seats, and keep your hands down.”",
+    "“On {bill} we abstain,” {leader} says. “Not for, not against. If a reporter asks, the answer is that we've raised serious concerns.”",
+    "{leader} sets the line on {bill}: present, and not voting. {whip} explains, twice, that present means present.",
+    "“{bill} isn't our fight,” {leader} says. “We abstain, we let the others own it, and we spend the week on something that is.”"
+  ],
   "grievances": [
     { "text": "{name} stands up and complains that {riding} found out about {bill} from the evening news.", "target": "leader", "heat": 2 },
     { "text": "{name} stands up and complains that the leader's office rewrote their press release and spelled {riding} wrong.", "target": "leader", "heat": 1 },
@@ -58,18 +116,31 @@
     { "text": "{name} stands up and complains that {other} voted against the line last month and nothing happened to them.", "target": "other", "heat": 3 }
   ],
   "stances": [
-    { "id": "support1", "text": "Back the line on {bill}. We win this one together or not at all.", "kind": "support", "leader": 6, "room": -2, "riding": -2 },
-    { "id": "support2", "text": "Thank the leader for the briefing and say you'll carry {bill} in your riding.", "kind": "support", "leader": 5, "room": 0, "riding": -1 },
-    { "id": "support3", "text": "Remind the room that the opposition would love nothing more than a split vote.", "kind": "support", "leader": 7, "room": 2, "riding": -1 },
-    { "id": "support4", "text": "Say {bill} isn't perfect, but it's ours, and you'll vote for it.", "kind": "support", "leader": 4, "room": 3, "riding": -1 },
-    { "id": "riding1", "text": "Tell them what {bill} costs your riding, with the numbers, and ask for a fix.", "kind": "riding", "leader": -2, "room": 3, "riding": 3 },
+    { "id": "support1", "text": "Back the line on {bill}. We win this one together or not at all.", "kind": "support", "leader": 6, "room": -2, "riding": -2, "when": ["yea", "nay", "abstain"] },
+    { "id": "support2", "text": "Thank the leader for the briefing and say you'll carry {bill} in your riding.", "kind": "support", "leader": 5, "room": 0, "riding": -1, "when": ["yea"] },
+    { "id": "support3", "text": "Remind the room that the opposition would love nothing more than a split vote.", "kind": "support", "leader": 7, "room": 2, "riding": -1, "when": ["yea", "nay", "abstain"] },
+    { "id": "support4", "text": "Say {bill} isn't perfect, but it's ours, and you'll vote for it.", "kind": "support", "leader": 4, "room": 3, "riding": -1, "when": ["yea"] },
+    { "id": "riding1", "text": "Tell them what {bill} costs your riding, with the numbers, and ask for a fix.", "kind": "riding", "leader": -2, "room": 3, "riding": 3, "when": ["yea"] },
     { "id": "riding2", "text": "Read out a letter from a constituent, word for word, and sit down.", "kind": "riding", "leader": -1, "room": 4, "riding": 2 },
-    { "id": "riding3", "text": "Say you'll vote for it if your riding gets the amendment. Otherwise, you can't.", "kind": "riding", "leader": -4, "room": 2, "riding": 4 },
-    { "id": "riding4", "text": "Ask that the next riding announcement go to a seat that paid for this vote.", "kind": "riding", "leader": -1, "room": 5, "riding": 2 },
-    { "id": "challenge1", "text": "Ask why caucus is told the line instead of asked. Loudly.", "kind": "challenge", "leader": -8, "room": 6, "riding": 2 },
-    { "id": "challenge2", "text": "Say you won't vote for {bill} as written, and that you suspect you're not alone.", "kind": "challenge", "leader": -10, "room": 4, "riding": 4 },
-    { "id": "challenge3", "text": "Ask the whip, in front of everyone, what happens to members who vote their riding.", "kind": "challenge", "leader": -6, "room": 5, "riding": 1 },
-    { "id": "challenge4", "text": "Move that {bill} be a free vote. Ask for a show of hands.", "kind": "challenge", "leader": -9, "room": 8, "riding": 3 },
+    { "id": "riding3", "text": "Say you'll vote for it if your riding gets the amendment. Otherwise, you can't.", "kind": "riding", "leader": -4, "room": 2, "riding": 4, "when": ["yea"] },
+    { "id": "riding4", "text": "Ask that the next riding announcement go to a seat that paid for this vote.", "kind": "riding", "leader": -1, "room": 5, "riding": 2, "when": ["yea", "nay", "abstain"] },
+    { "id": "challenge1", "text": "Ask why caucus is told the line instead of asked. Loudly.", "kind": "challenge", "leader": -8, "room": 6, "riding": 2, "when": ["yea", "nay", "abstain"] },
+    { "id": "challenge2", "text": "Say you won't vote for {bill} as written, and that you suspect you're not alone.", "kind": "challenge", "leader": -10, "room": 4, "riding": 4, "when": ["yea"] },
+    { "id": "challenge3", "text": "Ask the whip, in front of everyone, what happens to members who vote their riding.", "kind": "challenge", "leader": -6, "room": 5, "riding": 1, "when": ["yea", "nay", "abstain"] },
+    { "id": "challenge4", "text": "Move that {bill} be a free vote. Ask for a show of hands.", "kind": "challenge", "leader": -9, "room": 8, "riding": 3, "when": ["yea", "nay", "abstain"] },
+    { "id": "support5", "text": "Say you'll be in your seat to vote {bill} down, and that you'd like company.", "kind": "support", "leader": 6, "room": -1, "riding": -1, "when": ["nay"] },
+    { "id": "support6", "text": "Tell the room you've read {bill} twice and it hasn't improved. You're a no.", "kind": "support", "leader": 5, "room": 2, "riding": -1, "when": ["nay"] },
+    { "id": "support7", "text": "Thank the leader for freeing the vote on {bill}, and say you'll use it carefully.", "kind": "support", "leader": 4, "room": 1, "riding": 0, "when": ["free"] },
+    { "id": "support8", "text": "Say the party is at its best when it trusts its members, and sit down.", "kind": "support", "leader": 5, "room": 3, "riding": 0, "when": ["free"] },
+    { "id": "riding5", "text": "Say your riding would take {bill} tomorrow, and ask what you're meant to tell them when you vote it down.", "kind": "riding", "leader": -3, "room": 3, "riding": 3, "when": ["nay"] },
+    { "id": "riding6", "text": "Ask for something your riding can point to, since it won't be getting {bill}.", "kind": "riding", "leader": -1, "room": 4, "riding": 2, "when": ["nay", "abstain"] },
+    { "id": "riding7", "text": "Say you'll vote {bill} the way your riding would, and that you've asked them.", "kind": "riding", "leader": -1, "room": 3, "riding": 3, "when": ["free"] },
+    { "id": "riding8", "text": "Read out the riding's letters on {bill}: eleven for, nine against, one about potholes.", "kind": "riding", "leader": 0, "room": 4, "riding": 2, "when": ["free"] },
+    { "id": "challenge5", "text": "Say you can't vote against {bill} with a straight face, and that you suspect you're not alone.", "kind": "challenge", "leader": -10, "room": 4, "riding": 4, "when": ["nay"] },
+    { "id": "challenge6", "text": "Ask who decided to oppose {bill}, and when caucus was going to be told why.", "kind": "challenge", "leader": -8, "room": 6, "riding": 2, "when": ["nay"] },
+    { "id": "challenge7", "text": "Ask how the party plans to explain sitting on its hands on {bill}.", "kind": "challenge", "leader": -7, "room": 5, "riding": 2, "when": ["abstain"] },
+    { "id": "challenge8", "text": "Ask whether a free vote on {bill} is really free, looking straight at the whip.", "kind": "challenge", "leader": -6, "room": 6, "riding": 1, "when": ["free"] },
+    { "id": "challenge9", "text": "Say a free vote on {bill} is the party ducking a decision it was elected to make.", "kind": "challenge", "leader": -8, "room": 3, "riding": 1, "when": ["free"] },
     { "id": "quiet1", "text": "Say nothing. Take notes. Watch who's sitting with whom.", "kind": "quiet", "leader": 0, "room": 0, "riding": 0 },
     { "id": "quiet2", "text": "Nod when the leader speaks and leave before the grievances.", "kind": "quiet", "leader": 2, "room": -3, "riding": 0 },
     { "id": "quiet3", "text": "Stay seated, but catch the whip after the meeting with your concerns.", "kind": "quiet", "leader": 1, "room": -1, "riding": 1 },
