@@ -273,7 +273,7 @@ html, body {
   left: 0;
   right: 0;
   bottom: var(--agenda-h);
-  max-height: 62dvh;
+  max-height: 66dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
   border-radius: var(--r-lg) var(--r-lg) 0 0;
@@ -306,7 +306,11 @@ html, body {
   .caucus-sheet,
   .riding-sheet,
   .division-sheet {
-    max-height: 54dvh;
+    max-height: 70dvh;
+  }
+  /* The weekend paper and the morning's order paper are pages to read; give them the room. */
+  .agenda-sheet {
+    max-height: 80dvh;
   }
 }
 
@@ -436,7 +440,7 @@ blockquote.line {
 }
 @media (orientation: portrait) {
   .division-sheet:has(.hill) {
-    max-height: 70dvh;
+    max-height: 76dvh;
   }
 }
 .hill {
@@ -2738,10 +2742,6 @@ body.cold-open .topbar {
   background: var(--ink-4);
   font-weight: 500;
 }
-.stake + .when {
-  color: var(--ink-2);
-  font-size: 12px;
-}
 .stakes {
   margin: 8px 0;
   padding: 8px 12px;
@@ -2844,3 +2844,14 @@ body.cold-open .topbar {
 .count-board [data-n="yea"], .pr .y { color: var(--yea); }
 .count-board [data-n="nay"], .pr .n { color: var(--nay); }
 .pr b { color: var(--ink); }
+
+/* The buttons that finish a sheet stay in reach while its content scrolls under them. */
+.sheet .card-actions,
+.office-sheet > .choices:last-child {
+  position: sticky;
+  bottom: -16px;
+  z-index: 2;
+  margin: 10px -18px -16px;
+  padding: 12px 18px 16px;
+  background: linear-gradient(to bottom, rgba(243, 234, 216, 0), var(--paper) 28%);
+}

@@ -33,9 +33,8 @@ export function stakePanel(state, bill) {
 export function cardChip(state, card, side, mpId) {
   const s = cardStakes(state, card, side, mpId);
   if (!s) return '';
-  const when = s.vote ? 'vote' : s.note === 'announce' ? 'announce' : s.billId ? 'sign' : null;
-  if (s.note === 'home') return `<span class="stake up"><i aria-hidden="true">▲</i> ${esc(t('stake.home'))}</span>`;
-  return delta(s.riding, t('stake.riding')) + (when && s.riding ? `<small class="when">${esc(t('stake.' + when))}</small>` : '');
+  if (s.note === 'home') return `<span class="stake up"><i aria-hidden="true">\u25B2</i> ${esc(t('stake.home'))}</span>`;
+  return delta(s.riding, t('stake.riding'));
 }
 
 // The sum across the cards on the table: your riding standing once the deal has played out.
