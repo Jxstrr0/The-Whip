@@ -1,7 +1,7 @@
 // The caucus room UI: the leader's line, grievances, the player's three moves (listen, speak, whisper), and
 // from Act 5 the Chief Whip's business: free a whipped vote, or put a member out of caucus.
 import { t, esc, mpName, jobLine } from './text.js';
-import { neighbours, fillStance } from '../sim/caucus.js';
+import { neighbours, fillStance, stanceChoices } from '../sim/caucus.js';
 import { canUse, canRelease, expelCandidates } from '../sim/tools.js';
 import { data, tuning } from '../sim/config.js';
 import { openPaperList } from './picker.js';
@@ -25,7 +25,7 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
     const c = state.caucus;
     const bill = c.billId && state.bills[c.billId];
     const lineText = c.line ? (c.line.line === 'whipped' ? `whipped ${c.line.position.toUpperCase()}` : 'a free vote') : '';
-    const stances = c.stanceOptions.map((id) => data().caucus.stances.find((s) => s.id === id));
+    const stances = stanceChoices(state).map((id) => data().caucus.stances.find((s) => s.id === id));
     const nb = neighbours(state);
     sheet.classList.remove('hidden');
     sheet.innerHTML = `<div class="sheet-handle"></div>

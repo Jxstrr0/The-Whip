@@ -953,6 +953,42 @@ test('Rival whips act every week: a poach, a leak and a pair test are all observ
     return `moves ${[...seen].join(', ')} · whips ${styles.join(' ')}`;
   }));
 
+test('A leak spends something fresh about you, once, and the papers run one a week', () =>
+  quiet(() => {
+    const { s, me, rng } = whipScenario(4, 'LEAK-1');
+    const p = s.player;
+    p.skeleton = null;
+    p.record.promisesBroken = 0;
+    p.whipFile = [];
+    p.ridingStanding = 60;
+    const leaksIn = (from) => s.ledger.slice(from).filter((e) => e.what === 'leak').length;
+    // Nothing on you: any story is about the party, and costs you nothing at home.
+    for (let w = 0; w < 12; w++) {
+      s.date.absWeek = 10 + w;
+      const before = s.ledger.length;
+      rivals.rivalsWeek(s, rng);
+      assert(leaksIn(before) <= 1, `week ${w}: ${leaksIn(before)} leaks`);
+    }
+    assert(p.ridingStanding === 60, 'a party story moved your standing to ' + p.ridingStanding);
+    // One broken whip, fresh: it leaks once, for the tuned cost, and never again.
+    const day = s.date.absWeek * 5;
+    p.whipFile.push({ bill: 'x', vote: 'nay', line: 'yea', day });
+    let hits = 0;
+    for (let w = 1; w <= 12; w++) {
+      s.date.absWeek += 1;
+      const was = p.ridingStanding;
+      rivals.rivalsWeek(s, rng);
+      if (p.ridingStanding !== was) hits++;
+    }
+    assert(hits === 1 && p.ridingStanding === 60 + tuning().rivals.leakStanding, `hits ${hits}, standing ${p.ridingStanding}`);
+    assert(p.whipFile[0].leaked, 'the vote should be marked as leaked');
+    // An old one, past the fresh window, stays in the file.
+    p.whipFile.push({ bill: 'y', vote: 'nay', line: 'yea', day: (s.date.absWeek - tuning().rivals.leakFreshWeeks - 1) * 5 });
+    for (let w = 0; w < 6; w++) { s.date.absWeek += 1; rivals.rivalsWeek(s, rng); }
+    assert(!p.whipFile[1].leaked, 'a stale vote leaked');
+    return `party stories cost nothing; one fresh vote leaked once (${tuning().rivals.leakStanding}); a stale one stayed put`;
+  }));
+
 test('A free vote releases the caucus; expulsion makes an independent and reseats the House', () => {
   const { s, b, me } = whipScenario(5);
   s.parties[me.party].leaderPersonality = 'controlling';
@@ -1046,6 +1082,42 @@ test('Anyone but the leader and the Speaker can be expelled; the front bench nee
   assert(story?.event === 'expelled' && story.text.length && !/\{/.test(story.text) && story.you, 'front page: ' + JSON.stringify(story));
   assert(media.FRONT_PRIORITY.includes('expelled'), 'it can lead the weekend paper');
   return story.text;
+});
+
+test('The leader opens caucus on the line the party has actually taken', () => {
+  const C = data().caucus;
+  const reEsc = (x) => x.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
+  // Names stand for anything; the bill must be the bill's own title.
+  const matches = (pool, text, title) => pool.some((tpl) => new RegExp('^' + tpl.split('{bill}').map((part) => part.split(/\{\w+\}/).map(reEsc).join('.+')).join(reEsc(title)) + '$').test(text));
+  const cases = [['whipped', 'yea', (x) => C.leaderOpenings[x]], ['whipped', 'nay', (x) => C.leaderOpeningsNay[x]], ['free', 'yea', (x) => C.leaderOpeningsFree[x]], ['whipped', 'abstain', () => C.leaderOpeningsAbstain]];
+  let n = 0;
+  for (const temper of data().parties.leaderPersonalities) {
+    for (const [line, position, pool] of cases) {
+      assert(pool(temper)?.length >= 3, `openings for ${temper} ${line} ${position}`);
+      const { s, b: bill } = whipScenario(1, 'OPEN-1');
+      const party = s.parties[s.mps[s.player.mpId].party];
+      party.leaderPersonality = temper;
+      s.player.forceDilemma = bill.id;
+      bill.lines[party.id] = line;
+      bill.positions[party.id] = position;
+      const { opening } = caucusSim.startCaucus(s, createRng('open-' + n++));
+      assert(matches(pool(temper), opening, bill.title), `${temper} ${line} ${position}: ${opening}`);
+      assert(!/\{/.test(opening) && opening.includes(bill.title), 'filled in: ' + opening);
+      for (const [l2, p2, other] of cases) if (other(temper) !== pool(temper)) assert(!matches(other(temper), opening, bill.title), `not from the ${l2} ${p2} set: ${opening}`);
+      // What you can say back fits the same line.
+      const ctx = line === 'free' ? 'free' : position;
+      const said = caucusSim.stanceChoices(s).map((id) => C.stances.find((x) => x.id === id));
+      assert(said.length === 3 && said.every((x) => !x.when || x.when.includes(ctx)), `${ctx} stances: ${said.map((x) => x.id)}`);
+    }
+  }
+  // Freed before you speak, the stances follow the free vote.
+  const { s } = whipScenario(5, 'OPEN-2');
+  s.player.forceDilemma = Object.keys(s.bills).at(-1);
+  caucusSim.startCaucus(s, createRng('free'));
+  s.caucus.line = { line: 'free', position: 'yea' };
+  const freed = caucusSim.stanceChoices(s).map((id) => C.stances.find((x) => x.id === id));
+  assert(freed.every((x) => !x.when || x.when.includes('free')) && !freed.some((x) => /free vote\. Ask for a show/.test(x.text)), 'free stances: ' + freed.map((x) => x.id));
+  return `${n} openings and their stances checked`;
 });
 
 test('A restless Act 5 caucus stops you only when there is Chief Whip business', () => {
@@ -1402,6 +1474,29 @@ test('Act 4: the count is yours (a wrong count costs the job), the pair before a
   assert(down?.event === 'demoted' && w.player.act === 3 && w.mps[w.player.mpId].caucusRole === 'assistantWhip', 'back to assistant whip');
   return `paired ${s.mps[pair.mpId].name.last}; declined the car; Chief Whip at week ${R.act4MinWeeks}; exit and wrong-count both reachable`;
 });
+
+test('A confidence vote stops you the first time, and after that only when the margin could fall', () =>
+  quiet(() => {
+    const P = tuning().pacing;
+    const keep = P.confidenceStopMargin;
+    const { s, b } = whipScenario(2, 'CONF-STOP');
+    b.confidence = true;
+    s.player.forceDilemma = null;
+    const item = { billId: b.id, stage: b.stage };
+    const own = pacing.stopForItem(s, item);
+    if (own?.reason === 'ownVote') return 'skipped: this bill is the player\'s own dilemma';
+    try {
+      assert(own?.reason === 'confidence', 'the first confidence vote should stop you');
+      s.player.seenConfidence = true;
+      P.confidenceStopMargin = -1;
+      assert(pacing.stopForItem(s, item) === null, 'a safe confidence vote should go through on the line');
+      P.confidenceStopMargin = 999;
+      assert(pacing.stopForItem(s, item)?.reason === 'confidence', 'a close one should stop you');
+    } finally {
+      P.confidenceStopMargin = keep;
+    }
+    return `first stops; safe passes on the line; within ${keep} seats stops`;
+  }));
 
 test('Act 5: setting the line with the leader (whip it, free vote, confidence), and the fall', () => {
   const { s, b, me } = whipScenario(5);
