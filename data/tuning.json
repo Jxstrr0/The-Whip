@@ -329,6 +329,7 @@
     "leakCost": 10,
     "leakStanding": -2,
     "leakOdds": 0.5,
+    "leakFreshWeeks": 6,
     "digCost": 15,
     "pairRenegeBase": 0.45,
     "pairTestCost": 5,

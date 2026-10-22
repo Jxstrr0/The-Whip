@@ -953,6 +953,42 @@ test('Rival whips act every week: a poach, a leak and a pair test are all observ
     return `moves ${[...seen].join(', ')} · whips ${styles.join(' ')}`;
   }));
 
+test('A leak spends something fresh about you, once, and the papers run one a week', () =>
+  quiet(() => {
+    const { s, me, rng } = whipScenario(4, 'LEAK-1');
+    const p = s.player;
+    p.skeleton = null;
+    p.record.promisesBroken = 0;
+    p.whipFile = [];
+    p.ridingStanding = 60;
+    const leaksIn = (from) => s.ledger.slice(from).filter((e) => e.what === 'leak').length;
+    // Nothing on you: any story is about the party, and costs you nothing at home.
+    for (let w = 0; w < 12; w++) {
+      s.date.absWeek = 10 + w;
+      const before = s.ledger.length;
+      rivals.rivalsWeek(s, rng);
+      assert(leaksIn(before) <= 1, `week ${w}: ${leaksIn(before)} leaks`);
+    }
+    assert(p.ridingStanding === 60, 'a party story moved your standing to ' + p.ridingStanding);
+    // One broken whip, fresh: it leaks once, for the tuned cost, and never again.
+    const day = s.date.absWeek * 5;
+    p.whipFile.push({ bill: 'x', vote: 'nay', line: 'yea', day });
+    let hits = 0;
+    for (let w = 1; w <= 12; w++) {
+      s.date.absWeek += 1;
+      const was = p.ridingStanding;
+      rivals.rivalsWeek(s, rng);
+      if (p.ridingStanding !== was) hits++;
+    }
+    assert(hits === 1 && p.ridingStanding === 60 + tuning().rivals.leakStanding, `hits ${hits}, standing ${p.ridingStanding}`);
+    assert(p.whipFile[0].leaked, 'the vote should be marked as leaked');
+    // An old one, past the fresh window, stays in the file.
+    p.whipFile.push({ bill: 'y', vote: 'nay', line: 'yea', day: (s.date.absWeek - tuning().rivals.leakFreshWeeks - 1) * 5 });
+    for (let w = 0; w < 6; w++) { s.date.absWeek += 1; rivals.rivalsWeek(s, rng); }
+    assert(!p.whipFile[1].leaked, 'a stale vote leaked');
+    return `party stories cost nothing; one fresh vote leaked once (${tuning().rivals.leakStanding}); a stale one stayed put`;
+  }));
+
 test('A free vote releases the caucus; expulsion makes an independent and reseats the House', () => {
   const { s, b, me } = whipScenario(5);
   s.parties[me.party].leaderPersonality = 'controlling';

@@ -59,17 +59,30 @@ function poach(state, rng, party, whip, bill) {
   return true;
 }
 
+// A leak spends something fresh about you: a whipped vote you broke, or a promise you didn't keep. Each one
+// leaks once, and the papers run one leak a week. With nothing on you, the story is about your party instead.
 function leak(state, rng, party, whip) {
   const R = tuning().rivals;
   const p = state.player;
   const me = state.mps[p.mpId];
-  const reasons = [];
-  if (p.whipFile.length) reasons.push(`"${me.name.last} can't be relied on," says a source close to the ${party.short} whip.`);
-  if (p.record.promisesBroken) reasons.push(`"Ask ${me.name.last}'s colleagues what a promise from them is worth," a ${party.short} insider tells the paper.`);
-  if (party.whipAI.targets.length) reasons.push(`The paper reports "quiet talks" between ${party.name} and unhappy members of ${state.parties[me.party].name}.`);
-  if (!reasons.length || !rng.chance(R.leakOdds)) return false;
-  p.ridingStanding = clamp(p.ridingStanding + R.leakStanding, 0, 100);
-  const note = `${data().headlines.papers[0]}: ${rng.pick(reasons)}`;
+  const week = state.date.absWeek;
+  if (p.leakWeek === week || !rng.chance(R.leakOdds)) return false;
+  const day = week * 5;
+  const vote = p.whipFile.find((f) => !f.leaked && day - f.day <= R.leakFreshWeeks * 5);
+  const promise = (p.record.promisesBroken || 0) > (p.promisesLeaked || 0);
+  let line;
+  if (vote) {
+    vote.leaked = true;
+    line = `"${me.name.last} can't be relied on," says a source close to the ${party.short} whip.`;
+  } else if (promise) {
+    p.promisesLeaked = p.record.promisesBroken;
+    line = `"Ask ${me.name.last}'s colleagues what a promise from them is worth," a ${party.short} insider tells the paper.`;
+  } else if (party.whipAI.targets.length) {
+    line = `The paper reports "quiet talks" between ${party.name} and unhappy members of ${state.parties[me.party].name}.`;
+  } else return false;
+  p.leakWeek = week;
+  if (vote || promise) p.ridingStanding = clamp(p.ridingStanding + R.leakStanding, 0, 100);
+  const note = `${data().headlines.papers[0]}: ${line}`;
   ledgerAdd(state, { from: whip, to: p.mpId, kind: 'rival', what: 'leak', note });
   log(state, note, 'press');
   // Some leaks make the front page too.
