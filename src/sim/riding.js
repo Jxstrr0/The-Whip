@@ -82,19 +82,26 @@ function next(v) {
   if (v.at >= v.queue.length) v.phase = 'choose';
 }
 
-export function answerCase(state, carry) {
+// Three ways to take a case: carry it to Ostrava (it can come up in Question Period, and goes stale if it
+// never does), pass it to the office that actually handles it, or turn it down.
+export function answerCase(state, mode) {
   const v = state.ridingVisit;
   const item = v?.queue[v.at];
   if (!item || item.kind !== 'case') return null;
   const c = data().constituents.cases.find((x) => x.id === item.id);
   const p = state.player;
-  if (carry) {
+  v.lastWord = null;
+  if (mode === 'carry') {
     state.ridingCases.push({ id: `rc${state.ridingCases.length + 1}`, caseId: c.id, from: c.role, what: fillRiding(state, c.what), interest: c.interest, carried: true, week: state.date.absWeek, resolved: false });
     p.ridingStanding = clamp(p.ridingStanding + c.weight, 0, 100);
+  } else if (mode === 'refer') {
+    p.ridingStanding = clamp(p.ridingStanding + tuning().player.caseReferStanding, 0, 100);
+    const said = data().constituents.refer[c.role]?.text;
+    if (said) v.lastWord = { who: 'you', role: c.role, text: fillRiding(state, said) };
   } else p.ridingStanding = clamp(p.ridingStanding - Math.max(0, c.weight - 1), 0, 100);
-  v.results.push({ kind: 'case', id: c.id, carry });
+  v.results.push({ kind: 'case', id: c.id, mode });
   next(v);
-  return { carry };
+  return { mode };
 }
 
 export function answerReporter(state, index) {
@@ -108,14 +115,29 @@ export function answerReporter(state, index) {
   const whip = state.parties[state.mps[p.mpId].party]?.chiefWhip;
   if (whip) adjustRapport(state, whip, opt.whip);
   log(state, `The ${fillRiding(state, '{town}')} paper quotes you: “${fillRiding(state, opt.text)}”`, 'riding');
+  v.lastWord = null;
   v.results.push({ kind: 'reporter', stance: opt.stance });
   next(v);
   return { stance: opt.stance };
 }
 
-export function nodPresident(state) {
+// The president has their say; what you say back moves the executive, and sometimes the whip.
+export function answerPresident(state, index) {
   const v = state.ridingVisit;
-  if (v?.queue[v.at]?.kind !== 'president') return null;
+  const item = v?.queue[v.at];
+  if (item?.kind !== 'president') return null;
+  const pr = data().constituents.president.find((x) => x.id === item.id);
+  const r = data().constituents.presidentReplies?.[pr?.mood]?.[index];
+  v.lastWord = null;
+  if (r) {
+    const p = state.player;
+    p.ridingStanding = clamp(p.ridingStanding + r.standing, 0, 100);
+    p.nominationThreat = clamp(p.nominationThreat + r.threat, 0, 100);
+    const whip = state.parties[state.mps[p.mpId].party]?.chiefWhip;
+    if (whip && r.whip) adjustRapport(state, whip, r.whip);
+    v.lastWord = { who: 'president', text: fillRiding(state, r.reply) };
+    v.results.push({ kind: 'president', index });
+  }
   next(v);
   return {};
 }
@@ -130,6 +152,7 @@ export function startTownHall(state, rng) {
   const bg = data().backgrounds.backgrounds.find((b) => b.id === state.player.background);
   v.townHall = { opener: rng.pick(T.openers), topics, at: 0, crowd: 50 + (bg?.effects.townHallBonus || 0), answers: [] };
   v.phase = 'townHall';
+  v.lastWord = null;
   return v.townHall;
 }
 
@@ -228,6 +251,17 @@ hooks.riding.push((state, rng) => {
 // Weekly: the riding association watches your standing, and too many votes against home add up.
 hooks.weekend.push((state) => {
   const p = state.player;
+  // A big case you carried and never raised: whoever brought it starts ringing, once.
+  const T = tuning().player;
+  const weightOf = (c) => data().constituents.cases.find((x) => x.id === c.caseId)?.weight || 0;
+  for (const c of state.ridingCases || []) {
+    if (!c.carried || c.resolved || c.raised || c.stale || state.date.absWeek - c.week < T.staleCaseWeeks) continue;
+    if (weightOf(c) < T.staleCaseMinWeight) continue;
+    c.stale = true;
+    p.ridingStanding = clamp(p.ridingStanding - T.staleCaseCost, 0, 100);
+    const line = data().constituents.callbacks?.[c.from];
+    if (line) log(state, fillRiding(state, line.replace('{what}', c.what)), 'riding');
+  }
   if (p.ridingStanding < 35) p.nominationThreat = clamp(p.nominationThreat + 5, 0, 100);
   else if (p.ridingStanding > 55) p.nominationThreat = clamp(p.nominationThreat - 3, 0, 100);
 });
@@ -239,9 +273,9 @@ function act(state, fn) {
 }
 
 registerActions({
-  ridingCase: (state, a) => answerCase(state, !!a.carry),
+  ridingCase: (state, a) => answerCase(state, a.mode || (a.carry ? 'carry' : 'decline')),
   ridingReporter: (state, a) => answerReporter(state, a.index),
-  ridingPresident: (state) => nodPresident(state),
+  ridingPresident: (state, a = {}) => answerPresident(state, a.index ?? 0),
   ridingTownHall: (state) => act(state, (rng) => startTownHall(state, rng)),
   ridingAnswer: (state, a) => answerTownHall(state, a.index),
   ridingAnnounce: (state) => announceProject(state),

@@ -303,6 +303,60 @@
         { "text": "I stood up for {riding}. I'll do it every Wednesday if I have to.", "stance": "riding", "standing": 3, "whip": -5 },
         { "text": "Caucus is united. Your source is having a bad week.", "stance": "line", "standing": -1, "whip": 3 }
       ]
+    },
+    {
+      "id": "rp09",
+      "prompt": "“There's talk of layoffs at the plant in {town}. What have you done about it in Ostrava?”",
+      "options": [
+        { "text": "I've raised it with the minister twice. I'll keep raising it.", "stance": "promise", "standing": 3, "whip": -1 },
+        { "text": "The government's industrial plan is the best help the plant can get.", "stance": "line", "standing": -2, "whip": 2 },
+        { "text": "I won't speculate about a company's books.", "stance": "dodge", "standing": -2, "whip": 0 }
+      ]
+    },
+    {
+      "id": "rp10",
+      "prompt": "The reporter reads from a letter. “A pensioner in {town} says she wrote to you in March and heard nothing. Your answer?”",
+      "options": [
+        { "text": "Then she'll hear from me today. Give me her address after this.", "stance": "riding", "standing": 3, "whip": 0 },
+        { "text": "My office answers every letter. Something's gone astray.", "stance": "dodge", "standing": -1, "whip": 0 },
+        { "text": "I've been in Ostrava fighting for the budget that raises her pension.", "stance": "line", "standing": -1, "whip": 2 }
+      ]
+    },
+    {
+      "id": "rp11",
+      "prompt": "“Is it true the whip's office decides which events you can attend in your own riding?”",
+      "options": [
+        { "text": "Nobody tells me where I can go in {riding}.", "stance": "riding", "standing": 2, "whip": -3 },
+        { "text": "We coordinate. That's what a team does.", "stance": "line", "standing": -1, "whip": 2 },
+        { "text": "I'm here today, aren't I?", "stance": "dodge", "standing": 1, "whip": 0 }
+      ]
+    },
+    {
+      "id": "rp12",
+      "prompt": "“Your biggest donor sells to the province. Does that come up when you vote?”",
+      "options": [
+        { "text": "Never. You're welcome to check every vote against every cheque.", "stance": "riding", "standing": 2, "whip": 0 },
+        { "text": "Donations go to the party, not to me. Ask {party}.", "stance": "line", "standing": -2, "whip": 1 },
+        { "text": "I won't dignify that.", "stance": "dodge", "standing": -2, "whip": 0 }
+      ]
+    },
+    {
+      "id": "rp13",
+      "prompt": "“There's a cabinet shuffle coming and nobody from {province} is in the frame. Does {leader} rate this region?”",
+      "options": [
+        { "text": "{leader} knows exactly what {province} delivers, and so do I.", "stance": "line", "standing": -1, "whip": 2 },
+        { "text": "We're overdue a seat at that table, and I've said so.", "stance": "riding", "standing": 3, "whip": -3 },
+        { "text": "I don't comment on cabinet. Nobody who wants to be in it does.", "stance": "dodge", "standing": 0, "whip": 1 }
+      ]
+    },
+    {
+      "id": "rp14",
+      "prompt": "“Someone at the coffee shop asked me if you still live here. Do you?”",
+      "options": [
+        { "text": "Every weekend I'm not stuck on the Hill. Come to the house and I'll make you a coffee.", "stance": "riding", "standing": 2, "whip": 0 },
+        { "text": "I live where the job needs me, five days a week, like every member.", "stance": "line", "standing": -2, "whip": 1 },
+        { "text": "Which coffee shop? I'll go and ask them myself.", "stance": "dodge", "standing": 1, "whip": 0 }
+      ]
     }
   ],
   "president": [
@@ -318,5 +372,43 @@
     { "id": "ap10", "mood": "anxious", "text": "The polls have us within four points. The last MP who was within four points is now a realtor." },
     { "id": "ap11", "mood": "anxious", "text": "We have eleven thousand dollars in the bank and an election that could come any week. I've stopped sleeping." },
     { "id": "ap12", "mood": "anxious", "text": "Headquarters called asking whether you were planning to run. They didn't say why, and I didn't like that they asked." }
-  ]
+  ],
+  "refer": {
+    "mayor": { "label": "Send it to the province", "text": "That one sits with the provincial ministry. I'll write to the minister's office today and copy you, so they know someone's watching." },
+    "farmer": { "label": "Put them onto the farm office", "text": "The farm programs office in {town} can move faster than I can. Here's the name of the woman who runs it. Tell her I sent you." },
+    "plantManager": { "label": "Hand it to the trade office", "text": "The regional trade office handles exactly this. I'll make the introduction. They answer an MP's email faster than a company's." },
+    "unionSteward": { "label": "Send it to the labour board", "text": "This is a labour board matter, and it should be. I'll have my caseworker walk your members through the filing." },
+    "schoolBoard": { "label": "Pass it to the ministry", "text": "Schools are the province's, I'm afraid. I'll write to the education minister and send you the letter, so you've got it in writing." },
+    "reporter": { "label": "Send them to the department", "text": "The department's media office answers that kind of question, on the record. I'll make sure they know you're asking, and that I am too." }
+  },
+  "callbacks": {
+    "mayor": "The mayor of {town} rings your office: “Any news on {what}? Council asks me every Tuesday.”",
+    "farmer": "A farmer from {town} leaves a message about {what}. Your caseworker says it's the third.",
+    "plantManager": "The plant manager emails about {what}: “Head office wants a date. I've stopped making them up.”",
+    "unionSteward": "The union steward tells the {town} paper that {what} “went to Ostrava and got lost there.”",
+    "schoolBoard": "The school board chair copies the whole board on a polite note asking about {what}. It isn't really polite.",
+    "reporter": "The {town} paper runs a short item asking whatever became of {what}. It names you in the second paragraph."
+  },
+  "presidentReplies": {
+    "cooperative": [
+      { "text": "What do you need from me before the nomination?", "standing": 1, "threat": -2, "whip": 0, "reply": "Turn up to the barbecue. Shake every hand twice. That's genuinely it." },
+      { "text": "Thank you. None of it happens without you.", "standing": 0, "threat": -1, "whip": 0, "reply": "Flattery. Put it in the newsletter and we'll call it even." },
+      { "text": "Good. Headquarters should hear about this riding.", "standing": 0, "threat": 0, "whip": 2, "reply": "Tell them, then. They forget we're here unless we're losing." }
+    ],
+    "guarded": [
+      { "text": "Tell whoever's asking that I'm staying, and I'll prove it.", "standing": 1, "threat": -2, "whip": 0, "reply": "I'll tell them. Then you'd better prove it." },
+      { "text": "Give me the donors' names. I'll go and see every one.", "standing": 2, "threat": -1, "whip": -1, "reply": "That's three Fridays off the Hill. Ask the whip nicely." },
+      { "text": "My votes are mine. The executive can say so to my face.", "standing": -1, "threat": 2, "whip": 1, "reply": "They might. Don't say I didn't warn you." }
+    ],
+    "angry": [
+      { "text": "You're right. I should have called you before the vote.", "standing": 1, "threat": -3, "whip": 0, "reply": "Yes, you should have. Next time, call." },
+      { "text": "Let me explain why I voted the way I did.", "standing": 0, "threat": -1, "whip": 0, "reply": "Explain it at the AGM. In that tone, please, not the one from the papers." },
+      { "text": "The party asked, and I answered. That's the job.", "standing": -2, "threat": 3, "whip": 3, "reply": "Then the party can knock on the doors for you next time." }
+    ],
+    "anxious": [
+      { "text": "We've been closer than four points and won.", "standing": 1, "threat": -1, "whip": 0, "reply": "I hope you're right. I've put the lawn signs in the garage, just in case." },
+      { "text": "I'll do two fundraisers before Christmas.", "standing": 2, "threat": -2, "whip": -1, "reply": "Two. In {town}, where the money is. I'll book the hall." },
+      { "text": "I'll find out what headquarters is up to.", "standing": 0, "threat": -1, "whip": 1, "reply": "Find out quietly. If they're shopping for a candidate, I want to know before the papers do." }
+    ]
+  }
 }

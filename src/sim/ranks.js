@@ -71,6 +71,7 @@ export function assignRank(state, act, role) {
 function setRank(state, act, role, stopEvent, text, why = null) {
   assignRank(state, act, role);
   if (stopEvent === 'demoted') {
+    state.player.demotedWeek = state.date.absWeek;
     const leader = partyOf(state)?.leader;
     remember(state, 'demoted', { sub: why || 'replaced', ctx: { leader: leader ? fullName(state.mps[leader]) : 'The leader' }, people: [person(state, leader, NOTE().leader)] });
   }
