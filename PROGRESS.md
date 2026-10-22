@@ -1026,3 +1026,18 @@ Kelbo's notes: when the whip (or anyone) asks you to vote a certain way or asks 
 - A free vote still moves nothing: no riding change and no whip score. The panel says so rather than showing zeros.
 - The first-week hints and the job line still take room on a phone. I made the job line a little tighter; say if you'd rather lose it after the first week.
 - **Checked:** `tests.html`, with four new tests (the numbers shown for each way of voting are exactly what the vote then does; a free vote moves nothing; what each deal card says; the co-sponsor number). Portrait and landscape at phone size, no console errors.
+
+## Playtest fix: your row, on a screen
+
+Kelbo asked how to tell who is in their row as an assistant or deputy whip. The honest answer was that you couldn't: the row existed in the rules (the Act 3 goal, the rebellion checks, the friend's set piece), but no screen listed it. Now:
+
+- **An icon on the top bar** (four figures in a line), once you reach the whip's office in Act 3. It opens **Your row**: the members you answer for, with the ones needing attention first. Each carries where they stand on the next vote (firm, leaning, lost, away, or unmarked), coloured and with a sign, and a "friend" tag for your cohort or anyone who likes you. A line up top counts them ("8 firm, 3 leaning"). Tap a name for their card.
+- **In the whip's book**, a "My row" chip filters the list to your row (it works in every act), and your row's members carry the small four-figure mark beside their names.
+- **On an MP's card**, a "Your row" badge.
+- The marks are the ones from the count board, so they update as you work the office and each morning's files.
+
+**Things to know**
+
+- The row is the members of your party in your row on your side of the House. If fewer than five of your party sit there, the game uses the first 15 of your caucus by seat number instead (that was already how the rules worked). With the first week's seed that gave a row of 11.
+- The "no vote coming" case shows the list without marks and says so.
+- **Checked:** `tests.html`, two new tests (the report is exactly the row, friends are flagged, marks add up and sort worst-first; a mark set on the count board shows up). Phone size in portrait: the icon appears at Act 3, the sheet opens above the morning's sheet, the book filter narrows 120 members to 11, the card carries the badge. No console errors.

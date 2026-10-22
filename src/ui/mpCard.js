@@ -1,5 +1,6 @@
 // The MP card: a bottom sheet showing public facts plus only what the knowledge map says the player knows.
 import { cardView, HIDDEN_FIELDS, familiarity } from '../sim/knowledge.js';
+import { rowIds } from '../sim/row.js';
 import { t, esc, partyColor, partyName, roleName, interestName, ideologyText, loyaltyText, ambitionText, rapportText, ordinal } from './text.js';
 
 function seatText(state, seatId) {
@@ -49,7 +50,7 @@ export function createMpCard(root, { getState, onClose, actions = () => [] }) {
     if (!current || !state) return;
     const mp = state.mps[current];
     const v = cardView(state, current);
-    const role = mp.caucusRole !== 'backbencher' ? `<span class="badge">${esc(roleName(state, mp))}</span>` : '';
+    const role = (mp.caucusRole !== 'backbencher' ? `<span class="badge">${esc(roleName(state, mp))}</span>` : '') + (!v.isPlayer && rowIds(state).has(mp.id) ? ` <span class="badge row">${esc(t('row.tag'))}</span>` : '');
     const rows = HIDDEN_FIELDS.map((f) => {
       const fv = v.fields[f];
       const tone = fv.known && f === 'rapport' ? (fv.value >= 20 ? 'good' : fv.value <= -20 ? 'bad' : 'plain') : '';
