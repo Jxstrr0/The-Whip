@@ -164,7 +164,7 @@ export function drawBoard(g, w, h, rows, title) {
   g.fillStyle = '#f3ead8';
   g.fillRect(22, 18, 230, 40);
   g.fillStyle = '#1d1a16';
-  g.font = '600 24px Fraunces, Georgia, serif';
+  g.font = '600 24px Newsreader, Georgia, serif';
   g.fillText(title.toUpperCase(), 34, 46);
   rows.slice(0, 5).forEach((r, i) => {
     const y = 74 + i * 36;
@@ -175,7 +175,7 @@ export function drawBoard(g, w, h, rows, title) {
     g.fillStyle = '#f3ead8';
     g.fillRect(0, 0, w - 70, 30);
     g.fillStyle = r.color || '#1d1a16';
-    g.font = '18px Fraunces, Georgia, serif';
+    g.font = '18px Newsreader, Georgia, serif';
     g.fillText(r.text.slice(0, 44), 10, 21);
     g.fillStyle = '#a8322d';
     g.beginPath();
@@ -191,7 +191,7 @@ function paintNameplate(name) {
     g.fillStyle = '#c9a24a';
     g.fillRect(0, 0, w, h);
     g.fillStyle = '#2b2214';
-    g.font = '600 26px Fraunces, Georgia, serif';
+    g.font = '600 26px Newsreader, Georgia, serif';
     g.textAlign = 'center';
     g.fillText(name.toUpperCase().slice(0, 18), w / 2, 37);
   });
