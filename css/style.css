@@ -2847,11 +2847,36 @@ body.cold-open .topbar {
 
 /* The buttons that finish a sheet stay in reach while its content scrolls under them. */
 .sheet .card-actions,
-.office-sheet > .choices:last-child {
+.office-sheet > .choices:last-child,
+.division-sheet > .choices:last-child {
   position: sticky;
   bottom: -16px;
   z-index: 2;
   margin: 10px -18px -16px;
   padding: 12px 18px 16px;
   background: linear-gradient(to bottom, rgba(243, 234, 216, 0), var(--paper) 28%);
+}
+
+/* A chip sitting on a button gets its own paper, so green-on-green and red-on-green never happen. */
+.btn .stake {
+  background: rgba(255, 252, 244, 0.94);
+  box-shadow: 0 0 0 1px var(--line);
+  font-weight: 600;
+}
+.btn.primary .stake.flat {
+  color: var(--ink-2);
+}
+.job {
+  padding: 6px 12px;
+  font-size: 14.5px;
+  line-height: 1.35;
+}
+.stake-brief {
+  margin: 6px 0 8px;
+  font-size: 14px;
+}
+.stake-brief .side {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
 }
