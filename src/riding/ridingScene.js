@@ -333,9 +333,9 @@ function paintGlassName(name) {
     g.fillStyle = 'rgba(243,234,216,0.92)';
     g.textAlign = 'center';
     // Long names drop to a smaller face rather than running off the pane.
-    g.font = `600 ${name.length > 16 ? 56 : 68}px Fraunces, Georgia, serif`;
+    g.font = `600 ${name.length > 16 ? 56 : 68}px Newsreader, Georgia, serif`;
     g.fillText(name.toUpperCase(), w / 2, 112, w - 40);
-    g.font = '34px Fraunces, Georgia, serif';
+    g.font = '34px Newsreader, Georgia, serif';
     g.fillText(t('riding.glass'), w / 2, 176, w - 40);
     g.restore();
   };
