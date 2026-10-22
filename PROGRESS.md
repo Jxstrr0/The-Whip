@@ -1051,3 +1051,15 @@ Kelbo asked for the row on the count board too. The whip's count (the "The count
 - The evening board's four buttons (invite, call, ledger, end the evening) are now two by two, so pinning them leaves room for the evening above.
 - The row screen takes the vote it was opened from, so the marks match the count you were looking at. Opened from the top-bar icon, it uses the next vote.
 - **Checked:** `tests.html` is 106 of 106 (one new test: the report follows the vote asked for, and the line only shows from the whip's office on). Phone size, portrait: the line on the office desk, the order paper and the bells sheet, and a tap opening the row for the right bill. No console errors.
+
+## Playtest fix: your row says which way, and where each member stands
+
+Kelbo's screenshot showed "Your row · 9 firm · 2 leaning" and asked which way the two leaners were meant to vote, with a picture of where they should be and a plain call on whether a yea or a nay is needed. The row now answers all three.
+
+- **It says what you need.** The row line on the order paper, the count board and the office desk ends with "need YEA" or "need NAY", the side your whip is working for on that bill. The row screen opens with "On this vote you need YEA from every one of them."
+- **A meter for every member.** Each name carries a short bar running NAY to YEA. The end you need is outlined, a small tick marks where "firm" begins, and a dot shows where the member sits now (green firm, amber leaning, red lost or on the wrong side). The bar uses the same lean zones as the count itself, so the picture and the count never disagree.
+- **A sentence under each bar**, e.g. "Leaning YEA, not yet firm. A push makes it firm." Lost members say which way they are heading; unmarked and away members say so plainly instead of drawing a dot they haven't earned.
+- A legend sits under the tally chips so the bar can be read cold.
+- Marks you set by hand on the count board have no score behind them, so those members get the sentence and no dot.
+
+**Checked:** `tests.html` is 107 of 107 (new test: the report names the side needed, its scale matches the vote zones, firm, leaning and lost marks agree with their scores, and the row line says the side). Phone size in portrait: the order paper, the row sheet header, tally, legend and a leaning member's bar and caption. No console errors.
