@@ -1424,6 +1424,8 @@ test('Act 3: the row you answer for, leaning on a friend, and both ways out (dep
   f.player.filesShared = true;
   f.date.absWeek = 4;
   f.player.rowStats = { carried: 0, rebels: 4, failures: 1 };
+  assert(!hookEvent(pacing.hooks.weekend, f, createRng('w'), 'demoted') && f.player.act === 3, 'one bad night is a warning, not the sack');
+  f.player.rowStats.failures = tuning().ranks.rowFailuresForDemotion;
   const down = hookEvent(pacing.hooks.weekend, f, createRng('w'), 'demoted');
   assert(down?.event === 'demoted' && f.player.act === 2 && f.mps[f.player.mpId].caucusRole === 'backbencher' && ['soft', 'bully'].includes(f.player.reputation), 'demoted as soft or a bully');
   return `row of ${row.length}; leaned on ${friend.name.last}; up to Act 4, or down as ${f.player.reputation}`;
