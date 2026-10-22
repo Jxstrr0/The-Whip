@@ -57,6 +57,7 @@ export function fillLine(state, text, ctx = {}) {
     clique: m?.clique ? state.cliques[m.clique].name : 'the caucus',
     other: name(other) || 'someone on our side',
     otherRiding: other?.riding.name || 'their riding',
+    rival: name(state.mps[state.player.rival]) || 'your rival',
   };
   return text.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
 }
@@ -288,12 +289,34 @@ function moodFor(state, m, situation) {
   return m.mood;
 }
 
+// A line tagged `when` plays only while that is true of your career: the people who know you notice.
+function contextHolds(state, key) {
+  const p = state.player;
+  const K = tuning().meetings.context;
+  const week = state.date.absWeek;
+  switch (key) {
+    case 'rebelled': return p.whipFile.some((f) => week * 5 - f.day <= K.recentWeeks * 5);
+    case 'loyal': return p.act <= 2 && !p.whipFile.length && week >= K.loyalAfterWeeks;
+    case 'ridingLow': return p.ridingStanding < tuning().stakes.standingLow;
+    case 'ridingHigh': return p.ridingStanding > tuning().stakes.standingHigh;
+    case 'rival': return p.act === 2 && !!state.mps[p.rival];
+    case 'promoted': return p.act >= 3 && week - (p.actStart ?? 0) <= K.recentWeeks;
+    case 'demoted': return p.demotedWeek != null && week - p.demotedWeek <= K.recentWeeks;
+    case 'pressure': return p.act >= 3 && (state.pressure || 0) >= K.pressure;
+    default: return false;
+  }
+}
+
+const inAct = (state, l) => !l.act || l.act.includes(state.player.act);
+
 function pickLine(state, rng, filter) {
   const recent = new Set(state.player.recentLines || []);
-  const act = state.player.act;
-  const pool = data().dialogueLines.lines.filter((l) => filter(l) && (!l.act || l.act.includes(act)));
+  const all = data().dialogueLines.lines.filter((l) => filter(l) && inAct(state, l) && (!l.when || contextHolds(state, l.when)));
+  // When something about you is worth a remark, it usually gets one.
+  const apt = all.filter((l) => l.when);
+  const pool = apt.length && rng.chance(tuning().meetings.context.odds) ? apt : all.filter((l) => !l.when);
   const fresh = pool.filter((l) => !recent.has(l.id));
-  const line = rng.pick(fresh.length ? fresh : pool);
+  const line = rng.pick(fresh.length ? fresh : pool.length ? pool : all);
   if (line) state.player.recentLines = [...(state.player.recentLines || []).slice(-60), line.id];
   return line;
 }
@@ -301,7 +324,7 @@ function pickLine(state, rng, filter) {
 function setupTurn(state, rng, mt) {
   const speaker = mt.reversal ? 'whip' : 'mp';
   const line = pickLine(state, rng, (l) => l.speaker === speaker && l.situation === mt.situation && l.turn === mt.turn && l.mood.includes(mt.mood));
-  const players = data().dialogueLines.lines.filter((l) => l.speaker === 'player' && l.situation === mt.situation && l.turn === mt.turn && (!l.mood || l.mood.includes(mt.mood)));
+  const players = data().dialogueLines.lines.filter((l) => l.speaker === 'player' && l.situation === mt.situation && l.turn === mt.turn && inAct(state, l) && (!l.mood || l.mood.includes(mt.mood)));
   const byApproach = {};
   for (const l of rng.shuffle([...players])) byApproach[l.approach] ||= l;
   const opts = rng.shuffle(Object.values(byApproach)).slice(0, 4);

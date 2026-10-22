@@ -344,6 +344,12 @@ html, body {
 .sheet p {
   margin: 4px 0;
 }
+/* The riding: what was just said stays above the next visitor, quietly. */
+.last-word {
+  font-size: 13px;
+  font-style: italic;
+  margin: 0 0 6px;
+}
 .muted,
 .order-paper p,
 .hint,
