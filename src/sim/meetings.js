@@ -385,6 +385,7 @@ export function startMeeting(state, rng, { mpId, situation, walkIn = false, bill
     deal: null,
     revealed: [],
     wantsKnown: false,
+    rapportFrom: m.rapport,
   };
   if (situation === 'gossip' || situation === 'complaint') {
     const pool = Object.values(state.mps).filter((x) => x.id !== mpId && x.id !== state.player.mpId && (x.relations[mpId] != null || m.relations[x.id] != null));
@@ -459,9 +460,9 @@ export function proposeDeal(state, rng, offers, asks) {
   if (!mt || mt.phase !== 'deal') return null;
   mt.deal.offers = [...offers];
   mt.deal.asks = [...asks];
-  if (!offers.length && !asks.length) return finishMeeting(state, 'none');
+  if (!offers.length && !asks.length) return finishMeeting(state, 'none', rng);
   const score = evaluateDeal(state, mt, offers, asks);
-  if (score >= T.acceptAt) return finishMeeting(state, 'accepted');
+  if (score >= T.acceptAt) return finishMeeting(state, 'accepted', rng);
   if (score >= T.counterAt && !mt.deal.counter) {
     // Counter: drop the dearest ask, or ask for the thing they want.
     const m = state.mps[mt.mpId];
@@ -471,15 +472,41 @@ export function proposeDeal(state, rng, offers, asks) {
     mt.deal.message = 'counter';
     return { result: 'counter', counter };
   }
-  return finishMeeting(state, mt.reversal ? 'declined' : 'walked');
+  // The whip's office won't pay your price: you leave without its offer, as if you'd turned it down.
+  if (mt.reversal) mt.deal.refused = true;
+  return finishMeeting(state, mt.reversal ? 'declined' : 'walked', rng);
 }
 
-export function acceptCounter(state) {
+export function acceptCounter(state, rng) {
   const mt = state.meetings[state.meeting];
   if (!mt?.deal.counter) return null;
   mt.deal.offers = mt.deal.counter.offers;
   mt.deal.asks = mt.deal.counter.asks;
-  return finishMeeting(state, 'accepted');
+  return finishMeeting(state, 'accepted', rng);
+}
+
+// How a meeting ended, as the verdict card tells it: a deal, or which kind of no deal.
+export function meetingOutcome(mt) {
+  const d = mt.deal;
+  if (d.result === 'accepted') return 'deal';
+  if (mt.reversal) return d.refused ? 'refused' : 'youDeclined';
+  if (d.result === 'walked') return 'theyWalked';
+  if (d.counter) return 'youWalked';
+  return d.offers.length || d.asks.length || ['favorAsk', 'rebelRecruit'].includes(mt.situation) ? 'noDeal' : 'talk';
+}
+
+// What they say on the way out: a line for this kind of meeting if there's a fresh one, else one for any.
+function partingLine(state, rng, mt) {
+  const speaker = mt.reversal ? 'whip' : 'mp';
+  const outcome = meetingOutcome(mt);
+  const recent = new Set(state.player.recentLines || []);
+  const fits = data().dialogueLines.partings.filter((l) => l.speaker === speaker && l.outcome === outcome && (!l.mood || l.mood.includes(mt.mood)));
+  const own = fits.filter((l) => l.situation === mt.situation && !recent.has(l.id));
+  const any = fits.filter((l) => !l.situation && !recent.has(l.id));
+  const line = rng.pick(own.length ? own : any.length ? any : fits.filter((l) => !l.situation || l.situation === mt.situation));
+  if (!line) return null;
+  state.player.recentLines = [...(state.player.recentLines || []).slice(-60), line.id];
+  return fillLine(state, line.text, { mp: mt.mpId, bill: mt.billId, other: mt.otherId });
 }
 
 function promise(state, from, to, what, mt) {
@@ -507,7 +534,8 @@ function rememberWhipCall(state, whipId, billId, sub) {
   remember(state, 'whipCall', { sub, once: true, ctx: { whip: w ? `${w.name.first} ${w.name.last}` : 'The whip', bill: state.bills[billId]?.title || 'the bill' }, people: [person(state, whipId, data().memoir.notes.whip)] });
 }
 
-export function finishMeeting(state, result) {
+// rng is there when the player ended the meeting; a meeting cut short by the evening ending gets no verdict card.
+export function finishMeeting(state, result, rng = null) {
   const T = tuning().meetings;
   const mt = state.meetings[state.meeting];
   const m = state.mps[mt.mpId];
@@ -541,7 +569,14 @@ export function finishMeeting(state, result) {
   }
   if (mt.reversal) state.player.whipCalls.push(mt.billId);
   if (mt.situation === 'whipCall') rememberWhipCall(state, mt.mpId, mt.billId, result === 'accepted' ? 'accepted' : 'declined');
-  log(state, meetingSummary(state, mt), 'meeting');
+  mt.outcome = meetingOutcome(mt);
+  // The verdict card shows what the meeting came to; while it's up, the log line doesn't need a toast.
+  const card = !!(state.evening && rng);
+  if (card) {
+    mt.after = { rapport: Math.round(m.rapport - (mt.rapportFrom ?? m.rapport)), parting: partingLine(state, rng, mt) };
+    state.evening.debrief = mt.id;
+  }
+  log(state, meetingSummary(state, mt), 'meeting', card ? { quiet: true } : undefined);
   // Keep saves small: finished meetings keep their record, not their screen text; old ones go.
   delete mt.talk.options;
   delete mt.talk.current;
@@ -667,6 +702,7 @@ registerActions({
   meet(state, a) {
     return act(state, (rng) => {
       const e = state.evening;
+      closeDebrief(state);
       const w = a.whipCall ? e.whipCall : e.walkIns.find((x) => x.mpId === a.mpId);
       if (!w || e.used + 1 > e.slots) return null;
       if (a.whipCall) e.whipCall = null;
@@ -676,16 +712,26 @@ registerActions({
   invite(state, a) {
     return act(state, (rng) => {
       const e = state.evening;
+      closeDebrief(state);
       if (!e || e.used + 1 > e.slots || a.mpId === state.player.mpId) return null;
       return startMeeting(state, rng, { mpId: a.mpId, situation: 'introduction', billId: upcomingDilemma(state)?.bill.id || null });
     });
   },
-  call: (state, a) => act(state, (rng) => phoneCall(state, rng, a.mpId)),
+  call: (state, a) => act(state, (rng) => (closeDebrief(state), phoneCall(state, rng, a.mpId))),
   talk: (state, a) => act(state, (rng) => chooseTalk(state, rng, a.index)),
   propose: (state, a) => act(state, (rng) => proposeDeal(state, rng, a.offers, a.asks)),
-  acceptCounter: (state) => act(state, () => acceptCounter(state)),
-  leaveMeeting: (state) => act(state, () => finishMeeting(state, state.meetings[state.meeting]?.reversal ? 'declined' : 'none')),
+  acceptCounter: (state) => act(state, (rng) => acceptCounter(state, rng)),
+  leaveMeeting: (state) => act(state, (rng) => state.meeting && finishMeeting(state, state.meetings[state.meeting].reversal ? 'declined' : 'none', rng)),
+  closeDebrief: (state) => act(state, () => closeDebrief(state)),
 });
+
+// Back to the office: the verdict card goes, and its parting line with it (saves keep the record, not the words).
+function closeDebrief(state) {
+  const e = state.evening;
+  if (!e?.debrief) return;
+  if (state.meetings[e.debrief]?.after) delete state.meetings[e.debrief].after.parting;
+  e.debrief = null;
+}
 
 // Ending the evening resolves the office stop (the whip doesn't take no-shows lightly).
 resolvers.office = (state) => {
