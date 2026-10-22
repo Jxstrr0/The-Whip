@@ -36,11 +36,11 @@ export const rowIcon = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
 // members you answer for stand on this vote. Tapping it opens the row screen for the same vote.
 export function rowLine(state, billId) {
   if (state.player.act < tuning().tools.officeFilesFromAct) return '';
-  const { members, counts } = rowReport(state, billId);
+  const { want, members, counts } = rowReport(state, billId);
   if (!members.length) return '';
   const part = (k, n) => (n ? `<span class="row-mark ${k}"><i aria-hidden="true">${ROW_GLYPH[k]}</i> ${n} ${esc(t('row.mark.' + k))}</span>` : '');
   const tally = ['firm', 'leaning', 'lost', 'absent', 'unmarked'].map((k) => part(k, counts[k])).join('');
-  return `<button type="button" class="row-line" data-open-row="${esc(billId)}">${rowIcon}<b>${esc(t('row.title'))}</b><span class="tally">${tally}</span><span class="chev" aria-hidden="true">\u203A</span></button>`;
+  return `<button type="button" class="row-line" data-open-row="${esc(billId)}">${rowIcon}<b>${esc(t('row.title'))}</b>${want ? `<span class="need">${t('row.line.need', { side: `<b class="${want}">${esc(t('vote.' + want).toUpperCase())}</b>` })}</span>` : ''}<span class="tally">${tally}</span><span class="chev" aria-hidden="true">\u203A</span></button>`;
 }
 
 // A rubber stamp for an outcome: CARRIED, DEFEATED, DEAL, LEAVE GRANTED. kind: yea | nay | grey | brass.
