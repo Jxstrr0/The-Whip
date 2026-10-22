@@ -9,6 +9,7 @@ import { dilemmaFor } from './career.js';
 import { baseScore } from './mp.js';
 import { dayIndex, sittingDayAfter } from './bills.js';
 import { remember, person } from './memoir.js';
+import { applyCosponsor } from './stakes.js';
 
 const MOODS = ['cooperative', 'guarded', 'angry', 'anxious'];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -487,7 +488,13 @@ export function finishMeeting(state, result) {
   mt.deal.result = result;
   mt.phase = 'done';
   if (result === 'accepted') {
-    for (const c of mt.deal.offers) promise(state, pid, mt.mpId, c, mt);
+    for (const c of mt.deal.offers) {
+      promise(state, pid, mt.mpId, c, mt);
+      if (c === 'cosponsor') {
+        const signed = applyCosponsor(state, mt.mpId);
+        if (signed?.riding) log(state, `You put your name to ${signed.bill.title}. ${signed.riding > 0 ? 'It goes down well at home' : 'Home will not thank you for it'} (riding ${signed.riding > 0 ? '+' : ''}${signed.riding}).`, 'career');
+      }
+    }
     for (const c of mt.deal.asks) {
       if (c === 'info') {
         const others = Object.keys(m.relations).filter((id) => id !== pid);
@@ -612,7 +619,7 @@ function deliver(state, e) {
     p.pendingProject = true;
     log(state, 'A funding announcement for your riding is ready to make at home.', 'career');
   } else if (k === 'ridingMention') {
-    p.ridingStanding = clamp(p.ridingStanding + 1, 0, 100);
+    p.ridingStanding = clamp(p.ridingStanding + tuning().player.ridingMentionStanding, 0, 100);
   }
 }
 
