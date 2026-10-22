@@ -1041,3 +1041,13 @@ Kelbo asked how to tell who is in their row as an assistant or deputy whip. The 
 - The row is the members of your party in your row on your side of the House. If fewer than five of your party sit there, the game uses the first 15 of your caucus by seat number instead (that was already how the rules worked). With the first week's seed that gave a row of 11.
 - The "no vote coming" case shows the list without marks and says so.
 - **Checked:** `tests.html`, two new tests (the report is exactly the row, friends are flagged, marks add up and sort worst-first; a mark set on the count board shows up). Phone size in portrait: the icon appears at Act 3, the sheet opens above the morning's sheet, the book filter narrows 120 members to 11, the card carries the badge. No console errors.
+
+## Playtest fix: your row on the count board
+
+Kelbo asked for the row on the count board too. The whip's count (the "The count" line with firm, leaning, lost, away) now has a **Your row** line right under it, from the whip's office on: a tappable strip with the row icon and your row's marks for that vote ("8 firm, 3 leaning"). Tap it and the row screen opens for the same vote, with each member listed.
+
+- It shows in all three places the count appears: the **office desk** (tomorrow's count), the **bells sheet** and the **morning order paper**.
+- On the bells sheet the count and the row line now sit above the Hill map instead of under it, so they're in view while you chase members. The three vote buttons are one row each, with their riding and whip numbers beside the words.
+- The evening board's four buttons (invite, call, ledger, end the evening) are now two by two, so pinning them leaves room for the evening above.
+- The row screen takes the vote it was opened from, so the marks match the count you were looking at. Opened from the top-bar icon, it uses the next vote.
+- **Checked:** `tests.html` is 106 of 106 (one new test: the report follows the vote asked for, and the line only shows from the whip's office on). Phone size, portrait: the line on the office desk, the order paper and the bells sheet, and a tap opening the row for the right bill. No console errors.

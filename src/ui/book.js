@@ -1,14 +1,11 @@
 // The whip's book: all 120 MPs in a searchable, filterable list, built for one thumb.
 import { cardView, HIDDEN_FIELDS } from '../sim/knowledge.js';
-import { t, esc, mpName, partyColor, partyShort, partyName, roleName, ordinal } from './text.js';
+import { t, esc, mpName, partyColor, partyShort, partyName, roleName, ordinal, rowIcon } from './text.js';
 import { pickerHtml, wirePickers } from './picker.js';
 import { rowIds } from '../sim/row.js';
 
 // The riding types are written for mid-sentence use; as a field's value they take a capital.
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-
-// Four seated figures in a line: the mark for your row, here and on the top bar.
-export const rowIcon = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="4.5" cy="8" r="2.2"/><circle cx="10" cy="8" r="2.2"/><circle cx="15.5" cy="8" r="2.2"/><circle cx="21" cy="8" r="2.2"/><path d="M2 20v-4a2.5 2.5 0 0 1 5 0v4M7.5 20v-4a2.5 2.5 0 0 1 5 0v4M13 20v-4a2.5 2.5 0 0 1 5 0v4M18.5 20v-4a2.5 2.5 0 0 1 5 0v4"/></svg>';
 
 const FILTERS = ['party', 'clique', 'cohort', 'type'];
 
