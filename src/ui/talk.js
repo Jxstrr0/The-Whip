@@ -2,7 +2,7 @@
 import { t, esc, mpName, partyColor, partyShort, firstWeekHint, jobLine } from './text.js';
 import { fillLine } from '../sim/meetings.js';
 import { renderDealTable } from './dealTable.js';
-import { stakePanel, delta } from './stakes.js';
+import { stakePanel, stakeBrief, delta } from './stakes.js';
 import { billStakes } from '../sim/stakes.js';
 import { tuning } from '../sim/config.js';
 import { prediction } from '../sim/count.js';
@@ -56,7 +56,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger }) {
     const left = e.slots - e.used;
     const whip = e.whipCall
       ? `<div class="whip-call"><p><b>${t('office.whipCall')}</b></p><p>${esc(fillLine(state, e.whipCall.reason, { bill: e.whipCall.billId }))}</p>
-         ${stakePanel(state, state.bills[e.whipCall.billId])}
+         ${stakeBrief(state, state.bills[e.whipCall.billId])}
          <button class="btn primary" data-act="whip" ${left < 1 ? 'disabled' : ''}>${t('office.go')}</button></div>`
       : '';
     const rows = e.walkIns.length

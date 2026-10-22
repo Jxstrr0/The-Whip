@@ -29,6 +29,15 @@ export function stakePanel(state, bill) {
   return `<div class="stakes"><p class="stake-lean">${lean}</p>${rows}</div>`;
 }
 
+// The same thing in one short block, for a card that only needs to hint at it (the whip's call on the evening board).
+export function stakeBrief(state, bill) {
+  const s = billStakes(state, bill);
+  if (!s.whipped) return '';
+  const side = (v, st) => `<span class="side">${esc(t('vote.' + v))}</span> ${delta(st.riding, t('stake.riding'))}`;
+  const other = s.position === 'yea' ? 'nay' : 'yea';
+  return `<p class="stake-brief">${side(s.position, s.line)} ${side(other, s.rebel)}</p>`;
+}
+
 // The chip on a deal card: what it does for the riding, if anything. Empty when it has nothing to do with home.
 export function cardChip(state, card, side, mpId) {
   const s = cardStakes(state, card, side, mpId);
