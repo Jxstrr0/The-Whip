@@ -2880,3 +2880,38 @@ body.cold-open .topbar {
   letter-spacing: 0.04em;
   color: var(--ink-2);
 }
+
+/* A phone on its side is about 360px tall: spend less of it on padding, and let the job line sit on one row. */
+@media (orientation: landscape) and (min-width: 700px) {
+  .sheet {
+    width: min(500px, 52vw);
+  }
+}
+@media (orientation: landscape) and (max-height: 480px) {
+  .sheet {
+    padding-top: 6px;
+  }
+  .job {
+    margin: 4px 0 6px;
+    padding: 4px 10px;
+    font-size: 14px;
+    line-height: 1.3;
+  }
+  .job-label {
+    display: inline;
+    margin: 0 6px 0 0;
+  }
+  .stakes {
+    margin: 4px 0;
+    padding: 4px 10px;
+  }
+  .stake-rows li {
+    padding: 1px 0;
+  }
+  .sheet h2 {
+    font-size: 22px;
+  }
+  .sheet h3 {
+    margin: 8px 0 4px;
+  }
+}
