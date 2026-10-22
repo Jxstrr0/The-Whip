@@ -38,7 +38,7 @@ import { cardView, HIDDEN_FIELDS, reveal, decayKnowledge, touch, familiarity } f
 import { faceFor, faceOf, partsFor } from './src/faces.js';
 import { buildSeats, deskPairOffset, walkerPath, GEOMETRY } from './src/chamber/layout.js';
 import { introduceBill, makeBill, setLines } from './src/sim/bills.js';
-import { intentions } from './src/sim/mp.js';
+import { intentions, baseScore } from './src/sim/mp.js';
 import { putQuestion, runDivision, recordResult, speakerCastingVote } from './src/sim/vote.js';
 import * as pacing from './src/sim/pacing.js';
 import { createRng } from './src/sim/rng.js';
@@ -71,6 +71,7 @@ import * as qp from './src/sim/questionPeriod.js';
 import * as coldOpen from './src/sim/coldOpen.js';
 import * as memoir from './src/sim/memoir.js';
 import * as goals from './src/sim/goals.js';
+import * as stakes from './src/sim/stakes.js';
 import { t as uiText } from './src/ui/text.js';
 
 const sections = [];
@@ -2236,6 +2237,66 @@ test('A face is the same for the same member every time, and each tier only adds
   const m = s.mps[ids[3]];
   assert(faceOf(s, m.id).tier === 0 && faceOf(s, s.player.mpId).tier === 3, 'faceOf does not read familiarity');
   return `${kinds.size} features`;
+});
+
+
+// ---------- Round three: what an ask means at home ----------
+section('Round three · Stakes at home');
+
+const dilemmaOf = (s, b) => career.dilemmaFor(s, b, baseScore, tuning().pacing);
+
+test('The riding numbers shown for each way of voting are exactly what the vote then does', () => {
+  const T = tuning().player;
+  for (const choice of ['line', 'rebel', 'absent']) {
+    const s = newGame({ seed: 'TEST-1', party: 'p2', guided: true });
+    const b = s.bills[s.player.forceDilemma];
+    const pos = b.positions[s.mps[s.player.mpId].party];
+    const shown = stakes.voteStakes(s, b, choice === 'line' ? pos : choice === 'rebel' ? (pos === 'yea' ? 'nay' : 'yea') : 'absent');
+    const whip = s.parties[s.mps[s.player.mpId].party].chiefWhip;
+    const r0 = s.mps[whip].rapport;
+    const s0 = s.player.ridingStanding;
+    career.applyPlayerVote(s, b, choice, dilemmaOf(s, b), T);
+    assert(shown.whipped, 'the first week is a whipped vote');
+    assert(s.player.ridingStanding - s0 === shown.riding, `${choice}: shown riding ${shown.riding}, actual ${s.player.ridingStanding - s0}`);
+    assert(s.mps[whip].rapport - r0 === shown.whip, `${choice}: shown whip ${shown.whip}, actual ${s.mps[whip].rapport - r0}`);
+  }
+});
+
+test('A free vote moves neither the riding nor the whip, and still reports which way home leans', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2', guided: true });
+  const b = s.bills[s.player.forceDilemma];
+  b.lines[s.mps[s.player.mpId].party] = 'free';
+  const st = stakes.voteStakes(s, b, 'yea');
+  assert(!st.whipped && st.riding === 0 && st.whip === 0, 'nothing moves on a free vote');
+  assert(st.lean === null || ['yea', 'nay'].includes(st.lean.side), 'the riding\'s lean is still reported');
+});
+
+test('Deal cards say what they do at home: a riding project, a mention, a co-sponsorship, a promised vote', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2', guided: true });
+  const P = tuning().player;
+  assert(stakes.cardStakes(s, 'ridingProject', 'get').riding === P.ridingProjectStanding, 'project');
+  assert(stakes.cardStakes(s, 'ridingMention', 'get').riding === P.ridingMentionStanding, 'mention');
+  assert(stakes.cardStakes(s, 'ridingMention', 'give') === null, 'a mention you give does nothing at home');
+  assert(stakes.cardStakes(s, 'favor', 'give') === null, 'a plain favour has no stake at home');
+  const b = s.bills[s.player.forceDilemma];
+  const pos = b.positions[s.mps[s.player.mpId].party];
+  const v = stakes.cardStakes(s, `vote:${b.id}:${pos}`, 'give');
+  assert(v && v.riding === stakes.voteStakes(s, b, pos).riding, 'a promised vote shows the vote\'s own stake');
+  assert(stakes.cardStakes(s, `vote:${b.id}:${pos}`, 'get') === null, 'a vote promised to you is not your vote');
+});
+
+test('Signing on to a bill moves riding standing by exactly what the card showed', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2' });
+  const me = s.mps[s.player.mpId];
+  const sponsor = Object.values(s.bills).find((b) => b.status === 'active' && b.sponsor && b.sponsor !== me.id);
+  if (!sponsor) return 'no sponsored bill in this Parliament';
+  const shown = stakes.cardStakes(s, 'cosponsor', 'give', sponsor.sponsor);
+  const r0 = s.player.ridingStanding;
+  const done = stakes.applyCosponsor(s, sponsor.sponsor);
+  assert(done.riding === shown.riding, 'same number');
+  assert(s.player.ridingStanding === Math.max(0, Math.min(100, r0 + shown.riding)), 'standing moved by it');
+  assert(Math.abs(shown.riding) <= tuning().meetings.cosponsorRiding, 'bounded by tuning');
+  return `riding ${shown.riding >= 0 ? '+' : ''}${shown.riding} for ${sponsor.title}`;
 });
 
 async function run() {
