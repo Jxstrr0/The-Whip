@@ -2233,11 +2233,40 @@ test('Every Question Period line and headline fills with no placeholder left ove
   walk(Q.benches);
   walk(Q.gallery);
   for (const list of Object.values(Q.issues)) for (const i of list) assert(i.issue && data().world.interestNames[i.interest], 'issue with a known interest: ' + i.issue);
+  const cats = new Set(data().billTemplates.templates.map((b) => b.category));
+  for (const c of cats) assert(Q.details[c]?.length >= 2, 'details for bill category ' + c);
+  walk(Q.details);
   const H = data().headlines.headlines.filter((h) => h.event.startsWith('qp'));
   assert(H.length >= 10, 'Question Period headlines');
   const rng = createRng('h');
   for (const h of H) assert(!/[{}]/.test(media.headline(s, rng, h.event, { minister: 'A. Minister', issue: 'the bridge', bill: 'An Act' })), 'headline fills: ' + h.text);
   return `${n} lines, ${H.length} headlines`;
+});
+
+test('Question Period doesn\'t repeat itself: no line comes back until its pool runs dry, then the oldest does', () => {
+  const s = toQuestionPeriod('p1');
+  const Q = data().questionPeriod;
+  const rng = createRng('fresh');
+  const pool = Q.questions.government.offScript;
+  s.player.recentQp = [];
+  const seen = pool.map(() => qp.freshLine(s, rng, pool, 'test'));
+  assert(new Set(seen).size === pool.length, `all ${pool.length} heard once before any repeat`);
+  assert(qp.freshLine(s, rng, pool, 'test') === seen[0], 'then the one heard longest ago');
+  // Six Question Periods in a row on the same state: no question, answer or gallery line twice.
+  const s2 = toQuestionPeriod('p2');
+  const heard = [];
+  for (let i = 0; i < 6; i++) {
+    const r = createRng('qp' + i);
+    qp.startQuestionPeriod(s2, r, 'rota');
+    const q = s2.questionPeriod;
+    assert(!q.bill || (q.detail && !/[{}]/.test(q.questions.pointed)), 'a bill question names a detail');
+    qp.ask(s2, r, ['soft', 'pointed', 'offScript'][i % 3]);
+    heard.push(...Object.values(q.questions), q.answer, q.gallery);
+    s2.questionPeriod = null;
+  }
+  const dup = heard.filter((x, i) => heard.indexOf(x) !== i);
+  assert(!dup.length, 'repeated: ' + dup[0]);
+  return `${heard.length} lines over six Question Periods, none twice`;
 });
 
 section('Round two · The front page');
