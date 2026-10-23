@@ -4,17 +4,20 @@ Everything under `assets/` is CC0 or OFL and listed here with its source. Nothin
 
 ## Textures (`assets/textures/`)
 
-All from **ambientCG** (https://ambientcg.com), licence **CC0 1.0 Universal** (https://docs.ambientcg.com/license/: "All ambientCG assets are provided under the Creative Commons CC0 1.0 Universal License."). Downloaded as `<ID>_1K-JPG.zip`, resized to 512² and re-encoded. `*_c.jpg` is the colour map converted to a greyscale grain centred near 0.84 (the vertex colour carries the hue); `*_n.jpg` is the OpenGL normal map.
+All from **ambientCG** (https://ambientcg.com), licence **CC0 1.0 Universal** (https://docs.ambientcg.com/license/: "All ambientCG assets are provided under the Creative Commons CC0 1.0 Universal License."). Downloaded as `<ID>_1K-JPG.zip`, resized to 512² and re-encoded. `*_c.jpg` is the colour map, desaturated part-way and normalised to one brightness (so the vertex colour still carries the hue and a tint multiplies through); `*_n.jpg` is the OpenGL normal map; `*_r.jpg` is the roughness map normalised to a mean of 0.9 (`src/textures.js` scales it to each surface's roughness).
 
 | File | ambientCG asset | Used for |
 | --- | --- | --- |
-| `carpet_c/n.jpg` | Fabric033 | the chamber carpet |
-| `oak_c/n.jpg` | Wood049 | oak panelling, desks, benches, tables |
-| `walnut_c/n.jpg` | Wood051 | dark wood (the Speaker's chair, the whip's office) |
-| `stone_c/n.jpg` | Tiles143 | the chamber's stone walls |
-| `plaster_c/n.jpg` | Plaster001 | ceilings and plaster walls |
-| `leather_n.jpg` | Leather037 | green leather (normal map only; colour from the material) |
-| `wool_c/n.jpg` | Carpet016 | office and caucus carpets |
+| `carpet_c/n/r.jpg` | Fabric033 | the chamber carpet and the caucus table's baize |
+| `oak_c/n/r.jpg` | Wood049 | oak panelling, desks, benches, tables, kit furniture |
+| `walnut_c/n/r.jpg` | Wood051 | dark wood (the Speaker's chair, the whip's office) |
+| `stone_c/n/r.jpg` | Tiles143 | the chamber's stone walls |
+| `plaster_c/n/r.jpg` | Plaster001 | ceilings and plaster walls |
+| `leather_n/r.jpg` | Leather037 | green leather (normal and roughness only; colour from the material) |
+| `wool_c/n/r.jpg` | Carpet016 | office and caucus carpets, the cloth spines of kit books |
+| `brass_n/r.jpg` | Metal034 | brushed brass and steel: rails, the Mace, nameplates, lamp stems, chair legs (no colour map; the hue is the material's) |
+| `paper_c/n.jpg` | Paper001 | pages and pads in the rooms, and the fibre under every sheet of UI paper (`--grain` in `css/style.css`) |
+| `card_c.jpg` | Paper002 | the index card you write replies on (`--card-grain`) |
 
 ## Fonts (`assets/fonts/`)
 

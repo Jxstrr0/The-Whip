@@ -53,6 +53,7 @@ window.__caucus = caucusSim;
 import * as ridingSim from './src/sim/riding.js';
 import { calendarOf, weatherOf } from './src/sim/calendar.js';
 import { lightFor, hourOf, LIGHTS } from './src/light.js';
+import { textureFiles } from './src/textures.js';
 import { snapStop, STOPS } from './src/ui/drawer.js';
 import { stakeStamps } from './src/ui/stakes.js';
 import { readNumber, writeNumber } from './src/ui/feel.js';
@@ -2936,6 +2937,22 @@ test('The home-screen manifest and its icons are served, and index.html links th
   assert(/rel="manifest"/.test(html) && /apple-touch-icon/.test(html) && /apple-mobile-web-app-capable/.test(html), 'index links');
   assert(/rel="manifest" href="manifest\.webmanifest"/.test(html), 'manifest path is relative');
   return `${man.icons.length} icons`;
+});
+
+test('Every surface map is served as a JPEG, the paper fibre the CSS uses among them, inside the texture budget', async () => {
+  const files = textureFiles();
+  assert(files.includes('paper_c.jpg') && files.includes('brass_n.jpg') && files.includes('oak_r.jpg'), 'paper, brass and roughness maps are listed');
+  const css = await (await fetch('css/style.css')).text();
+  assert(/--grain: url\("\.\.\/assets\/textures\/paper_c\.jpg"\)/.test(css), 'the UI paper uses the paper map');
+  assert(/--card-grain: url\("\.\.\/assets\/textures\/card_c\.jpg"\)/.test(css), 'the index card uses the card map');
+  let bytes = 0;
+  for (const f of [...files, 'card_c.jpg']) {
+    const r = await fetch(`assets/textures/${f}`);
+    assert(r.ok && /image\/jpeg/.test(r.headers.get('content-type') || ''), `texture ${f}`);
+    bytes += (await r.arrayBuffer()).byteLength;
+  }
+  assert(bytes < 3 * 1024 * 1024, `textures weigh ${bytes} bytes`);
+  return `${files.length + 1} maps, ${(bytes / 1024).toFixed(0)} KB`;
 });
 
 test('Haptics are a setting: on by default, silent when off, and never throw', () => {
