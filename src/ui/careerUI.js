@@ -21,7 +21,8 @@ export function createCareerUI(root, { getState, dispatch }) {
     const key = `${p.event}:${p.mpId || ''}:${p.asksLeft ?? ''}:${(p.options || []).map((o) => o.id).join(',')}`;
     if (shown === key) return;
     shown = key;
-    const title = p.event === 'lost' ? t('career.lostTitle', { rival: mpName(state.mps[p.rival]) }) : t(TITLES[p.event] || 'career.continue');
+    const lifeKey = p.event === 'lifeEvent' && p.lifeKind ? `career.lifeEvent.${p.lifeKind}` : null;
+    const title = p.event === 'lost' ? t('career.lostTitle', { rival: mpName(state.mps[p.rival]) }) : lifeKey && t(lifeKey) !== lifeKey ? t(lifeKey) : t(TITLES[p.event] || 'career.continue');
     const who = p.mpId ? state.mps[p.mpId] : p.rival && p.event !== 'lost' ? state.mps[p.rival] : null;
     const head = who ? `<header class="card-head"><span class="chip" style="background:${partyColor(state, who)}"></span><div class="who"><h2>${esc(title)}</h2><p class="muted">${esc(mpName(who))}${p.event === 'act2' ? ` · ${t('career.rival')}` : ''}</p></div></header>` : `<h2>${esc(title)}</h2>`;
     const stampHtml = ACT_STAMP[p.event] ? stamp(t('career.act', { n: ACT_STAMP[p.event] }), 'yea', true) : p.event === 'lost' ? stamp(t('career.passedOver'), 'nay') : p.event === 'demoted' || p.event === 'replaced' ? stamp(t('career.act', { n: state.player.act }), 'nay', true) : p.event === 'fall' || p.event === 'revolted' ? stamp(t('ending.' + (p.event === 'fall' ? 'fall' : 'revolt')), 'nay', true) : '';
@@ -30,7 +31,7 @@ export function createCareerUI(root, { getState, dispatch }) {
       ${stampHtml ? `<p>${stampHtml}</p>` : ''}
       <blockquote class="line">${esc(p.text || '')}</blockquote>
       ${p.rivalText ? `<p>${esc(p.rivalText)}</p>` : ''}
-      ${p.score ? `<p class="muted">${esc(`The whip's reckoning: you ${p.score[0]}, ${mpName(state.mps[p.rival] || state.mps[state.player.rival] || { name: { first: 'your', last: 'rival' } })} ${p.score[1]}.`)}</p>` : ''}
+      ${p.score ? `<p class="muted">${esc(t('career.reckoning', { you: p.score[0], them: p.score[1], rival: state.mps[p.rival] || state.mps[state.player.rival] ? mpName(state.mps[p.rival] || state.mps[state.player.rival]) : t('career.rival').toLowerCase() }))}</p>` : ''}
       <div class="choices">${choices || `<button class="btn primary" data-c="">${t('career.continue')}</button>`}</div>`;
     sheet.classList.remove('hidden');
     sheet.querySelectorAll('[data-c]').forEach((b) => (b.onclick = () => dispatch({ type: 'resolve', choice: b.dataset.c || null })));
