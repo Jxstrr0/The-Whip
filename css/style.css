@@ -1436,10 +1436,13 @@ input::placeholder {
 }
 .bar-row {
   display: grid;
-  grid-template-columns: 74px 1fr 40px;
+  grid-template-columns: max-content 1fr 40px;
   align-items: center;
   gap: 8px;
   font-variant-numeric: tabular-nums;
+}
+.bar-row > span {
+  white-space: nowrap;
 }
 .bar-row b {
   text-align: right;
