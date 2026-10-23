@@ -4,6 +4,7 @@
 // and in the UI's mood pill.
 import * as THREE from 'three';
 import { merge, figureMaterial } from './kit3d.js';
+import { jacketGeometry, jacketFrontZ, shirtFront, pelvis, taper, shoe } from './body.js';
 import { HEAD_R, HEAD_PARTS, BODY_PARTS, headGeometries, bodyGeometries, hairCap, partsFor, partColour, tieColour, growScale } from './faces.js';
 
 export { HEAD_R };
@@ -40,6 +41,13 @@ export function shade(color, id, amount = 0.06) {
   tmp.set(color).getHSL(hsl);
   const k = ((hashOf(id || 'x') >>> 21) % 101) / 100 - 0.5;
   tmp.setHSL(hsl.h, Math.max(0, Math.min(1, hsl.s - Math.abs(k) * 0.08)), Math.max(0, Math.min(1, hsl.l + k * 2 * amount)));
+  return '#' + tmp.getHexString();
+}
+
+// Trousers a shade under the jacket, so the hem reads and the legs sit back.
+export function trouserColour(suit) {
+  tmp.set(suit).getHSL(hsl);
+  tmp.setHSL(hsl.h, hsl.s, Math.max(0, hsl.l - 0.035));
   return '#' + tmp.getHexString();
 }
 
@@ -81,22 +89,23 @@ function egg(r, x, y, z, sx = 1, sy = 1, sz = 1, segs = 12) {
   g.translate(x, y, z);
   return g;
 }
-function block(w, h, d, x, y, z) {
-  const g = new THREE.BoxGeometry(w, h, d);
-  g.translate(x, y, z);
-  return g;
-}
-// A tie: the knot under the collar and a blade that narrows toward it.
+// A tie: the knot where the shirt's V closes and a blade that narrows toward it, lying on the chest.
 export function tieParts(shoulderY) {
-  const blade = new THREE.BoxGeometry(0.046, 0.2, 0.014);
+  const blade = new THREE.BoxGeometry(0.046, 0.21, 0.012);
   const p = blade.attributes.position;
-  for (let i = 0; i < p.count; i++) if (p.getY(i) > 0) p.setX(i, p.getX(i) * 0.7);
-  blade.translate(0, shoulderY - 0.215, 0.138);
-  return [block(0.05, 0.045, 0.022, 0, shoulderY - 0.1, 0.134), blade];
+  for (let i = 0; i < p.count; i++) {
+    const y = p.getY(i);
+    if (y > 0) p.setX(i, p.getX(i) * 0.7);
+    p.setZ(i, p.getZ(i) + y * 0.06);
+  }
+  blade.translate(0, shoulderY - 0.235, jacketFrontZ(0, -0.235) + 0.004);
+  const knot = new THREE.BoxGeometry(0.05, 0.045, 0.022);
+  knot.translate(0, shoulderY - 0.108, jacketFrontZ(0, -0.108) + 0.004);
+  return [knot, blade];
 }
 // The lapel pin: a small flattened disc on the left lapel.
 export function pinPart(shoulderY) {
-  return egg(0.017, 0.082, shoulderY - 0.075, 0.121, 1, 1, 0.35, 8);
+  return egg(0.017, 0.082, shoulderY - 0.075, jacketFrontZ(0.082, -0.075) + 0.004, 1, 1, 0.35, 8);
 }
 
 // Proportions in metres, facing +z, origin on the floor between the feet.
@@ -106,7 +115,7 @@ export const POSES = {
     hip: 0.47,
     shoulderY: 1.02,
     headY: 1.25,
-    arms: [[0.22, 1.0, 0.0], [0.25, 0.77, 0.1], [0.13, 0.6, 0.3]],
+    arms: [[0.22, 1.01, 0.0], [0.25, 0.77, 0.1], [0.14, 0.6, 0.3]],
     legs: [[0.1, 0.5, 0.0], [0.1, 0.5, 0.36], [0.1, 0.08, 0.34]],
     lap: true,
   },
@@ -114,17 +123,18 @@ export const POSES = {
     hip: 0.86,
     shoulderY: 1.4,
     headY: 1.63,
-    arms: [[0.22, 1.38, 0.0], [0.25, 1.1, 0.03], [0.26, 0.85, 0.08]],
-    legs: [[0.1, 0.86, 0.0], [0.1, 0.47, 0.02], [0.1, 0.08, 0.0]],
+    arms: [[0.22, 1.39, 0.0], [0.245, 1.12, 0.03], [0.255, 0.87, 0.08]],
+    legs: [[0.095, 0.86, 0.0], [0.095, 0.47, 0.02], [0.095, 0.08, 0.0]],
     lap: false,
   },
 };
 
-// One geometry per body part. Parts that take a per-person colour (suit, skin, hair) are separate from the
-// ones that don't (the white collar, the dark shoes), so instance colours stay simple.
+// One geometry per body part. Parts that take a per-person colour (suit, trousers, skin, hair) are separate
+// from the ones that don't (the white shirt, the dark shoes), so instance colours stay simple.
 export function figureParts(pose = 'seated') {
   const P = POSES[pose];
   const suit = [];
+  const trousers = [];
   const hands = [];
   const head = [];
   const hair = [];
@@ -132,37 +142,36 @@ export function figureParts(pose = 'seated') {
   const dark = [];
   const tie = tieParts(P.shoulderY);
   const pin = [pinPart(P.shoulderY)];
-  const torsoH = P.shoulderY - P.hip + 0.1;
-  suit.push(egg(1, 0, P.hip + torsoH * 0.48, 0, 0.2, torsoH / 2, 0.14, 14));
-  suit.push(limb([-0.19, P.shoulderY, 0], [0.19, P.shoulderY, 0], 0.085, 10));
+  suit.push(jacketGeometry(P.shoulderY));
   for (const s of [-1, 1]) {
     const [sh, el, ha] = P.arms.map(([x, y, z]) => [x * s, y, z]);
-    suit.push(limb(sh, el, 0.058));
-    suit.push(limb(el, ha, 0.05));
-    hands.push(egg(0.045, ...ha, 1, 0.8, 1.2, 8));
+    suit.push(taper(sh, el, 0.062, 0.052));
+    suit.push(taper(el, ha, 0.052, 0.044));
+    hands.push(egg(0.047, ...ha, 1, 0.78, 1.2, 8));
     const [hp, kn, an] = P.legs.map(([x, y, z]) => [x * s, y, z]);
-    if (!P.lap) suit.push(limb(hp, kn, 0.08));
-    suit.push(limb(kn, an, 0.065));
-    dark.push(block(0.11, 0.07, 0.25, an[0], 0.035, an[2] + 0.05));
+    trousers.push(taper(hp, kn, 0.08, 0.07));
+    trousers.push(taper(kn, an, 0.07, 0.06));
+    dark.push(shoe().translate(an[0], 0.035, an[2] + 0.06));
   }
-  if (P.lap) suit.push(block(0.36, 0.13, 0.42, 0, P.hip + 0.03, 0.17));
+  trousers.push(pelvis(P.hip, { seated: P.lap }));
   hands.push(limb([0, P.shoulderY - 0.02, 0.01], [0, P.headY - 0.09, 0.01], 0.05, 8));
   head.push(egg(HEAD_R, 0, P.headY, 0, 1, 1.12, 1.02, 14));
   hair.push(hairCap().translate(0, P.headY, 0));
-  shirt.push(block(0.12, 0.09, 0.02, 0, P.shoulderY - 0.05, 0.133));
+  shirt.push(shirtFront(P.shoulderY));
   const face = headGeometries();
   for (const g of Object.values(face)) g.translate(0, P.headY, 0);
   const body = bodyGeometries(P.shoulderY);
-  return { suit: merge(suit), hands: merge(hands), head: merge(head), hair: merge(hair), shirt: merge(shirt), dark: merge(dark), tie: merge(tie), pin: merge(pin), face, body, pose: P };
+  return { suit: merge(suit), trousers: merge(trousers), hands: merge(hands), head: merge(head), hair: merge(hair), shirt: merge(shirt), dark: merge(dark), tie: merge(tie), pin: merge(pin), face, body, pose: P };
 }
 
-// An instanced crowd of n figures in one pose. Eight draw calls however many people, plus one for each kind
+// An instanced crowd of n figures in one pose. Nine draw calls however many people, plus one for each kind
 // of face part someone in the crowd has earned.
 export function createFigureCrowd(n, { pose = 'seated' } = {}) {
   const parts = figureParts(pose);
   const P = parts.pose;
   const mats = {
     suit: figureMaterial({ roughness: 0.82 }),
+    trousers: figureMaterial({ roughness: 0.85 }),
     hands: figureMaterial({ roughness: 0.6 }),
     head: figureMaterial({ roughness: 0.6 }),
     hair: figureMaterial({ roughness: 0.95 }),
@@ -220,6 +229,7 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
     }
     const b = base[i];
     meshes.suit.setMatrixAt(i, b);
+    meshes.trousers.setMatrixAt(i, b);
     meshes.hands.setMatrixAt(i, b);
     meshes.shirt.setMatrixAt(i, b);
     meshes.dark.setMatrixAt(i, b);
@@ -294,6 +304,7 @@ export function createFigureCrowd(n, { pose = 'seated' } = {}) {
       tie = tie && tieColour(face, tie);
       if (face?.tier >= 3 && face.signature === 'bowtie') tie = null;
       meshes.suit.setColorAt(i, color.set(suit));
+      meshes.trousers.setColorAt(i, color.set(trouserColour(suit)));
       meshes.hands.setColorAt(i, color.set(skin));
       meshes.head.setColorAt(i, color.set(skin));
       meshes.hair.setColorAt(i, color.set(hair));
