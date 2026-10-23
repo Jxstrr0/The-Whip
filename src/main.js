@@ -1,7 +1,7 @@
 // Boot: load data, show the start menu (or start straight from ?seed=), build the rooms and UI, run the loop.
 import * as THREE from 'three';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
-import { setupRenderer, sharedEnvironment } from './look.js';
+import { setupRenderer, sharedEnvironment, DETAIL } from './look.js';
 import { loadData } from './loadData.js';
 import { setData, tuning } from './sim/config.js';
 import { newGame, scenarioGame, dailyGame, sharedGame, scenarioList } from './sim/modes.js';
@@ -54,6 +54,9 @@ const DEBUG = params.get('debug') === '1';
 
 // Sound and settings exist before any game does: the title page has a room tone and a settings sheet too.
 applySettings();
+// How much a room builds. `?lite=1` forces the lean build for a frame-rate check; otherwise it's the setting.
+const LITE = params.get('lite') === '1';
+DETAIL.rich = !LITE && getSettings().richRooms;
 const audio = createAudio(getSettings());
 let settingsSheet = null;
 function openSettings() {
@@ -64,6 +67,10 @@ onSettings((s, key) => {
   if (key === 'sound' || key === 'volume') audio.configure(s);
   // New party colours mean every room redraws; the menu's preview Parliament too.
   if (key === 'colourBlind') world?.recolor();
+  if (key === 'richRooms') {
+    DETAIL.rich = !LITE && s.richRooms;
+    world?.recolor();
+  }
   if (key === 'glossary' && world) (s.glossary ? glossAll : unglossAll)(world.ui);
 });
 

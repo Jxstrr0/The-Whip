@@ -4,17 +4,20 @@ Everything under `assets/` is CC0 or OFL and listed here with its source. Nothin
 
 ## Textures (`assets/textures/`)
 
-All from **ambientCG** (https://ambientcg.com), licence **CC0 1.0 Universal** (https://docs.ambientcg.com/license/: "All ambientCG assets are provided under the Creative Commons CC0 1.0 Universal License."). Downloaded as `<ID>_1K-JPG.zip`, resized to 512² and re-encoded. `*_c.jpg` is the colour map, desaturated part-way and normalised to one brightness (so the vertex colour still carries the hue and a tint multiplies through); `*_n.jpg` is the OpenGL normal map; `*_r.jpg` is the roughness map normalised to a mean of 0.9 (`src/textures.js` scales it to each surface's roughness).
+All from **ambientCG** (https://ambientcg.com), licence **CC0 1.0 Universal** (https://docs.ambientcg.com/license/: "All ambientCG assets are provided under the Creative Commons CC0 1.0 Universal License."). Downloaded as `<ID>_1K-JPG.zip` and re-encoded: the surfaces that fill a phone screen at 1024² (oak, walnut, marble) or 768² (carpet, leather, buttoned leather), the rest at 512². `*_c.jpg` is the colour map, most of its own colour kept and normalised to one brightness (so the vertex colour still decides the hue and a tint multiplies through); `*_n.jpg` is the OpenGL normal map; `*_r.jpg` is the roughness map at 512², normalised to a mean of 0.9 (`src/textures.js` scales it to each surface's roughness).
 
 | File | ambientCG asset | Used for |
 | --- | --- | --- |
 | `carpet_c/n/r.jpg` | Fabric033 | the chamber carpet and the caucus table's baize |
 | `oak_c/n/r.jpg` | Wood049 | oak panelling, desks, benches, tables, kit furniture |
-| `walnut_c/n/r.jpg` | Wood051 | dark wood (the Speaker's chair, the whip's office) |
-| `stone_c/n/r.jpg` | Tiles143 | the chamber's stone walls |
+| `walnut_c/n/r.jpg` | Wood051 | dark wood (the Speaker's chair, the whips' desks, the chesterfield's frame) |
+| `marble_c/n/r.jpg` | Marble014 | the chamber's walls, cornice and window surrounds |
 | `plaster_c/n/r.jpg` | Plaster001 | ceilings and plaster walls |
-| `leather_n/r.jpg` | Leather037 | green leather (normal and roughness only; colour from the material) |
+| `leather_c/n/r.jpg` | Leather037 | smooth leather (colour map kept as grey patina; the hue is the material's) |
+| `buttoned_c/n/r.jpg` | Leather036A | deep-buttoned leather: the chesterfield, the Speaker's chair, the gallery benches |
 | `wool_c/n/r.jpg` | Carpet016 | office and caucus carpets, the cloth spines of kit books |
+| `drape_c/n/r.jpg` | Fabric085 | heavy wool weave: the gallery cloth, the office curtains |
+| `cloth_n.jpg` | Fabric031 | suiting weave on the figures' cloth (normal map only) |
 | `brass_n/r.jpg` | Metal034 | brushed brass and steel: rails, the Mace, nameplates, lamp stems, chair legs (no colour map; the hue is the material's) |
 | `paper_c/n.jpg` | Paper001 | pages and pads in the rooms, and the fibre under every sheet of UI paper (`--grain` in `css/style.css`) |
 | `card_c.jpg` | Paper002 | the index card you write replies on (`--card-grain`) |
