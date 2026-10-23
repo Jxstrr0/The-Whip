@@ -294,7 +294,7 @@ export function create(ctx) {
   // From your own seat you can't see yourself, so your figure leaves the chair while the camera is in it.
   function applyHomeHiding() {
     if (!homeSeatId) return;
-    figures.setPresent(homeSeatId, controls.mode !== 'home' && controls.mode !== 'walk' && life.standingSeat !== homeSeatId);
+    figures.setPresent(homeSeatId, controls.mode !== 'home' && controls.mode !== 'walk');
   }
   controls.onModeChange(applyHomeHiding);
 
@@ -314,7 +314,10 @@ export function create(ctx) {
       lights.bells(on);
       ctx.onBells?.(on);
       hemiGoal = on ? hemiBase * 0.8 : hemiBase;
-      if (on) takeDivisionShot();
+      if (on) {
+        takeDivisionShot();
+        figures.stir();
+      }
     },
     gavel() {
       life.gavel();
@@ -334,18 +337,24 @@ export function create(ctx) {
         if (mySeat) {
           life.stand(seatId, mpId);
           controls.shot(mySeat);
+          figures.attention(figures.seatPoint(seatId), (s) => s.seatId !== seatId);
         }
       } else if (phase === 'answer') {
         if (mSeat && ministerId) {
           life.stand(mSeat.seatId, ministerId);
           controls.shot(mSeat);
+          figures.attention(figures.seatPoint(mSeat.seatId), (s) => s.seatId !== mSeat.seatId);
         } else life.sit();
       } else {
         life.sit();
+        figures.attention(null);
         if (phase === 'gallery') {
           life.gavel();
           ctx.onGavel?.();
           controls.divisionShot(true);
+          // The minister's side thumps the desks for the answer.
+          const party = state?.mps[ministerId]?.party;
+          if (party) figures.react('thump', (s, id) => state.mps[id]?.party === party, { chance: 0.7, delay: 1.2 });
         } else {
           controls.divisionShot(false);
           if (returnHome) {
@@ -414,9 +423,24 @@ export function create(ctx) {
       const seatOf = (id) => state.mps[id]?.seatId;
       hidden = result.absent.map(seatOf).filter(Boolean);
       for (const sid of hidden) figures.setPresent(sid, false);
-      lights.play(result, seatOf, opts);
+      figures.sitAll();
+      // Members stand at their places as the Clerk counts them, and the winning side thumps the desks.
+      const winners = new Set(result.yeas.length > result.nays.length ? result.yeas : result.nays);
+      lights.play(result, seatOf, {
+        ...opts,
+        tick(c, mpId, kind) {
+          const sid = seatOf(mpId);
+          if (sid) figures.rise(sid, true);
+          opts.tick?.(c, mpId, kind);
+        },
+        done() {
+          figures.react('thump', (s, id) => winners.has(id), { chance: 0.6, delay: 1.5 });
+          opts.done?.();
+        },
+      });
     },
     clearDivision() {
+      figures.sitAll();
       for (const sid of hidden) figures.setPresent(sid, true);
       hidden = [];
       lights.reset();

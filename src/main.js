@@ -38,6 +38,8 @@ import { createAudio } from './audio.js';
 import { getSettings, setSetting, onSettings, applySettings } from './settings.js';
 import { buzz } from './haptics.js';
 import { feelVars, tickSheet, feelStamps } from './ui/feel.js';
+import { watchGlossary, glossAll, unglossAll } from './ui/gloss.js';
+import { resumeNote } from './sim/goals.js';
 import { createLedger } from './ui/ledger.js';
 import { createCareerUI } from './ui/careerUI.js';
 import { createRecordUI } from './ui/recordUI.js';
@@ -62,6 +64,7 @@ onSettings((s, key) => {
   if (key === 'sound' || key === 'volume') audio.configure(s);
   // New party colours mean every room redraws; the menu's preview Parliament too.
   if (key === 'colourBlind') world?.recolor();
+  if (key === 'glossary' && world) (s.glossary ? glossAll : unglossAll)(world.ui);
 });
 
 // "At risk" in the book: how likely an MP is to stray on the next whipped vote, from what you can see.
@@ -240,6 +243,8 @@ function buildWorld() {
   });
 
   toast = createToast(ui);
+  // The glossary: a tap on a dotted term shows its sentence in the toast.
+  watchGlossary(ui, (term) => toast.show(`${term.label}: ${term.text}`, 7000));
   ledger = createLedger(ui, { getState });
   const memoir = createMemoir(ui, { getState, onPerson: (mpId) => card.show(mpId) });
   const gameMenu = createGameMenu(ui, {
@@ -457,6 +462,7 @@ function buildWorld() {
     card,
     book,
     ui,
+    toast,
     renderAll,
     resize,
     setStats(s) {
@@ -475,7 +481,7 @@ function buildWorld() {
   };
 }
 
-async function startGame(state, slot = state.slot || 1) {
+async function startGame(state, slot = state.slot || 1, { resumed = false } = {}) {
   // The menu's preview room, if any, goes; the game builds its own.
   world?.rooms.reset();
   state.slot = slot;
@@ -488,6 +494,9 @@ async function startGame(state, slot = state.slot || 1) {
   world.resize();
   // A fresh game opens on its first stop (Monday morning of a guided first week).
   if (!state.flow.pending && state.flow.forceWatch) dispatch({ type: 'advance' });
+  // Back after a break: one line on where things stood.
+  const note = resumed ? resumeNote(getState()) : null;
+  if (note) world.toast.show(note, 12000);
   saveGame(getState());
 }
 
@@ -535,7 +544,7 @@ async function boot() {
     saves: allSaves(),
     latest: latestSave(),
     scenarios: scenarioList(),
-    onContinue: (slot) => startGame(loadGame(slot), slot),
+    onContinue: (slot) => startGame(loadGame(slot), slot, { resumed: true }),
     onNew: (opts, slot) => startGame(newGame({ ...opts, guided: true, coldOpen: true }), slot),
     onScenario: (id, person, slot) => startGame(scenarioGame(id, person), slot),
     onDaily: (person, slot) => startGame(dailyGame(person), slot),
