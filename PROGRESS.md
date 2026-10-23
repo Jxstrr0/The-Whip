@@ -1351,3 +1351,31 @@ Kelbo's picks from the "anything else obvious" list: 1 (home screen), 2 (haptics
 - `tests.html` 128 of 128. Four new tests: the manifest and every icon are served and `index.html` links them; haptics are a setting, silent when off, and an unknown beat is a no-op; rival whips never poach the same member twice in one week, no poach line repeats word for word, and a third visit is ledger only; the town hall cuts come from tuning and `riding.js` has no literal left.
 - Played at phone size in portrait and landscape from week 4: the weekend paper, office, caucus, morning paper, a division and the riding. No console errors. The settings sheet shows the new toggle in Chromium (which can buzz).
 - Not checked here: the install itself and the buzz need a real phone. Kelbo, try "Add to Home Screen" from Safari's share sheet or Chrome's menu, and listen for the buzz when the bells go.
+
+## UI refresh, part one: ink, not boxes
+
+Kelbo asked for a UI refresh and picked all five options from the pitch (A room first, B ink not boxes, C lamplight, D the desk, E feel pass), plus a textures and chamber pass after. Order: B, A, C, E, D. B first because the others sit on it.
+
+**What changed.** The sheets keep their shape, shadow, heights and tokens; what's gone is the nesting. Hierarchy now comes from size, italics, hairlines and indents, the way a printed order paper does it, not from tinted panels inside the paper.
+
+- **The visitor's name is set large** (26px) with the mood under it in italics and a dot in the mood's colour: "● Guarded · Turn 1 of 3".
+- **"Your job here"** is a small spaced brass label inline with the line, a hairline under it. No tinted box, no bar down the left. Folded, it's the same one line with a chevron.
+- **The stakes are a ruled table.** The riding's lean is the table's heading in italics; each way of voting is a row with the riding and whip numbers in their own columns, so the eye runs down them. The numbers are signed tabular numerals in green or red; the unit stays in plain ink. No more pill chips with arrow badges: the sign carries the meaning, so it still reads without the colour.
+- **Every other stake number** (the bells sheet's choices, the riding's cases, the evening board, deal cards, the debrief's rapport) is the same inked number. On the green button the numbers go to paper.
+- **Speech hangs off a brass opening quotation mark**, set in from the margin. The Speaker's call in QP gets a grey one, a revolt a red one. A scenario's verdict (a stamp and a note, not speech) sits between two rules instead.
+- **Replies are ruled rows.** In a meeting, the riding, Question Period and a caucus revolt, what you say back is read in order: a hairline between each, the approach as a small spaced label above the line, a brass chevron at the end. The one under your thumb takes a green rule down its left edge and a wash that fades across the row. Action buttons (Go, Propose, the evening board's four, the primary) stay the soft paper buttons.
+- **Notes to the player** (the first-week hints, "this is your own bill") are an italic paragraph between two hairlines. The whip's call on the evening board is a labelled entry between two rules with the bill set large.
+- **The whip's count** is a ruled line with the standing in its tone colour (green safe, amber close, red short) rather than a tinted bar; **your row** under it is a ruled line too, and the marks in its tally are inked, not pilled.
+- **Badges are ink**: a role, "confidence", "the week's vote", "you" on your own card are small spaced labels in brass (green for you), not paper tags.
+- **The deal table's two columns** are ruled, not boxed; the cards on it stay cards. The front page's "by the numbers" box keeps a rule and loses its fill. The Book's rules go faint, like everything else's.
+
+**Small calls:**
+- Approach labels on replies are uppercase and letter-spaced (as in the pitch). The scenario cards on the title page keep their sentence-case blurbs.
+- The timeline cards on the whip's record and the memoir keep their panels: they're a different object (a dossier of moments) and round two set them deliberately. Option D will look at them again.
+- The deal cards (`.card-chip`) keep their pill shape: they're the cards you trade, not a panel.
+
+**Checked:**
+- `tests.html` 128 of 128.
+- Played at phone size in portrait and landscape, a fresh game and the "Three short" scenario: Question Period, caucus, the evening board with and without the whip's call, a one-to-one on the whip's call (the table) and on a walk-in, the deal table, the riding, the weekend paper, Monday's paper, the bells with the count and your row, the ledger, the Book, an MP's card, the aim sheet, the menu, election night and the record. No console errors in play.
+
+**Next:** A (room first): meeting sheets at half height with the visitor framed, the speech line in the room, slimmer top bar and one-line date bar. The five "regardless" fixes from the pitch go in with A (the clipped visitor's head, the date bar's news line, the ledger's height, the aim chip, and the top bar wrapping at 390px in Acts 3+ when it carries five items).

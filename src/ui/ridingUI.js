@@ -42,12 +42,12 @@ export function createRidingUI(root, { getState, dispatch }) {
       } else if (item.kind === 'reporter') {
         const q = C.reporter.find((x) => x.id === item.id);
         body = `${who}<blockquote class="line">${esc(fillRiding(state, q.prompt))}</blockquote>
-          <div class="choices">${q.options.map((o, i) => `<button class="btn" data-rep="${i}">${esc(fillRiding(state, o.text))}</button>`).join('')}</div>`;
+          <div class="choices replies">${q.options.map((o, i) => `<button class="btn" data-rep="${i}">${esc(fillRiding(state, o.text))}</button>`).join('')}</div>`;
       } else {
         const pr = C.president.find((x) => x.id === item.id);
         const replies = C.presidentReplies?.[pr.mood] || [];
         body = `${who}<blockquote class="line">${esc(fillRiding(state, pr.text))}</blockquote>
-          <div class="choices">${replies.length ? replies.map((r, i) => `<button class="btn" data-pres="${i}">${esc(fillRiding(state, r.text))}</button>`).join('') : `<button class="btn primary" data-pres="0">${t('riding.thanks')}</button>`}</div>`;
+          <div class="choices replies">${replies.length ? replies.map((r, i) => `<button class="btn" data-pres="${i}">${esc(fillRiding(state, r.text))}</button>`).join('') : `<button class="btn primary" data-pres="0">${t('riding.thanks')}</button>`}</div>`;
       }
     } else if (v.phase === 'townHall') {
       const th = v.townHall;
@@ -55,7 +55,7 @@ export function createRidingUI(root, { getState, dispatch }) {
       body = `${th.at === 0 ? `<p class="muted">${esc(fillRiding(state, th.opener))}</p>` : ''}
         <div class="tally">${bar(t('riding.crowd'), th.crowd)}</div>
         <blockquote class="line">${esc(fillRiding(state, topic.prompt))}</blockquote>
-        <div class="choices">${topic.options.map((o, i) => `<button class="btn" data-th="${i}">${esc(fillRiding(state, o.text))}</button>`).join('')}</div>`;
+        <div class="choices replies">${topic.options.map((o, i) => `<button class="btn" data-th="${i}">${esc(fillRiding(state, o.text))}</button>`).join('')}</div>`;
     } else {
       body = `${lastWord}<p class="muted">${t('riding.done')}</p><div class="choices">
         ${!v.townHall ? `<button class="btn" data-act="townhall">${esc(t('riding.townHall', { town: v.town }))}</button>` : ''}
