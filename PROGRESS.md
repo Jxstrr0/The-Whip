@@ -1221,3 +1221,24 @@ Question Period is where a backbencher gets the cameras, and it was repeating it
 - `tests.html` 117 of 117. One new test: a pool plays out before anything repeats, the oldest line comes back first, and six Question Periods in a row repeat no line. The fill test now also covers `{detail}` and checks every bill category has details.
 - Played the first Question Period through the real buttons at phone size in portrait (pointed) and landscape (off-script). No console errors. The first Question Period scrolls in portrait by the same amount as on `main`, because of its tutorial note, so that's not new.
 - Effects and odds are untouched. Only the line picking changed.
+
+## Small fix: "the" before bill names
+
+Bill titles went into sentences bare: "waiting for Congestion Charge Enabling Act", "the line on Rural Roads Fund Act". Opposition motions were worse, because their titles are the motion's own wording: "a vote on That the House call on the government to cap tuition increases".
+
+**What changed:**
+- **One way to name a bill in a sentence.** `billName(bill)` in `src/sim/bills.js` gives "the Congestion Charge Enabling Act". Each opposition motion now has a spoken name in `data/bill-templates.json` (`prose`), the way members actually say it: "the rent freeze motion", "the motion to repeal the firearms buyback". The Address in Reply is "the Address in Reply". Every sentence that names a bill uses it: meetings, caucus, Question Period, the riding, headlines, the log, the memoir, career beats and the UI strings.
+- **Names that open a sentence get a capital.** There were 18 separate copies of the `{slot}` filler. They now share one (`src/sim/fill.js`), which capitalises a slot that starts a sentence or opens a quote: "The Housing Supply Acceleration Act is whipped YEA", "“Now. The Rural Roads Fund Act.”". The fallbacks ("the whip", "the leader") get the same treatment.
+- **Headers stay as titles.** The count board, the Order Paper, the whip's call card and "First reading: …" still show the bare title, because that's how a title reads as a label. The Speaker's question now reads "That the Rural Roads Fund Act be read a second time".
+- One caucus line had the leader hand round a page "headed" the bill, which doesn't work with a spoken name. It now has the bill "across the top", and the leader's closing line was tidied ("That's the line. Learn it.").
+
+**Checked:**
+- `tests.html` 118 of 118. One new test:
+  - every motion has a spoken name;
+  - the filler capitalises sentence openings and nothing else;
+  - every data line naming a bill reads without "the the" or a lower-case opening, for an Act and for a motion;
+  - a whole Parliament played headless leaves no bill title straight after "on", "for", "to" or "about" in the log or the memoir.
+- The caucus test was updated to expect the bill's name, not its bare title.
+- Played at phone size in portrait and landscape with no console errors.
+
+**Noticed, not fixed:** a rival whip's "was seen leaving the … whip's office" note can land several times in a row in the log, once for each party they visit. It's in `src/sim/rivals.js`, not in this change.

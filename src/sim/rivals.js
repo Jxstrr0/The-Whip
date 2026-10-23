@@ -4,7 +4,7 @@
 import { tuning, data } from './config.js';
 import { hooks, log, isSittingWeek } from './pacing.js';
 import { baseScore } from './mp.js';
-import { lineFor } from './bills.js';
+import { lineFor, billName } from './bills.js';
 import { ledgerAdd, nextVote } from './tools.js';
 import { headline } from './media.js';
 
@@ -53,7 +53,7 @@ function poach(state, rng, party, whip, bill) {
   state.nudges[w.m.id] ||= {};
   state.nudges[w.m.id][bill.id] = (state.nudges[w.m.id][bill.id] || 0) - SIGN[position] * R.poachNudge;
   party.whipAI.targets = [...new Set([...party.whipAI.targets, w.m.id])].slice(-6);
-  const note = `${fullName(w.m)} was seen leaving the ${party.short} whip's office before ${bill.title}.`;
+  const note = `${fullName(w.m)} was seen leaving the ${party.short} whip's office before ${billName(bill)}.`;
   ledgerAdd(state, { from: whip, to: w.m.id, kind: 'rival', what: `poach:${bill.id}`, note });
   log(state, note, 'rival');
   return true;
@@ -88,7 +88,7 @@ function leak(state, rng, party, whip) {
   // Some leaks make the front page too.
   if (rng.chance(tuning().media.leakPress)) {
     const bill = Object.values(state.bills).filter((b) => b.status === 'active' && b.nextVote != null && b.kind !== 'oppositionMotion').sort((a, b) => a.nextVote - b.nextVote)[0];
-    headline(state, rng, 'leak', { party: state.parties[me.party].name, bill: bill?.title || 'the bill', count: Math.max(2, party.whipAI.targets.length + 1) });
+    headline(state, rng, 'leak', { party: state.parties[me.party].name, bill: billName(bill), count: Math.max(2, party.whipAI.targets.length + 1) });
   }
   return true;
 }
@@ -128,12 +128,12 @@ function pairTest(state, rng, party, whip) {
   if (rng.next() < odds) {
     pr.broken = true;
     p.whipTrust[party.id] = clamp(trust + R.trustReneged, -100, 100);
-    const note = `${fullName(other)} will be in their seat for ${bill.title} after all. The ${party.short} whip's office says there was a misunderstanding.`;
+    const note = `${fullName(other)} will be in their seat for ${billName(bill)} after all. The ${party.short} whip's office says there was a misunderstanding.`;
     ledgerAdd(state, { from: whip, to: p.mpId, kind: 'rival', what: `pairBroken:${pr.bill}`, note, kept: false });
     log(state, note, 'rival');
   } else {
     p.whipTrust[party.id] = clamp(trust + R.trustHonoured, -100, 100);
-    const note = `The ${party.short} whip's office confirms the pair on ${bill.title}: ${fullName(other)} stays away.`;
+    const note = `The ${party.short} whip's office confirms the pair on ${billName(bill)}: ${fullName(other)} stays away.`;
     ledgerAdd(state, { from: whip, to: p.mpId, kind: 'rival', what: `pairHonoured:${pr.bill}`, note, kept: true });
     log(state, note, 'rival');
   }

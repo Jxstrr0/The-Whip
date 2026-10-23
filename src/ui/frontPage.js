@@ -5,8 +5,9 @@ import { t, esc, scenarioVerdict, aimShort } from './text.js';
 import { data, tuning } from '../sim/config.js';
 import { quietLead } from '../sim/media.js';
 import { calendarOf, weatherOf } from '../sim/calendar.js';
+import { fill as fillSlots } from '../sim/fill.js';
 
-const fill = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? '');
+const fill = (text, ctx) => fillSlots(text, ctx, () => '');
 
 // Sorts the parties by national polling and writes the ticker that runs under the masthead.
 function pollTicker(state, polling) {
