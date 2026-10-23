@@ -82,6 +82,11 @@ function next(v) {
   if (v.at >= v.queue.length) v.phase = 'choose';
 }
 
+// What each answer to a case does to riding standing, so the sheet can show it before you choose.
+export function caseStakes(c) {
+  return { carry: c.weight, refer: tuning().player.caseReferStanding, decline: -Math.max(0, c.weight - 1) };
+}
+
 // Three ways to take a case: carry it to Ostrava (it can come up in Question Period, and goes stale if it
 // never does), pass it to the office that actually handles it, or turn it down.
 export function answerCase(state, mode) {
@@ -91,14 +96,15 @@ export function answerCase(state, mode) {
   const c = data().constituents.cases.find((x) => x.id === item.id);
   const p = state.player;
   v.lastWord = null;
+  const stakes = caseStakes(c);
   if (mode === 'carry') {
     state.ridingCases.push({ id: `rc${state.ridingCases.length + 1}`, caseId: c.id, from: c.role, what: fillRiding(state, c.what), interest: c.interest, carried: true, week: state.date.absWeek, resolved: false });
-    p.ridingStanding = clamp(p.ridingStanding + c.weight, 0, 100);
+    p.ridingStanding = clamp(p.ridingStanding + stakes.carry, 0, 100);
   } else if (mode === 'refer') {
-    p.ridingStanding = clamp(p.ridingStanding + tuning().player.caseReferStanding, 0, 100);
+    p.ridingStanding = clamp(p.ridingStanding + stakes.refer, 0, 100);
     const said = data().constituents.refer[c.role]?.text;
     if (said) v.lastWord = { who: 'you', role: c.role, text: fillRiding(state, said) };
-  } else p.ridingStanding = clamp(p.ridingStanding - Math.max(0, c.weight - 1), 0, 100);
+  } else p.ridingStanding = clamp(p.ridingStanding + stakes.decline, 0, 100);
   v.results.push({ kind: 'case', id: c.id, mode });
   next(v);
   return { mode };

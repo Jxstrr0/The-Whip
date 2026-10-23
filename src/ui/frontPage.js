@@ -105,7 +105,6 @@ export function renderFrontPage(state, p, photoUrl) {
             ${state.player.act >= 3 ? `<div class="kv${(state.pressure || 0) >= 70 ? ' stale' : ''}"><span class="k">${t('week.pressure')}</span><span class="v">${Math.round(state.pressure || 0)} / 100</span></div>` : ''}
           </div>
           <p class="aim-week"><span class="k">${t('week.aim')}</span>${esc(aimShort(state))}</p>
-          <p class="muted small">${esc(t('week.act', { n: state.player.act, n2: state.player.whipFile.length, noticed: Math.round(state.player.actProgress.noticed) }))}</p>
         </section>
         <section class="front-polls">
           <h4>${t('front.polls')}</h4>
