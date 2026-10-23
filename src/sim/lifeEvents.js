@@ -40,7 +40,7 @@ hooks.weekend.push((state, rng) => {
       shown++;
       reveal(state, m.id, 'lifeEvents', 'gossip');
       const L = data().career.lifeEvent;
-      stop = { kind: 'career', event: 'lifeEvent', important: true, needsChoice: true, mpId: m.id, eventId: e.id, text: e.text, options: [{ id: 'showUp', label: L.showUp, note: L.showUpNote, enabled: true }, { id: 'sendNote', label: L.sendNote, note: L.sendNoteNote, enabled: true }, { id: 'ignore', label: L.ignore, note: L.ignoreNote, enabled: true }] };
+      stop = { kind: 'career', event: 'lifeEvent', lifeKind: e.kind, important: true, needsChoice: true, mpId: m.id, eventId: e.id, text: e.text, options: [{ id: 'showUp', label: L.showUp, note: L.showUpNote, enabled: true }, { id: 'sendNote', label: L.sendNote, note: L.sendNoteNote, enabled: true }, { id: 'ignore', label: L.ignore, note: L.ignoreNote, enabled: true }] };
     }
   }
   return stop;

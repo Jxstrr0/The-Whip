@@ -666,7 +666,9 @@ test('At home a case can be carried, passed on or turned down, and a carried cas
   assert(s.ridingVisit.lastWord?.who === 'you' && !/[{}]/.test(s.ridingVisit.lastWord.text), 'what you told them stays on screen');
   ridingSim.endVisit(s);
   visitWith('rc001');
+  const before = p.ridingStanding;
   ridingSim.answerCase(s, 'carry');
+  assert(p.ridingStanding === before + ridingSim.caseStakes(C.cases.find((c) => c.id === 'rc001')).carry, 'the chip on Carry shows what carrying is worth');
   const carried = s.ridingCases[s.ridingCases.length - 1];
   ridingSim.endVisit(s);
   const weekend = () => { for (const h of pacing.hooks.weekend) h(s, rng); };
