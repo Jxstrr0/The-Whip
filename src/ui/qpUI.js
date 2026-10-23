@@ -46,7 +46,7 @@ export function createQpUI(root, { getState, dispatch, getRoom, onBenches }) {
       body = `<p class="muted to">${esc(slot)}${qp.source === 'deal' ? ` · ${esc(t('qp.deal'))}` : ''}</p>
         <blockquote class="line call">${esc(qp.call)}</blockquote>
         ${jobLine(state, 'questionPeriod')}${firstWeekHint(state, 'tutorial.qp')}
-        <div class="choices">${FRAMINGS.map((f) => `<button class="btn" data-framing="${f}"><small class="approach">${t('qp.' + f)}</small>${esc(qp.questions[f])}</button>`).join('')}</div>`;
+        <div class="choices replies">${FRAMINGS.map((f) => `<button class="btn" data-framing="${f}"><small class="approach">${t('qp.' + f)}</small>${esc(qp.questions[f])}</button>`).join('')}</div>`;
     } else if (verdictFor !== key) {
       phase = 'answer';
       body = `<p class="muted who">${t('qp.you')}</p>

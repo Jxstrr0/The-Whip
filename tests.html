@@ -1877,6 +1877,28 @@ test('A minority government falls on a lost confidence vote and an election is c
   return `${night.governmentName} ${night.minority ? 'minority' : 'majority'} after the fall; ${h.parties[h.house.government].short} took over from ${h.parties[gov0].short} in week 4 (${me.name.last} still seated)`;
 });
 
+test('Losing the nomination at an election still seats the new House behind the memoir', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2' });
+  const me = s.mps[s.player.mpId];
+  s.house.minority = true;
+  s.date.absWeek = tuning().confidence.handoverWeeks + 5;
+  s.house.fallen = { day: 1, billId: null, divisionId: null };
+  s.player.nominationThreat = tuning().election.nominationChallengeAt;
+  s.player.ridingStanding = 20;
+  assert(pacing.next(s)?.kind === 'dissolved', 'the writ drops');
+  pacing.resolve(s, 'canvass');
+  const night = pacing.next(s);
+  assert(night?.kind === 'election' && night.player.result === 'deselected' && s.player.lostSeat === 'nomination', 'the nomination is lost');
+  const seated = Object.values(s.seats).map((x) => x.mpId);
+  assert(seated.length > 100 && seated.every((id) => s.mps[id]), 'every seat holds a member who is in the House');
+  for (const q of Object.values(s.parties)) {
+    assert(!q.leader || s.mps[q.leader], `${q.short} has a leader who is in the House`);
+    assert(!q.chiefWhip || s.mps[q.chiefWhip], `${q.short}'s chief whip is in the House`);
+  }
+  assert(s.house.speaker && s.mps[s.house.speaker]?.caucusRole === 'speaker', 'a Speaker is in the chair');
+  return `${me.name.last} lost the nomination; ${seated.length} seated, ${Object.keys(s.mps).length} in the House`;
+});
+
 test('A full four-year Parliament and its election play through with the bot, no errors; the riding can be lost or the nomination', () => {
   const s = newGame({ seed: 'TEST-3', party: 'p1' });
   const rng = createRng('bot8');
