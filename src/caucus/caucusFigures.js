@@ -75,7 +75,8 @@ export function createCaucusFigures(seats) {
   const pos = new THREE.Vector3();
   const one = new THREE.Vector3(1, 1, 1);
   const q = new THREE.Quaternion();
-  let leaning = null; // { pairs: [[i, j]], t }
+  let leaning = 0; // seconds left of two people leaning toward each other
+  let leaners = [];
 
   function layoutMarks(camera) {
     const counts = { cooperative: 0, guarded: 0, angry: 0, anxious: 0 };
@@ -111,8 +112,6 @@ export function createCaucusFigures(seats) {
     if (glow.instanceColor) glow.instanceColor.needsUpdate = true;
   }
 
-  const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
-
   return {
     group,
     torsos: crowd.torsos,
@@ -133,7 +132,24 @@ export function createCaucusFigures(seats) {
     // Two people lean toward each other for a moment: what "keeps leaning over to" looks like.
     showPairs(pairs) {
       const idx = new Map(seats.map((s, i) => [s.mpId, i]));
-      leaning = { pairs: pairs.map(([a, b]) => [idx.get(a), idx.get(b)]).filter(([a, b]) => a != null && b != null && !gone.has(a) && !gone.has(b)), t: 0 };
+      leaners = [];
+      for (const [a, b] of pairs) {
+        const i = idx.get(a);
+        const j = idx.get(b);
+        if (i == null || j == null || gone.has(i) || gone.has(j)) continue;
+        for (const [me, other] of [[i, j], [j, i]]) {
+          crowd.attention([seats[other].x, 1.2, seats[other].z], { only: [me], delay: 0.3, lean: 0.12 });
+          leaners.push(me);
+        }
+      }
+      leaning = 3;
+    },
+    // The room turns to the head of the table while someone speaks there, and back when they're done.
+    focus(on) {
+      const head = seats[0];
+      const rest = seats.map((s, i) => i).filter((i) => i > 0 && !gone.has(i));
+      crowd.attention(on ? [head.x, 1.3, head.z] : null, { only: rest, delay: 1 });
+      if (on) crowd.react('nod', { only: rest, chance: 0.3, delay: 2.5 });
     },
     // Someone has been put out of caucus: their chair is empty for the rest of the meeting.
     empty(mpId) {
@@ -146,20 +162,12 @@ export function createCaucusFigures(seats) {
     },
     update(dt, camera) {
       crowd.update(dt);
-      if (leaning) {
-        leaning.t += dt;
-        const T = leaning.t;
-        const k = T < 0.6 ? T / 0.6 : T < 2.4 ? 1 : T < 3.0 ? 1 - (T - 2.4) / 0.6 : 0;
-        for (const [a, b] of leaning.pairs) {
-          for (const [i, j] of [[a, b], [b, a]]) {
-            const me = base[i];
-            const other = base[j];
-            const want = Math.max(-0.9, Math.min(0.9, wrap(Math.atan2(other.x - me.x, other.z - me.z) - me.rotY)));
-            crowd.place(i, { ...me, yaw: me.yaw + (want - me.yaw) * k, lean: me.lean + 0.12 * k });
-          }
+      if (leaning > 0) {
+        leaning -= dt;
+        if (leaning <= 0) {
+          crowd.attention(null, { only: leaners, delay: 0.4 });
+          leaners = [];
         }
-        crowd.commit();
-        if (T >= 3.0) leaning = null;
       }
       if (camera) layoutMarks(camera);
     },
