@@ -195,7 +195,8 @@ export function answerTownHall(state, index) {
     // A good room spreads by word of mouth; a bad one spreads faster.
     const swing = Math.round((th.crowd - 50) / 8);
     state.player.ridingStanding = clamp(state.player.ridingStanding + swing, 0, 100);
-    log(state, say('log.riding.townHall.' + (th.crowd >= 60 ? 'won' : th.crowd <= 40 ? 'lost' : 'even'), { town: v.town }), 'riding');
+    const TH = tuning().stakes.townHall;
+    log(state, say('log.riding.townHall.' + (th.crowd >= TH.won ? 'won' : th.crowd <= TH.lost ? 'lost' : 'even'), { town: v.town }), 'riding');
     // A full hall is sometimes a story in the weekend paper.
     withRng(state, (rng) => {
       if (rng.chance(tuning().media.townHallPress)) headline(state, rng, 'townHall', { bill: billName(v.billId && state.bills[v.billId]) });
