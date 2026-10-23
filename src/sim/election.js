@@ -211,6 +211,8 @@ export function runElection(state, rng, choice = 'canvass') {
     log(state, deselected ? say('log.election.deselected') : say('log.election.lostSeat', { riding: me.riding.name }), 'career');
     summary.needsChoice = true;
     p.lostSeat = deselected ? 'nomination' : 'defeated';
+    // The House still has to be seated around the newcomers: the chamber behind the memoir draws it from the seats.
+    reseat(state);
     return summary;
   }
   // The new Parliament around the survivor.
