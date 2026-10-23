@@ -92,7 +92,7 @@ html, body {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(ellipse at 50% 45%, transparent 52%, rgba(0, 0, 0, 0.38) 100%);
+  background: radial-gradient(ellipse at var(--vig-x) var(--vig-y), transparent 52%, rgb(0 0 0 / var(--vig)) 100%);
 }
 
 /* Room switches cut through ink-black and fade back in. */
@@ -132,6 +132,130 @@ html, body {
   background-color: var(--paper);
   background-image: var(--grain);
   color: var(--ink);
+}
+
+/* ---- Light -------------------------------------------------------------------------------------------- */
+/* The paper takes the room's light. src/light.js sets data-light on <html> from the room, the hour and the
+   calendar; each light is one set of paper and ink tokens. The tokens are registered so a change of light
+   fades through (--light-fade, from tuning look.light.fade) instead of cutting; a browser without @property
+   still switches, it just doesn't fade. Every ink here reads at 4.5:1 or better on its paper. */
+@property --paper { syntax: "<color>"; inherits: true; initial-value: #f3ead8; }
+@property --paper-2 { syntax: "<color>"; inherits: true; initial-value: #e9dec6; }
+@property --paper-3 { syntax: "<color>"; inherits: true; initial-value: #d9cbae; }
+@property --ink { syntax: "<color>"; inherits: true; initial-value: #1d1a16; }
+@property --ink-2 { syntax: "<color>"; inherits: true; initial-value: #4e463c; }
+@property --line { syntax: "<color>"; inherits: true; initial-value: rgba(29, 26, 22, 0.1); }
+@property --glow { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --shade { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --vig { syntax: "<number>"; inherits: true; initial-value: 0.38; }
+@property --vig-x { syntax: "<percentage>"; inherits: true; initial-value: 50%; }
+@property --vig-y { syntax: "<percentage>"; inherits: true; initial-value: 45%; }
+@property --glow-x { syntax: "<percentage>"; inherits: true; initial-value: 50%; }
+@property --glow-y { syntax: "<percentage>"; inherits: true; initial-value: 0%; }
+:root {
+  --light-fade: 400ms;
+  /* Day: the chamber by morning light. A faint wash from the high windows. */
+  --glow: rgba(255, 255, 255, 0.3);
+  --shade: transparent;
+  --vig: 0.38;
+  --vig-x: 50%;
+  --vig-y: 45%;
+  --glow-x: 50%;
+  --glow-y: 0%;
+  transition:
+    --paper var(--light-fade) ease,
+    --paper-2 var(--light-fade) ease,
+    --paper-3 var(--light-fade) ease,
+    --ink var(--light-fade) ease,
+    --ink-2 var(--light-fade) ease,
+    --line var(--light-fade) ease,
+    --glow var(--light-fade) ease,
+    --shade var(--light-fade) ease,
+    --vig var(--light-fade) ease,
+    --vig-x var(--light-fade) ease,
+    --vig-y var(--light-fade) ease,
+    --glow-x var(--light-fade) ease,
+    --glow-y var(--light-fade) ease;
+}
+/* Grey: an overcast or winter morning. The page cools and the wash goes blue. */
+:root[data-light="grey"] {
+  --paper: #ece7dc;
+  --paper-2: #dfd9cc;
+  --paper-3: #cdc6b6;
+  --ink: #1a1917;
+  --ink-2: #49453f;
+  --ink-3: rgba(26, 25, 23, 0.19);
+  --ink-4: rgba(26, 25, 23, 0.09);
+  --line: rgba(26, 25, 23, 0.11);
+  --fill: rgba(250, 250, 248, 0.5);
+  --glow: rgba(214, 222, 232, 0.4);
+  --shade: rgba(40, 45, 55, 0.06);
+  --vig: 0.44;
+}
+/* Bells: the division. Pale, hard, no warmth, the room dark at the edges. */
+:root[data-light="bells"] {
+  --paper: #f5f3ee;
+  --paper-2: #e9e6df;
+  --paper-3: #d5d1c8;
+  --ink: #121110;
+  --ink-2: #403d38;
+  --ink-3: rgba(18, 17, 16, 0.2);
+  --ink-4: rgba(18, 17, 16, 0.09);
+  --line: rgba(18, 17, 16, 0.14);
+  --fill: rgba(255, 255, 255, 0.5);
+  --glow: transparent;
+  --shade: transparent;
+  --vig: 0.52;
+  --vig-y: 40%;
+}
+/* Lamp: the office in the evening, and the riding office after dark. Amber paper lit from the top right, a
+   little darker at the foot, the ink warm. Brass and the stake colours go a shade darker to hold on it. */
+:root[data-light="lamp"],
+:root[data-light="pendant"] {
+  --paper: #e8d2a9;
+  --paper-2: #dcc395;
+  --paper-3: #c8ad7a;
+  --ink: #2a1d10;
+  --ink-2: #5a4328;
+  --ink-3: rgba(42, 29, 16, 0.22);
+  --ink-4: rgba(42, 29, 16, 0.1);
+  --line: rgba(60, 30, 0, 0.14);
+  --fill: rgba(255, 240, 205, 0.45);
+  --brass-ink: #5f4713;
+  --yea: #274b31;
+  --nay: #8f271f;
+  --grey: #5c5a58;
+  --glow: rgba(255, 226, 160, 0.85);
+  --shade: rgba(60, 30, 0, 0.12);
+  --vig: 0.55;
+  --vig-x: 70%;
+  --vig-y: 30%;
+  --glow-x: 92%;
+  --glow-y: 2%;
+}
+/* Pendant: the caucus room, lit from the shades over the table rather than a lamp at your elbow. */
+:root[data-light="pendant"] {
+  --glow: rgba(255, 226, 160, 0.6);
+  --vig: 0.5;
+  --vig-x: 50%;
+  --vig-y: 40%;
+  --glow-x: 50%;
+  --glow-y: 0%;
+}
+/* Strip: the room you share in Act 1, under a strip light. Cool, even, a little green. */
+:root[data-light="strip"] {
+  --paper: #edf0ee;
+  --paper-2: #e0e4e1;
+  --paper-3: #ccd2cd;
+  --ink: #181b19;
+  --ink-2: #454b47;
+  --ink-3: rgba(24, 27, 25, 0.19);
+  --ink-4: rgba(24, 27, 25, 0.09);
+  --line: rgba(24, 27, 25, 0.12);
+  --fill: rgba(252, 254, 252, 0.5);
+  --glow: rgba(225, 238, 250, 0.5);
+  --shade: rgba(20, 30, 30, 0.05);
+  --vig: 0.42;
 }
 
 /* ---- Top bar: a masthead tag and paper tags for the buttons ------------------------------------------- */
@@ -181,7 +305,7 @@ html, body {
   min-width: 0;
   white-space: nowrap;
   padding: 0 10px;
-  background-color: rgba(243, 234, 216, 0.88);
+  background-color: color-mix(in srgb, var(--paper) 88%, transparent);
   background-image: var(--grain);
   border: 0;
   border-radius: var(--r-sm);
@@ -290,6 +414,11 @@ html, body {
   font-size: 16px;
   line-height: 1.4;
   animation: sheet-in 180ms ease-out;
+  /* Where the room's light falls on the paper, and where it doesn't. */
+  background-image:
+    radial-gradient(ellipse 70% 45% at var(--glow-x) var(--glow-y), var(--glow), transparent 70%),
+    linear-gradient(180deg, transparent 55%, var(--shade)),
+    var(--grain);
 }
 @keyframes sheet-in {
   from {
@@ -3218,7 +3347,7 @@ body.cold-open .topbar {
   max-width: min(300px, calc(100vw - 56px));
   padding: 9px 13px 10px;
   border-radius: var(--r-md);
-  background-color: rgba(243, 234, 216, 0.95);
+  background-color: color-mix(in srgb, var(--paper) 95%, transparent);
   background-image: var(--grain);
   color: var(--ink);
   font-family: var(--serif);
@@ -3237,7 +3366,7 @@ body.cold-open .topbar {
   top: 14px;
   border: 8px solid transparent;
   border-left: 0;
-  border-right-color: rgba(243, 234, 216, 0.95);
+  border-right-color: color-mix(in srgb, var(--paper) 95%, transparent);
 }
 .speech.on {
   opacity: 1;
@@ -3318,7 +3447,7 @@ body.cold-open .topbar {
   z-index: 2;
   margin: 10px -18px -16px;
   padding: 12px 18px 16px;
-  background: linear-gradient(to bottom, rgba(243, 234, 216, 0), var(--paper) 28%);
+  background: linear-gradient(to bottom, transparent, var(--paper) 28%);
 }
 
 /* Numbers on the green button are set in paper, so green-on-green and red-on-green never happen. */

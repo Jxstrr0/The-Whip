@@ -261,6 +261,11 @@
     "deskLamp": 10,
     "pendant": 16,
     "walkerEvery": 18,
+    "light": {
+      "fade": 400,
+      "nightFrom": 0.7,
+      "lampFromAct": 2
+    },
     "fidgetEvery": 14
   },
   "tools": {

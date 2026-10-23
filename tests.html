@@ -52,6 +52,7 @@ import * as caucusSim from './src/sim/caucus.js';
 window.__caucus = caucusSim;
 import * as ridingSim from './src/sim/riding.js';
 import { calendarOf, weatherOf } from './src/sim/calendar.js';
+import { lightFor, hourOf, LIGHTS } from './src/light.js';
 import { botAct } from './src/sim/bot.js';
 import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo } from './src/save.js';
 import { getSettings, setSetting } from './src/settings.js';
@@ -3006,6 +3007,45 @@ test('The town hall won / lost cuts come from tuning', async () => {
   const src = await (await fetch('src/sim/riding.js')).text();
   assert(!/crowd >= 60|crowd <= 40/.test(src), 'riding.js still has the numbers');
   return `won at ${TH.won}, lost at ${TH.lost}`;
+});
+
+test('The paper takes the room\'s light: bells pale, the office by lamp (a strip light while shared), a grey winter morning', () => {
+  const L = tuning().look.light;
+  assert(L.fade > 0 && L.nightFrom > 0 && L.nightFrom <= 1 && L.lampFromAct >= 1, 'look.light in tuning');
+  const state = newGame({ seed: 'TEST-LIGHT', party: 'p1' });
+  const at = (pending, act = 1, absWeek = 0) => {
+    state.flow.pending = pending;
+    state.player.act = act;
+    state.date.absWeek = absWeek;
+  };
+  at({ kind: 'division' });
+  assert(lightFor(state, 'chamber') === 'bells' && hourOf(state) === 'afternoon', 'the division');
+  at({ kind: 'office' }, 1);
+  assert(lightFor(state, 'office') === 'strip' && hourOf(state) === 'evening', 'the shared room');
+  at({ kind: 'meeting' }, L.lampFromAct);
+  assert(lightFor(state, 'office') === 'lamp', 'your own office, by lamp');
+  at({ kind: 'caucus' });
+  assert(lightFor(state, 'caucus') === 'pendant' && hourOf(state) === 'morning', 'the caucus room');
+  // A clear September morning is day; the same chamber in a winter week is grey, whatever the sky.
+  const clear = [...Array(40).keys()].find((w) => weatherOf(state, w).kind === 'clear' && weatherOf(state, w).season === 'autumn');
+  at({ kind: 'morning' }, 1, clear);
+  assert(lightFor(state, 'chamber') === 'day', 'a clear autumn morning');
+  const winter = [...Array(40).keys()].find((w) => weatherOf(state, w).season === 'winter');
+  at({ kind: 'morning' }, 1, winter);
+  assert(lightFor(state, 'chamber') === 'grey', 'a winter morning');
+  // The riding by day, and lit from inside once the evenings draw in or on election night.
+  at({ kind: 'riding' }, 1, clear);
+  assert(lightFor(state, 'riding') === 'day' && hourOf(state) === 'afternoon', 'the riding by day');
+  const dusk = [...Array(40).keys()].find((w) => weatherOf(state, w).dark >= L.nightFrom);
+  at({ kind: 'riding' }, 1, dusk);
+  assert(lightFor(state, 'riding') === 'lamp', 'the riding after dark');
+  at({ kind: 'coldOpen', phase: 'count' }, 1, clear);
+  assert(lightFor(state, 'riding') === 'lamp', 'election night');
+  for (const k of ['morning', 'division', 'office', 'meeting', 'caucus', 'riding', 'coldOpen', 'weekSummary', 'career', 'questionPeriod']) {
+    at({ kind: k, phase: 'walk' }, 3, clear);
+    for (const room of ['chamber', 'office', 'caucus', 'riding']) assert(LIGHTS.includes(lightFor(state, room)), `${k} in the ${room}`);
+  }
+  return `winter from week ${winter + 1}, dusk from week ${dusk + 1}`;
 });
 
 test('The glossary: every term has a label, forms and one sentence, and no two terms claim the same form', () => {
