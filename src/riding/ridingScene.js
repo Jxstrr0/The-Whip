@@ -574,6 +574,7 @@ export function create(ctx) {
     },
     update(dt) {
       visitor?.update(dt);
+      me.update(dt);
       if (townHall) crowd.update(dt);
       precipitation.update(dt);
       cam.update(dt);
