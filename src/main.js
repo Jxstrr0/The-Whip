@@ -13,6 +13,7 @@ import './sim/questionPeriod.js';
 import { caucusSeating } from './sim/caucus.js';
 import { townHallPlacards } from './sim/riding.js';
 import { weatherOf } from './sim/calendar.js';
+import { lightFor } from './light.js';
 import { saveGame, loadGame, deleteSave, exportSave, importSave, allSaves, latestSave } from './save.js';
 import { createRooms } from './rooms.js';
 import * as chamber from './chamber/scene.js';
@@ -369,6 +370,9 @@ function buildWorld() {
   let lastLog = getState()?.log.length ?? 0;
   function renderAll(state = getState()) {
     const name = roomFor(state);
+    // The paper takes the room's light (css/style.css, "Light").
+    document.documentElement.dataset.light = lightFor(state, name);
+    document.documentElement.style.setProperty('--light-fade', `${tuning().look.light.fade}ms`);
     const me = state.mps[state.player.mpId];
     const colleague = name === 'office' && state.player.act < 2 ? deskmate(state, me) : null;
     rooms.show(name, {

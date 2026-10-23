@@ -257,7 +257,12 @@
     "chandelier": 22,
     "deskLamp": 10,
     "pendant": 16,
-    "walkerEvery": 18
+    "walkerEvery": 18,
+    "light": {
+      "fade": 400,
+      "nightFrom": 0.7,
+      "lampFromAct": 2
+    }
   },
   "tools": {
     "timePerWeek": 90,

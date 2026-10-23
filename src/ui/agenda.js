@@ -6,6 +6,7 @@ import { prediction } from '../sim/count.js';
 import { countLine, rowLine } from './text.js';
 import { renderFrontPage } from './frontPage.js';
 import { calendarOf } from '../sim/calendar.js';
+import { hourOf } from '../light.js';
 
 export function createAgenda(root, { getState, onContinue, onSkip, photo = null }) {
   const bar = document.createElement('section');
@@ -35,13 +36,14 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
     return t('agenda.date', { day, date: c.dayOfMonth, month: c.month, week: c.week, year: c.year }) + (d.constituencyWeek ? ` · ${t('agenda.constituency')}` : '');
   }
 
-  // The bar's short form: the day, short, on one line ("Mon 22 Sep"), and "at home" in a constituency week.
+  // The bar's short form: the day, short, on one line ("Mon 22 Sep · evening"), the hour the paper is lit for,
+  // and "at home" in a constituency week.
   function dayText(state) {
     const d = state.date;
     const c = calendarOf(d);
     const C = tuning().calendar;
     const day = t('agenda.day', { day: C.daysShort[d.dayOfWeek - 1], date: c.dayOfMonth, month: C.monthsShort[c.monthIndex] });
-    return `${esc(day)}${d.constituencyWeek ? ` <span>· ${esc(t('agenda.home'))}</span>` : ''}`;
+    return `${esc(day)} <span>· ${esc(t('time.' + hourOf(state)))}</span>${d.constituencyWeek ? ` <span>· ${esc(t('agenda.home'))}</span>` : ''}`;
   }
 
   function renderBar() {
