@@ -385,22 +385,59 @@ html, body {
   }
 }
 
-/* Dialogue and notes read like quotations on the page. */
+/* Dialogue hangs off a brass opening quotation mark, set in from the margin like a quotation on a page. */
 blockquote.line {
-  margin: 10px 0;
-  padding: 10px 14px;
-  border-radius: var(--r-md);
-  background: var(--paper-2);
+  position: relative;
+  margin: 12px 0 10px 18px;
+  padding: 0;
   font-size: 17px;
-  line-height: 1.4;
+  line-height: 1.38;
 }
-.tutorial,
-.whip-call {
-  margin: 8px 0;
-  padding: 10px 14px;
-  border-radius: var(--r-md);
-  background: rgba(47, 90, 60, 0.09);
+blockquote.line::before {
+  content: '\201C';
+  position: absolute;
+  left: -19px;
+  top: -5px;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--brass);
+}
+/* Notes to the player: a short italic paragraph between two hairlines. */
+.tutorial {
+  margin: 10px 0;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
   font-size: 15px;
+  font-style: italic;
+  color: var(--ink-2);
+}
+/* The whip's call on the evening board: a labelled entry between two rules, the bill set large. */
+.whip-call {
+  margin: 10px 0 4px;
+  padding: 10px 0 12px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  font-size: 15px;
+}
+.whip-call-label,
+.replies .btn small.approach,
+.talk-choices .btn small.approach {
+  margin: 0 0 2px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brass-ink);
+}
+.whip-call-bill {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.whip-call .btn {
+  margin-top: 6px;
 }
 .note {
   font-size: 14px;
@@ -758,6 +795,65 @@ blockquote.line {
   letter-spacing: 0.01em;
   color: var(--brass-ink);
 }
+/* What you say back (a meeting, the riding, Question Period, a revolt) is the content, not a row of buttons:
+   ruled rows read in order, a brass chevron at the end of each, and the one under the thumb takes a green
+   rule down its left edge and a wash that fades across the row. */
+.choices.replies,
+.talk-choices {
+  gap: 0;
+  margin-top: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.replies .btn,
+.talk-choices .btn {
+  position: relative;
+  min-height: 48px;
+  margin: 0;
+  padding: 9px 30px 9px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 16px;
+  line-height: 1.32;
+  text-align: left;
+}
+.replies .btn::after,
+.talk-choices .btn::after {
+  content: '\203A';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-56%);
+  font-size: 24px;
+  line-height: 1;
+  color: var(--brass);
+}
+.replies .btn:active,
+.talk-choices .btn:active {
+  transform: none;
+  margin: 0 -18px;
+  padding-left: 15px;
+  padding-right: 48px;
+  border-left: 3px solid var(--bench);
+  background: linear-gradient(90deg, rgba(47, 90, 60, 0.12), transparent 70%);
+  box-shadow: none;
+}
+.replies .btn:active::after,
+.talk-choices .btn:active::after {
+  right: 26px;
+}
+.replies .btn.primary {
+  margin-top: 8px;
+  border: 1px solid var(--bench);
+  border-radius: var(--r-md);
+  background: var(--bench);
+  padding: 8px 14px;
+}
+.replies .btn.primary::after {
+  content: none;
+}
 .btn.primary small.approach {
   color: rgba(243, 234, 216, 0.88);
 }
@@ -769,27 +865,47 @@ blockquote.line {
 }
 
 /* Badges: small paper tags; moods carry their colour as an ink bar, not a fill. */
+/* Badges are set in ink, not printed on tags: a small spaced label in brass; "you" in bench green. */
 .badge {
   display: inline-block;
-  padding: 1px 10px;
+  padding: 0;
   border: 0;
-  border-radius: 999px;
-  background: var(--paper-2);
-  color: var(--ink);
-  font-size: 13px;
-  font-variant-caps: normal;
-  letter-spacing: 0.01em;
-  vertical-align: middle;
+  background: none;
+  color: var(--brass-ink);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: 1px;
 }
 .badge.you {
-  background: var(--bench);
-  border-color: var(--bench);
-  color: var(--paper);
+  color: var(--bench);
 }
-.badge.mood-cooperative { box-shadow: inset 10px 0 0 -4px #2e9e5b; padding-left: 14px; }
-.badge.mood-guarded { box-shadow: inset 10px 0 0 -4px var(--grey); padding-left: 14px; }
-.badge.mood-angry { box-shadow: inset 10px 0 0 -4px #c8423b; padding-left: 14px; }
-.badge.mood-anxious { box-shadow: inset 10px 0 0 -4px var(--amber); padding-left: 14px; }
+/* A visitor's mood: italic, with a dot in the mood's colour (the word carries it without the colour). */
+.badge[class*="mood-"] {
+  --mood: var(--grey);
+  font-size: 14px;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-2);
+  vertical-align: baseline;
+}
+.badge[class*="mood-"]::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--mood);
+  vertical-align: 1px;
+}
+.badge.mood-cooperative { --mood: #2e9e5b; }
+.badge.mood-guarded { --mood: var(--grey); }
+.badge.mood-angry { --mood: #c8423b; }
+.badge.mood-anxious { --mood: var(--amber); }
 
 .chip {
   width: 8px;
@@ -823,7 +939,12 @@ blockquote.line {
 }
 .card-head .who p {
   color: var(--ink-2);
-  font-size: 14px;
+  font-size: 14.5px;
+  font-style: italic;
+}
+.card-head .who h2 {
+  font-size: 26px;
+  line-height: 1.08;
 }
 .slots {
   color: var(--brass);
@@ -832,10 +953,10 @@ blockquote.line {
 
 /* The whip's count, one ruled line under an order-paper item or at the top of the bells sheet. */
 .count-line {
-  margin: 6px 0 2px;
-  padding: 8px 12px;
-  border-radius: var(--r-md);
-  background: rgba(201, 162, 74, 0.14);
+  margin: 8px 0 2px;
+  padding: 7px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
   font-size: 15px;
   font-variant-numeric: tabular-nums;
 }
@@ -879,7 +1000,9 @@ blockquote.line {
 /* Question Period: the Speaker's call in the chair's voice, who is speaking, the gallery's stamp. */
 .qp-sheet blockquote.line.call {
   font-style: italic;
-  border-left-color: var(--ink-2);
+}
+.qp-sheet blockquote.line.call::before {
+  color: var(--ink-3);
 }
 .qp-sheet .who,
 .qp-sheet .to {
@@ -946,8 +1069,8 @@ blockquote.line {
   border-radius: 2px;
   vertical-align: middle;
 }
-blockquote.line.revolt {
-  border-left-color: var(--red);
+blockquote.line.revolt::before {
+  color: var(--red);
 }
 
 /* ---- The Book: the whip's working list, a full-height ledger ------------------------------------------ */
@@ -1177,7 +1300,7 @@ input::placeholder {
   gap: 10px;
   min-height: 52px;
   padding: 4px 0;
-  border-bottom: 1px solid var(--ink-3);
+  border-bottom: 1px solid var(--line);
   cursor: pointer;
 }
 .book-list li.done {
@@ -1361,16 +1484,16 @@ input::placeholder {
 /* "Your job here": one line under a scene's title saying what the player is there to do. */
 .job {
   margin: 6px 0 10px;
-  padding: 8px 12px;
-  border-left: 3px solid var(--brass);
-  border-radius: 0 var(--r-sm) var(--r-sm) 0;
-  background: rgba(184, 146, 58, 0.08);
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--line);
   font-size: 15px;
   line-height: 1.4;
 }
 .job-label {
-  display: block;
-  margin-bottom: 1px;
+  display: inline;
+  margin-right: 6px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 /* A section folded shut under a heading that reads like the sheet's other headings; a tap opens it. */
 .fold-block {
@@ -1421,7 +1544,7 @@ input::placeholder {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 0 0 8px;
   list-style: none;
   cursor: pointer;
 }
@@ -1667,7 +1790,18 @@ input::placeholder {
 }
 
 .tutorial.brief {
-  background: rgba(201, 162, 74, 0.12);
+  font-style: normal;
+  color: var(--ink);
+}
+/* The scenario's verdict is a note with a stamp on it, not speech: no quotation mark, two rules. */
+blockquote.line.scenario-verdict {
+  margin-left: 0;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+blockquote.line.scenario-verdict::before {
+  content: none;
 }
 .scenario-verdict .stamp {
   margin-right: 8px;
@@ -1711,11 +1845,10 @@ input::placeholder {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+/* The two sides of a deal: ruled columns, the cards on the table between the rules. */
 .deal-col {
-  background: var(--paper-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  padding: 4px 8px 8px;
+  padding: 0 0 6px;
+  border-bottom: 1px solid var(--line);
   min-height: 70px;
 }
 .deal-col h4 {
@@ -2318,9 +2451,7 @@ html.large #ui {
 .front-numbers {
   margin: 10px 0 14px;
   padding: 2px 12px 8px;
-  border-radius: var(--r-sm);
-  background: rgba(184, 146, 58, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(184, 146, 58, 0.25);
+  border: 1px solid var(--ink-3);
 }
 .front-numbers .kv {
   padding: 5px 0;
@@ -2494,7 +2625,7 @@ body.cold-open .topbar {
   min-height: 64px;
 }
 .co-line blockquote.line {
-  margin: 10px 0 6px;
+  margin: 10px 0 6px 18px;
   animation: co-line-in 420ms ease-out;
 }
 .co-called {
@@ -2891,107 +3022,101 @@ body.cold-open .topbar {
   --warn-ink: #8a5a0b;
 }
 .stake {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 2px 6px 2px 0;
-  padding: 2px 10px 2px 3px;
-  --tone: var(--grey);
-  color: var(--tone);
-  border: 1px solid color-mix(in srgb, var(--tone) 30%, transparent);
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
+  display: inline-block;
+  margin: 0 10px 0 0;
+  --tone: var(--ink-2);
+  color: var(--ink-2);
+  font-size: 13.5px;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
   line-height: 1.5;
   white-space: nowrap;
-  box-shadow: var(--lift);
 }
-/* The arrow sits in its own small round badge: the sign and shape carry the meaning, the colour backs them up. */
-.stake i {
-  display: inline-grid;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--tone);
-  color: var(--paper);
-  font-style: normal;
-  font-size: 9px;
-  line-height: 1;
+.stake:last-child {
+  margin-right: 0;
+}
+/* The number carries the colour; the unit stays in plain ink. */
+.stake b {
+  font-weight: 650;
+  color: var(--tone);
 }
 .stake.up {
   --tone: var(--good);
-  background: color-mix(in srgb, var(--good) 12%, var(--paper));
 }
 .stake.down {
   --tone: var(--bad);
-  background: color-mix(in srgb, var(--bad) 12%, var(--paper));
 }
 .stake.flat {
-  --tone: var(--grey);
-  color: var(--ink-2);
-  background: var(--paper-2);
-  font-weight: 500;
+  font-style: italic;
 }
+/* The stakes for a bill: a small ruled table. The riding's lean is its heading; each way of voting is a row
+   with the riding and whip numbers in their own columns, so the eye runs down them. */
 .stakes {
-  margin: 8px 0;
-  padding: 8px 12px;
-  border-radius: var(--r-md);
-  background: var(--fill);
-  box-shadow: var(--lift);
+  width: 100%;
+  margin: 8px 0 4px;
+  border-collapse: collapse;
+  font-size: 15px;
 }
+.stakes caption,
 .stake-lean {
-  margin: 0 0 4px;
-  font-size: 14px;
+  caption-side: top;
+  margin: 0;
+  padding: 0 0 5px;
+  text-align: left;
+  font-size: 14.5px;
+  font-style: italic;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--line);
 }
 .stake-lean b,
 .stakes b.yea {
+  font-style: normal;
   color: var(--yea);
 }
 .stake-lean b.nay,
 .stakes b.nay {
   color: var(--nay);
 }
-.stake-rows {
-  list-style: none;
+.stakes th,
+.stakes td {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--ink-4);
+  vertical-align: baseline;
+  text-align: left;
+  font-weight: 400;
+}
+.stakes td {
+  width: 74px;
+  padding-left: 8px;
+  text-align: right;
+  white-space: nowrap;
+}
+.stakes td .stake {
   margin: 0;
-  padding: 0;
+  font-size: 15px;
+  color: var(--ink);
 }
-.stake-rows li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2px 8px;
-  padding: 3px 0;
-  border-top: 1px solid var(--line);
-  font-size: 14px;
-}
-.stake-rows .nums {
-  display: inline-flex;
-  flex-wrap: wrap;
+.stakes tr:last-child th,
+.stakes tr:last-child td {
+  border-bottom: 1px solid var(--line);
 }
 .stake-line {
   display: block;
   margin-top: 2px;
 }
-.stake-line .stake {
-  margin-top: 0;
-  margin-bottom: 0;
-}
 .stake-total {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: 8px;
   margin: 8px 0 0;
-  padding: 6px 10px;
-  border-radius: var(--r-md);
-  background: var(--fill);
-  box-shadow: var(--lift);
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
   font-size: 14px;
+  font-style: italic;
+  color: var(--ink-2);
+}
+.stake-total .stake {
+  font-style: normal;
 }
 .card-chip .lbl {
   display: block;
@@ -3003,7 +3128,7 @@ body.cold-open .topbar {
 }
 .card-chip .stake {
   margin: 0 6px 0 0;
-  font-size: 12px;
+  font-size: 12.5px;
 }
 .btn .stake-line {
   font-weight: 400;
@@ -3020,9 +3145,9 @@ body.cold-open .topbar {
 .count-line .cnt {
   font-weight: 600;
 }
-.count-line.tone-good { background: color-mix(in srgb, var(--good) 13%, transparent); }
-.count-line.tone-warn { background: color-mix(in srgb, var(--amber) 20%, transparent); }
-.count-line.tone-bad { background: color-mix(in srgb, var(--bad) 13%, transparent); }
+.count-line.tone-good .cnt { color: var(--good); }
+.count-line.tone-warn .cnt { color: var(--warn-ink); }
+.count-line.tone-bad .cnt { color: var(--bad); }
 .count-line .cnt i {
   font-style: normal;
   font-size: 13px;
@@ -3050,16 +3175,14 @@ body.cold-open .topbar {
   background: linear-gradient(to bottom, rgba(243, 234, 216, 0), var(--paper) 28%);
 }
 
-/* A chip sitting on a button gets its own paper, so green-on-green and red-on-green never happen. */
-.btn .stake {
-  background: color-mix(in srgb, var(--tone) 10%, #fffcf4);
-  font-weight: 600;
+/* Numbers on the green button are set in paper, so green-on-green and red-on-green never happen. */
+.btn.primary .stake {
+  color: rgba(243, 234, 216, 0.82);
 }
-.btn.primary .stake.flat {
-  color: var(--ink-2);
+.btn.primary .stake b {
+  color: var(--paper);
 }
 .job {
-  padding: 6px 12px;
   font-size: 14.5px;
   line-height: 1.35;
 }
@@ -3080,7 +3203,7 @@ body.cold-open .topbar {
   }
   .job {
     margin: 4px 0 6px;
-    padding: 4px 10px;
+    padding: 0 0 5px;
     font-size: 14px;
     line-height: 1.3;
   }
@@ -3090,10 +3213,10 @@ body.cold-open .topbar {
   }
   .stakes {
     margin: 4px 0;
-    padding: 4px 10px;
   }
-  .stake-rows li {
-    padding: 1px 0;
+  .stakes th,
+  .stakes td {
+    padding: 4px 0;
   }
   .sheet h2 {
     font-size: 22px;
@@ -3160,7 +3283,6 @@ body.cold-open .topbar {
   height: 14px;
 }
 .badge.row {
-  background: color-mix(in srgb, var(--brass) 22%, transparent);
   color: var(--brass-ink);
 }
 .row-sheet {
@@ -3177,12 +3299,12 @@ body.cold-open .topbar {
   gap: 4px 6px;
   margin: 4px 0 6px;
 }
+/* The marks in your row's tally: the glyph and the count in the mark's colour, set in ink, a gap between each. */
 .row-mark {
   display: inline-flex;
   align-items: baseline;
   gap: 4px;
-  padding: 1px 8px;
-  border-radius: 999px;
+  margin-right: 6px;
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
@@ -3192,10 +3314,10 @@ body.cold-open .topbar {
   font-style: normal;
   font-size: 13px;
 }
-.row-mark.firm { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
-.row-mark.leaning { color: var(--warn-ink); background: color-mix(in srgb, var(--amber) 22%, transparent); }
-.row-mark.lost { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
-.row-mark.absent, .row-mark.unmarked { color: var(--grey); background: var(--ink-4); font-weight: 500; }
+.row-mark.firm { color: var(--good); }
+.row-mark.leaning { color: var(--warn-ink); }
+.row-mark.lost { color: var(--bad); }
+.row-mark.absent, .row-mark.unmarked { color: var(--grey); font-weight: 500; }
 .row-mark.stale { opacity: 0.7; }
 .row-sheet .book-list li {
   cursor: pointer;
@@ -3209,12 +3331,12 @@ body.cold-open .topbar {
   gap: 4px 8px;
   width: 100%;
   min-height: 44px;
-  margin: 4px 0 2px;
-  padding: 6px 12px;
+  margin: 0 0 2px;
+  padding: 6px 0;
   border: 0;
-  border-radius: var(--r-md);
-  background: var(--fill);
-  box-shadow: var(--lift);
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
   color: var(--ink);
   font: inherit;
   font-size: 15px;

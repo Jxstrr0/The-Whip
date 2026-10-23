@@ -83,7 +83,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
       <div class="verdict-row">${stamp(t(dealt ? 'debrief.stamp.deal' : 'debrief.stamp.noDeal'), INK[o] || 'grey', true)}<p class="verdict-line">${esc(t('debrief.' + (dealt && mt.reversal ? 'dealWhip' : o), { first: m.name.first }))}</p></div>
       ${mt.after?.parting ? `<blockquote class="line">${esc(mt.after.parting)}</blockquote>` : ''}
       ${dealt ? `<div class="deal-cols">${terms(mt.deal.offers, t('deal.youGive'), false)}${terms(mt.deal.asks, t('deal.youGet'), true)}</div>${tableTotal(state, mt.deal, mt.mpId)}` : ''}
-      <p class="debrief-facts"><span class="k">${esc(t('debrief.rapport'))}</span> ${r ? delta(r, '') : `<span class="stake flat"><i aria-hidden="true">●</i> ${esc(t('stake.flat'))}</span>`}${learned ? ` <span class="muted">${esc(learned)}</span>` : ''}</p>
+      <p class="debrief-facts"><span class="k">${esc(t('debrief.rapport'))}</span> ${delta(r, '')}${learned ? ` <span class="muted">${esc(learned)}</span>` : ''}</p>
       ${owed ? `<p class="hint">${t('debrief.ledger')}</p>` : ''}
       <div class="choices">
         ${owed ? `<button class="btn" data-act="ledger">${t('tool.ledger')}</button>` : ''}
@@ -106,7 +106,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
     if (done?.outcome) return verdict(state, done);
     const left = e.slots - e.used;
     const whip = e.whipCall
-      ? `<div class="whip-call"><p><b>${t('office.whipCall')}</b></p><p>${esc(state.bills[e.whipCall.billId]?.title || '')}</p>
+      ? `<div class="whip-call"><p class="whip-call-label">${t('office.whipCall')}</p><p class="whip-call-bill">${esc(state.bills[e.whipCall.billId]?.title || '')}</p>
          ${stakeBrief(state, state.bills[e.whipCall.billId])}
          <button class="btn primary" data-act="whip" ${left < 1 ? 'disabled' : ''}>${t('office.go')}</button></div>`
       : '';
@@ -160,7 +160,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
     const stakes = bill ? (later ? stakeBrief(state, bill) : stakePanel(state, bill)) : '';
     const head = `<div class="sheet-handle"></div>
       <header class="card-head"><span class="chip" style="background:${partyColor(state, m)}"></span>
-        <div class="who"><h2>${esc(mpName(m))}</h2><p><span class="badge mood-${mt.mood}">${t('mood.' + mt.mood)}</span> ${mt.phase === 'talk' ? t('talk.turn', { n: mt.turn, max: mt.maxTurns }) : ''}</p></div></header>
+        <div class="who"><h2>${esc(mpName(m))}</h2><p><span class="badge mood-${mt.mood}">${t('mood.' + mt.mood)}</span>${mt.phase === 'talk' ? ` · ${t('talk.turn', { n: mt.turn, max: mt.maxTurns })}` : ''}</p></div></header>
       ${later ? '' : jobLine(state, 'meeting', { situation: mt.situation, pos: mt.billId ? t('vote.' + state.bills[mt.billId]?.positions[state.mps[state.player.mpId].party]) : '' })}
       ${stakes}`;
     if (mt.phase === 'talk') {

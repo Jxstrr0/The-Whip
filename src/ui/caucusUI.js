@@ -139,7 +139,7 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
     const you = r.target === 'whip';
     const choices = you ? ['back', 'quiet'] : ['back', 'join', 'quiet'];
     const label = (k) => t((you ? 'caucus.revoltYou' : 'caucus.revolt') + k[0].toUpperCase() + k.slice(1));
-    return `<h3>${t('caucus.revolt')}</h3><blockquote class="line revolt">${esc(r.text)}</blockquote>${r.choice ? `<p class="note">${esc(label(r.choice))}.</p>` : `<div class="choices">${choices.map((k) => `<button class="btn" data-revolt="${k}">${label(k)}</button>`).join('')}</div>`}`;
+    return `<h3>${t('caucus.revolt')}</h3><blockquote class="line revolt">${esc(r.text)}</blockquote>${r.choice ? `<p class="note">${esc(label(r.choice))}.</p>` : `<div class="choices replies">${choices.map((k) => `<button class="btn" data-revolt="${k}">${label(k)}</button>`).join('')}</div>`}`;
   }
 
   // From Act 5: free the week's whipped line, or put a member out of caucus (with a confirm, since it can't

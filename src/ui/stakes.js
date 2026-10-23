@@ -1,32 +1,34 @@
-// What an ask means at home: riding-standing and whip numbers as small colour-coded chips (arrow and sign as well
-// as colour, so they read without it), a panel for a bill, and a chip for a deal card.
+// What an ask means at home: riding-standing and whip numbers set as ink (a signed tabular numeral in colour,
+// the unit in plain ink; the sign carries the meaning, so it reads without colour), a ruled table for a bill,
+// and a chip for a deal card.
 import { t, esc } from './text.js';
 import { billStakes, cardStakes } from '../sim/stakes.js';
 
-const MINUS = '−';
+const MINUS = '\u2212';
 
-// One number: ▲ +4 riding (good), ▼ −6 riding (bad), ● no change (flat).
+// One number: +4 riding (good), \u22126 riding (bad), no change (flat).
 export function delta(n, what) {
   const cls = n > 0 ? 'up' : n < 0 ? 'down' : 'flat';
-  const mark = n > 0 ? '▲' : n < 0 ? '▼' : '●';
-  const num = n > 0 ? `+${n}` : n < 0 ? `${MINUS}${-n}` : t('stake.flat');
-  return `<span class="stake ${cls}"><i aria-hidden="true">${mark}</i> ${n === 0 ? esc(num) : `${esc(num)} ${esc(what)}`}</span>`;
+  if (n === 0) return `<span class="stake flat">${esc(t('stake.flat'))}</span>`;
+  const num = n > 0 ? `+${n}` : `${MINUS}${-n}`;
+  return `<span class="stake ${cls}"><b>${esc(num)}</b> ${esc(what)}</span>`;
 }
 
 const sideWord = (v) => `<b class="${v}">${esc(t('vote.' + v).toUpperCase())}</b>`;
 
-// The riding's view and what each way of voting does, for a scene about a bill (the whip's call, a recruiter, the bells).
+// The riding's view and what each way of voting does, for a scene about a bill (the whip's call, a recruiter, the bells):
+// a small ruled table, the riding's lean as its heading, one row per way of voting, the numbers in their own columns.
 export function stakePanel(state, bill) {
   const me = state.mps[state.player.mpId];
   const s = billStakes(state, bill);
   const lean = s.lean
     ? t('stake.lean.' + s.lean.level, { riding: esc(me.riding.name), side: sideWord(s.lean.side) })
     : t('stake.lean.none', { riding: esc(me.riding.name) });
-  const row = (label, st) => `<li><span class="what">${esc(label)}</span><span class="nums">${delta(st.riding, t('stake.riding'))}${delta(st.whip, t('stake.whip'))}</span></li>`;
+  const row = (label, st) => `<tr><th scope="row">${esc(label)}</th><td>${delta(st.riding, t('stake.riding'))}</td><td>${delta(st.whip, t('stake.whip'))}</td></tr>`;
   const rows = s.whipped
-    ? `<ul class="stake-rows">${row(t('stake.withLine', { pos: t('vote.' + s.position) }), s.line)}${row(t('stake.against', { pos: t('vote.' + (s.position === 'yea' ? 'nay' : 'yea')) }), s.rebel)}</ul>`
-    : `<p class="muted small">${esc(t('stake.free'))}</p>`;
-  return `<div class="stakes"><p class="stake-lean">${lean}</p>${rows}</div>`;
+    ? `<tbody>${row(t('stake.withLine', { pos: t('vote.' + s.position) }), s.line)}${row(t('stake.against', { pos: t('vote.' + (s.position === 'yea' ? 'nay' : 'yea')) }), s.rebel)}</tbody>`
+    : `<tbody><tr><td colspan="3" class="muted small">${esc(t('stake.free'))}</td></tr></tbody>`;
+  return `<table class="stakes"><caption class="stake-lean">${lean}</caption>${rows}</table>`;
 }
 
 // The same thing in one short block, for a card that only needs to hint at it (the whip's call on the evening board).
@@ -42,7 +44,7 @@ export function stakeBrief(state, bill) {
 export function cardChip(state, card, side, mpId) {
   const s = cardStakes(state, card, side, mpId);
   if (!s) return '';
-  if (s.note === 'home') return `<span class="stake up"><i aria-hidden="true">\u25B2</i> ${esc(t('stake.home'))}</span>`;
+  if (s.note === 'home') return `<span class="stake up"><b>+</b> ${esc(t('stake.home'))}</span>`;
   return delta(s.riding, t('stake.riding'));
 }
 
