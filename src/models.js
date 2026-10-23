@@ -139,6 +139,7 @@ export function instancedModel(parent, name, placements, { pack = 'furniture', o
 // material should ignore vertex colours, since the kit mesh's are painted for the shared one.
 export function placeModel(parent, name, { pack = 'furniture', x = 0, y = 0, z = 0, rotY = 0, scale = 1, swap = null, onReady } = {}) {
   const holder = new THREE.Group();
+  holder.name = name;
   holder.position.set(x, y, z);
   holder.rotation.y = rotY;
   holder.scale.setScalar(scale);
