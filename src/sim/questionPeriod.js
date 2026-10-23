@@ -1,7 +1,7 @@
 // Question Period: the one place a backbencher gets the cameras. A slot comes round on the rota, or the whip
 // delivers one they promised. You stand, choose how to frame the question, the minister answers, the gallery
 // reacts. The whip, the riding and the press each notice a different way of asking.
-import { data, tuning } from './config.js';
+import { data, tuning, say } from './config.js';
 import { withRng } from './rng.js';
 import { registerActions } from './actions.js';
 import { hooks, resolvers, log, isSittingWeek } from './pacing.js';
@@ -171,12 +171,12 @@ export function ask(state, rng, framing) {
   const events = { lob: 'qpLob', parried: 'qpParried', hit: 'qpHit', home: 'qpRiding' };
   if (rng.chance(E.press)) {
     const issue = framing === 'offScript' || !qp.bill ? qp.local.issue : qp.bill;
-    fx.headline = headline(state, rng, events[outcome], { minister: fullName(minister), bill: qp.bill || issue, issue, party: party?.name || 'The party' });
+    fx.headline = headline(state, rng, events[outcome], { minister: fullName(minister), bill: qp.bill || issue, issue, party: party?.name || say('who.party') });
   }
   qp.effects = fx;
   p.record.questions = (p.record.questions || 0) + 1;
-  remember(state, 'firstQuestion', { sub: outcome, once: true, ctx: { minister: fullName(minister) || 'the minister', topic: framing === 'offScript' || !qp.bill ? qp.local.issue : qp.bill }, people: [person(state, minister?.id, data().memoir.notes.minister)] });
-  log(state, `Question Period: you asked ${fullName(minister) || 'the minister'} about ${framing === 'offScript' ? qp.local.issue : qp.bill || qp.local.issue}. ${qp.gallery}`, 'info');
+  remember(state, 'firstQuestion', { sub: outcome, once: true, ctx: { minister: fullName(minister) || say('who.minister'), topic: framing === 'offScript' || !qp.bill ? qp.local.issue : qp.bill }, people: [person(state, minister?.id, data().memoir.notes.minister)] });
+  log(state, say('log.qp.asked', { minister: fullName(minister) || say('who.minister'), issue: framing === 'offScript' ? qp.local.issue : qp.bill || qp.local.issue, gallery: qp.gallery }), 'info');
 }
 
 function finish(state, rng) {

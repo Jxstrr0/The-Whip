@@ -1243,6 +1243,39 @@ Bill titles went into sentences bare: "waiting for Congestion Charge Enabling Ac
 
 **Noticed, not fixed:** a rival whip's "was seen leaving the … whip's office" note can land several times in a row in the log, once for each party they visit. It's in `src/sim/rivals.js`, not in this change.
 
+## Playtest: readability pass two
+
+Kelbo's picks from the second list: 1 yes (one line after a few weeks), 2 yes, 3 fold away, 4 fold away, 5 yes, numbers first, 6 shorten a touch, 7 tidy it up.
+
+- **"Your job here" folds to one line.** For the first three weeks (`pacing.jobFullWeeks` in tuning) it reads in full. After that it's one line with an arrow; tap it for the rest. It stays in full in scenarios, where the brief matters, and folds from the first week of a second Parliament. The office box goes from 88px to 36px.
+- **Your aim sits on the date bar.** The separate strip above the bar is gone. The bar reads "Tue 23 Dec" on the left and a small chip on the right with the act's aim and its count: "Get noticed 4/8", "Vacancy in 2 wk", "Row votes 3/5", "Caucus 61/70". Tap the chip for the full aim sheet, as before. On narrow phones (360–390px wide) the chip moves down beside the latest news so the date never gets squeezed. The bar is 72px tall, down from 100px. Days and months use short names from tuning (`calendar.daysShort`, `calendar.monthsShort`), and a constituency week adds "· at home".
+- **Caucus grievances fold away.** They now sit under "Grievances 3" with an arrow. Once opened they stay open while you listen, speak or whisper.
+- **The bill summary folds away on the vote.** "What the bill does" is one line until you tap it. The bells, the party line and your choices move up the screen.
+- **The weekend paper leads with the numbers.** "By the numbers" (riding standing, the whip's view, times you broke with the line, recorded divisions, your aim) is now a boxed panel right under the masthead. The lead story and the polls follow.
+- **Question Period is shorter.** The slot and the minister share one line ("Wednesday afternoon · to Brigid Burrell, Minister"). I had trimmed the 14 longest questions too, but the Question Period content pass above replaced the questions first. Its longest runs to about 150 characters, so its writing stays as is. On a Pixel 7 the sheet now fits without scrolling (569 of 569px; it was 609 of 580).
+- **Text out of the code.** These lines moved into `data/strings.en.json`: the reasons people come to your door ("The whip's office wants to see you about…"), the names of deal cards, the caucus line ("whipped YEA" / "a free vote"), what you hear when you listen, the notes after you speak, the "no favours left" desk note, and a few MP card fields. Excuses for Friday leave moved to `career.json`. The sim reads strings through a small `say()` in `src/sim/config.js`, which works like the UI's `t()`.
+
+**Small calls:**
+- Found while checking landscape: the side sheet had been widened to 500px, but the date bar and the camera aim (`src/framing.js`) still assumed 440px, so the sheet covered the end of the bar. Both now read one width (`--side-w`), and the chip shows in full.
+- Still in the code: the sim's own log lines (about 60, across 15 files: "You crossed the floor to…", the confidence and election lines, and similar). They're specific and read well. Moved in the next entry.
+
+**Checked:**
+- `tests.html` 118 of 118 after merging main.
+- Played from week 3 to week 6 at phone size, portrait and landscape: office, caucus with the fold opened, a division with the summary opened, the riding, Question Period and the weekend paper. The bar checked at 360, 375, 390 and 412px wide. No console errors.
+
+## Playtest: the sim's log lines move to data
+
+Kelbo asked for the rest of the text to come out of the code.
+
+- **Every line the sim writes now lives in `data/strings.en.json`.** That covers the log, the ledger notes, the rival whips' leaks, the vote results, the Speaker's question, the stage names ("second reading", "the motion") and the fallback names ("The whip", "someone else"). It's 147 new keys across 17 files in `src/sim/`. They're grouped by prefix: `log.*` for log lines, `who.*` for names, `stage.*`, `question.*` and `tally.*`. The code calls `say('log.meeting.deal', { who, give, get })` and the filler does the rest, including the capital at the start of a sentence.
+- **Nothing reads differently, bar one fix.** Six whole careers played by the bot gave 3,803 log lines, and the before and after logs match word for word, with one exception. A voice vote used to log "carried, carried on a voice vote". It now reads "… at second reading: carried on a voice vote." The lines the bot never reached were checked by matching every `{slot}` in the data against what the code passes.
+
+**Small calls:** the riding thresholds in the town hall line (60 and 40) are still numbers in the code, as they were. Moving them to tuning is a separate change.
+
+**Checked:**
+- `tests.html` 118 of 118.
+- Played at phone size, portrait and landscape: office, caucus, a division, the riding, Question Period and the weekend paper. No console errors.
+
 ## The week's vote (part one: the sim)
 
 Every sitting week now builds to one vote. On Monday the House leader picks the whipped vote that will decide the week and puts it down for Thursday. The pick goes to a confidence vote first, then the closest and most watched. All week the rooms point at that vote. On Thursday it goes last on the paper as a recorded division you stand for, and the members you brought over since Monday are read out as yours. This answers "the core loop needs a little something": the week now has a spine, and what you do Monday to Wednesday pays off on Thursday.

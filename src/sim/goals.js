@@ -10,6 +10,13 @@ export function isGuidedWeek(state) {
   return state.date.absWeek === 0 && (state.player.record?.parliaments ?? 1) === 1 && state.mode?.kind !== 'scenario';
 }
 
+// "Your job here" is written out in full for the first weeks of a first Parliament and for a scenario's week;
+// after that the player knows the rooms and it folds to one line they can open.
+export function jobFolds(state) {
+  if (state.mode?.kind === 'scenario') return false;
+  return (state.player.record?.parliaments ?? 1) > 1 || state.date.absWeek >= tuning().pacing.jobFullWeeks;
+}
+
 // The act's aim. Each counter is { key, have, need }; `limit` counters are ones to stay under or above,
 // not reach. `waiting` is set once the counters are done and the next step is up to the House; `fell` when
 // this Act 2 follows a fall from the whip's office.

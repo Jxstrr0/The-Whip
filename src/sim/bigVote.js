@@ -105,7 +105,7 @@ function announce(state, rng, bill) {
   const ctx = { bill: billName(bill), side: bv.side.toUpperCase(), ours: bv.start.ours, theirs: bv.start.theirs, short: Math.max(0, bv.start.theirs - bv.start.ours + 1) };
   const pool = bv.outlook === 'close' ? (bv.start.ours > bv.start.theirs ? L.setClose : L.setShort) : bv.outlook === 'safe' ? L.setSafe : L.setLong;
   log(state, fill(rng.pick(pool), ctx), 'bill');
-  headline(state, rng, { close: 'bigVoteAhead', safe: 'bigVoteSafe', long: 'bigVoteLong' }[bv.outlook], { bill: billName(bill), ours: state.parties[state.mps[state.player.mpId].party]?.name || 'the party' });
+  headline(state, rng, { close: 'bigVoteAhead', safe: 'bigVoteSafe', long: 'bigVoteLong' }[bv.outlook], { bill: billName(bill), ours: state.parties[state.mps[state.player.mpId].party].name });
 }
 
 // Runs before every other morning hook, so the week's other business (the row's set piece, the deputy's

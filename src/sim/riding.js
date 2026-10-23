@@ -1,6 +1,6 @@
 // The riding: Friday leave from the whip, constituents with cases, the local reporter, the riding
 // association president, town halls, announcements, riding standing and the nomination.
-import { data, tuning } from './config.js';
+import { data, tuning, say } from './config.js';
 import { withRng } from './rng.js';
 import { registerActions } from './actions.js';
 import { hooks, resolvers, log, isSittingWeek } from './pacing.js';
@@ -124,7 +124,7 @@ export function answerReporter(state, index) {
   p.ridingStanding = clamp(p.ridingStanding + opt.standing, 0, 100);
   const whip = state.parties[state.mps[p.mpId].party]?.chiefWhip;
   if (whip) adjustRapport(state, whip, opt.whip);
-  log(state, `The ${fillRiding(state, '{town}')} paper quotes you: “${fillRiding(state, opt.text)}”`, 'riding');
+  log(state, say('log.riding.quoted', { town: fillRiding(state, '{town}'), text: fillRiding(state, opt.text) }), 'riding');
   v.lastWord = null;
   v.results.push({ kind: 'reporter', stance: opt.stance });
   next(v);
@@ -195,7 +195,7 @@ export function answerTownHall(state, index) {
     // A good room spreads by word of mouth; a bad one spreads faster.
     const swing = Math.round((th.crowd - 50) / 8);
     state.player.ridingStanding = clamp(state.player.ridingStanding + swing, 0, 100);
-    log(state, `Town hall in ${v.town}: the crowd ended ${th.crowd >= 60 ? 'on your side' : th.crowd <= 40 ? 'against you' : 'unconvinced'}.`, 'riding');
+    log(state, say('log.riding.townHall.' + (th.crowd >= 60 ? 'won' : th.crowd <= 40 ? 'lost' : 'even'), { town: v.town }), 'riding');
     // A full hall is sometimes a story in the weekend paper.
     withRng(state, (rng) => {
       if (rng.chance(tuning().media.townHallPress)) headline(state, rng, 'townHall', { bill: billName(v.billId && state.bills[v.billId]) });
@@ -210,7 +210,7 @@ export function announceProject(state) {
   if (!p.pendingProject || !state.ridingVisit) return null;
   p.pendingProject = false;
   p.ridingStanding = clamp(p.ridingStanding + tuning().player.ridingProjectStanding, 0, 100);
-  log(state, `You announce new funding for ${state.ridingVisit.town}. The local paper puts it on the front page.`, 'riding');
+  log(state, say('log.riding.project', { town: state.ridingVisit.town }), 'riding');
   state.ridingVisit.announced = true;
   return {};
 }
@@ -220,7 +220,7 @@ export function endVisit(state) {
   if (!v) return;
   const p = state.player;
   const d = p.ridingStanding - v.startStanding;
-  log(state, `A day in ${state.mps[p.mpId].riding.name}: riding standing ${d >= 0 ? '+' : ''}${d}.`, 'riding');
+  log(state, say('log.riding.day', { riding: state.mps[p.mpId].riding.name, d: d >= 0 ? `+${d}` : d }), 'riding');
   p.lastRidingWeek = state.date.absWeek;
   state.ridingVisit = null;
 }
@@ -242,7 +242,7 @@ hooks.riding.push((state, rng) => {
   if (!sitting && state.date.dayOfWeek !== 1) return null;
   if (sitting && state.date.dayOfWeek !== tuning().calendar.ridingDay) return null;
   if (sitting && !leaveGranted(state, rng)) {
-    log(state, "The whip's office wants you in Ostrava this Friday. The riding will have to wait.", 'riding');
+    log(state, say('log.riding.kept'), 'riding');
     p.ridingStanding = clamp(p.ridingStanding - 1, 0, 100);
     return null;
   }
@@ -254,7 +254,7 @@ hooks.riding.push((state, rng) => {
     return { kind: 'riding', important: true, needsChoice: true };
   }
   p.ridingStanding = clamp(p.ridingStanding + 1, 0, 100);
-  log(state, `Friday in ${state.mps[p.mpId].riding.name}: coffee, two handshakes and a ribbon cutting.`, 'riding');
+  log(state, say('log.riding.friday', { riding: state.mps[p.mpId].riding.name }), 'riding');
   return null;
 });
 
