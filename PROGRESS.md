@@ -1509,3 +1509,31 @@ The third of Kelbo's five picks. The paper was one cream everywhere: the same sh
 - Played through from election night: the cold open under the lamp, opening day on cream with the fade visible as the chamber comes in, the shared room and the whip's first meeting under the strip light, Question Period and the order paper by day. No console errors in play.
 
 **Next:** E (the feel pass): sheet motion with a drag and a peek, counters that tick, stamps that press, a dolly on the visitor's arrival.
+
+## UI refresh, part four: the feel pass
+
+The fourth of Kelbo's five picks. The paper was handled by cuts: a sheet appeared at its height, a number was its new value the instant the sheet redrew, a stamp blinked on, a reply fired on the tap and the visitor was cut to. Now the paper moves under the thumb, the numbers run to where they are going, a stamp comes down and is felt, a reply is pressed before it goes, and the camera follows a visitor in.
+
+**What changed.**
+
+- **The drawer is dragged** (`src/ui/drawer.js`). The handle still swaps half and full on a tap; now it also follows the thumb, and on release the sheet settles on the nearest stop, or one stop along the way it was thrown. There are three stops: *peek* (the handle, the name and the line under it, with the whole room to look at), *half* and *full*. The settle is a short eased run of the height (`look.feel.sheet`, 340 ms); the camera reframes the person as it goes because the sheet reports its height as it moves. On a phone on its side the sheet is a side sheet and a drag does nothing, as before.
+- **Numbers tick** (`src/ui/feel.js`). The stakes on a sheet (+4 riding, −8 whip) count from their last value to the new one, keeping the sign and the minus, over `look.feel.tick` (520 ms); a sheet freshly shown counts up from nothing. The count board's yeas and nays run up to each new count during the division (`look.feel.tickFast`, 220 ms) instead of jumping every few seats.
+- **Stamps press**. The stamp comes in from above, pressed a touch too far into the paper at the bottom of the stroke, and comes up with the ink bled a hair at the edge (`look.feel.stamp`, 260 ms). The phone gives one short buzz when a stamp that wasn't on the page lands on it: CARRIED and DEFEATED on the count board, HELD and LOST, ELECTED, NO DEAL. A deal keeps its own buzz and doesn't double up.
+- **Replies are pressed before they go**. A tap on a reply inks the row and stands the others down, and the action follows a beat later (`look.feel.press`, 140 ms), so the choice is seen taken before the turn moves. Talk replies, the riding's answers, the Question Period framings and the caucus revolt choices all take it.
+- **The visitor is followed in**. When someone walks into the office the camera dollies from the door view to its place over your shoulder across `look.feel.dolly` seconds (2.2), eased at both ends, arriving as they sit, instead of cutting and settling. Someone already seated (the cold open, a restored game) is still cut to.
+- **Every timing is in tuning** (`look.feel`) and the CSS reads the same numbers through custom properties. Under `prefers-reduced-motion` the sheet goes straight to its stop, numbers are set at once, stamps and sheets don't animate and a reply fires on the tap.
+
+**Small calls:**
+- A throw takes the sheet one stop in the thrown direction, not to the end of the run, so a flick from full lands on half and a second flick on peek. It is easier to control and a peek is rarely what a flick from full means.
+- At peek the person's line stays in the room beside them (it only comes back onto the paper at full), so a peek is a way to look at the room with the line still readable.
+- The riding visitor is not dollied: the riding camera's desk shot already holds while a constituent walks in, and a move there made the small office swim.
+- The count board's tick is short because the next count comes a few seats later; a long one would never catch up.
+- Seen on the way through, not fixed here: on the count board the date bar's aim chip is cut to a letter beside the Continue and skip buttons at 390 px. That is the bar's layout from round two, not this pass; noted for the tidy.
+
+**Checked:**
+- `tests.html` green (a new test pins the timings, the three stops, the snap rule for drags and throws, and the signed number read and write).
+- At phone size in portrait: a slow drag down to peek, a drag with the sheet mid-way under the thumb, a flick up to half, a tap to full and back, a small drag that settles back to half; the number tick from 0 to +8; a reply pressed, its siblings standing down, and the next turn 140 ms later; the office arrival from the door view to over the shoulder. No console errors.
+- In landscape the side sheet ignores a drag. With reduced motion on, the sheet is at its stop the moment the thumb lifts and the reply fires on the tap.
+- Headless frames run at a few a second here, so the settle and the dolly were checked by their numbers (the height keyframes, the stop reached, the camera's end shot) rather than by eye; the motion itself needs Kelbo's phone.
+
+**Next:** D (the desk): the whip's call as a memo pad with a clip, index-card replies, the desk calendar.

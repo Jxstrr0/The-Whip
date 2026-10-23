@@ -4,6 +4,7 @@ import { data } from '../sim/config.js';
 import { fillRiding, caseStakes } from '../sim/riding.js';
 import { delta } from './stakes.js';
 import { drawer, HANDLE } from './drawer.js';
+import { take } from './feel.js';
 
 export function createRidingUI(root, { getState, dispatch, getRoom = () => null }) {
   const sheet = document.createElement('section');
@@ -84,9 +85,9 @@ export function createRidingUI(root, { getState, dispatch, getRoom = () => null 
     on('[data-act="townhall"]', { type: 'ridingTownHall' });
     on('[data-act="announce"]', { type: 'ridingAnnounce' });
     on('[data-act="home"]', { type: 'resolve' });
-    sheet.querySelectorAll('[data-pres]').forEach((b) => b.addEventListener('click', () => dispatch({ type: 'ridingPresident', index: Number(b.dataset.pres) })));
-    sheet.querySelectorAll('[data-rep]').forEach((b) => b.addEventListener('click', () => dispatch({ type: 'ridingReporter', index: Number(b.dataset.rep) })));
-    sheet.querySelectorAll('[data-th]').forEach((b) => b.addEventListener('click', () => dispatch({ type: 'ridingAnswer', index: Number(b.dataset.th) })));
+    sheet.querySelectorAll('[data-pres]').forEach((b) => b.addEventListener('click', () => take(b, () => dispatch({ type: 'ridingPresident', index: Number(b.dataset.pres) }))));
+    sheet.querySelectorAll('[data-rep]').forEach((b) => b.addEventListener('click', () => take(b, () => dispatch({ type: 'ridingReporter', index: Number(b.dataset.rep) }))));
+    sheet.querySelectorAll('[data-th]').forEach((b) => b.addEventListener('click', () => take(b, () => dispatch({ type: 'ridingAnswer', index: Number(b.dataset.th) }))));
   }
   return { render, sheet };
 }

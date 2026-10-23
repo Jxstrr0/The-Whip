@@ -37,6 +37,7 @@ import { createStartMenu, createGameMenu, createSettingsSheet } from './ui/menus
 import { createAudio } from './audio.js';
 import { getSettings, setSetting, onSettings, applySettings } from './settings.js';
 import { buzz } from './haptics.js';
+import { feelVars, tickSheet, feelStamps } from './ui/feel.js';
 import { watchGlossary, glossAll, unglossAll } from './ui/gloss.js';
 import { resumeNote } from './sim/goals.js';
 import { createLedger } from './ui/ledger.js';
@@ -378,6 +379,7 @@ function buildWorld() {
     // The paper takes the room's light (css/style.css, "Light").
     document.documentElement.dataset.light = lightFor(state, name);
     document.documentElement.style.setProperty('--light-fade', `${tuning().look.light.fade}ms`);
+    feelVars();
     const me = state.mps[state.player.mpId];
     const colleague = name === 'office' && state.player.act < 2 ? deskmate(state, me) : null;
     rooms.show(name, {
@@ -413,6 +415,9 @@ function buildWorld() {
       hud?.render();
     }
     ledger.refresh();
+    // Numbers tick to their new values and a fresh stamp is felt (src/ui/feel.js).
+    for (const el of ui.querySelectorAll('.sheet, .count-board, .agenda')) tickSheet(el);
+    feelStamps(ui);
     // Meeting outcomes, calls and deliveries show briefly as a toast.
     const fresh = state.log.slice(lastLog).filter((l) => (l.kind === 'meeting' || l.kind === 'career') && !l.quiet);
     lastLog = state.log.length;

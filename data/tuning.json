@@ -266,6 +266,14 @@
       "nightFrom": 0.7,
       "lampFromAct": 2
     },
+    "feel": {
+      "sheet": 340,
+      "tick": 520,
+      "tickFast": 220,
+      "stamp": 260,
+      "press": 140,
+      "dolly": 2.2
+    },
     "fidgetEvery": 14
   },
   "tools": {

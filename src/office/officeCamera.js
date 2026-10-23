@@ -38,6 +38,9 @@ export function createOfficeCamera(camera, { empty = SHOTS.empty } = {}) {
   // are small, so only a little) so more of them fits in the clear part of the screen.
   let back = 0;
   const away = new THREE.Vector3();
+  // A dolly: a timed move from where the camera is to the shot, eased both ends, for a visitor walking in
+  // (the exponential settle below is for the small moves; a cut-and-settle on an arrival read as a cut).
+  const dolly = { on: false, t: 0, len: 0, pos: new THREE.Vector3(), look: new THREE.Vector3() };
   camera.position.copy(pos);
   camera.lookAt(look);
   const goalDrop = () => (fixedDrop ?? dropFor(clear, camera.fov, pos.distanceTo(look) + back, { at: 0.38, minTop: 0.13 }));
@@ -50,6 +53,7 @@ export function createOfficeCamera(camera, { empty = SHOTS.empty } = {}) {
       // A shot with a subject frames them from the sheet's height; an empty room aims where its set says.
       subject = !!s.subject;
       fixedDrop = s.subject ? null : s.drop ?? 1.15;
+      dolly.on = false;
       if (snap) {
         pos.copy(goalPos);
         look.copy(goalLook);
@@ -58,13 +62,32 @@ export function createOfficeCamera(camera, { empty = SHOTS.empty } = {}) {
         back = goalBack();
       }
     },
+    // Move to a shot over `seconds`, starting from wherever the camera is now.
+    dolly(name, seconds) {
+      this.shot(name);
+      if (!(seconds > 0)) return;
+      dolly.on = true;
+      dolly.t = 0;
+      dolly.len = seconds;
+      dolly.pos.copy(pos);
+      dolly.look.copy(look);
+    },
     setClear(f) {
       clear = f;
     },
     update(dt) {
       const k = 1 - Math.exp(-dt * 2.5);
-      pos.lerp(goalPos, k);
-      look.lerp(goalLook, k);
+      if (dolly.on) {
+        dolly.t += dt;
+        const x = Math.min(1, dolly.t / dolly.len);
+        const u = x * x * (3 - 2 * x);
+        pos.lerpVectors(dolly.pos, goalPos, u);
+        look.lerpVectors(dolly.look, goalLook, u);
+        if (x >= 1) dolly.on = false;
+      } else {
+        pos.lerp(goalPos, k);
+        look.lerp(goalLook, k);
+      }
       drop += (goalDrop() - drop) * k;
       sideOn += ((subject ? 1 : 0) - sideOn) * k;
       back += (goalBack() - back) * k;
