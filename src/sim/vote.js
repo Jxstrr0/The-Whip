@@ -51,7 +51,8 @@ export function putQuestion(state, item, rng, overrides = {}) {
     if (!it.present || paired.has(id) || it.vote !== losing) continue;
     if (it.position === losing || Math.abs(it.score) > tuning().vote.riseConviction) rising++;
   }
-  const division = rising >= tuning().vote.divisionMinRising || !!bill.confidence;
+  // Confidence votes and the week's big vote always go to a standing count.
+  const division = rising >= tuning().vote.divisionMinRising || !!bill.confidence || !!item.big;
   return { item, bill, intents, paired, voice: { yeas, nays, carried: voiceCarried }, division };
 }
 

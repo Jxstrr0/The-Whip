@@ -268,10 +268,11 @@ export function advanceBill(state, bill, carried, rng) {
 export function todaysItems(state) {
   const today = dayIndex(state.date);
   const max = tuning().bills.votesPerDayMax;
+  const big = (b) => (b.id === state.bigVote?.billId && b.nextVote === state.bigVote.day ? 1 : 0);
   const due = Object.values(state.bills)
     .filter((b) => b.status === 'active' && b.nextVote != null && b.nextVote <= today)
-    .sort((a, b) => (b.confidence ? 1 : 0) - (a.confidence ? 1 : 0) || a.nextVote - b.nextVote || a.id.localeCompare(b.id));
-  // Overflow rolls to tomorrow rather than vanishing.
+    .sort((a, b) => big(b) - big(a) || (b.confidence ? 1 : 0) - (a.confidence ? 1 : 0) || a.nextVote - b.nextVote || a.id.localeCompare(b.id));
+  // Overflow rolls to tomorrow rather than vanishing. The week's big vote is never the one that rolls.
   for (const b of due.slice(max)) b.nextVote = sittingDayAfter(state, 1);
   return due.slice(0, max).map((b) => ({ billId: b.id, stage: b.stage }));
 }

@@ -12,6 +12,7 @@ import { baseScore, scoreToVote } from './mp.js';
 import { remember, person } from './memoir.js';
 import { canUse, canRelease, expelCandidates } from './tools.js';
 import { billName } from './bills.js';
+import { bigVoteBill } from './bigVote.js';
 import { fill as fillSlots } from './fill.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -46,12 +47,15 @@ export function caucusSeating(state, partyId) {
   return { head, rest: rest.map((m) => m.id) };
 }
 
-// The week's key question: the player's dilemma if there is one, else the most visible whipped bill.
+// The week's key question: the first week's dilemma, then the week's big vote, else the player's dilemma or
+// the most visible whipped bill.
 function keyBill(state) {
   const me = state.mps[state.player.mpId];
   const week = Object.values(state.bills).filter((b) => b.status === 'active' && b.nextVote != null && Math.floor(b.nextVote / 5) === state.date.absWeek);
   const forced = state.player.forceDilemma && state.bills[state.player.forceDilemma];
   if (forced && forced.status === 'active') return forced;
+  const big = bigVoteBill(state);
+  if (big) return big;
   return week.find((b) => dilemmaFor(state, b, baseScore, tuning().pacing)) || week.filter((b) => b.lines[me.party] === 'whipped').sort((a, b) => b.visibility - a.visibility)[0] || null;
 }
 

@@ -13,6 +13,7 @@ import { isKnown, reveal, touch } from './knowledge.js';
 import { lineFor, billName } from './bills.js';
 import { reseat } from './modes.js';
 import { headline } from './media.js';
+import { bigVoteBill } from './bigVote.js';
 
 const SIGN = { yea: 1, nay: -1 };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -92,8 +93,11 @@ export function wantedSide(state, bill, side = null) {
   return baseScore(state, me(state), bill).score >= 0 ? 'yea' : 'nay';
 }
 
-// The next whipped vote the player's party faces, which is what most tools are about.
+// The next whipped vote the player's party faces, which is what most tools are about: the week's big vote
+// while it's still to come.
 export function nextVote(state) {
+  const big = bigVoteBill(state);
+  if (big) return big;
   return Object.values(state.bills)
     .filter((b) => b.status === 'active' && b.nextVote != null)
     .sort((a, b) => a.nextVote - b.nextVote)[0] || null;

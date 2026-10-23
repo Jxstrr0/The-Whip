@@ -10,10 +10,10 @@ const SIGN = { yea: 1, nay: -1 };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
 // Which story leads when a day has several.
-const PRIORITY = ['confidenceLost', 'confidenceLostHandover', 'confidenceSurvived', 'billDefeated', 'playerRebelled', 'rebellion', 'closeVote', 'playerToedLine', 'billPassed'];
+const PRIORITY = ['confidenceLost', 'confidenceLostHandover', 'confidenceSurvived', 'bigVoteLost', 'bigVoteWon', 'billDefeated', 'playerRebelled', 'rebellion', 'closeVote', 'playerToedLine', 'billPassed'];
 // Which story leads the weekend front page when a week has several (the day's lead list, plus what the week
 // turned up outside the division lobby).
-export const FRONT_PRIORITY = ['confidenceLost', 'confidenceLostHandover', 'confidenceSurvived', 'billDefeated', 'playerRebelled', 'expelled', 'walkout', 'rebellion', 'qpHit', 'leak', 'townHall', 'closeVote', 'absence', 'playerToedLine', 'qpRiding', 'qpParried', 'billPassed', 'qpLob', 'routine'];
+export const FRONT_PRIORITY = ['confidenceLost', 'confidenceLostHandover', 'confidenceSurvived', 'bigVoteLost', 'bigVoteWon', 'billDefeated', 'playerRebelled', 'expelled', 'walkout', 'rebellion', 'qpHit', 'leak', 'townHall', 'closeVote', 'absence', 'playerToedLine', 'qpRiding', 'qpParried', 'billPassed', 'qpLob', 'routine'];
 // Stories the player is in: the front page runs their photograph beside these.
 const PLAYER_EVENTS = new Set(['playerRebelled', 'expelled', 'playerToedLine', 'townHall', 'absence', 'qpHit', 'qpParried', 'qpLob', 'qpRiding']);
 
@@ -45,7 +45,15 @@ function storiesOf(state) {
     if (!d?.recorded) continue;
     const bill = state.bills[d.billId];
     const ctx = { bill: billName(bill), yeas: d.yeas.length, nays: d.nays.length };
-    if (bill.confidence && bill.kind !== 'oppositionMotion') {
+    // The week's big vote is written up as the whips' week, won or lost; a confidence vote stays a confidence story.
+    const bv = state.bigVote;
+    const big = bv?.billId === bill.id && bv.day === d.day && !(bill.confidence && bill.kind !== 'oppositionMotion');
+    if (big) {
+      const party = state.parties[me.party];
+      const whip = party?.chiefWhip ? fullName(state.mps[party.chiefWhip]) : 'the Chief Whip';
+      out.push({ event: (bv.side === 'yea') === d.carried ? 'bigVoteWon' : 'bigVoteLost', ctx: { ...ctx, ours: party?.name || 'the party', whip }, bill });
+    }
+    else if (bill.confidence && bill.kind !== 'oppositionMotion') {
       // A fall early in the Parliament hands the House to the opposition; later it means an election.
       const handover = !d.carried && dissolution.canHandOver?.(state);
       const opp = Object.values(state.parties).find((q) => q.role === 'opposition');

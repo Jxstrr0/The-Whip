@@ -22,6 +22,7 @@ import './record.js';
 import './media.js';
 import './election.js';
 import './calendar.js';
+import './bigVote.js';
 import { coldOpenStop } from './coldOpen.js';
 import { remember, person } from './memoir.js';
 
