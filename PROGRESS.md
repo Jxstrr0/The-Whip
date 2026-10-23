@@ -1408,3 +1408,30 @@ The second of Kelbo's five picks. The rooms were built to be looked at and the p
 - Played at phone size in portrait and landscape: the cold open, the whip's call (half and full, the stakes line), a walk-in, a verdict with the parting line, the evening board, the deal table, the ledger, the riding's visitors (farmer, union steward, the reporter) and its end of day, the Act 4 top bar at 390px and 360px. No console errors in play.
 
 **Next:** C (lamplight): the paper tinted by the room and the time of day.
+
+## UI refresh, part three: lamplight
+
+The third of Kelbo's five picks. The paper was one cream everywhere: the same sheet at a nine o'clock sitting, under the office lamp at the end of the day, and with the division bells going. Now the room and the hour light it.
+
+**What changed.**
+
+- **Six lights, one set of paper and ink each** (`css/style.css`, the "Light" block). *Day* is the cream the paper has had. *Grey* is a cooler, flatter page for an overcast, wet or winter sitting. *Bells* is pale and hard, with a tighter edge and no glow, for the division. *Lamp* is amber with a warm pool at the top right corner and a shadow gathering at the foot, for the office in the evening and the riding office once the evenings draw in. *Pendant* is the same amber under a softer, centred pool for the caucus room. *Strip* is a cool, slightly green page for the shared room in Act 1, matching the strip light that set has. Each light also moves the vignette on the room (where it sits and how deep it is).
+- **One rule picks the light** (`src/light.js`, `lightFor`): a division is always bells; the office is strip in Act 1 and lamp from Act 2 (`look.light.lampFromAct` in tuning); the caucus room is pendant; the riding office is lamp on election night and once the day is darker than `look.light.nightFrom` (the same threshold at which that set lights its windows); everything else is day, or grey if the weather is overcast, rain, fog, snow or a storm, or it is winter.
+- **The change fades** rather than cuts (`look.light.fade`, 400 ms): the paper and ink are registered custom properties, so the tokens interpolate as the stop changes room. Chrome, Safari and Firefox fade; a browser without `@property` switches.
+- **Inks hold their contrast** on every paper: the brass label ink, the yea and nay, and the grey go darker under the lamp, and all the inks sit at 4.5:1 or better on their papers (the lamp's secondary ink is the tightest, at 5.4:1).
+- **The date bar says the hour**: "Mon 22 Sep · evening". Morning for the House and the caucus, afternoon for Question Period, a division and the riding, evening for the office (`hourOf` in `src/light.js`, words in `data/strings.en.json`). The long date on the order paper does not carry it.
+- **The paper tints with the light wherever it appears**: the sheets, the note in the room, the top bar's tags, the count board, the toast and the fade behind the sticky buttons all read the tokens; the literal cream that was left in the CSS is gone except where it is text on a dark ground.
+
+**Small calls:**
+- The caucus room gets its own pendant variant of the lamp paper rather than the office's corner pool, because its three pendants hang over the middle of the table.
+- Lamp light in the riding office follows the set's own window rule, so the paper and the windows turn together.
+- The fade is kept under `prefers-reduced-motion`: it is a colour change, not movement.
+- The hour is on the bar only. The order paper's long heading already carries the date, the week and the year, and a fourth part made it crowded.
+- No light is darker than the cream; the inks stay dark on light paper throughout, which is what keeps the type readable in the sun. A true night mode is a different pass.
+
+**Checked:**
+- `tests.html` green (a new test pins each room and stop to its light and hour).
+- Each light forced on the meeting sheet at phone size, portrait and landscape, and sampled: the six papers paint as six papers, and the note in the room follows.
+- Played through from election night: the cold open under the lamp, opening day on cream with the fade visible as the chamber comes in, the shared room and the whip's first meeting under the strip light, Question Period and the order paper by day. No console errors in play.
+
+**Next:** E (the feel pass): sheet motion with a drag and a peek, counters that tick, stamps that press, a dolly on the visitor's arrival.
