@@ -1177,6 +1177,21 @@ Kelbo asked for a clear verdict after each office meeting. When a one-to-one end
 - `tests.html` 116 of 116. The new test covers a deal, a walk-out, closing the card, and at least two partings for every speaker, outcome and mood, with no repeats.
 - Played at phone size, portrait and landscape. The deal and walk-out cards both fit portrait without scrolling. In landscape the side sheet scrolls under its buttons like the other sheets. No console errors.
 
+## Playtest: readability pass
+
+Kelbo asked for a look for bloat in the content and for the UI to read more clearly. The data files turned out lean: no unused tuning, one unused world value, and 9 repeated lines, all on purpose. The bloat was on screen, where scenes explained themselves twice.
+
+- **One explanation per scene.** In the guided first week the office, the bells and the riding each showed a tutorial paragraph under "Your job here" that said the same thing again. The bells' paragraph also said "the doors close in a minute" over a 15-second timer, and the office paragraph said a call costs a block when the button says ½. Those three paragraphs are gone. The first-question note in Question Period and Thursday's morning note keep only their scene-setting. The office goes from 128 words to 85 and now fits a phone without scrolling, with the visitor at your door on screen instead of behind the buttons. The division goes from 151 words to 116.
+- **The whip's call says it once.** The job line, the card title and the card line all said "the whip's office wants to see you". Now the card shows the bill.
+- **Riding cases show what they're worth.** Carry, pass on and decline each carry a riding chip (for example +2, +1, −1), from the same numbers the sim uses (`caseStakes` in `src/sim/riding.js`). Before, only the first-week tutorial said which was worth more. The riding job line now says a carried case stays yours until it's raised in Question Period.
+- **Life events have real titles.** "Something's happened" is now "A colleague's ambition", "Trouble at home", "Trouble in their riding" or "One more Parliament?".
+- **The week paper says your aim once.** The extra line under it ("the whip's file has 0 entries · noticed 2") is gone. The morning paper and the week paper drop the date bar's Continue, since each has its own button. Skip ahead stays.
+- **Smaller fixes.** "Riding standing" stays on one line beside its bar. The rival-score line in career moments moved into the strings file. 11 strings that nothing used were removed.
+
+**Checked:**
+- `tests.html` 116 of 116. The riding case test now also checks that the Carry chip matches what carrying does.
+- Played the guided first week and weeks 3–5 at phone size, portrait and landscape. No console errors.
+
 ## Stake chips restyled (small pass)
 
 The riding / whip +/- chips (the little "▲ +4 riding" and "▼ −6 whip" bubbles on the whip's call, the deal table, the count board and the carry-a-case buttons) got a nicer look: a round filled badge carries the arrow, the pill has a tinted paper fill with a fine border and a soft lift, and the numbers are a touch bolder. The flat "no change" chip is darker for contrast. CSS only (`.stake` in `css/style.css`); the arrow and sign still carry the meaning, colour just backs them up.

@@ -1,5 +1,5 @@
 // The office UI: the evening board (slots, walk-ins, invite, call) and the meeting's talk phase.
-import { t, esc, mpName, partyColor, partyShort, firstWeekHint, jobLine, stamp } from './text.js';
+import { t, esc, mpName, partyColor, partyShort, jobLine, stamp } from './text.js';
 import { fillLine, cardLabel } from '../sim/meetings.js';
 import { renderDealTable } from './dealTable.js';
 import { stakePanel, stakeBrief, delta, cardChip, tableTotal } from './stakes.js';
@@ -94,7 +94,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
     if (done?.outcome) return verdict(state, done);
     const left = e.slots - e.used;
     const whip = e.whipCall
-      ? `<div class="whip-call"><p><b>${t('office.whipCall')}</b></p><p>${esc(fillLine(state, e.whipCall.reason, { bill: e.whipCall.billId }))}</p>
+      ? `<div class="whip-call"><p><b>${t('office.whipCall')}</b></p><p>${esc(state.bills[e.whipCall.billId]?.title || '')}</p>
          ${stakeBrief(state, state.bills[e.whipCall.billId])}
          <button class="btn primary" data-act="whip" ${left < 1 ? 'disabled' : ''}>${t('office.go')}</button></div>`
       : '';
@@ -113,7 +113,6 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
     sheet.innerHTML = `<div class="sheet-handle"></div>
       <header class="card-head"><div class="who"><h2>${t(`office.title.${Math.max(1, Math.min(5, state.player.act))}`)}</h2><p>${t('office.slots')}: <span class="slots">${slotDots(e)}</span></p></div></header>
       ${jobLine(state, 'office', { slots: e.slots, whipCall: !!e.whipCall })}
-      ${firstWeekHint(state, 'tutorial.office')}
       ${whip}
       <h3>${t('office.walkIns')}</h3><ul class="book-list">${rows}</ul>
       ${whipsDesk(state)}
