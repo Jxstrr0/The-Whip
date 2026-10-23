@@ -1405,3 +1405,23 @@ Kelbo: "The MPs body shapes look rough rn." The figures were an egg for a torso 
 **Checked:**
 - `tests.html` 132 of 132.
 - Played at phone size in portrait and landscape: the chamber from your seat, the overview and a framed block; the office with a visitor walking in and seated, angry and cooperative, with and without a face; the caucus table; the town hall. No console errors.
+
+## Playtest: crisper bodies, and figures that move
+
+Kelbo: "they're very oval and rounded. Can we animate them well too?" Two passes in one. The shapes first: the head is now a squircle with a flat crown and a jaw rather than an egg, the jacket's shoulders and chest are squarer, hands are flat mitts rather than balls, and the joints are tighter. Then the motion: every figure in the game is now jointed (neck, shoulders, elbows, hips, knees) and driven by one small motion kit, `src/motion.js`, so the benches, the caucus table, the town hall and the visitor at your desk all move the same way.
+
+- **Crowds that are alive.** Every member breathes, and every ten seconds or so someone glances along the bench, shifts in their seat, nods, looks down at their papers, folds their arms or props a chin. The timing is scattered, so it reads as a room, not a drill.
+- **The House reacts as a House.** During Question Period everyone turns to whoever is on their feet; a member stands to put their question and works one hand while they speak; the minister's side thumps the desks after the answer. In a division, members stand as the Clerk counts them and the winning side thumps when the result is read; the bells send a stir along the benches.
+- **The visitor at your desk** walks in with a real stride, turns into the chair, sits down (a proper stand-up and sit-down, not a snap), and settles into the mood of the meeting: leaning in with you, arms folded, hands wringing. Moods change mid-meeting with a blend, and they fidget while they wait for your next line.
+- **The caucus table** turns to the head of the table while someone speaks there, and two neighbours lean in toward each other when the whisper lands.
+- **The town hall** holds its placards up by hand (the holder's arm comes up with the board), and a warm room cheers with raised arms and clapping across the crowd.
+- **The player's office colleague** types at their desk; the desk figure takes your mood.
+
+**Small calls:**
+- One tuning number: `look.fidgetEvery` (seconds between a figure's idle fidgets, scattered by half either way).
+- The jointed figure paints its colours into one mesh per moving part, so a visitor costs a dozen draw calls rather than twenty. Draw calls now: chamber 60 from your seat and in the overview (was 52), office 44 empty and 56 with a visitor (was 52 and 54), caucus 32, town hall 31. The chamber sits at the top of its budget rather than under it; Kelbo's phone has the headroom, and the frame-rate check with `?debug=1` is still owed.
+- The headless tour runs at about one frame a second, so walk-ins and blends look slow in screenshots; on a phone they run at full speed.
+
+**Checked:**
+- `tests.html` 132 of 132.
+- Played at phone size in portrait and landscape: the chamber from your seat and the overview, Question Period (a member standing, the minister answering, the thumps), a full division counted and cleared, the office with a visitor walking in and seated through cooperative, angry, guarded and anxious, the caucus table with the head of the table speaking and a pair leaning in, the town hall cold with placards, warm, and cheering on election night. No console errors.
