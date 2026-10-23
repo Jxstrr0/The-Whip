@@ -36,30 +36,30 @@
       "soft": {
         "bill": [
           "Could the minister tell the House what {bill} will mean for communities like {riding}?",
-          "The people of {riding} have been waiting for {bill} for a long time. Can the minister tell the House when they'll see it working?",
+          "{riding} has waited a long time for {bill}. Can the minister tell the House when people there will see it working?",
           "Would the minister explain to the House how {bill} delivers on what we promised in the election?"
         ],
         "issue": [
           "Can the minister update the House on what the government is doing about {issue}?",
           "People in {riding} ask me about {issue} every weekend. Could the minister tell them what's coming?",
-          "Would the minister tell the House how this government's plan on {issue} compares with the record of the party opposite?"
+          "How does the government's plan on {issue} compare with the record of the party opposite?"
         ]
       },
       "pointed": {
         "bill": [
-          "The minister has told this House twice that {bill} is ready. The people of {riding} have read it. When will the minister?",
-          "I want to support {bill}. So does my riding. Can the minister explain why the clause everyone back home asked about isn't in it?",
+          "The minister has twice told this House that {bill} is ready. {riding} has read it. When will the minister?",
+          "I want to support {bill}. So does my riding. Why isn't the clause everyone back home asked for in it?",
           "Will the minister confirm that {bill} does for {riding} what the department's own briefing note says it won't?"
         ],
         "issue": [
-          "My constituents have heard the government's words on {issue}. What they haven't seen is a date. Does the minister have one?",
+          "My constituents have heard the government's words on {issue}. They haven't seen a date. Does the minister have one?",
           "The minister's department wrote to me about {issue} in the spring. It's autumn. Is the letter the plan?",
           "I ask as a member of this caucus: on {issue}, is the minister speaking for the government or for the department?"
         ]
       },
       "offScript": [
-        "I want to ask the minister about {issue}. Not the file. The thing itself. Has anyone in the department actually been to {riding} to look at it?",
-        "The minister won't find {issue} in the briefing book, because it's in {riding}. Will the minister come and see it with me?",
+        "Not the file: {issue} itself. Has anyone in the minister's department actually been to {riding} to look at it?",
+        "The minister won't find {issue} in the briefing book. It's in {riding}. Will the minister come and see it with me?",
         "Mr. Speaker, {issue}. The people who sent me here want to know whether this government has heard of it. Has the minister?"
       ]
     },
@@ -78,20 +78,20 @@
       },
       "pointed": {
         "bill": [
-          "On page nine of {bill} the minister's own officials wrote a number. It isn't the number the minister gave this House on Tuesday. Which one is true?",
-          "I have the minister's letter on {bill} from last spring, and I have the bill. They disagree. Which one should the people of {riding} believe?",
+          "On page nine of {bill}, the minister's officials wrote a number. It isn't the one the minister gave this House on Tuesday. Which is true?",
+          "I have the minister's letter on {bill} from last spring, and I have the bill. They disagree. Which should {riding} believe?",
           "The minister says {bill} was costed. Will the minister table the costing today, or tell the House why it can't be?"
         ],
         "issue": [
-          "The minister has said {issue} is being studied. I have the study. It was finished a year ago. What's the minister been doing since?",
-          "On {issue}, the minister's department has a plan it won't publish and a date it won't give. Which is the minister more embarrassed by?",
-          "Yesterday the minister said {issue} was a provincial matter. The minister's own website says otherwise. Would the minister like to correct one of them?"
+          "The minister says {issue} is being studied. I have the study. It was finished a year ago. What has the minister done since?",
+          "On {issue}, the department has a plan it won't publish and a date it won't give. Which embarrasses the minister more?",
+          "Yesterday the minister called {issue} a provincial matter. The minister's own website disagrees. Which would the minister like to correct?"
         ]
       },
       "offScript": [
-        "I'm going to ask the minister about {issue}, which is in {riding}, and which I'd wager the minister has never heard of. Have you?",
+        "I'll ask about {issue}, which is in {riding}, and which I'd wager the minister has never heard of. Has the minister?",
         "Forget the talking points. {issue}. Does the minister know what it is, and what the government intends to do about it?",
-        "The minister's department has a file on {issue}. I know because I've read it, and it's two pages. Is that the government's answer to {riding}?"
+        "The department's file on {issue} is two pages. I know: I've read it. Is that the government's answer to {riding}?"
       ]
     }
   },

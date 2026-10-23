@@ -291,9 +291,13 @@ html, body {
   }
 }
 @media (orientation: landscape) and (min-width: 700px) {
+  /* One width for the side sheet, so the agenda bar can end where it begins. */
+  :root {
+    --side-w: min(500px, 52vw);
+  }
   .sheet {
     left: auto;
-    width: min(440px, 46vw);
+    width: var(--side-w);
     top: calc(64px + env(safe-area-inset-top));
     bottom: 0;
     max-height: none;
@@ -1230,7 +1234,7 @@ input::placeholder {
 /* In landscape the agenda keeps to the left under the room, so a side sheet runs the full height. */
 @media (orientation: landscape) and (min-width: 700px) {
   .agenda {
-    right: calc(min(440px, 46vw) + 36px); /* the side sheet's width plus its side padding */
+    right: calc(var(--side-w) + 36px); /* the side sheet's width plus its side padding */
     border-radius: 0 var(--r-lg) 0 0;
   }
 }
@@ -1240,17 +1244,38 @@ input::placeholder {
   gap: 8px;
   padding-top: 4px;
 }
-.agenda-date {
+/* The date line: the day and your aim on top, the latest news under them. Two tap targets share it:
+   the day and the news open the feed, the aim opens the aim. */
+.agenda-info {
   flex: 1;
   min-width: 0;
-  min-height: 46px;
-  text-align: left;
+  container-type: inline-size;
+}
+.agenda-lines {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  column-gap: 8px;
+}
+.agenda-date,
+.agenda-news,
+.agenda-aim {
+  min-width: 0;
   background: none;
   border: 0;
   color: var(--ink);
   font: inherit;
-  font-weight: 600;
+  text-align: left;
+}
+/* Continue and Skip keep to their size so the date line keeps room for the aim. */
+.agenda-row > .btn {
+  flex: none;
+  padding: 0 14px;
+}
+.agenda-date {
+  min-height: 30px;
   padding: 0 4px;
+  font-weight: 600;
 }
 .agenda-date .day {
   display: block;
@@ -1262,9 +1287,10 @@ input::placeholder {
   font-weight: 400;
   color: var(--ink-2);
 }
-.agenda-date small {
-  display: block;
-  font-weight: 400;
+.agenda-news {
+  grid-column: 1 / -1;
+  min-height: 22px;
+  padding: 0 4px 2px;
   font-size: 13px;
   color: var(--ink-2);
   white-space: nowrap;
@@ -1272,21 +1298,37 @@ input::placeholder {
   text-overflow: ellipsis;
 }
 .agenda-aim {
+  position: relative;
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  width: 100%;
-  min-height: 34px;
-  padding: 6px 10px;
-  border: 0;
-  border-radius: var(--r-sm);
-  background: rgba(184, 146, 58, 0.12);
-  color: var(--ink);
-  font: inherit;
-  font-size: 14px;
-  text-align: left;
+  gap: 6px;
+  justify-self: end;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(184, 146, 58, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(184, 146, 58, 0.35);
+  font-size: 13px;
 }
-.agenda-aim .k,
+/* A bigger hit area than the chip it draws. */
+.agenda-aim::after {
+  content: '';
+  position: absolute;
+  inset: -8px -4px;
+}
+.agenda-aim .n {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.agenda-aim b {
+  flex: none;
+  font-weight: 650;
+  color: var(--brass-ink);
+  font-variant-numeric: tabular-nums;
+}
 .job-label,
 .aim-week .k,
 .aim-sheet .kicker {
@@ -1295,14 +1337,25 @@ input::placeholder {
   font-weight: 650;
   color: var(--brass-ink);
 }
-.agenda-aim .v {
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* On narrow phones the day has the top line to itself and the aim moves down beside the news. */
+@container (max-width: 230px) {
+  .agenda-date {
+    grid-column: 1 / -1;
+  }
+  .agenda-aim {
+    grid-row: 2;
+    justify-self: start;
+    min-height: 24px;
+    padding: 1px 8px;
+  }
+  .agenda-news {
+    grid-column: 2;
+    grid-row: 2;
+    padding-left: 0;
+  }
 }
 .agenda-aim[aria-expanded="true"] {
-  background: rgba(184, 146, 58, 0.22);
+  background: rgba(184, 146, 58, 0.28);
 }
 
 /* "Your job here": one line under a scene's title saying what the player is there to do. */
@@ -1318,6 +1371,85 @@ input::placeholder {
 .job-label {
   display: block;
   margin-bottom: 1px;
+}
+/* A section folded shut under a heading that reads like the sheet's other headings; a tap opens it. */
+.fold-block {
+  margin: 12px 0 6px;
+}
+.fold-block summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 4px 0;
+  list-style: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-style: italic;
+  letter-spacing: 0.01em;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--line);
+}
+.fold-block summary::-webkit-details-marker {
+  display: none;
+}
+.fold-block summary::after {
+  content: '\203A';
+  margin-left: auto;
+  font-style: normal;
+  color: var(--brass-ink);
+  transition: transform 0.15s ease;
+}
+.fold-block[open] summary::after {
+  transform: rotate(90deg);
+}
+.fold-n {
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--brass-ink);
+}
+.fold-block > :not(summary) {
+  margin-top: 8px;
+}
+
+/* Folded after the first weeks: the label and the start of the line, a tap opens the rest. */
+.job.fold {
+  padding: 0;
+}
+.job.fold summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 12px;
+  list-style: none;
+  cursor: pointer;
+}
+.job.fold summary::-webkit-details-marker {
+  display: none;
+}
+.job.fold summary::after {
+  content: '\203A';
+  flex: none;
+  margin-left: auto;
+  color: var(--brass-ink);
+  transition: transform 0.15s ease;
+}
+.job.fold[open] summary::after {
+  transform: rotate(90deg);
+}
+.job.fold .job-label {
+  display: inline;
+  margin: 0;
+}
+.job-text {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.job.fold[open] .job-text {
+  white-space: normal;
 }
 
 /* The act's aim: the goal, a bar per counter, and how it's won or lost. */
@@ -2182,15 +2314,16 @@ html.large #ui {
   font-weight: 400;
   margin-right: 4px;
 }
-.front-grid {
-  display: grid;
-  gap: 0 18px;
+/* Your week, first under the masthead: a boxed panel with tighter rules than the news below it. */
+.front-numbers {
+  margin: 10px 0 14px;
+  padding: 2px 12px 8px;
+  border-radius: var(--r-sm);
+  background: rgba(184, 146, 58, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(184, 146, 58, 0.25);
 }
-/* Two columns only where the sheet is wide (a tablet held upright); the landscape side sheet is too narrow. */
-@media (orientation: portrait) and (min-width: 560px) {
-  .front-grid {
-    grid-template-columns: 1fr 1fr;
-  }
+.front-numbers .kv {
+  padding: 5px 0;
 }
 .front-numbers .kv .v {
   white-space: nowrap;
@@ -2927,11 +3060,6 @@ body.cold-open .topbar {
 }
 
 /* A phone on its side is about 360px tall: spend less of it on padding, and let the job line sit on one row. */
-@media (orientation: landscape) and (min-width: 700px) {
-  .sheet {
-    width: min(500px, 52vw);
-  }
-}
 @media (orientation: landscape) and (max-height: 480px) {
   .sheet {
     padding-top: 6px;
