@@ -262,6 +262,7 @@ export function createSettingsSheet(root, { get, set }) {
       ${toggle('sound', 'settings.sound', 'settings.soundNote')}
       <label class="setting"><div class="what"><b>${t('settings.volume')}</b></div><input type="range" name="volume" min="0" max="1" step="0.05" value="${s.volume}" aria-label="${t('settings.volume')}"${s.sound ? '' : ' disabled'}></label>
       ${canBuzz ? toggle('haptics', 'settings.haptics', 'settings.hapticsNote') : ''}
+      ${toggle('glossary', 'settings.glossary', 'settings.glossaryNote')}
       ${toggle('colourBlind', 'settings.colourBlind', 'settings.colourBlindNote')}
       ${toggle('largeText', 'settings.largeText', 'settings.largeTextNote')}
       <div class="choices"><button class="btn primary" data-act="close">${t('settings.done')}</button></div>`;
