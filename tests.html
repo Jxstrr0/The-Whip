@@ -56,6 +56,7 @@ import { botAct } from './src/sim/bot.js';
 import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo } from './src/save.js';
 import { getSettings, setSetting } from './src/settings.js';
 import { canBuzz, buzz } from './src/haptics.js';
+import { glossTerms, unglossAll } from './src/ui/gloss.js';
 import { partyColor } from './src/ui/text.js';
 import { createAudio } from './src/audio.js';
 import * as tools from './src/sim/tools.js';
@@ -73,6 +74,7 @@ import * as qp from './src/sim/questionPeriod.js';
 import * as coldOpen from './src/sim/coldOpen.js';
 import * as memoir from './src/sim/memoir.js';
 import * as goals from './src/sim/goals.js';
+const resumeNoteOf = (s, now) => goals.resumeNote(s, now);
 import * as stakes from './src/sim/stakes.js';
 import * as rowSim from './src/sim/row.js';
 import * as bigVote from './src/sim/bigVote.js';
@@ -2959,6 +2961,77 @@ test('The town hall won / lost cuts come from tuning', async () => {
   const src = await (await fetch('src/sim/riding.js')).text();
   assert(!/crowd >= 60|crowd <= 40/.test(src), 'riding.js still has the numbers');
   return `won at ${TH.won}, lost at ${TH.lost}`;
+});
+
+test('The glossary: every term has a label, forms and one sentence, and no two terms claim the same form', () => {
+  const terms = data().glossary.terms;
+  assert(terms.length >= 20, 'enough terms');
+  const forms = new Map();
+  for (const term of terms) {
+    assert(term.id && term.label && term.match.length && term.text, `term ${term.id} incomplete`);
+    assert(/[.!]$/.test(term.text) && term.text.length <= 160, `${term.id}: one short sentence ending in a stop`);
+    assert(!/\n/.test(term.text), `${term.id}: one line`);
+    for (const f of term.match) {
+      assert(!forms.has(f.toLowerCase()), `form "${f}" claimed by ${forms.get(f.toLowerCase())} and ${term.id}`);
+      forms.set(f.toLowerCase(), term.id);
+    }
+  }
+  return `${terms.length} terms, ${forms.size} forms`;
+});
+
+test('Glossing wraps the first use of a term on a sheet only, and never inside a heading, button or stamp', () => {
+  const sheet = document.createElement('section');
+  sheet.className = 'sheet';
+  sheet.innerHTML = `<h2>Caucus · the whipped vote</h2>
+    <p class="job">Pick a lobby. The line is yea. A whipped vote, and a pairing on offer; the Speaker is in the chair.</p>
+    <blockquote>“The whip wants it whipped. Whipped, I said.”</blockquote>
+    <details><summary>Grievances about the whip</summary><p>The division is at three; the division bells will go.</p></details>
+    <p>Said in confidence. Independent shops want it. Then a confidence vote, and an independent member.</p>
+    <button class="btn">Pair with the whip</button><span class="stamp">Whipped</span>`;
+  const before = sheet.textContent;
+  const n = glossTerms(sheet);
+  const wrapped = [...sheet.querySelectorAll('.term')].map((b) => `${b.dataset.term}=${b.textContent}`);
+  assert(sheet.textContent === before, 'the text must read the same');
+  assert(n === wrapped.length && n >= 6, `wrapped ${n}`);
+  assert(wrapped.includes('whipped=whipped vote') && wrapped.filter((w) => w.startsWith('whipped=')).length === 1, 'whipped once, taken whole');
+  assert(wrapped.includes('lobby=lobby') && wrapped.includes('line=The line') && wrapped.includes('pair=pairing') && wrapped.includes('speaker=Speaker'), 'the terms in the job line');
+  assert(wrapped.includes('whip=whip'), 'the whip, from the quote');
+  assert(wrapped.includes('division=division'), 'division from the folded body');
+  assert(wrapped.includes('confidence=confidence vote') && wrapped.includes('independent=independent'), 'the ruled-out uses are skipped');
+  assert(!/in <button[^>]*>confidence/.test(sheet.innerHTML) && !/>independent<\/button> shops/.test(sheet.innerHTML), '"in confidence" and "independent shops" stay plain');
+  assert(!sheet.querySelector('h2 .term, summary .term, .btn .term, .stamp .term'), 'nothing inside a heading, summary, button or stamp');
+  assert(sheet.querySelector('.term').tagName === 'BUTTON' && sheet.querySelector('.term').type === 'button', 'a real button, not a submit');
+  assert(glossTerms(sheet) === 0, 'a second pass adds nothing');
+  unglossAll(sheet);
+  assert(!sheet.querySelector('.term') && sheet.textContent === before, 'unglossed cleanly');
+  return `${n} terms glossed once each`;
+});
+
+test('The resume note: nothing after a short break, the weightiest recent line after a long one, dated in plain words', () => {
+  const s = newGame({ seed: 'RESUME-1', party: 'p1' });
+  const day = s.date.absWeek * 5 + (s.date.dayOfWeek - 1);
+  s.log.push({ day: day - 1, week: s.date.absWeek, text: 'You listened to the room.', kind: 'caucus' });
+  s.log.push({ day: day - 2, week: s.date.absWeek, text: 'You broke with the line on the rent freeze.', kind: 'bill' });
+  s.log.push({ day: day - 30, week: s.date.absWeek - 6, text: 'You were made deputy whip.', kind: 'career' });
+  const now = Date.now();
+  s.savedAt = now - 5 * 60000;
+  assert(resumeNoteOf(s, now) === null, 'five minutes away is not a break');
+  s.savedAt = now - 3 * 3600000;
+  const a = resumeNoteOf(s, now);
+  assert(a === 'Last time, earlier today: You broke with the line on the rent freeze.', `got "${a}"`);
+  s.savedAt = now - 30 * 3600000;
+  assert(/^Last time, yesterday:/.test(resumeNoteOf(s, now)), 'yesterday');
+  s.savedAt = now - 3 * 24 * 3600000;
+  assert(/^Last time, 3 days ago:/.test(resumeNoteOf(s, now)), 'days');
+  s.savedAt = now - 40 * 24 * 3600000;
+  assert(/^Last time, a while back:/.test(resumeNoteOf(s, now)), 'a while back');
+  s.log.push({ day, week: s.date.absWeek, text: 'The whip has had enough: you are off the front bench.', kind: 'career' });
+  assert(/off the front bench\.$/.test(resumeNoteOf(s, now)), 'a career beat outranks a vote');
+  s.log.push({ day, week: s.date.absWeek, text: 'The room you share: two desks, one window, a filing cabinet with somebody else\'s name on the drawers, and the boxes from the last member who sat here. Your deskmate works late too.', kind: 'career' });
+  assert(/off the front bench\.$/.test(resumeNoteOf(s, now)), 'a long description is passed over');
+  s.log = [];
+  assert(resumeNoteOf(s, now) === null, 'nothing to say');
+  return a;
 });
 
 async function run() {

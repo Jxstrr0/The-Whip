@@ -1,7 +1,7 @@
 // Fetch every data/*.json file the game needs. Used by the game and by tests.html.
 export const DATA_FILES = [
   'world', 'parties', 'party-names', 'names', 'ridings', 'cliques', 'backgrounds', 'tuning',
-  'bill-templates', 'dialogue-lines', 'constituents', 'caucus', 'headlines', 'strings.en', 'career', 'scenarios', 'question-period', 'seasons', 'hill', 'cold-open', 'memoir',
+  'bill-templates', 'dialogue-lines', 'constituents', 'caucus', 'headlines', 'strings.en', 'career', 'scenarios', 'question-period', 'seasons', 'hill', 'cold-open', 'memoir', 'glossary',
 ];
 
 export async function loadData(base = 'data/') {
