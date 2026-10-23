@@ -1,7 +1,7 @@
 // The caucus meeting: Wednesday morning behind closed doors. The leader sets the week's line, grievances
 // get aired, and the player can listen, speak and whisper. From Act 5 the Chief Whip can also free the line or
 // expel a member (both in tools.js).
-import { data, tuning } from './config.js';
+import { data, tuning, say } from './config.js';
 import { withRng } from './rng.js';
 import { registerActions } from './actions.js';
 import { hooks, resolvers, log, isSittingWeek, queueStop } from './pacing.js';
@@ -17,6 +17,8 @@ import { fill as fillSlots } from './fill.js';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
 const fillText = fillSlots;
+// The caucus line in words: "whipped YEA" or "a free vote".
+export const lineName = (line) => (line.line === 'whipped' ? say('caucus.lineWhipped', { pos: line.position.toUpperCase() }) : say('caucus.lineFree'));
 
 // Seat the caucus by clique around the table, leader at the head; the player moves up with rank.
 // A revolt in the caucus room goes in the memoir (the first one, any that won, any you took a side in): who
@@ -164,13 +166,13 @@ export function caucusListen(state, rng) {
     const friend = Object.entries(m.relations).filter(([oid, v]) => v > 30 && state.mps[oid]?.party === m.party).sort((a, b) => b[1] - a[1])[0];
     if (friend) {
       revealMany(state, id, ['clique'], 'caucus');
-      pairs.push(`${fullName(m)} keeps leaning over to ${fullName(state.mps[friend[0]])}.`);
+      pairs.push(say('caucus.heardPair', { name: fullName(m), friend: fullName(state.mps[friend[0]]) }));
       pairIds.push([id, friend[0]]);
     }
   }
   const moods = sample.map((id) => state.mps[id].mood);
   const angry = moods.filter((m) => m === 'angry').length;
-  const note = `You listen. ${angry ? `${angry} of the six you watch look angry.` : 'Nobody near you looks angry.'} ${pairs.join(' ')}`;
+  const note = say('caucus.heard', { mood: angry ? say('caucus.heardAngry', { n: angry, of: sample.length }) : say('caucus.heardCalm'), pairs: pairs.join(' ') }).trim();
   c.heard.push({ ids: sample, note, pairs: pairIds });
   log(state, note, 'caucus');
   return { note, ids: sample, pairs: pairIds };
@@ -286,7 +288,7 @@ export function endCaucus(state) {
   if (c.revolt && !c.revolt.resolved) withRng(state, (rng) => resolveRevolt(state, rng));
   if (c.billId) {
     const b = state.bills[c.billId];
-    log(state, `Caucus: the line on ${billName(b)} is ${c.line.line === 'whipped' ? `whipped ${c.line.position.toUpperCase()}` : 'a free vote'}.`, 'caucus');
+    log(state, say('caucus.lineLog', { bill: billName(b), line: lineName(c.line) }), 'caucus');
   }
   state.caucus = null;
 }

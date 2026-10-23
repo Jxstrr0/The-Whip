@@ -22,7 +22,7 @@ function fieldValue(state, mp, f, v) {
     case 'interests':
       return v.map(interestName).join(', ');
     case 'cohort':
-      return v === state.house.parliament ? `${ordinal(v)} Parliament (this one)` : `${ordinal(v)} Parliament · ${mp.tenure} yrs`;
+      return v === state.house.parliament ? t('card.parliamentNow', { n: ordinal(v) }) : t('card.parliamentThen', { n: ordinal(v), yrs: mp.tenure });
     case 'mood':
       return t('mood.' + v);
     case 'rapport':
@@ -30,9 +30,9 @@ function fieldValue(state, mp, f, v) {
     case 'attendance':
       return `${v}%`;
     case 'lifeEvents':
-      return v.length ? v.map((e) => e.kind).join(', ') : 'Nothing you know of';
+      return v.length ? v.map((e) => e.kind).join(', ') : t('card.lifeNone');
     case 'secrets':
-      return v ? `${v}` : 'None';
+      return v ? `${v}` : t('card.secretsNone');
     default:
       return String(v);
   }

@@ -551,7 +551,7 @@ hooks.morning.push((state, rng) => {
   if (!bill) return;
   const party = me(state).party;
   const pool = Object.values(state.mps).filter((m) => m.party === party && m.id !== state.player.mpId && m.caucusRole === 'backbencher');
-  const REASONS = ['a hospital appointment', 'a funeral in the riding', 'a trade mission', 'their daughter’s graduation', 'a riding association dinner', 'a long-booked holiday'];
+  const REASONS = data().career.leave.reasons;
   for (const m of rng.shuffle(pool).slice(0, T.leaveRequestsPerWeek)) {
     if (state.leaves?.[bill.id]?.[m.id]) continue;
     state.leaveRequests.push({ mpId: m.id, billId: bill.id, reason: rng.pick(REASONS) });

@@ -1,5 +1,5 @@
 // The count board: the bells and your choice during a division, then the standing count ticking up by party.
-import { t, esc, stamp, partyShort, partyColor, mpName, countLine, rowLine, jobLine } from './text.js';
+import { t, esc, stamp, partyShort, partyColor, mpName, countLine, rowLine, jobLine, foldBlock } from './text.js';
 import { tuning, data } from '../sim/config.js';
 import { stageLabel, questionText } from '../sim/vote.js';
 import { prediction } from '../sim/count.js';
@@ -80,7 +80,7 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
       ${jobLine(state, 'division', { reason: p.reason, chase: shown > 0, dilemma: !!d, confidence: bill.confidence, line: p.line, pos: t('vote.' + pos) })}
       <div data-count>${countHtml()}</div>
       ${hill}
-      <p>${esc(bill.summary || '')}</p>
+      ${bill.summary ? foldBlock(t('div.summary'), `<p>${esc(bill.summary)}</p>`) : ''}
       ${bill.confidence ? `<p class="warn">${t('div.confidence')}</p>` : ''}
       ${p.reason === 'ownBill' ? `<p class="tutorial">${t('div.ownBill')}</p>` : ''}
       <div class="kvs">
