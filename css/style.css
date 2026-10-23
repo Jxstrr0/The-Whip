@@ -456,6 +456,18 @@ html, body {
   .sheet[data-h="half"] {
     max-height: 46dvh;
   }
+  /* Pulled down to a peek: the handle and the heading, and the room to look at. */
+  .sheet[data-h="peek"] {
+    max-height: 104px;
+    overflow: hidden;
+  }
+}
+/* Under the thumb the sheet follows it exactly; its height is set from the drawer (src/ui/drawer.js). */
+.sheet.dragging {
+  animation: none;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .sheet-handle {
@@ -471,7 +483,11 @@ html, body {
 /* A tap on the handle swaps the drawer between half and full; the whole top edge of the sheet takes it. */
 button.sheet-handle {
   position: relative;
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
+}
+.sheet.dragging button.sheet-handle {
+  cursor: grabbing;
 }
 button.sheet-handle::after {
   content: '';
@@ -911,6 +927,18 @@ blockquote.line::before {
     animation: none;
     opacity: 0.6;
   }
+  .sheet,
+  .stamp {
+    animation: none;
+  }
+  .replies .btn.taken,
+  .replies .btn.taken::after,
+  .replies .btn:disabled,
+  .talk-choices .btn.taken,
+  .talk-choices .btn.taken::after,
+  .talk-choices .btn:disabled {
+    transition: none;
+  }
 }
 
 /* Key/value rows, ruled like a printed table. */
@@ -1009,6 +1037,33 @@ blockquote.line::before {
 .replies .btn:active::after,
 .talk-choices .btn:active::after {
   right: 26px;
+}
+/* A reply taken: the row holds the ink while the action follows (src/ui/feel.js, take), the rest stand down. */
+.replies .btn.taken,
+.talk-choices .btn.taken {
+  margin: 0 -18px;
+  padding-left: 15px;
+  padding-right: 48px;
+  border-left: 3px solid var(--bench);
+  background: linear-gradient(90deg, rgba(47, 90, 60, 0.16), transparent 70%);
+  transition: background-color var(--feel-press, 140ms) ease-out;
+}
+.replies .btn.taken::after,
+.talk-choices .btn.taken::after {
+  right: 22px;
+  transition: right var(--feel-press, 140ms) cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+.replies .btn:disabled:not(.taken),
+.talk-choices .btn:disabled:not(.taken) {
+  opacity: 0.55;
+  transition: opacity var(--feel-press, 140ms) ease-out;
+}
+.replies .btn.primary.taken {
+  margin: 8px 0 0;
+  padding: 8px 14px;
+  border-left: 1px solid var(--bench);
+  background: var(--bench);
+  transform: scale(0.98);
 }
 .replies .btn.primary {
   margin-top: 8px;
@@ -1207,7 +1262,7 @@ blockquote.line::before {
   transform: rotate(-5deg);
   -webkit-mask-image: var(--stamp-mask);
   mask-image: var(--stamp-mask);
-  animation: stamp-in 170ms cubic-bezier(0.2, 1.5, 0.4, 1);
+  animation: stamp-in var(--feel-stamp, 260ms) cubic-bezier(0.3, 0.7, 0.3, 1) both;
 }
 .stamp.big {
   font-size: 20px;
@@ -1219,10 +1274,28 @@ blockquote.line::before {
 .stamp.bad { color: var(--nay); }
 .stamp.grey { color: var(--grey); }
 .stamp.brass { color: var(--brass); }
+/* A stamp comes down: in from above, pressed a touch too far into the paper, then up with the ink bled a
+   little at the edge. */
 @keyframes stamp-in {
-  from {
-    transform: rotate(-5deg) scale(1.3);
+  0% {
+    transform: rotate(-5deg) scale(1.35);
     opacity: 0;
+    text-shadow: none;
+    box-shadow: none;
+  }
+  55% {
+    transform: rotate(-5deg) scale(0.96);
+    opacity: 1;
+  }
+  80% {
+    text-shadow: 0 0 1px currentColor;
+    box-shadow: 0 0 0 1px currentColor;
+  }
+  100% {
+    transform: rotate(-5deg) scale(1);
+    opacity: 0.9;
+    text-shadow: 0 0 0.4px currentColor;
+    box-shadow: 0 0 0 0.4px currentColor;
   }
 }
 
@@ -1881,6 +1954,7 @@ input::placeholder {
   text-align: right;
   font-size: 22px;
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 .bar {
   position: relative;

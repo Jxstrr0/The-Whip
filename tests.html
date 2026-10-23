@@ -53,6 +53,8 @@ window.__caucus = caucusSim;
 import * as ridingSim from './src/sim/riding.js';
 import { calendarOf, weatherOf } from './src/sim/calendar.js';
 import { lightFor, hourOf, LIGHTS } from './src/light.js';
+import { snapStop, STOPS } from './src/ui/drawer.js';
+import { readNumber, writeNumber } from './src/ui/feel.js';
 import { botAct } from './src/sim/bot.js';
 import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo } from './src/save.js';
 import { getSettings, setSetting } from './src/settings.js';
@@ -2982,6 +2984,23 @@ test('The town hall won / lost cuts come from tuning', async () => {
   const src = await (await fetch('src/sim/riding.js')).text();
   assert(!/crowd >= 60|crowd <= 40/.test(src), 'riding.js still has the numbers');
   return `won at ${TH.won}, lost at ${TH.lost}`;
+});
+
+test('The feel pass: timings in tuning, a dragged sheet settles on the nearest stop or the way it was thrown, numbers keep their sign', () => {
+  const F = tuning().look.feel;
+  for (const k of ['sheet', 'tick', 'tickFast', 'stamp', 'press']) assert(F[k] > 0 && F[k] < 2000, `look.feel.${k}`);
+  assert(F.dolly > 0 && F.dolly < 10, 'look.feel.dolly in seconds');
+  assert(STOPS.join() === 'peek,half,full', 'three stops');
+  const h = { peek: 104, half: 368, full: 560 };
+  assert(snapStop(120, h) === 'peek' && snapStop(300, h) === 'half' && snapStop(500, h) === 'full', 'nearest stop at rest');
+  assert(snapStop(540, h, 1) === 'half', 'thrown down from near full goes to half');
+  assert(snapStop(540, h, 3) === 'half' && snapStop(300, h, 1) === 'peek', 'a throw goes one stop, not to the end');
+  assert(snapStop(120, h, -1) === 'half' && snapStop(368, h, -1) === 'full', 'thrown up goes up');
+  assert(snapStop(104, h, 1) === 'peek' && snapStop(560, h, -1) === 'full', 'nowhere further to go');
+  assert(snapStop(300, h, 0.2) === 'half', 'a slow drag is not a throw');
+  assert(readNumber('+4') === 4 && readNumber('\u22126') === -6 && readNumber('12') === 12 && readNumber('12 / 24') === null && readNumber('+') === null, 'reads signed numbers only');
+  assert(writeNumber(3, '+4') === '+3' && writeNumber(-2, '+4') === '\u22122' && writeNumber(0, '\u22126') === '0' && writeNumber(7, '12') === '7', 'writes them the same way');
+  return `sheet ${F.sheet}ms, tick ${F.tick}ms, stamp ${F.stamp}ms, press ${F.press}ms, dolly ${F.dolly}s`;
 });
 
 test('The paper takes the room\'s light: bells pale, the office by lamp (a strip light while shared), a grey winter morning', () => {
