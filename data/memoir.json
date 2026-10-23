@@ -24,7 +24,8 @@
     "newLeader": "the new leader",
     "oldLeader": "the leader they came for",
     "tookYouIn": "took you in",
-    "lifeEvent": "you were asked to be there"
+    "lifeEvent": "you were asked to be there",
+    "turned": "came over to you"
   },
   "fallback": { "whip": "The whip", "leader": "The leader", "rival": "your rival" },
   "asides": {
@@ -412,6 +413,25 @@
         "You crossed the floor from {from} to {to}. It is a short walk. You start again as a rookie, with your name going ahead of you.",
         "You left {from} for {to}, carrying your files across the aisle in a box. Your old benches watched you sit down."
       ]
+    },
+    "bigVote": {
+      "turned": {
+        "tone": "yea",
+        "title": ["Thursday's vote, turned", "The names that carried it", "Your names, read out"],
+        "text": [
+          "{bill} went the line's way, {yeas} to {nays}, by fewer votes than you had brought over that week. Every one of them had sat across from you since Monday.",
+          "The week's vote was {bill}, and it came down to {margin}. The Clerk read your names among the rest, and nobody else in the chamber knew which ones they were.",
+          "{bill}, {yeas} to {nays}. Take away the members you'd turned since Monday and it goes the other way. The whip's office knew it, and so did you."
+        ]
+      },
+      "lost": {
+        "tone": "nay",
+        "title": ["Thursday's vote, lost", "The one that got away"],
+        "text": [
+          "{bill} went against the line, {yeas} to {nays}. It had been close since Monday, and close is where it stayed.",
+          "The week's vote was {bill}, and the line lost it by {margin}. You went over the count again that night, name by name, looking for the ones that had moved."
+        ]
+      }
     },
     "revolt": {
       "leaderWon": {

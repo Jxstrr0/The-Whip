@@ -77,6 +77,69 @@
     "bully": "Your row went its own way again on a vote that mattered, and the deputy whip has drawn the conclusion: nobody follows a bully. You're back on the backbench, and the row isn't sorry to see you go.",
     "wrongCount": "You said the count was safe. It wasn't, and the House knew it before the leader did. The Chief Whip has moved you sideways; you'll run a row again, if you can hold one."
   },
+  "bigVote": {
+    "setClose": [
+      "The House leader has put {bill} down for Thursday, whipped {side}. This morning's count says it carries, {ours} to {theirs}, which is close enough that nobody in the whip's office believes it.",
+      "{bill} comes to the House on Thursday, whipped {side}. The count this morning is {ours} to {theirs}. Monday's count has never once been Thursday's.",
+      "Thursday's business is {bill}. You're {ours} to {theirs} on paper, and paper has a way of going soft by Wednesday."
+    ],
+    "setShort": [
+      "The House leader has put {bill} down for Thursday, whipped {side}, and this morning's count has the line losing it, {theirs} to {ours}. Three days to find {short}.",
+      "{bill} is down for Thursday, and on this morning's numbers the line is {short} short. The whip's office has stopped answering its phones and started making calls.",
+      "Thursday: {bill}, whipped {side}, {theirs} to {ours} against as of this morning. By Thursday that changes, or it's in the papers."
+    ],
+    "setSafe": [
+      "{bill} is down for Thursday, whipped {side}. The count is comfortable, {ours} to {theirs}, and the whip's office would like it kept that way.",
+      "The House leader has put {bill} down for Thursday. Nobody expects trouble at {ours} to {theirs}, which is when the whip's office expects it most.",
+      "Thursday's vote is {bill}, safe on paper at {ours} to {theirs}. The only way to lose it is for people not to turn up."
+    ],
+    "won": [
+      "The line held on {bill}, {yeas} to {nays}. By Monday the whip's office will be calling it routine.",
+      "{bill}, {yeas} to {nays}, and the week goes the line's way. In the lobby, the members who were wavering on Monday say they were never in doubt.",
+      "Thursday's vote went the line's way, {yeas} to {nays}. Somebody in the whip's office will sleep tonight."
+    ],
+    "wonSafe": [
+      "{bill} went as counted, {yeas} to {nays}. Nobody will remember it, which is the point.",
+      "The line held on {bill}, {yeas} to {nays}, as everyone said it would."
+    ],
+    "lost": [
+      "The line lost {bill}, {yeas} to {nays}. The whip's office will want to know where the votes went, starting with the ones it was promised.",
+      "{bill} went the wrong way, {yeas} to {nays}. The week was about that vote, and the week is gone.",
+      "Thursday's vote is lost, {yeas} to {nays}. Coming out of the lobby, nobody looks at the whips."
+    ],
+    "lostSafe": [
+      "The line lost {bill}, {yeas} to {nays}, on a vote that was safe on Monday. That isn't a bad night. That's a story.",
+      "{bill} fell, {yeas} to {nays}, and it was meant to be the easy one. The Chief Whip's door stays shut all evening."
+    ],
+    "setLong": [
+      "{bill} is down for Thursday, whipped {side}, and the line is {short} short with no obvious place to find them. The whip's office would settle for losing it respectably.",
+      "The House leader has put {bill} down for Thursday. On this morning's count it isn't close: {theirs} to {ours} against the line. Nobody expects to win it; the job is to keep the benches together while you lose.",
+      "Thursday: {bill}, whipped {side}, and {theirs} to {ours} the wrong way. A vote you can't win is still a vote somebody can break ranks on."
+    ],
+    "wonLong": [
+      "{bill} went the line's way, {yeas} to {nays}, on a vote it was losing by a distance on Monday. Nobody in the lobby can quite explain it, and the whip's office isn't trying.",
+      "The line won {bill}, {yeas} to {nays}. On Monday's numbers it shouldn't have been close. Somebody across the aisle has some explaining to do."
+    ],
+    "lostLong": [
+      "{bill} went against the line, {yeas} to {nays}, as Monday's count said it would. The whips will be looking at who stayed in the lobby and who wandered.",
+      "The line lost {bill}, {yeas} to {nays}. It was never there to be won, and nobody pretends otherwise."
+    ],
+    "freed": [
+      "{bill} went to a free vote in the end, {yeas} to {nays}. Nobody won the week and nobody lost it."
+    ],
+    "yoursOne": [
+      "{names} voted with the line on Thursday, and that one is down to you. The whip's office keeps a note of who brings whom.",
+      "One name the Clerk read for the line was yours: {names}."
+    ],
+    "yours": [
+      "Of the names read for the line, {n} were yours: {names}.",
+      "The Clerk read {n} names for the line that were down to you: {names}."
+    ],
+    "yoursNone": [
+      "None of the names read for the line were ones you'd turned. It came out the way it did without you.",
+      "You didn't bring anyone over this week. The count went its own way."
+    ]
+  },
   "warned": {
     "row": "{n} of your row went the other way on {bill}. The deputy whip stops you in the corridor: “Once is a bad night. Twice is a pattern.”",
     "count": "You had {bill} down as safe. It wasn't. The Chief Whip says nothing, which is worse. Another one like it and the count goes to someone else."

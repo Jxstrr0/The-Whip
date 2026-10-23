@@ -58,6 +58,7 @@ export function sceneJob(state, kind, ctx = {}) {
   switch (kind) {
     case 'morning':
       if (!ctx.items?.length) return { key: 'job.morning.none' };
+      if (ctx.items.some((i) => i.stop === 'bigVote')) return { key: 'job.morning.bigVote' };
       if (ctx.items.some((i) => i.stop === 'ownVote')) return { key: 'job.morning.ownVote' };
       return { key: whip ? 'job.morning.whip' : 'job.morning' };
     case 'office':
@@ -73,6 +74,7 @@ export function sceneJob(state, kind, ctx = {}) {
       if (ctx.reason === 'ownBill') return { key: 'job.division.ownBill' };
       if (ctx.chase) return { key: 'job.division.chase', vars: { pos: ctx.pos } };
       if (ctx.dilemma) return { key: 'job.division.dilemma', vars: { pos: ctx.pos } };
+      if (ctx.reason === 'bigVote') return { key: 'job.division.bigVote', vars: { pos: ctx.pos } };
       if (ctx.confidence) return { key: 'job.division.confidence', vars: { pos: ctx.pos } };
       return { key: ctx.line === 'whipped' ? 'job.division.line' : 'job.division.free', vars: { pos: ctx.pos } };
     }

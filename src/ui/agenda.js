@@ -101,7 +101,7 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
       ? p.items
           .map(({ billId, stage, stop }) => {
             const b = state.bills[billId];
-            const tags = [b.confidence ? `<span class="badge">${t('agenda.confidence')}</span>` : '', stop === 'ownVote' ? `<span class="badge you">${t('agenda.yourVote')}</span>` : ''].join(' ');
+            const tags = [b.confidence ? `<span class="badge">${t('agenda.confidence')}</span>` : '', stop === 'ownVote' ? `<span class="badge you">${t('agenda.yourVote')}</span>` : '', stop === 'bigVote' ? `<span class="badge you">${t('agenda.bigVote')}</span>` : ''].join(' ');
             const count = state.player.act >= tuning().tools.officeFilesFromAct && b.lines[state.mps[state.player.mpId].party] === 'whipped' ? countLine(prediction(state, billId)) + rowLine(state, billId) : '';
             return `<li><b>${esc(b.title)}</b> <small>${esc(stageLabel(stage))}</small> ${tags}<p>${esc(b.summary || '')}</p>${count}</li>`;
           })

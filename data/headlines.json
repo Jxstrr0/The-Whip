@@ -88,6 +88,29 @@
     { "id": "h079", "event": "expelled", "text": "{member}, the {role}, to sit as an independent" },
     { "id": "h080", "event": "expelled", "text": "Whip's office puts out {member}; front bench told to take note" },
     { "id": "h081", "event": "expelled", "text": "{member} out, and {party} is a seat lighter" },
+    { "id": "h082", "event": "bigVoteAhead", "text": "Thursday's vote on {bill} too close to call" },
+    { "id": "h083", "event": "bigVoteAhead", "text": "Whips count and recount ahead of {bill} vote" },
+    { "id": "h084", "event": "bigVoteAhead", "text": "{bill} heads for a knife-edge Thursday" },
+    { "id": "h085", "event": "bigVoteAhead", "text": "Nobody will say how Thursday's vote on {bill} goes" },
+    { "id": "h086", "event": "bigVoteAhead", "text": "All eyes on Thursday as {bill} comes to the House" },
+    { "id": "h087", "event": "bigVoteSafe", "text": "Thursday's vote on {bill} expected to go as whipped" },
+    { "id": "h088", "event": "bigVoteSafe", "text": "Whips relaxed ahead of Thursday's vote on {bill}" },
+    { "id": "h089", "event": "bigVoteSafe", "text": "Quiet week forecast as {bill} comes to a vote" },
+    { "id": "h090", "event": "bigVoteSafe", "text": "{bill} down for Thursday; whips see no trouble" },
+    { "id": "h091", "event": "bigVoteWon", "text": "{ours} whips get their way on {bill}, {yeas} to {nays}" },
+    { "id": "h092", "event": "bigVoteWon", "text": "{whip}'s office carries the week on {bill}" },
+    { "id": "h093", "event": "bigVoteWon", "text": "{bill}: the count held, {yeas}–{nays}" },
+    { "id": "h094", "event": "bigVoteWon", "text": "Thursday goes the whips' way on {bill}" },
+    { "id": "h095", "event": "bigVoteWon", "text": "Wavering members fall into line on {bill}" },
+    { "id": "h096", "event": "bigVoteLost", "text": "{ours} whips lose the week on {bill}" },
+    { "id": "h097", "event": "bigVoteLost", "text": "Count fails {whip} on {bill}, {yeas} to {nays}" },
+    { "id": "h098", "event": "bigVoteLost", "text": "{bill} vote goes against the whips" },
+    { "id": "h099", "event": "bigVoteLost", "text": "Thursday slips away from {ours} on {bill}" },
+    { "id": "h100", "event": "bigVoteLost", "text": "Questions for {whip} after {bill} vote" },
+    { "id": "h101", "event": "bigVoteLong", "text": "{ours} short of the numbers on {bill} ahead of Thursday" },
+    { "id": "h102", "event": "bigVoteLong", "text": "Thursday's vote on {bill}: the arithmetic isn't there for {ours}" },
+    { "id": "h103", "event": "bigVoteLong", "text": "{bill} vote looks settled before it starts" },
+    { "id": "h104", "event": "bigVoteLong", "text": "Whips privately concede {bill}" },
 
     { "id": "h056", "event": "leak", "text": "Leaked memo shows {party} split on {bill}" },
     { "id": "h057", "event": "leak", "text": "What was said in Wednesday's caucus, by people who were there" },
@@ -198,6 +221,26 @@
     "qpRiding": [
       "{name} used the riding's sixty seconds to put {issue} to {minister}, who promised to look into it. {riding} has heard that before and wrote it down anyway.",
       "Not on the party's list and not on the minister's: {issue} got its hearing because the member for {riding} would not use the question for anything else."
+    ],
+    "bigVoteAhead": [
+      "Both whips' offices say they have the numbers on {bill}. At most one of them is right.",
+      "Members who haven't said how they'll vote on {bill} found their phones busy all weekend. Several have stopped answering."
+    ],
+    "bigVoteSafe": [
+      "The whips say the numbers on {bill} are settled. The whips said that last time, too.",
+      "Thursday's vote on {bill} is the week's business, and on paper the week's business is done."
+    ],
+    "bigVoteWon": [
+      "The members who were undecided on Monday were in the right lobby on Thursday. The whip's office isn't saying what it cost.",
+      "{yeas} to {nays}. A week of corridor conversations came down to one standing count, and the whip's office had it right."
+    ],
+    "bigVoteLost": [
+      "The whips had {bill} down as theirs on Monday. By Thursday evening, {yeas} to {nays}, it belonged to somebody else.",
+      "Members who promised their votes on {bill} were asked on the way out of the lobby where those votes had gone. Few stopped to answer."
+    ],
+    "bigVoteLong": [
+      "On the numbers as they stand, {bill} is lost on Thursday. The whips say the numbers will move. They usually say that.",
+      "Nobody is predicting an upset on {bill}. The members who could produce one aren't taking calls."
     ],
     "quiet": [
       "The House sat, the House rose, and the parking lot was empty by four. The whips call that a good week; the gallery calls it a long one.",
