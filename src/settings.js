@@ -1,8 +1,8 @@
-// Player settings: sound, volume, colour-blind party colours and large text. Stored under whip:settings.
+// Player settings: sound, volume, haptics, colour-blind party colours and large text. Stored under whip:settings.
 // The CSS side is two classes on <html> (cb, large); the party palette is read by partyColor in ui/text.js.
 import { loadSettings, saveSettings } from './save.js';
 
-const DEFAULTS = { sound: true, volume: 0.7, colourBlind: false, largeText: false };
+const DEFAULTS = { sound: true, volume: 0.7, haptics: true, colourBlind: false, largeText: false };
 
 // Only known keys of the right type survive a load, so a stale or hand-edited entry can't break the UI.
 function clean(raw) {
