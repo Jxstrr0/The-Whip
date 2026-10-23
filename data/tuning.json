@@ -142,7 +142,10 @@
     "moodChangeOdds": 0.35,
     "ridingRegression": 0.04,
     "confidenceStopMargin": 10,
-    "jobFullWeeks": 3
+    "jobFullWeeks": 3,
+    "resumeNoteMinutes": 30,
+    "resumeNoteDays": 5,
+    "resumeNoteChars": 150
   },
   "stakes": {
     "noLean": 0.2,
@@ -257,7 +260,8 @@
     "chandelier": 22,
     "deskLamp": 10,
     "pendant": 16,
-    "walkerEvery": 18
+    "walkerEvery": 18,
+    "fidgetEvery": 14
   },
   "tools": {
     "timePerWeek": 90,
