@@ -1337,3 +1337,17 @@ Every sitting week now builds to one vote. On Monday the House leader picks the 
 - Monday's front page leading with the vote;
 - the Clerk marking your names as they're read;
 - a result card that says what the vote did for you.
+
+## Playtest: on the phone
+
+Kelbo's picks from the "anything else obvious" list: 1 (home screen), 2 (haptics), 4 (two small fixes). 5 and 6 (a "Last time…" line and the glossary) are the next entry.
+
+- **Add to home screen.** `manifest.webmanifest` at the root (standalone display, the sun mark as the icon in 192, 512 and a maskable 512, the dark theme colour) and the Apple metas in `index.html` (`apple-mobile-web-app-capable`, a translucent status bar, a 180px touch icon), since iOS ignores the manifest's display and icons. Added from Safari's share sheet or Chrome's "Add to Home screen", the game opens full-screen with no address bar. Nothing is fetched from outside and there's no service worker: it still needs a connection for Three.js, as before. The icons are in `assets/icons/`, rendered from the same SVG as the favicon.
+- **A buzz on the big moments.** `src/haptics.js`: a short pattern when the bells start, on the gavel, when a deal closes at the table and when the whip calls with the line moved. Android phones vibrate; iPhones have no web API for it and get nothing. "Buzz on the big moments" sits in settings under Volume, on by default, and is hidden on a phone that can't buzz. Each meeting buzzes once for the call and once for the deal, however often its sheet redraws. The patterns live in the module like the audio levels do in `audio.js`.
+- **Rival whips stop queueing at the same door.** Each party's whip used to poach the single wobbliest member, so with three rival parties the feed said "X was seen leaving the … whip's office" three times in a row with only the party changed. Each whip now works the wobbliest member nobody else has been at that week (`src/sim/rivals.js`). The same whip back at the same door reads as a return visit ("… was back at the NU whip's office. The Pension Age Modernization Act again."), and a third visit goes in the ledger only.
+- **The town hall cuts are in tuning.** `stakes.townHall.won` (60) and `.lost` (40) in `data/tuning.json`; `riding.js` no longer carries the numbers.
+
+**Checked:**
+- `tests.html` 128 of 128. Four new tests: the manifest and every icon are served and `index.html` links them; haptics are a setting, silent when off, and an unknown beat is a no-op; rival whips never poach the same member twice in one week, no poach line repeats word for word, and a third visit is ledger only; the town hall cuts come from tuning and `riding.js` has no literal left.
+- Played at phone size in portrait and landscape from week 4: the weekend paper, office, caucus, morning paper, a division and the riding. No console errors. The settings sheet shows the new toggle in Chromium (which can buzz).
+- Not checked here: the install itself and the buzz need a real phone. Kelbo, try "Add to Home Screen" from Safari's share sheet or Chrome's menu, and listen for the buzz when the bells go.
