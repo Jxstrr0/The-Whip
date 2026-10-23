@@ -622,6 +622,29 @@ test('Every meeting has a line and four answers in every act, and none falls bac
   }
 });
 
+test('Every door has at least three openers a mood and two replies an approach, and no text repeats', () => {
+  const L = data().dialogueLines.lines;
+  const inAct = (l, a) => !l.act || l.act.includes(a);
+  const doors = ['whipCall', 'introduction', 'favorAsk', 'complaint', 'gossip', 'rebelRecruit'];
+  for (const a of [1, 3, 5]) {
+    for (const sit of doors) {
+      const turns = new Set(L.filter((l) => l.situation === sit).map((l) => l.turn));
+      for (const turn of turns) {
+        for (const mood of ['cooperative', 'guarded', 'angry', 'anxious']) {
+          const said = L.filter((l) => l.speaker !== 'player' && l.situation === sit && l.turn === turn && l.mood.includes(mood) && inAct(l, a) && !l.when);
+          assert(said.length >= 3, `act ${a} ${sit} turn ${turn} ${mood}: only ${said.length} openers`);
+        }
+        const replies = L.filter((l) => l.speaker === 'player' && l.situation === sit && l.turn === turn && inAct(l, a));
+        for (const way of ['listen', 'concede']) assert(replies.filter((l) => l.approach === way).length >= 2, `act ${a} ${sit} turn ${turn}: one way to ${way}`);
+      }
+    }
+  }
+  const texts = L.map((l) => l.text).concat(data().dialogueLines.partings.map((p) => p.text));
+  assert(new Set(texts).size === texts.length, 'a line appears twice');
+  // Context lines outside the mentor's room exist for the people at your door too.
+  for (const sit of ['whipCall', 'introduction', 'favorAsk', 'gossip']) assert(L.some((l) => l.situation === sit && l.when), `${sit}: nobody notices what you have done`);
+});
+
 test('The mentor remarks on what you have done lately, and only when it is true', () => {
   const K = tuning().meetings.context;
   const was = K.odds;
