@@ -8,6 +8,7 @@ import { surface } from '../textures.js';
 import { placeModel } from '../models.js';
 import { tuning } from '../sim/config.js';
 import { createOfficeCamera } from './officeCamera.js';
+import { createSpeech } from '../speech.js';
 import { createVisitor, createFigure, poseFigure } from './visitor.js';
 import { wardrobe } from '../figures.js';
 import { createPrecipitation, DEFAULT_WEATHER, GREY_SKIES, mix } from '../weatherFx.js';
@@ -579,6 +580,8 @@ export function create(ctx) {
   let visitor = null;
   let reversal = false;
   let t = 0;
+  // What they're saying, set beside them in the room.
+  const speech = createSpeech();
 
   function seatPlayer(rev) {
     reversal = rev;
@@ -630,6 +633,7 @@ export function create(ctx) {
         f.mpId = v.mpId;
         scene.add(f.group);
         deskFigure = f;
+        speech.attach(f);
         cam.shot('reversal', v.snap);
         return;
       }
@@ -637,8 +641,17 @@ export function create(ctx) {
       visitor = createVisitor(scene, { color: v.color, mpId: v.mpId, path: visitorPath(mySet.W, mySet.D), seat: VISITOR_SEAT, facing: 0, outfit: wardrobe(v.mpId, v.color), face: v.face, faceFrom: v.snap ? null : v.faceFrom });
       visitor.mpId = v.mpId;
       visitor.setMood(v.mood);
+      speech.attach(visitor.figure);
       if (v.snap) visitor.sitNow();
       cam.shot('host', v.snap);
+    },
+    // Their current line, or nothing. It shows once they're in the chair.
+    setSpeech(text) {
+      speech.set(text);
+    },
+    // How much of a portrait screen is clear above the sheet: the camera frames the visitor in it.
+    setClear(f) {
+      cam.setClear(f);
     },
     setMood(m) {
       visitor?.setMood(m);
@@ -671,6 +684,7 @@ export function create(ctx) {
     update(dt) {
       visitor?.update(dt);
       deskFigure?.tick(dt);
+      speech.update(dt, visitor ? visitor.phase === 'seated' : !!deskFigure);
       cam.update(dt);
       for (const p of fx) p.update(dt);
       if (colleague) {
@@ -687,6 +701,7 @@ export function create(ctx) {
       camera.updateProjectionMatrix();
     },
     dispose() {
+      speech.dispose();
       visitor?.dispose();
       scene.traverse((o) => o.userData.cancel?.());
       disposeTree(scene);

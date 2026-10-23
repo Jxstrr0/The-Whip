@@ -45,7 +45,8 @@
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.12 0 0 0 0 0.09 0 0 0 0 0.05 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --stamp-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.6 -0.25'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
   --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' fill='none' stroke='%231d1a16' stroke-width='1.6'/%3E%3C/svg%3E");
-  --agenda-h: calc(68px + env(safe-area-inset-bottom));
+  --agenda-h: calc(60px + env(safe-area-inset-bottom));
+  --top-h: 34px; /* the top bar's tags; side sheets and the ledger start under it */
   /* Softness: rounded paper, warm shadows instead of hard rules. */
   --r-sm: 8px;
   --r-md: 12px;
@@ -160,35 +161,41 @@ html, body {
 }
 .brand {
   margin-right: auto;
-  height: 40px;
-  line-height: 40px;
-  padding: 0 12px 0 10px;
+  white-space: nowrap;
+  height: var(--top-h);
+  line-height: var(--top-h);
+  padding: 0 11px 0 9px;
   background-color: var(--paper);
   background-image: var(--grain);
   color: var(--ink);
-  border-radius: var(--r-md);
+  border-radius: var(--r-sm);
+  font-size: 15px;
   font-weight: 600;
   font-variant-caps: normal;
   letter-spacing: 0.01em;
   box-shadow: var(--float);
 }
+/* The buttons are lighter than the masthead: smaller tags, thinner paper, a shorter shadow. */
 .topbar .btn {
-  min-height: 40px;
-  padding: 0 12px;
-  background-color: var(--paper);
+  min-height: var(--top-h);
+  min-width: 0;
+  white-space: nowrap;
+  padding: 0 10px;
+  background-color: rgba(243, 234, 216, 0.88);
   background-image: var(--grain);
   border: 0;
-  border-radius: var(--r-md);
+  border-radius: var(--r-sm);
   color: var(--ink);
+  font-size: 14px;
   font-variant-caps: normal;
   letter-spacing: 0.01em;
-  font-weight: 600;
-  box-shadow: var(--float);
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 3px 10px rgba(0, 0, 0, 0.16);
 }
 
 .status {
   position: absolute;
-  top: calc(60px + env(safe-area-inset-top));
+  top: calc(var(--top-h) + 20px + env(safe-area-inset-top));
   left: calc(10px + env(safe-area-inset-left));
   font: 11px/1.3 ui-monospace, monospace;
   color: rgba(243, 234, 216, 0.75);
@@ -298,7 +305,7 @@ html, body {
   .sheet {
     left: auto;
     width: var(--side-w);
-    top: calc(64px + env(safe-area-inset-top));
+    top: calc(var(--top-h) + 20px + env(safe-area-inset-top));
     bottom: 0;
     max-height: none;
     padding-bottom: calc(16px + env(safe-area-inset-bottom));
@@ -316,14 +323,44 @@ html, body {
   .agenda-sheet {
     max-height: 80dvh;
   }
+  /* The drawer at half: a talking sheet, with the person you're talking to in the room above it. */
+  .sheet[data-h="half"] {
+    max-height: 46dvh;
+  }
 }
 
 .sheet-handle {
+  display: block;
   width: 36px;
   height: 4px;
   margin: 2px auto 10px;
+  padding: 0;
+  border: 0;
   border-radius: 2px;
   background: var(--ink-3);
+}
+/* A tap on the handle swaps the drawer between half and full; the whole top edge of the sheet takes it. */
+button.sheet-handle {
+  position: relative;
+  cursor: pointer;
+}
+button.sheet-handle::after {
+  content: '';
+  position: absolute;
+  inset: -12px -120px -8px;
+}
+/* Upright, a line the room is showing beside its speaker stays off the paper (until the paper is pulled
+   full, when it takes the line back). On a phone on its side the paper carries the line and the room's note
+   stays away. */
+@media (orientation: portrait) {
+  .sheet:not([data-h="full"]) .line.in-room {
+    display: none;
+  }
+}
+@media (orientation: landscape) {
+  .labels .speech-anchor {
+    display: none;
+  }
 }
 
 .sheet h2 {
@@ -976,9 +1013,16 @@ blockquote.line::before {
 }
 .ledger-sheet,
 .book {
-  top: calc(64px + env(safe-area-inset-top));
+  top: calc(var(--top-h) + 20px + env(safe-area-inset-top));
   max-height: none;
   z-index: 6; /* above whichever room sheet is open */
+}
+/* The ledger is as tall as what's in it; the Book is a full page. */
+@media not ((orientation: landscape) and (min-width: 700px)) {
+  .ledger-sheet {
+    top: auto;
+    max-height: 72dvh;
+  }
 }
 /* The game menu too: opened during a division, it stays on top of the count board and of the scene the vote hands on to. */
 .game-menu {
@@ -1375,10 +1419,9 @@ input::placeholder {
   container-type: inline-size;
 }
 .agenda-lines {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
+  display: flex;
   align-items: center;
-  column-gap: 8px;
+  gap: 12px;
 }
 .agenda-date,
 .agenda-news,
@@ -1396,7 +1439,8 @@ input::placeholder {
   padding: 0 14px;
 }
 .agenda-date {
-  min-height: 30px;
+  flex: none;
+  min-height: 36px;
   padding: 0 4px;
   font-weight: 600;
 }
@@ -1410,47 +1454,65 @@ input::placeholder {
   font-weight: 400;
   color: var(--ink-2);
 }
+/* The latest news rides the same line where there's room for it (a tablet, a phone on its side); on a
+   phone upright the toast carries it and a tap on the day opens the feed. */
 .agenda-news {
-  grid-column: 1 / -1;
+  display: none;
+  flex: 1;
+  min-width: 0;
   min-height: 22px;
-  padding: 0 4px 2px;
+  padding: 0 4px;
   font-size: 13px;
   color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+@container (min-width: 440px) {
+  .agenda-news {
+    display: block;
+  }
+}
+/* The aim: its name in brass over a thin rule that fills as the count comes in. */
 .agenda-aim {
   position: relative;
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  justify-self: end;
-  max-width: 100%;
-  min-height: 28px;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: rgba(184, 146, 58, 0.14);
-  box-shadow: inset 0 0 0 1px rgba(184, 146, 58, 0.35);
+  flex-direction: column;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 50%;
+  min-height: 36px;
+  justify-content: center;
+  gap: 3px;
+  padding: 0 2px;
   font-size: 13px;
+  color: var(--brass-ink);
 }
-/* A bigger hit area than the chip it draws. */
+/* A bigger hit area than the words it draws. */
 .agenda-aim::after {
   content: '';
   position: absolute;
-  inset: -8px -4px;
+  inset: -8px -6px;
 }
 .agenda-aim .n {
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 .agenda-aim b {
-  flex: none;
-  font-weight: 650;
-  color: var(--brass-ink);
+  font-weight: 500;
+  color: var(--ink-2);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.agenda-aim .rule {
+  display: block;
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(to right, var(--brass) var(--p, 0%), var(--ink-4) var(--p, 0%));
 }
 .job-label,
 .aim-week .k,
@@ -1460,25 +1522,10 @@ input::placeholder {
   font-weight: 650;
   color: var(--brass-ink);
 }
-/* On narrow phones the day has the top line to itself and the aim moves down beside the news. */
-@container (max-width: 230px) {
-  .agenda-date {
-    grid-column: 1 / -1;
-  }
-  .agenda-aim {
-    grid-row: 2;
-    justify-self: start;
-    min-height: 24px;
-    padding: 1px 8px;
-  }
-  .agenda-news {
-    grid-column: 2;
-    grid-row: 2;
-    padding-left: 0;
-  }
-}
-.agenda-aim[aria-expanded="true"] {
-  background: rgba(184, 146, 58, 0.28);
+.agenda-aim[aria-expanded="true"] .n {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--brass);
 }
 
 /* "Your job here": one line under a scene's title saying what the player is there to do. */
@@ -1570,6 +1617,8 @@ input::placeholder {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-style: italic;
+  color: var(--ink-2);
 }
 .job.fold[open] .job-text {
   white-space: normal;
@@ -3103,6 +3152,91 @@ body.cold-open .topbar {
   display: block;
   margin-top: 2px;
 }
+/* The same stakes as one ruled line for a talk: the lean, then each way of voting with its two numbers.
+   It wraps on a narrow phone and stays one block between two rules. */
+.stakes-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 6px 0 2px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--ink-2);
+}
+.stakes-line .lean {
+  flex-basis: 100%;
+  font-style: italic;
+}
+.stakes-line .lean b {
+  font-style: normal;
+  color: var(--yea);
+}
+.stakes-line .lean b.nay {
+  color: var(--nay);
+}
+.stakes-line .way {
+  white-space: nowrap;
+}
+.stakes-line .side {
+  color: var(--ink);
+}
+.stakes-line .stake {
+  margin: 0 0 0 2px;
+  font-size: 14px;
+}
+.stakes-line .free {
+  font-style: italic;
+}
+
+/* ---- What they're saying, set beside them in the room ------------------------------------------------- */
+.speech-anchor {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.speech {
+  position: absolute;
+  left: 10px;
+  top: -14px;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(300px, calc(100vw - 56px));
+  padding: 9px 13px 10px;
+  border-radius: var(--r-md);
+  background-color: rgba(243, 234, 216, 0.95);
+  background-image: var(--grain);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 15.5px;
+  line-height: 1.32;
+  box-shadow: var(--float);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.26s ease, transform 0.26s ease, margin-left 0.2s ease;
+  pointer-events: none;
+}
+.speech::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 14px;
+  border: 8px solid transparent;
+  border-left: 0;
+  border-right-color: rgba(243, 234, 216, 0.95);
+}
+.speech.on {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .speech {
+    transition: opacity 0.2s ease;
+    transform: none;
+  }
+}
 .stake-total {
   display: flex;
   align-items: baseline;
@@ -3228,7 +3362,7 @@ body.cold-open .topbar {
 
 /* ---- Your row: the icon, the filter chip, the tag, and the sheet ---- */
 .topbar .btn.icon-only {
-  width: 44px;
+  width: 38px;
   padding: 0;
   display: inline-grid;
   place-items: center;
@@ -3236,8 +3370,8 @@ body.cold-open .topbar {
 .topbar .btn.icon-only .ico,
 .chip-toggle .ico,
 .row-tag .ico {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.7;

@@ -15,6 +15,8 @@ export const ROLE_COLORS = {
 };
 // The reporter stays on their feet; everyone else takes the chair.
 const STANDS = new Set(['reporter']);
+// Whether a visitor in this role stands rather than taking the chair (the camera frames them higher).
+export const stands = (role) => STANDS.has(role);
 // Who wears a tie to see their MP: the mayor and the plant manager in their own, the riding association
 // president in the party's with the pin.
 function outfitFor(role, partyColor) {
