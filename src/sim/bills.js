@@ -1,12 +1,10 @@
 // Bills: kinds, the five stages, templates, party lines, scheduling, amendments, and the PMB lottery hook.
-import { data, tuning } from './config.js';
+import { data, tuning, say } from './config.js';
 import { createRng } from './rng.js';
 
 const pad = (n) => String(n).padStart(3, '0');
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const VOTE_STAGES = ['second', 'report', 'third'];
-export const STAGE_NAMES = { first: 'first reading', second: 'second reading', committee: 'committee', report: 'report stage', third: 'third reading', motion: 'the motion' };
-
 // How a bill reads mid-sentence: "the Rural Roads Fund Act", or a motion's spoken name ("the rent freeze motion").
 export function billName(bill) {
   if (!bill) return 'the bill';
@@ -226,7 +224,7 @@ export function addAmendment(state, bill, rng, at) {
   const a = { id: `${bill.id}a${bill.amendments.length + 1}`, at, by, kind, adopted: at === 'committee' };
   if (kind === 'riding') {
     a.riding = mp.riding.id;
-    a.text = `Adds funding for ${mp.riding.name}`;
+    a.text = say('amendment.riding', { riding: mp.riding.name });
   } else {
     a.text = 'Softens the bill';
   }
@@ -323,12 +321,12 @@ export function shoreUpConfidence(state, bill, predict) {
     // The price: something for the partner's ridings.
     const theirs = Object.values(state.mps).filter((m) => m.party === p.id).map((m) => m.riding.id);
     for (const r of theirs.slice(0, 6)) if (!bill.beneficiaryRidings.includes(r)) bill.beneficiaryRidings.push(r);
-    notes.push(`The government wins ${p.name} support for ${billName(bill)} with concessions for their ridings.`);
+    notes.push(say('log.bill.partnerBought', { party: p.name, bill: billName(bill) }));
     if (margin() > 1) return notes;
   }
   if (bill.kind !== 'supply' && margin() <= 0) {
     bill.confidence = false;
-    notes.push(`The government says ${billName(bill)} is not a matter of confidence.`);
+    notes.push(say('log.bill.notConfidence', { bill: billName(bill) }));
   }
   return notes;
 }

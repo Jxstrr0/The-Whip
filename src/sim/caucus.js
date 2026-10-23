@@ -202,7 +202,7 @@ export function caucusSpeak(state, rng, stanceId) {
     if (agrees && rng.chance(0.5)) adjustRapport(state, id, 1);
   }
   const text = fillStance(state, st.text);
-  log(state, `In caucus you said: “${text}”`, 'caucus');
+  log(state, say('log.caucus.said', { text }), 'caucus');
   return { text, kind: st.kind };
 }
 

@@ -6,8 +6,8 @@ import { createRng, withRng } from './rng.js';
 import { createPlayer, setupFirstWeek } from './career.js';
 import { assignSeats } from '../chamber/layout.js';
 import { initFlow, hooks, log } from './pacing.js';
-import { data, tuning } from './config.js';
-import { fill, capFirst } from './fill.js';
+import { data, tuning, say } from './config.js';
+import { fill } from './fill.js';
 import { makeBill, billName } from './bills.js';
 import { prediction } from './count.js';
 import { assignRank, shareFiles } from './ranks.js';
@@ -177,8 +177,8 @@ const SETUPS = {
     }
     const count = prediction(state, bill.id);
     state.mode.billId = bill.id;
-    state.mode.brief = fill(sc.brief, { bill: billName(bill), partner: deal ? state.parties[deal.with].name : 'The third party', ours: count.ours, theirs: count.side === 'yea' ? count.nays : count.yeas, short: count.short, away: away.length ? `${listNames(away, state)} ${away.length === 1 ? 'is' : 'are'} away.` : 'Nobody of ours is away.' });
-    log(state, `${capFirst(billName(bill))} is down for Thursday. The count says ${count.short} short.`, 'career');
+    state.mode.brief = fill(sc.brief, { bill: billName(bill), partner: deal ? state.parties[deal.with].name : say('who.thirdParty'), ours: count.ours, theirs: count.side === 'yea' ? count.nays : count.yeas, short: count.short, away: away.length ? say(away.length === 1 ? 'scenario.awayOne' : 'scenario.awayMany', { names: listNames(away, state) }) : say('scenario.awayNone') });
+    log(state, say('log.scenario.threeShort', { bill: billName(bill), short: count.short }), 'career');
   },
 
   // Chief whip, Wednesday, a bill the benches hate, and a caucus that has had enough of you.
@@ -208,7 +208,7 @@ const SETUPS = {
     state.forceRevolt = true;
     state.mode.billId = bill.id;
     state.mode.brief = fill(sc.brief, { bill: billName(bill), ringleader: fullName(sore[0]) });
-    log(state, `${capFirst(billName(bill))} is down for Thursday. Caucus at ten.`, 'career');
+    log(state, say('log.scenario.roomTurns', { bill: billName(bill) }), 'career');
   },
 
   // A rookie, the first-week dilemma without the first-week script, and a riding already on the phone.
@@ -223,7 +223,7 @@ const SETUPS = {
     const bill = state.bills[p.forceDilemma];
     state.mode.billId = bill?.id || null;
     state.mode.brief = fill(sc.brief, { bill: billName(bill), position: (bill?.positions[me.party] || 'yea').toUpperCase() });
-    if (bill) log(state, `${capFirst(billName(bill))} is down for Thursday. The riding has noticed.`, 'career');
+    if (bill) log(state, say('log.scenario.homeTruths', { bill: billName(bill) }), 'career');
   },
 };
 

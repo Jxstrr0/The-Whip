@@ -1,6 +1,6 @@
 // The day loop: morning, caucus, House, office, fallout. Routine days auto-resolve to a summary line;
 // the game only stops (state.flow.pending) for days that matter.
-import { tuning } from './config.js';
+import { tuning, say } from './config.js';
 import { withRng } from './rng.js';
 import { registerActions } from './actions.js';
 import { weeklyBusiness, committeeTick, todaysItems, reportStageAmendments, shoreUpConfidence, dayIndex, billName } from './bills.js';
@@ -92,7 +92,7 @@ function startDay(state, rng) {
   if (d.dayOfWeek === 1) {
     if (sitting) {
       const bills = weeklyBusiness(state, rng);
-      for (const b of bills) log(state, `First reading: ${b.title}.`, 'bill');
+      for (const b of bills) log(state, say('log.firstReading', { title: b.title }), 'bill');
       committeeTick(state, rng);
     }
   }
@@ -130,7 +130,7 @@ function decide(state, rng, item, choice, dilemma) {
   const bill = state.bills[item.billId];
   if (item.stage === 'report') {
     const a = reportStageAmendments(state, bill, rng);
-    if (a) log(state, `Report stage amendment on ${billName(bill)} ${a.adopted ? 'carried' : 'defeated'}: ${a.text}.`, 'bill');
+    if (a) log(state, say(a.adopted ? 'log.amendment.carried' : 'log.amendment.defeated', { bill: billName(bill), text: a.text }), 'bill');
   }
   const me = state.player.mpId;
   const ov = playerOverride(state, bill, choice);
@@ -150,9 +150,8 @@ function afterResult(state, result) {
   const p = state.player;
   const bill = state.bills[result.billId];
   const me = state.mps[p.mpId];
-  const verb = result.carried ? 'carried' : 'defeated';
-  const label = result.stage === 'motion' ? '' : ` at ${stageLabel(result.stage)}`;
-  log(state, `${bill.title}${label}: ${verb}, ${tally(result)}.`, result.recorded ? 'division' : 'voice');
+  const key = result.recorded ? (result.carried ? 'log.result.carried' : 'log.result.defeated') : 'log.result.voice';
+  log(state, say(result.stage === 'motion' ? key : key + 'At', { title: bill.title, stage: stageLabel(result.stage), tally: tally(result) }), result.recorded ? 'division' : 'voice');
   if (!result.recorded) return;
   state.flow.week.start.votes++;
   // Party line side won or lost (the whip's record counts these).
@@ -174,7 +173,7 @@ function afterResult(state, result) {
     const gov = state.house.government;
     state.polling[gov] = Math.max(1, Math.round((state.polling[gov] - tuning().pacing.defeatPollHit) * 10) / 10);
   }
-  if (state.house.fallen) log(state, `The government has lost the confidence of the House.`, 'confidence');
+  if (state.house.fallen) log(state, say('log.fallen'), 'confidence');
   rememberDivision(state, result);
 }
 
@@ -299,8 +298,7 @@ export function next(state) {
       }
     }
     flow.step = 'dissolved';
-    const why = state.house.fallen ? 'The government fell on a confidence vote.' : 'Parliament reached its fixed election date.';
-    log(state, `Parliament is dissolved. ${why}`, 'confidence');
+    log(state, say(state.house.fallen ? 'log.dissolved.fallen' : 'log.dissolved.fixedDate'), 'confidence');
     flow.pending = { kind: 'dissolved', important: true, needsChoice: true, reason: state.house.fallen ? 'fallen' : 'fixedDate' };
     return flow.pending;
   }

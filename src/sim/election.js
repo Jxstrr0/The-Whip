@@ -2,7 +2,7 @@
 // polling sets seat totals; each riding is decided by its member's margin, standing and scandal. The House is
 // rebuilt around the survivors: new cohort, roles and cliques reassigned, the ledger carried over. A fallen
 // government early in a Parliament may hand over instead, with no election.
-import { data, tuning } from './config.js';
+import { data, tuning, say } from './config.js';
 import { fill } from './fill.js';
 import { log, resolvers, queueStop, initFlow, dissolution } from './pacing.js';
 import { withRng } from './rng.js';
@@ -200,7 +200,7 @@ export function runElection(state, rng, choice = 'canvass') {
   const seats = Object.values(state.parties).map((q) => ({ id: q.id, name: q.name, short: q.short, color: q.color, before: before[q.id], after: q.seats }));
   const gov = state.parties[state.house.government];
   const summary = { kind: 'election', phase: 'result', important: true, needsChoice: true, parliament: newParliament, government: gov.id, governmentName: gov.name, minority: state.house.minority, seats, campaignText, cohortLost, newcomers: openings.length, gone: gone.length, player: { riding: me.riding.name, result: deselected ? 'deselected' : playerLost ? 'lost' : 'held', margin: clamp(Math.abs(Math.round(scores.get(me.id))), 1, 40), standing: p.ridingStanding }, changed: gov.id !== oldGov };
-  log(state, `Election night: ${gov.name} ${state.house.minority ? 'forms a minority government' : 'forms the government'} with ${gov.seats} seats.`, 'confidence');
+  log(state, say(state.house.minority ? 'log.election.minority' : 'log.election.majority', { gov: gov.name, seats: gov.seats }), 'confidence');
   const govCtx = { gov: gov.name, govKind: state.house.minority ? 'minority' : 'majority' };
   remember(state, 'election', {
     sub: summary.player.result,
@@ -208,7 +208,7 @@ export function runElection(state, rng, choice = 'canvass') {
     aside: summary.player.result === 'held' ? fill(data().memoir.asides[summary.changed ? 'govChanged' : 'govSame'], govCtx) : '',
   });
   if (playerLost) {
-    log(state, deselected ? `The riding association deselected you before the writ.` : `You lost ${me.riding.name}.`, 'career');
+    log(state, deselected ? say('log.election.deselected') : say('log.election.lostSeat', { riding: me.riding.name }), 'career');
     summary.needsChoice = true;
     p.lostSeat = deselected ? 'nomination' : 'defeated';
     return summary;
@@ -249,7 +249,7 @@ function openParliament(state, parliamentNo) {
   if (p.mentor && !state.mps[p.mentor]) p.mentor = null;
   reseat(state);
   initFlow(state);
-  log(state, `The ${parliamentNo}th Parliament opens.`, 'confidence');
+  log(state, say('log.election.opens', { n: parliamentNo }), 'confidence');
 }
 
 // A government that falls early in a Parliament can be replaced without an election, if the rest of the House
@@ -284,7 +284,7 @@ export function tryHandover(state, rng) {
   reseat(state);
   for (const b of Object.values(state.bills)) if (b.status === 'active' && b.kind === 'government') b.status = 'dropped';
   state.flow.queue = [];
-  log(state, `${gov.name} has lost the confidence of the House. The Governor General has asked ${opp.name} to govern.`, 'confidence');
+  log(state, say('log.election.handover', { gov: gov.name, opp: opp.name }), 'confidence');
   headline(state, rng, 'confidenceLost', { yeas: 0, nays: 0, party: gov.name });
   return { kind: 'election', phase: 'handover', important: true, needsChoice: true, from: gov.id, to: opp.id, fromName: gov.name, toName: opp.name };
 }
