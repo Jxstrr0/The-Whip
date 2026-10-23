@@ -585,6 +585,7 @@ export function create(ctx) {
     },
     update(dt) {
       visitor?.update(dt);
+      me.update(dt);
       speech.update(dt, visitor?.phase === 'seated');
       if (townHall) crowd.update(dt);
       precipitation.update(dt);

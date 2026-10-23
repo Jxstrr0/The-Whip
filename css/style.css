@@ -608,6 +608,18 @@ blockquote.line::before {
 .note {
   font-size: 14px;
 }
+/* A term of art on its first use: a dotted line under the word, in the running text's own type. */
+.term {
+  all: unset;
+  cursor: pointer;
+  text-decoration: underline dotted var(--ink-2);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.term:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
 .note.good {
   color: var(--bench);
 }

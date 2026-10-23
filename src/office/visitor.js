@@ -1,99 +1,77 @@
-// The articulated figure for the office and the riding: the crowds' silhouette with elbows, knees, hands and
-// shoes on pivots, so it can walk in, sit, and hold a pose that says how the meeting is going.
+// The articulated figure for the office and the riding: the crowds' body on real pivots (neck, shoulders,
+// elbows, hips, knees), moved by the same channels and fidgets as the crowds (motion.js), so it can walk in,
+// sit, hold a pose that says how the meeting is going, and never quite sit still.
 import * as THREE from 'three';
-import { blobMaterial, figureMaterial, merge } from '../kit3d.js';
-import { lookFor, shade, tieParts, pinPart } from '../figures.js';
+import { blobMaterial, figureMaterial, vertexMaterial, merge, paint } from '../kit3d.js';
+import { lookFor, shade, trouserColour, tieParts, pinPart } from '../figures.js';
+import { RIG, jacketGeometry, shirtFront, pelvis, headGeometry, armGeometry, legGeometry, handGeometry, shoeGeometry, FOREARM_SCALE, SHIN_SCALE } from '../body.js';
 import { headGeometries, bodyGeometries, hairCap, partsFor, partColour, tieColour, growScale, HEAD_PARTS } from '../faces.js';
-
-const HIP = 0.86;
-const THIGH = 0.39;
-const SHIN = 0.39;
-const UPPER = 0.27;
-const FORE = 0.26;
-const SHOULDER_H = 0.54; // above the hips
-const HEAD_H = 0.77;
-const SEAT = 0.47;
-
-// A limb hanging from its pivot along -y.
-function hanging(r, len, mat) {
-  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 3, 8), mat);
-  m.position.y = -len / 2;
-  return m;
-}
+import { NCH, IX, POSES, poseChannels, startFidget, endFidget, stepFidget, pickFidget, breathe, stride as strideChannels, addChannels, wrapAngle } from '../motion.js';
+import { tuning } from '../sim/config.js';
 
 // `outfit` is a wardrobe() result: its suit replaces `color`, and its tie and pin are worn; without one the
 // figure is a plain suit (the player seen from behind, a constituent). `face` is a faces.js result: how much
 // of a face the player has earned on them (none for a stranger); setFace() changes it later, growing new parts.
+const SHIRT = '#e9e3d8';
+const DARK = '#1d1a16';
+
 export function createFigure(color, mpId = 'x', outfit = null, face = null) {
   const look = lookFor(mpId);
-  const mats = {
-    suit: figureMaterial({ color: outfit?.suit || shade(color, mpId), roughness: 0.82 }),
-    skin: figureMaterial({ color: look.skin, roughness: 0.6 }),
-    hair: figureMaterial({ color: look.hair, roughness: 0.95 }),
-    shirt: figureMaterial({ color: '#e9e3d8', roughness: 0.7 }),
-    dark: figureMaterial({ color: '#1d1a16', roughness: 0.8 }),
-  };
+  const suit = outfit?.suit || shade(color, mpId);
+  const trousers = trouserColour(suit);
+  // Every moving part is one mesh with its colours painted into the vertices (jacket, shirt and pin as one
+  // body; sleeve and hand as one forearm), so a figure costs a dozen draw calls rather than twenty.
+  const mat = vertexMaterial({ roughness: 0.78 });
+  const mats = { body: mat };
+  const part = (pieces) => new THREE.Mesh(merge(pieces.map(([geo, colour]) => paint(geo, colour))), mat);
   const g = new THREE.Group();
   const body = new THREE.Group();
-  body.position.y = HIP;
+  body.position.y = RIG.hip;
+  body.rotation.order = 'YXZ';
 
-  const torso = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), mats.suit);
-  torso.scale.set(0.2, 0.32, 0.14);
-  torso.position.y = 0.28;
-  const shoulders = new THREE.Mesh(new THREE.CapsuleGeometry(0.085, 0.38, 3, 10), mats.suit);
-  shoulders.rotation.z = Math.PI / 2;
-  shoulders.position.y = SHOULDER_H;
-  const collar = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.09, 0.02), mats.shirt);
-  collar.position.set(0, SHOULDER_H - 0.05, 0.133);
-  const neck = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.1, 3, 8), mats.skin);
-  neck.position.set(0, SHOULDER_H + 0.08, 0.01);
-  // The head turns and nods about the neck.
+  const torsoPieces = [[jacketGeometry(RIG.shoulder), suit], [pelvis(0), trousers], [shirtFront(RIG.shoulder), SHIRT]];
+  if (outfit?.pin) torsoPieces.push([pinPart(RIG.shoulder), outfit.pin]);
+  const torso = part(torsoPieces);
+  // The head (with its neck) turns and nods about the top of the collar; the hair sits on the skull.
   const head = new THREE.Group();
-  head.position.set(0, HEAD_H - 0.12, 0);
-  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.115, 14, 10), mats.skin);
-  skull.scale.set(1, 1.12, 1.02);
-  skull.position.y = 0.12;
-  const cap = new THREE.Mesh(hairCap(), mats.hair);
-  cap.scale.set(1, Math.max(look.hairStyle, 0.01), 1);
-  cap.position.y = 0.12;
-  cap.visible = look.hairStyle > 0;
-  head.add(skull, cap);
-  body.add(torso, shoulders, collar, neck, head);
+  head.position.set(0, RIG.neck, 0);
+  head.rotation.order = 'YXZ';
+  const headPieces = [[headGeometry(), look.skin]];
+  if (look.hairStyle > 0) headPieces.push([hairCap().scale(1, look.hairStyle, 1).translate(0, RIG.skull, 0), look.hair]);
+  head.add(part(headPieces));
+  body.add(torso, head);
+  // The tie stays its own mesh: it changes colour with the face tiers and goes when a bow tie is earned.
   let tieMesh = null;
   if (outfit?.tie) {
     mats.tie = figureMaterial({ color: outfit.tie, roughness: 0.55 });
-    tieMesh = new THREE.Mesh(merge(tieParts(SHOULDER_H)), mats.tie);
+    tieMesh = new THREE.Mesh(merge(tieParts(RIG.shoulder)), mats.tie);
     body.add(tieMesh);
   }
-  if (outfit?.pin) {
-    mats.pin = figureMaterial({ color: outfit.pin, roughness: 0.3, metalness: 0.6 });
-    body.add(new THREE.Mesh(pinPart(SHOULDER_H), mats.pin));
-  }
 
+  // One geometry each for an upper arm, a forearm with its hand, a thigh and a shin with its shoe; both sides share them.
+  const upperGeo = paint(armGeometry(), suit);
+  const foreGeo = merge([paint(armGeometry().scale(...FOREARM_SCALE), suit), paint(handGeometry().translate(0, -RIG.fore, 0), look.skin)]);
+  const thighGeo = paint(legGeometry(), trousers);
+  const shinGeo = merge([paint(legGeometry().scale(...SHIN_SCALE), trousers), paint(shoeGeometry().translate(0, -RIG.shin, 0), DARK)]);
   const arms = [-1, 1].map((s) => {
     const sh = new THREE.Group();
-    sh.position.set(0.22 * s, SHOULDER_H, 0);
+    sh.position.set(RIG.shoulderX * s, RIG.shoulder, 0);
     const el = new THREE.Group();
-    el.position.y = -UPPER;
+    el.position.y = -RIG.upper;
     // Fold first (x), then turn the folded forearm across the chest (y): needed for crossed arms.
     el.rotation.order = 'YXZ';
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), mats.skin);
-    hand.scale.set(1, 0.8, 1.2);
-    hand.position.y = -FORE;
-    el.add(hanging(0.05, FORE, mats.suit), hand);
-    sh.add(hanging(0.058, UPPER, mats.suit), el);
+    el.add(new THREE.Mesh(foreGeo, mat));
+    sh.add(new THREE.Mesh(upperGeo, mat), el);
     body.add(sh);
     return { sh, el };
   });
   const legs = [-1, 1].map((s) => {
     const hip = new THREE.Group();
-    hip.position.set(0.1 * s, HIP, 0);
+    hip.position.set(RIG.hipX * s, RIG.hip, 0);
     const knee = new THREE.Group();
-    knee.position.y = -THIGH;
-    const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.07, 0.25), mats.dark);
-    shoe.position.set(0, -SHIN - 0.04, 0.05);
-    knee.add(hanging(0.065, SHIN, mats.suit), shoe);
-    hip.add(hanging(0.08, THIGH, mats.suit), knee);
+    knee.position.y = -RIG.thigh;
+    knee.add(new THREE.Mesh(shinGeo, mat));
+    hip.add(new THREE.Mesh(thighGeo, mat), knee);
     g.add(hip);
     return { hip, knee };
   });
@@ -107,36 +85,28 @@ export function createFigure(color, mpId = 'x', outfit = null, face = null) {
   if (face) {
     const full = partsFor({ ...face, tier: 3 });
     const heads = headGeometries();
-    const bodies = bodyGeometries(SHOULDER_H);
+    const bodies = bodyGeometries(RIG.shoulder);
     const lookC = { skin: look.skin, hair: look.hair, hairStyle: look.hairStyle };
-    for (const [k] of full) {
+    const addPart = (k, geo) => {
       const fixed = k === 'eyes' ? '#1b1714' : k === 'earrings' ? '#d4b25a' : null;
       const mat = figureMaterial({ color: fixed || partColour(k, face, lookC), roughness: k === 'eyes' ? 0.35 : 0.7, metalness: k === 'earrings' ? 0.7 : ['round', 'square', 'halfMoons'].includes(k) ? 0.3 : 0, side: k === 'beard' ? THREE.DoubleSide : THREE.FrontSide });
       mats[`face_${k}`] = mat;
       const pivot = new THREE.Group();
       if (HEAD_PARTS.includes(k)) {
-        pivot.position.y = 0.12;
-        pivot.add(new THREE.Mesh(heads[k], mat));
+        pivot.position.y = RIG.skull;
         head.add(pivot);
       } else {
         pivot.position.set(...bodies.anchors[k]);
-        pivot.add(new THREE.Mesh(bodies.geos[k], mat));
         body.add(pivot);
       }
+      pivot.add(new THREE.Mesh(geo, mat));
       faceParts[k] = { pivot, level: 0 };
-    }
+    };
+    for (const [k] of full) addPart(k, HEAD_PARTS.includes(k) ? heads[k] : bodies.geos[k]);
     // The heavy brows replace the plain ones, so both are built for a brows person.
-    if (face.feature === 'brows' && !faceParts.brows) {
-      const mat = figureMaterial({ color: partColour('brows', face, lookC), roughness: 0.7 });
-      mats.face_brows = mat;
-      const pivot = new THREE.Group();
-      pivot.position.y = 0.12;
-      pivot.add(new THREE.Mesh(heads.brows, mat));
-      head.add(pivot);
-      faceParts.brows = { pivot, level: 0 };
-    }
-    for (const [k, g] of Object.entries(heads)) if (!faceParts[k]) g.dispose();
-    for (const [k, g] of Object.entries(bodies.geos)) if (!faceParts[k]) g.dispose();
+    if (face.feature === 'brows' && !faceParts.brows) addPart('brows', heads.brows);
+    for (const [k, geo] of Object.entries(heads)) if (!faceParts[k]) geo.dispose();
+    for (const [k, geo] of Object.entries(bodies.geos)) if (!faceParts[k]) geo.dispose();
   }
   function showFace() {
     const on = new Map(partsFor(face && { ...face, tier }));
@@ -167,7 +137,43 @@ export function createFigure(color, mpId = 'x', outfit = null, face = null) {
   shadow.position.y = 0.012;
   g.add(shadow, body);
   g.scale.setScalar(look.height);
-  return {
+
+  // Motion: the pose being settled into, what's held over it, the fidget under way, and the walk.
+  let poseName = 'standing';
+  const cur = new Float32Array(poseChannels('standing'));
+  let goal = poseChannels('standing');
+  let rate = 4;
+  let moving = false;
+  let held = null;
+  let fidget = null;
+  let queued = null;
+  let idleT = 1 + Math.random() * 2;
+  let time = 0;
+  const phase = Math.random() * Math.PI * 2;
+  let walkK = 0;
+  let walkT = 0;
+  let scale = 1;
+  const out = new Float32Array(NCH);
+  const nextIdle = () => (tuning().look.fidgetEvery ?? 14) * 0.5 * (0.5 + Math.random());
+
+  // Every pivot from the channels. Legs hang from the hips but don't lean with the trunk.
+  function apply(c) {
+    body.position.set(0, c[IX.bodyY], c[IX.bodyZ]);
+    body.rotation.set(c[IX.lean], c[IX.turn], c[IX.sway]);
+    head.rotation.set(c[IX.headX], c[IX.headY], c[IX.headZ]);
+    for (let s = 0; s < 2; s++) {
+      const a = s ? IX.aRx : IX.aLx;
+      const e = s ? IX.eRx : IX.eLx;
+      arms[s].sh.rotation.set(c[a], c[a + 1], c[a + 2]);
+      arms[s].el.rotation.set(c[e], c[e + 1], 0);
+      legs[s].hip.position.set(RIG.hipX * (s ? 1 : -1), c[IX.bodyY], c[IX.bodyZ]);
+      legs[s].hip.rotation.x = c[s ? IX.hipR : IX.hipL];
+      legs[s].knee.rotation.x = c[s ? IX.kneeR : IX.kneeL];
+    }
+  }
+  apply(cur);
+
+  const f = {
     group: g,
     body,
     head,
@@ -183,61 +189,113 @@ export function createFigure(color, mpId = 'x', outfit = null, face = null) {
       return tier;
     },
     setFace,
-    // Advance any parts growing in.
+    get pose() {
+      return poseName;
+    },
+    // Settle into a pose over a moment (or at once with `snap`); the fidgets that follow come with it.
+    setPose(name, { rate: r = 4, snap = false } = {}) {
+      if (!POSES[name]) name = 'standing';
+      poseName = name;
+      goal = poseChannels(name);
+      rate = r;
+      moving = true;
+      if (snap) {
+        cur.set(goal);
+        scale = POSES[name].scale || 1;
+        moving = false;
+        apply(cur);
+        g.scale.setScalar(scale * look.height);
+      }
+    },
+    // A fidget now (or after up to `delay` seconds): any name from motion.js FIDGETS.
+    fidget(name, { delay = 0, hold = null } = {}) {
+      queued = { name, at: time + delay * Math.random(), hold };
+    },
+    // Let a held fidget (speaking, clapping) fall away.
+    calm() {
+      queued = null;
+      if (fidget) endFidget(fidget);
+    },
+    // Channels held over the pose until let go (null): hands kept on a keyboard, a glass held up.
+    hold(channels) {
+      if (!channels) {
+        held = null;
+        return;
+      }
+      held = held || new Float32Array(NCH);
+      held.fill(0);
+      addChannels(held, channels);
+    },
+    // Advance any parts growing in (kept for callers that drive the pivots themselves).
     tick(dt) {
       if (growT >= 1) return;
       growT = Math.min(1, growT + dt / 0.7);
       showFace();
     },
+    // One frame: the pose blend, breathing, the fidget (or the walk, when `walk` is on), the face growing in.
+    update(dt, { walk = false } = {}) {
+      time += dt;
+      this.tick(dt);
+      if (moving) {
+        const k = Math.min(1, dt * rate);
+        let far = 0;
+        for (let c = 0; c < NCH; c++) {
+          cur[c] += (goal[c] - cur[c]) * k;
+          far = Math.max(far, Math.abs(goal[c] - cur[c]));
+        }
+        if (far < 0.002) {
+          cur.set(goal);
+          moving = false;
+        }
+      }
+      out.set(cur);
+      if (held) for (let c = 0; c < NCH; c++) out[c] += held[c];
+      breathe(out, time, phase);
+      walkK += ((walk ? 1 : 0) - walkK) * Math.min(1, dt * 6);
+      if (walkK > 0.01) {
+        walkT += dt;
+        strideChannels(out, walkT, walkK);
+      }
+      if (walk) {
+        if (fidget) endFidget(fidget);
+        queued = null;
+      } else if (queued && time >= queued.at) {
+        if (fidget) endFidget(fidget);
+        else {
+          fidget = startFidget(queued.name, cur, queued);
+          queued = null;
+        }
+      }
+      if (fidget) {
+        if (!stepFidget(fidget, dt, out)) {
+          fidget = null;
+          idleT = nextIdle();
+        }
+      } else if (!queued && !walk) {
+        idleT -= dt;
+        if (idleT <= 0) {
+          const name = pickFidget(poseName);
+          if (name) fidget = startFidget(name, cur);
+          else idleT = nextIdle();
+        }
+      }
+      apply(out);
+      const want = (POSES[poseName].scale || 1) * look.height;
+      g.scale.setScalar(g.scale.x + (want - g.scale.x) * Math.min(1, dt * 4));
+    },
   };
+  return f;
 }
 
-// Joint angles per pose. Shoulder x negative swings the arm forward; z moves it across the body (mirrored for
-// the right arm); elbow x folds the forearm forward, elbow y turns it across the chest.
-const SIT = { hips: -Math.PI / 2, knees: Math.PI / 2 };
-const POSES = {
-  standing: { bodyY: HIP, lean: 0, headX: 0, arms: [[0, 0, 0.06], [0, 0, -0.06]], elbows: [[-0.15, 0], [-0.15, 0]], hips: 0, knees: 0, scale: 1 },
-  walking: { bodyY: HIP, lean: 0.05, headX: 0, arms: [[0, 0, 0.06], [0, 0, -0.06]], elbows: [[-0.3, 0], [-0.3, 0]], hips: 0, knees: 0, scale: 1 },
-  // Upright, hands on the knees.
-  cooperative: { bodyY: SEAT, lean: -0.03, headX: 0, arms: [[-0.55, 0, 0.05], [-0.55, 0, -0.05]], elbows: [[-0.95, 0], [-0.95, 0]], ...SIT, scale: 1 },
-  // Arms folded across the chest, leaning back a touch.
-  guarded: { bodyY: SEAT, lean: -0.1, headX: 0.05, arms: [[-0.9, 0, 0.3], [-0.9, 0, -0.3]], elbows: [[-1.5, 1.35], [-1.3, -1.35]], ...SIT, scale: 1 },
-  // Leaning in, both hands flat on the desk edge.
-  angry: { bodyY: SEAT, lean: 0.35, headX: -0.15, arms: [[-1.2, 0, 0.15], [-1.2, 0, -0.15]], elbows: [[-0.25, 0], [-0.25, 0]], ...SIT, scale: 1 },
-  // Shoulders in, hands clasped in the lap, head down.
-  anxious: { bodyY: SEAT - 0.01, lean: 0.15, headX: 0.3, arms: [[-0.75, 0, 0.3], [-0.75, 0, -0.3]], elbows: [[-1.45, 0.7], [-1.45, -0.7]], ...SIT, scale: 0.95 },
-};
-
+// Put a figure straight into a pose (k = 1) or start settling toward it. Kept for the rooms that place a
+// figure once and leave it; `f.setPose` says the same thing.
 export function poseFigure(f, name, k = 1) {
-  const p = POSES[name] || POSES.standing;
-  const lerp = (a, b) => a + (b - a) * k;
-  f.body.position.y = lerp(f.body.position.y, p.bodyY);
-  f.body.rotation.x = lerp(f.body.rotation.x, p.lean);
-  f.head.rotation.x = lerp(f.head.rotation.x, p.headX);
-  f.arms.forEach((a, i) => {
-    a.sh.rotation.x = lerp(a.sh.rotation.x, p.arms[i][0]);
-    a.sh.rotation.y = lerp(a.sh.rotation.y, p.arms[i][1]);
-    a.sh.rotation.z = lerp(a.sh.rotation.z, p.arms[i][2]);
-    a.el.rotation.x = lerp(a.el.rotation.x, p.elbows[i][0]);
-    a.el.rotation.y = lerp(a.el.rotation.y, p.elbows[i][1]);
-  });
-  for (const l of f.legs) {
-    l.hip.position.y = p.bodyY;
-    l.hip.rotation.x = lerp(l.hip.rotation.x, p.hips);
-    l.knee.rotation.x = lerp(l.knee.rotation.x, p.knees);
-  }
-  f.group.scale.setScalar(lerp(f.group.scale.x, p.scale * f.baseScale));
+  f.setPose(name, { snap: k >= 1 });
 }
 
-// Legs from the hip, arms opposite, a knee bend on the swing-through.
-export function stride(f, t) {
-  const s = Math.sin(t * 9);
-  f.legs[0].hip.rotation.x = s * 0.5;
-  f.legs[1].hip.rotation.x = -s * 0.5;
-  f.legs[0].knee.rotation.x = Math.max(0, -s) * 0.7;
-  f.legs[1].knee.rotation.x = Math.max(0, s) * 0.7;
-  f.arms[0].sh.rotation.x = -s * 0.35;
-  f.arms[1].sh.rotation.x = s * 0.35;
+// The walk, for callers that move a figure along a path themselves: one frame at time t.
+export function stride(f, dt) {
+  f.update(dt, { walk: true });
 }
 
 // A visitor that follows waypoints from the door to a chair. update(dt) animates; `seated` tells the camera.
@@ -261,15 +319,18 @@ export function createVisitor(scene, { color, mpId, path, seat, facing, outfit =
   const speed = 3.2;
   let onSeated = null;
   let onGone = null;
+  const dir = new THREE.Vector3();
 
+  // Along the path, turning toward each new leg over a few frames rather than snapping to it.
   function walk(dt, list) {
     const target = list[leg + 1];
     if (!target) return true;
     const pos = f.group.position;
-    const dir = target.clone().sub(pos);
+    dir.subVectors(target, pos);
     const dist = dir.length();
     const step = speed * dt;
-    f.group.rotation.y = Math.atan2(dir.x, dir.z);
+    const want = Math.atan2(dir.x, dir.z);
+    f.group.rotation.y += wrapAngle(want - f.group.rotation.y) * Math.min(1, dt * 10);
     if (dist <= step) {
       pos.copy(target);
       leg++;
@@ -279,13 +340,20 @@ export function createVisitor(scene, { color, mpId, path, seat, facing, outfit =
     return false;
   }
 
+  function sitIn(snap) {
+    f.setPose(mood, { rate: 5, snap });
+  }
+
   return {
     figure: f,
     get phase() {
       return phase;
     },
+    // How the meeting is going: the pose changes, and so does what they do with their hands.
     setMood(m) {
+      if (m === mood) return;
       mood = m;
+      if (phase === 'seated' || phase === 'sitting') sitIn(false);
     },
     // Learning more mid-meeting: the new parts grow in (after the walk-in, if they haven't sat yet).
     setFace(next) {
@@ -302,19 +370,20 @@ export function createVisitor(scene, { color, mpId, path, seat, facing, outfit =
       onGone = cb;
       leg = 0;
       t = 0;
+      f.fidget('standUp');
+      f.setPose('walking', { rate: 5 });
     },
     // Skip the walk-in (when a meeting resumes mid-way or the room is rebuilt).
     sitNow() {
       f.group.position.set(seat[0], 0, seat[1]);
       f.group.rotation.y = facing;
       phase = 'seated';
-      poseFigure(f, mood, 1);
+      sitIn(true);
       if (faceNext) f.setFace(faceNext);
       faceNext = null;
     },
     update(dt) {
       t += dt;
-      f.tick(dt);
       if (phase === 'seated' && faceNext) {
         focusIn -= dt;
         if (focusIn <= 0) {
@@ -323,35 +392,34 @@ export function createVisitor(scene, { color, mpId, path, seat, facing, outfit =
         }
       }
       if (phase === 'entering') {
-        poseFigure(f, 'walking', 1);
-        stride(f, t);
+        if (f.pose !== 'walking') f.setPose('walking', { snap: true });
+        f.update(dt, { walk: true });
         if (walk(dt, pts)) {
           phase = 'sitting';
           t = 0;
+          sitIn(false);
+          f.fidget('sitDown');
         }
       } else if (phase === 'sitting') {
-        f.group.rotation.y += (facing - f.group.rotation.y) * Math.min(1, dt * 8);
-        poseFigure(f, mood, Math.min(1, dt * 6));
+        f.group.rotation.y += wrapAngle(facing - f.group.rotation.y) * Math.min(1, dt * 8);
+        f.update(dt);
         if (t > 0.5) {
           phase = 'seated';
           onSeated?.();
         }
       } else if (phase === 'seated') {
-        poseFigure(f, mood, Math.min(1, dt * 4));
-        // Breathing, and the head drifting a little, so a seated person never freezes.
-        f.body.position.y += Math.sin(t * 1.6) * 0.0012;
-        f.head.rotation.y = Math.sin(t * 0.7) * 0.06;
+        f.update(dt);
       } else if (phase === 'leaving') {
-        poseFigure(f, 'walking', Math.min(1, dt * 6));
-        stride(f, t);
-        if (walk(dt, [...pts].reverse())) {
+        // A moment to get up before the first step.
+        f.update(dt, { walk: t > 0.35 });
+        if (t > 0.35 && walk(dt, [...pts].reverse())) {
           phase = 'gone';
           f.group.visible = false;
           const cb = onGone;
           onGone = null;
           cb?.();
         }
-      }
+      } else f.update(dt);
     },
     dispose() {
       scene.remove(f.group);
