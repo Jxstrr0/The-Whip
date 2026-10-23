@@ -3,7 +3,8 @@
 // project, threaten a nomination, use leverage, release a free vote, expel. Each costs House time or a
 // favour from a weekly budget, pushes on the MP's decision through state.nudges / state.leverage /
 // state.chased / state.leaves, and lands in the ledger from both sides.
-import { tuning, data } from './config.js';
+import { tuning, data, say } from './config.js';
+import { fill } from './fill.js';
 import { registerActions } from './actions.js';
 import { hooks, log, isSittingWeek } from './pacing.js';
 import { withRng, createRng } from './rng.js';
@@ -122,7 +123,7 @@ function persuade(state, rng, { mpId, billId, side }) {
   reveal(state, mpId, 'ideology', 'tools');
   addStyle(state, 'fixer');
   const moved = afterVote !== beforeVote && afterVote === want;
-  const note = open ? (moved ? `${fullName(m)} will vote ${want} on ${billName(bill)}. You made the case.` : `${fullName(m)} heard you out on ${billName(bill)}; they're closer.`) : `${fullName(m)} wasn't going to be moved on ${billName(bill)}. You lost a quarter hour.`;
+  const note = say(open ? (moved ? 'log.tool.persuaded' : 'log.tool.closer') : 'log.tool.unmoved', { name: fullName(m), want, bill: billName(bill) });
   ledgerAdd(state, { from: state.player.mpId, to: mpId, kind: 'tool', what: `persuade:${billId}:${want}`, note });
   log(state, note, 'tool');
   return { ok: true, moved, open, note };
@@ -243,7 +244,7 @@ function closeBells(state) {
   const k = bells.runs.filter((r) => r.found).length;
   const name = fullName(state.mps[bells.runs[0].mpId]);
   const tpl = n === 1 ? (k ? L.oneIn : L.oneOut) : k === n ? L.allIn : k ? L.someIn : L.noneIn;
-  log(state, tpl.replace('{name}', name).replace('{bill}', billName(bill)).replace('{n}', NUMBER[n] || n).replace('{k}', NUMBER[k] || k), 'tool');
+  log(state, fill(tpl, { name, bill: billName(bill), n: NUMBER[n] || n, k: NUMBER[k] || k }), 'tool');
 }
 const NUMBER = ['none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
 
@@ -278,7 +279,7 @@ function pair(state, rng, { mpId, billId, withParty }) {
   state.pairs.push(entry);
   p.whipTrust[withParty] = clamp(trust + T.pairTrustGain, -100, 100);
   const whip = state.parties[withParty].chiefWhip;
-  const note = `Paired ${fullName(state.mps[mpId])} with ${fullName(other)} (${state.parties[withParty].short}) on ${billName(bill)}.`;
+  const note = say('log.tool.paired', { name: fullName(state.mps[mpId]), other: fullName(other), party: state.parties[withParty].short, bill: billName(bill) });
   ledgerAdd(state, { from: p.mpId, to: whip || other.id, kind: 'pair', what: `pair:${billId}:${mpId}:${other.id}`, note, settled: false });
   log(state, note, 'tool');
   addStyle(state, 'fixer');
@@ -296,7 +297,7 @@ function leave(state, rng, { mpId, billId, grant }) {
   adjustRapport(state, mpId, grant ? T.leaveRapport : T.blockedRapport);
   if (!grant) m.mood = 'angry';
   addStyle(state, grant ? 'fixer' : 'enforcer');
-  const note = grant ? `You let ${fullName(m)} go home for ${billName(bill)}. Pair them, or that's a vote short.` : `You refused ${fullName(m)} leave for ${billName(bill)}. They weren't pleased.`;
+  const note = say(grant ? 'log.tool.leaveGranted' : 'log.tool.leaveRefused', { name: fullName(m), bill: billName(bill) });
   ledgerAdd(state, { from: state.player.mpId, to: mpId, kind: 'tool', what: `leave:${billId}:${grant ? 'granted' : 'blocked'}`, note });
   log(state, note, 'tool');
   return { ok: true, note };
@@ -319,7 +320,7 @@ function committeeSeat(state, rng, { mpId, committeeId, give }) {
     m.mood = 'angry';
     addStyle(state, 'enforcer');
   }
-  const note = give ? `${fullName(m)} gets a seat on ${state.committees[m.committee]?.name}. They'll remember who gave it.` : `You took ${fullName(m)} off their committee. They'll remember that too.`;
+  const note = say(give ? 'log.tool.seatGiven' : 'log.tool.seatStripped', { name: fullName(m), committee: state.committees[m.committee]?.name });
   ledgerAdd(state, { from: state.player.mpId, to: mpId, kind: give ? 'favor' : 'threat', what: `committeeSeat:${give ? 'given' : 'stripped'}`, note });
   log(state, note, 'tool');
   return { ok: true, note };
@@ -339,11 +340,11 @@ function qpSlot(state, rng, { mpId, give }) {
     leaked = rng.next() < T.qpLeakOdds;
     if (leaked) {
       state.player.ridingStanding = clamp(state.player.ridingStanding + T.leakStanding, 0, 100);
-      log(state, `${data().headlines.papers[0]}: "Backbenchers muzzled by the whip's office," says a member who wasn't given a question.`, 'press');
+      log(state, say('log.press', { paper: data().headlines.papers[0], text: say('log.tool.qpLeak') }), 'press');
     }
     addStyle(state, 'enforcer');
   }
-  const note = give ? `${fullName(m)} gets a question in Question Period this week.` : `You passed ${fullName(m)} over for Question Period.${leaked ? ' It made the papers.' : ''}`;
+  const note = say(give ? 'log.tool.qpGiven' : leaked ? 'log.tool.qpDeniedLeaked' : 'log.tool.qpDenied', { name: fullName(m) });
   ledgerAdd(state, { from: state.player.mpId, to: mpId, kind: give ? 'favor' : 'threat', what: `qpSlot:${give ? 'given' : 'denied'}`, note });
   log(state, note, 'tool');
   return { ok: true, leaked, note };
@@ -357,7 +358,7 @@ function ridingProject(state, rng, { mpId }) {
   if (next) nudge(state, mpId, next.id, SIGN[wantedSide(state, next)] * T.projectNudge);
   state.pressure = clamp((state.pressure || 0) + 1, 0, 100);
   addStyle(state, 'fixer');
-  const note = `A funding announcement is coming to ${m.riding.name}. The press will notice who got one.`;
+  const note = say('log.tool.project', { riding: m.riding.name });
   ledgerAdd(state, { from: state.player.mpId, to: mpId, kind: 'promise', what: 'ridingProject', note, dueWeek: state.date.absWeek + T.projectDueWeeks, settled: false });
   log(state, note, 'tool');
   return { ok: true, note };
@@ -372,7 +373,7 @@ function threatenNomination(state, rng, { mpId, billId }) {
   m.floorCrossRisk = clamp((m.floorCrossRisk || 0) + T.nominationCrossRisk, 0, 100);
   m.mood = 'anxious';
   addStyle(state, 'enforcer');
-  const note = `You let ${fullName(m)} know their next nomination isn't guaranteed. They'll vote with you on ${billName(bill)}, and they'll hate you for it.`;
+  const note = say('log.tool.nomination', { name: fullName(m), bill: billName(bill) });
   ledgerAdd(state, { from: state.player.mpId, to: mpId, kind: 'threat', what: `nomination:${billId}`, note });
   log(state, note, 'tool');
   return { ok: true, note };
@@ -392,10 +393,10 @@ function leverage(state, rng, { mpId, billId }) {
     state.pressure = clamp((state.pressure || 0) + 5, 0, 100);
     m.scandal = clamp((m.scandal || 0) + tuning().media.scandalLeak, 0, 100);
     state.mps[state.player.mpId].scandal = clamp((state.mps[state.player.mpId].scandal || 0) + tuning().media.scandalLeak, 0, 100);
-    log(state, `${data().headlines.papers[0]}: "Whip's office accused of using a member's private life as a lever."`, 'press');
+    log(state, say('log.press', { paper: data().headlines.papers[0], text: say('log.tool.leverageLeak') }), 'press');
   }
   addStyle(state, 'operator');
-  const note = `You used what you know about ${fullName(m)}. They'll vote your way on ${billName(bill)}. That's not forgiven.${leaked ? ' And it got out.' : ''}`;
+  const note = say(leaked ? 'log.tool.leverageLeaked' : 'log.tool.leverage', { name: fullName(m), bill: billName(bill) });
   ledgerAdd(state, { from: state.player.mpId, to: mpId, kind: 'threat', what: `leverage:${billId}`, note });
   log(state, note, 'tool');
   return { ok: true, leaked, note };
@@ -420,7 +421,7 @@ function freeVote(state, rng, { billId }) {
   state.player.leaderTrust = clamp(state.player.leaderTrust + (tuning().ranks.freeVoteTrust[temper] ?? -3), 0, 100);
   if (state.caucus?.billId === billId) state.caucus.line = { line: 'free', position: bill.positions[party] };
   addStyle(state, 'loyalist');
-  const note = `You released the caucus on ${billName(bill)}. A free vote; the result is theirs now.`;
+  const note = say('log.tool.freeVote', { bill: billName(bill) });
   ledgerAdd(state, { from: state.player.mpId, to: party, kind: 'tool', what: `freeVote:${billId}`, note });
   log(state, note, 'tool');
   return { ok: true, note };
@@ -526,8 +527,8 @@ function expel(state, rng, { mpId }) {
     }
     if (before > 0) turned = roomTurns(state, rng, c, before);
   }
-  if (front) headline(state, rng, 'expelled', { member: fullName(m), role: data().headlines.roles?.[role] || 'front-bencher', party: party.name });
-  const note = `${fullName(m)} has been expelled from caucus and sits as an independent.`;
+  if (front) headline(state, rng, 'expelled', { member: fullName(m), role: data().headlines.roles?.[role] || say('who.frontBencher'), party: party.name });
+  const note = say('log.tool.expelled', { name: fullName(m) });
   ledgerAdd(state, { from: state.player.mpId, to: mpId, kind: 'threat', what: 'expelled', note });
   log(state, note, 'tool');
   return { ok: true, note, front, turned, ringleader: turned ? c.revolt.ringleader : null };
@@ -555,7 +556,7 @@ hooks.morning.push((state, rng) => {
   if (!bill) return;
   const party = me(state).party;
   const pool = Object.values(state.mps).filter((m) => m.party === party && m.id !== state.player.mpId && m.caucusRole === 'backbencher');
-  const REASONS = ['a hospital appointment', 'a funeral in the riding', 'a trade mission', 'their daughter’s graduation', 'a riding association dinner', 'a long-booked holiday'];
+  const REASONS = data().career.leave.reasons;
   for (const m of rng.shuffle(pool).slice(0, T.leaveRequestsPerWeek)) {
     if (state.leaves?.[bill.id]?.[m.id]) continue;
     state.leaveRequests.push({ mpId: m.id, billId: bill.id, reason: rng.pick(REASONS) });

@@ -1,7 +1,7 @@
 // Rival whips: the other parties' chief whips as actors with a style and a weekly budget. Each Monday they
 // work your caucus: poach a wobbly member with a pairing offer or a favour, leak to the press, dig for your
 // skeleton, and test whether the pairs you made with them hold. Everything they do is in the feed and the ledger.
-import { tuning, data } from './config.js';
+import { tuning, data, say } from './config.js';
 import { hooks, log, isSittingWeek } from './pacing.js';
 import { baseScore } from './mp.js';
 import { lineFor, billName } from './bills.js';
@@ -53,7 +53,7 @@ function poach(state, rng, party, whip, bill) {
   state.nudges[w.m.id] ||= {};
   state.nudges[w.m.id][bill.id] = (state.nudges[w.m.id][bill.id] || 0) - SIGN[position] * R.poachNudge;
   party.whipAI.targets = [...new Set([...party.whipAI.targets, w.m.id])].slice(-6);
-  const note = `${fullName(w.m)} was seen leaving the ${party.short} whip's office before ${billName(bill)}.`;
+  const note = say('log.rival.poach', { name: fullName(w.m), party: party.short, bill: billName(bill) });
   ledgerAdd(state, { from: whip, to: w.m.id, kind: 'rival', what: `poach:${bill.id}`, note });
   log(state, note, 'rival');
   return true;
@@ -73,16 +73,16 @@ function leak(state, rng, party, whip) {
   let line;
   if (vote) {
     vote.leaked = true;
-    line = `"${me.name.last} can't be relied on," says a source close to the ${party.short} whip.`;
+    line = say('log.rival.leakVote', { last: me.name.last, party: party.short });
   } else if (promise) {
     p.promisesLeaked = p.record.promisesBroken;
-    line = `"Ask ${me.name.last}'s colleagues what a promise from them is worth," a ${party.short} insider tells the paper.`;
+    line = say('log.rival.leakPromise', { last: me.name.last, party: party.short });
   } else if (party.whipAI.targets.length) {
-    line = `The paper reports "quiet talks" between ${party.name} and unhappy members of ${state.parties[me.party].name}.`;
+    line = say('log.rival.leakTalks', { party: party.name, ours: state.parties[me.party].name });
   } else return false;
   p.leakWeek = week;
   if (vote || promise) p.ridingStanding = clamp(p.ridingStanding + R.leakStanding, 0, 100);
-  const note = `${data().headlines.papers[0]}: ${line}`;
+  const note = say('log.press', { paper: data().headlines.papers[0], text: line });
   ledgerAdd(state, { from: whip, to: p.mpId, kind: 'rival', what: 'leak', note });
   log(state, note, 'press');
   // Some leaks make the front page too.
@@ -100,11 +100,11 @@ function dig(state, rng, party, whip) {
   const need = 2 + (p.skeleton.severity || 1) * 2;
   if (party.whipAI.digging >= need) {
     p.skeleton.foundBy = party.id;
-    const note = `Someone from ${party.name} has been asking around about your ${describeSkeleton(p.skeleton.kind)}. They've found it.`;
+    const note = say('log.rival.dugUp', { party: party.name, what: describeSkeleton(p.skeleton.kind) });
     ledgerAdd(state, { from: whip, to: p.mpId, kind: 'rival', what: 'skeleton', note });
     log(state, note, 'rival');
   } else if (party.whipAI.digging === 2) {
-    log(state, `A ${party.short} staffer has been asking questions about your past.`, 'rival');
+    log(state, say('log.rival.digging', { party: party.short }), 'rival');
   }
   return true;
 }
@@ -128,12 +128,12 @@ function pairTest(state, rng, party, whip) {
   if (rng.next() < odds) {
     pr.broken = true;
     p.whipTrust[party.id] = clamp(trust + R.trustReneged, -100, 100);
-    const note = `${fullName(other)} will be in their seat for ${billName(bill)} after all. The ${party.short} whip's office says there was a misunderstanding.`;
+    const note = say('log.rival.pairBroken', { name: fullName(other), bill: billName(bill), party: party.short });
     ledgerAdd(state, { from: whip, to: p.mpId, kind: 'rival', what: `pairBroken:${pr.bill}`, note, kept: false });
     log(state, note, 'rival');
   } else {
     p.whipTrust[party.id] = clamp(trust + R.trustHonoured, -100, 100);
-    const note = `The ${party.short} whip's office confirms the pair on ${billName(bill)}: ${fullName(other)} stays away.`;
+    const note = say('log.rival.pairHonoured', { name: fullName(other), bill: billName(bill), party: party.short });
     ledgerAdd(state, { from: whip, to: p.mpId, kind: 'rival', what: `pairHonoured:${pr.bill}`, note, kept: true });
     log(state, note, 'rival');
   }

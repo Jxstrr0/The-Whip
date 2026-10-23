@@ -1,6 +1,6 @@
 // The whip's record and the ways a career ends: retirement, cabinet, an exit, the fall, a revolt. Also
 // floor-crossing, which doesn't end a career but starts it again in another caucus.
-import { data, tuning } from './config.js';
+import { data, tuning, say } from './config.js';
 import { registerActions } from './actions.js';
 import { log } from './pacing.js';
 import { reseat } from './modes.js';
@@ -40,11 +40,11 @@ export function endCareer(state, kind, extra = {}) {
   // The last page of the memoir (a lost seat already has its election night there).
   if (!['defeated', 'nomination'].includes(kind)) {
     const leader = state.parties[state.mps[state.player.mpId].party]?.leader;
-    remember(state, 'ending', { sub: kind, ctx: { portfolio: extra.portfolio || 'a portfolio', leader: leader ? `${state.mps[leader].name.first} ${state.mps[leader].name.last}` : 'The leader' }, people: kind === 'cabinet' || kind === 'exit' ? [person(state, leader, data().memoir.notes.leader)] : [] });
+    remember(state, 'ending', { sub: kind, ctx: { portfolio: extra.portfolio || say('who.portfolio'), leader: leader ? `${state.mps[leader].name.first} ${state.mps[leader].name.last}` : say('who.leader') }, people: kind === 'cabinet' || kind === 'exit' ? [person(state, leader, data().memoir.notes.leader)] : [] });
   }
   state.ending = { endingKind: kind, week: state.date.absWeek, record: whipRecord(state), epilogue: data().career.ending[kind] || '', ...extra };
   state.flow.pending = { kind: 'ending', important: true, needsChoice: true, ...state.ending };
-  log(state, `The whip's career ends: ${kind}.`, 'career');
+  log(state, say('log.ending', { kind }), 'career');
   return state.flow.pending;
 }
 
@@ -95,8 +95,8 @@ export function crossFloor(state, partyId) {
   p.whipTrust[from?.id] = -40;
   delete p.whipTrust[partyId];
   reseat(state);
-  remember(state, 'crossed', { ctx: { from: from ? from.name : 'your old party', to: to.name }, people: [person(state, to.leader, data().memoir.notes.tookYouIn)] });
-  log(state, `You crossed the floor to ${to.name}. ${from ? from.name : 'Your old caucus'} won't forget it. You start again as a rookie, with your name going ahead of you.`, 'career');
+  remember(state, 'crossed', { ctx: { from: from ? from.name : say('who.oldParty'), to: to.name }, people: [person(state, to.leader, data().memoir.notes.tookYouIn)] });
+  log(state, say(from ? 'log.crossed' : 'log.crossedNoParty', { to: to.name, from: from?.name }), 'career');
   return { ok: true };
 }
 

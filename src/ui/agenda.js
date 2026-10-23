@@ -1,5 +1,5 @@
 // The agenda: the date, Continue and Skip, the day's feed, the morning order paper and the weekly review.
-import { t, esc, scenarioBrief, jobLine, aimShort, aimDetail } from './text.js';
+import { t, esc, scenarioBrief, jobLine, aimShort, aimChip, aimDetail } from './text.js';
 import { tuning } from '../sim/config.js';
 import { stageLabel } from '../sim/vote.js';
 import { prediction } from '../sim/count.js';
@@ -35,12 +35,13 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
     return t('agenda.date', { day, date: c.dayOfMonth, month: c.month, week: c.week, year: c.year }) + (d.constituencyWeek ? ` · ${t('agenda.constituency')}` : '');
   }
 
-  // The bar's short form: the day in full and the week, on one line.
+  // The bar's short form: the day, short, on one line ("Mon 22 Sep"), and "at home" in a constituency week.
   function dayText(state) {
     const d = state.date;
     const c = calendarOf(d);
-    const day = t('agenda.day', { day: tuning().calendar.days[d.dayOfWeek - 1], date: c.dayOfMonth, month: c.month });
-    return `${esc(day)} <span>· ${esc(d.constituencyWeek ? t('agenda.constituency') : t('agenda.week', { week: c.week }))}</span>`;
+    const C = tuning().calendar;
+    const day = t('agenda.day', { day: C.daysShort[d.dayOfWeek - 1], date: c.dayOfMonth, month: C.monthsShort[c.monthIndex] });
+    return `${esc(day)}${d.constituencyWeek ? ` <span>· ${esc(t('agenda.home'))}</span>` : ''}`;
   }
 
   function renderBar() {
@@ -51,10 +52,14 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
     const ownButton = p?.kind === 'morning' || p?.kind === 'weekSummary';
     const last = state.log.slice(-1)[0]?.text || '';
     const feed = expanded ? `<p class="feed-head">${esc(dateText(state))}</p><ol class="feed">${state.log.slice(-25).reverse().map((l) => `<li class="${l.kind}">${esc(l.text)}</li>`).join('')}</ol>` : '';
+    // One strip: the day and your aim on the top line, the latest news under them, then Continue and Skip.
     bar.innerHTML = `
-      <button class="agenda-aim" data-act="aim" aria-expanded="${aimOpen}" aria-label="${esc(t('aim.open', { text: aimShort(state) }))}"><span class="k">${t('aim.label')}</span><span class="v">${esc(aimShort(state))}</span></button>
       <div class="agenda-row">
-        <button class="agenda-date" data-act="expand" aria-expanded="${expanded}" aria-label="${esc(dateText(state))}"><span class="day">${dayText(state)}</span><small>${esc(last)}</small></button>
+        <div class="agenda-info"><div class="agenda-lines">
+          <button class="agenda-date" data-act="expand" aria-expanded="${expanded}" aria-label="${esc(dateText(state))}"><span class="day">${dayText(state)}</span></button>
+          <button class="agenda-aim" data-act="aim" aria-expanded="${aimOpen}" aria-label="${esc(t('aim.open', { text: aimShort(state) }))}">${aimChip(state)}</button>
+          <button class="agenda-news" data-act="expand" aria-hidden="true" tabindex="-1">${esc(last)}</button>
+        </div></div>
         ${blocked ? '' : `${ownButton ? '' : `<button class="btn primary" data-act="continue">${t('agenda.continue')}</button>`}
         <button class="btn" data-act="skip" title="${t('agenda.skipHint')}" aria-label="${t('agenda.skipHint')}"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5l5 5-5 5M10 5l5 5-5 5"/></svg></button>`}
       </div>${feed}`;
@@ -63,10 +68,12 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
       renderBar();
       renderAim();
     };
-    bar.querySelector('[data-act="expand"]').onclick = () => {
-      expanded = !expanded;
-      renderBar();
-    };
+    bar.querySelectorAll('[data-act="expand"]').forEach((b) => {
+      b.onclick = () => {
+        expanded = !expanded;
+        renderBar();
+      };
+    });
     if (!blocked) {
       bar.querySelector('[data-act="continue"]')?.addEventListener('click', onContinue);
       bar.querySelector('[data-act="skip"]').onclick = onSkip;

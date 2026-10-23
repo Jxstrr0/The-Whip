@@ -1,8 +1,8 @@
 // Acts 3 to 5: the row you answer for, leaning on a friend, the deputy's count and the pair before a
 // confidence vote, the temptation, the chief whip's chair, setting the line with the leader, cabinet offers,
 // and the fall. Graduation and failure are both reachable at every rank.
-import { data, tuning } from './config.js';
-import { fill, capFirst } from './fill.js';
+import { data, tuning, say } from './config.js';
+import { fill } from './fill.js';
 import { hooks, log, resolvers, queueStop } from './pacing.js';
 import { baseScore } from './mp.js';
 import { lineFor, billName } from './bills.js';
@@ -153,15 +153,15 @@ function leanOn(state, p, choice) {
     state.nudges[m.id][bill.id] = (state.nudges[m.id][bill.id] || 0) + s * R.leanHardNudge;
     adjustRapport(state, m.id, R.leanHardRapport);
     addStyle(state, 'enforcer', 2);
-    log(state, `You leaned on ${fullName(m)}. They'll vote the line on ${billName(bill)}, and they won't forget how you asked.`, 'career');
+    log(state, say('log.lean.hard', { name: fullName(m), bill: billName(bill) }), 'career');
   } else if (choice === 'gentle') {
     state.nudges[m.id][bill.id] = (state.nudges[m.id][bill.id] || 0) + s * R.leanGentleNudge;
     adjustRapport(state, m.id, R.leanGentleRapport);
     addStyle(state, 'fixer', 2);
-    log(state, `You asked ${fullName(m)} as a friend. They said they'd think about it.`, 'career');
+    log(state, say('log.lean.gentle', { name: fullName(m) }), 'career');
   } else {
     addStyle(state, 'conscience', 2);
-    log(state, `You let ${fullName(m)} vote their riding on ${billName(bill)}. The deputy whip will see the gap.`, 'career');
+    log(state, say('log.lean.letGo', { name: fullName(m), bill: billName(bill) }), 'career');
   }
 }
 
@@ -191,7 +191,7 @@ hooks.fallout.push((state) => {
     if (bill.confidence && !lost && SIGN[pos] && state.house.government === m.party) p.leaderTrust = clamp(p.leaderTrust + tuning().ranks.confidenceCarriedTrust, 0, 100);
     if (lost && (bill.confidence || bill.kind === 'government') && p.predicted?.[bill.id] === 0) {
       p.wrongCounts = (p.wrongCounts || 0) + 1;
-      log(state, p.act === 4 && p.wrongCounts < tuning().ranks.wrongCountsForFailure ? fill(data().career.warned.count, { bill: billName(bill) }) : `You had ${billName(bill)} down as safe. It wasn't.`, 'career');
+      log(state, p.act === 4 && p.wrongCounts < tuning().ranks.wrongCountsForFailure ? fill(data().career.warned.count, { bill: billName(bill) }) : say('log.wrongCount', { bill: billName(bill) }), 'career');
     }
   }
   return null;
@@ -213,12 +213,12 @@ hooks.morning.push((state) => {
 });
 
 function confidencePair(state, p, choice) {
-  if (choice !== 'accept') { log(state, 'You turned the pair down. You’ll get them into the chamber yourself.', 'career'); return; }
+  if (choice !== 'accept') { log(state, say('log.pair.declined'), 'career'); return; }
   const opp = state.parties[p.party];
   const theirs = Object.values(state.mps).filter((m) => m.party === opp.id && m.caucusRole !== 'speaker').sort((a, b) => a.attendance - b.attendance)[0];
   if (!theirs) return;
   state.pairs.push({ bill: p.billId, a: p.mpId, b: theirs.id, by: 'player', party: opp.id, week: state.date.absWeek, tested: false, broken: false });
-  log(state, `Paired ${fullName(state.mps[p.mpId])} with ${fullName(theirs)} (${opp.short}) for the confidence vote. Now you wait for the bells.`, 'career');
+  log(state, say('log.pair.confidence', { name: fullName(state.mps[p.mpId]), other: fullName(theirs), party: opp.short }), 'career');
 }
 
 // ---------- weekends: graduation, failure, offers ----------
@@ -235,9 +235,9 @@ function act3Weekend(state) {
     return setRank(state, 2, 'backbencher', 'demoted', data().career.demoted[soft ? 'soft' : 'bully'], soft ? 'soft' : 'bully');
   }
   if (p.actProgress.rowVotesCarried >= R.rowCarriesForAct4 && weeks >= R.act3MinWeeks) {
-    log(state, 'The deputy whip put your name forward. You run the count now.', 'career');
+    log(state, say('log.act4'), 'career');
     const chief = partyOf(state)?.chiefWhip;
-    remember(state, 'act4', { ctx: { whip: chief ? fullName(state.mps[chief]) : 'The Chief Whip' }, people: [person(state, chief, NOTE().whip)] });
+    remember(state, 'act4', { ctx: { whip: chief ? fullName(state.mps[chief]) : say('who.chiefWhip') }, people: [person(state, chief, NOTE().whip)] });
     return setRank(state, 4, 'deputyWhip', 'act4', data().career.act4);
   }
   return null;
@@ -262,20 +262,21 @@ function act4Weekend(state, rng) {
     const chief = party.chiefWhip ? state.mps[party.chiefWhip] : null;
     const V = data().career.chiefVacancy;
     const ok = p.caucusSupport >= R.caucusSupportForChief || p.leaderTrust >= R.leaderTrustForChief;
-    const ctx = { chief: chief ? fullName(chief) : 'The Chief Whip', leader: leaderName(state) };
+    const ctx = { chief: chief ? fullName(chief) : say('who.chiefWhip'), leader: leaderName(state) };
     if (ok) {
-      const support = p.caucusSupport >= R.caucusSupportForChief ? 'The caucus wanted you.' : 'The caucus had other ideas; the leader overruled them, and will pay for it.';
+      const support = say(p.caucusSupport >= R.caucusSupportForChief ? 'chief.support.caucus' : 'chief.support.leader');
       if (p.caucusSupport < R.caucusSupportForChief) p.leaderTrust = clamp(p.leaderTrust - 5, 0, 100);
-      log(state, `${ctx.chief} is going to cabinet. ${ctx.leader} appointed you Chief Whip.`, 'career');
+      log(state, say('log.act5', ctx), 'career');
       remember(state, 'act5', { ctx, people: [person(state, party.leader, NOTE().appointedYou), person(state, chief?.id, NOTE().wentToCabinet)] });
       return setRank(state, 5, 'chiefWhip', 'act5', fill(V.intro, ctx) + ' ' + fill(V.appointed, { ...ctx, support }) + ' ' + data().career.act5);
     }
     const other = party.assistantWhips[0] ? state.mps[party.assistantWhips[0]] : null;
     if (chief) chief.caucusRole = 'cabinet';
     if (other) { other.caucusRole = 'chiefWhip'; party.chiefWhip = other.id; party.assistantWhips = party.assistantWhips.filter((id) => id !== other.id); }
-    log(state, `${ctx.chief} went to cabinet and ${other ? fullName(other) : 'someone else'} got the chair.`, 'career');
-    remember(state, 'passedOver', { ctx: { ...ctx, other: other ? fullName(other) : 'someone else' }, people: [person(state, other?.id, NOTE().gotChair), person(state, chief?.id, NOTE().wentToCabinet)] });
-    return { kind: 'career', event: 'chiefVacancy', important: true, needsChoice: true, text: fill(V.intro, ctx) + ' ' + fill(V.kept, { ...ctx, other: other ? fullName(other) : 'someone else' }) };
+    const otherName = other ? fullName(other) : say('who.someoneElse');
+    log(state, say('log.passedOver', { ...ctx, other: otherName }), 'career');
+    remember(state, 'passedOver', { ctx: { ...ctx, other: otherName }, people: [person(state, other?.id, NOTE().gotChair), person(state, chief?.id, NOTE().wentToCabinet)] });
+    return { kind: 'career', event: 'chiefVacancy', important: true, needsChoice: true, text: fill(V.intro, ctx) + ' ' + fill(V.kept, { ...ctx, other: otherName }) };
   }
   return null;
 }
@@ -312,7 +313,7 @@ hooks.morning.push((state) => {
   if (p.act >= 3 && !p.filesShared) {
     p.filesShared = true;
     shareFiles(state);
-    log(state, "The whip's office opened its files to you. You know your caucus now.", 'career');
+    log(state, say('log.filesShared'), 'career');
   }
   return null;
 });
@@ -343,15 +344,15 @@ function setLine(state, p, choice) {
     bill.lines[m.party] = 'free';
     for (const x of Object.values(state.mps)) if (x.party === m.party) x.loyalty = clamp(x.loyalty + 1, 0, 100);
     state.player.leaderTrust = clamp(state.player.leaderTrust + (R.freeVoteTrust[party.leaderPersonality] ?? -3), 0, 100);
-    log(state, `A free vote on ${billName(bill)}.`, 'career');
+    log(state, say('log.setLine.free', { bill: billName(bill) }), 'career');
   } else if (choice === 'confidence' && p.options.find((o) => o.id === 'confidence')?.enabled) {
     bill.confidence = true;
     bill.lines[m.party] = 'whipped';
     state.player.leaderTrust = clamp(state.player.leaderTrust + R.confidenceTrust, 0, 100);
-    log(state, `${capFirst(billName(bill))} is a matter of confidence. Everyone comes home for it.`, 'career');
+    log(state, say('log.setLine.confidence', { bill: billName(bill) }), 'career');
   } else {
     bill.lines[m.party] = 'whipped';
-    log(state, `${capFirst(billName(bill))} is whipped ${lineFor(bill, m.party).position.toUpperCase()}.`, 'career');
+    log(state, say('log.setLine.whipped', { bill: billName(bill), pos: lineFor(bill, m.party).position.toUpperCase() }), 'career');
   }
 }
 
@@ -379,14 +380,14 @@ resolvers.careerExtra = (state, p, choice) => {
   if (p.event === 'temptation') {
     if (choice === 'accept') return endCareer(state, 'exit');
     state.player.leaderTrust = clamp(state.player.leaderTrust + R.temptationTrust, 0, 100);
-    log(state, 'You told the leader no. They said they understood.', 'career');
+    log(state, say('log.temptationDeclined'), 'career');
     remember(state, 'temptation', { ctx: { leader: leaderName(state) }, people: [person(state, partyOf(state)?.leader, NOTE().leader)] });
     return;
   }
   if (p.event === 'cabinetOffer') {
     if (choice === 'accept') return endCareer(state, 'cabinet', { portfolio: p.portfolio });
     state.player.cabinetOffers = (state.player.cabinetOffers || 0) + 1;
-    log(state, `You declined cabinet. ${leaderName(state)} said the offer stands.`, 'career');
+    log(state, say('log.cabinetDeclined', { leader: leaderName(state) }), 'career');
     remember(state, 'cabinetDeclined', { ctx: { leader: leaderName(state), portfolio: p.portfolio }, people: [person(state, partyOf(state)?.leader, NOTE().leader)] });
     return;
   }

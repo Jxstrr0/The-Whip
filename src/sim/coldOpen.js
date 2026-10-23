@@ -2,7 +2,7 @@
 // the player's riding while the national seats fill in, the returning officer declares, and the next stop walks
 // the new member into the chamber for the first time. The night is built from the Parliament already generated
 // (the player's margin, the House's seats), on its own seeded stream so the game's RNG is untouched.
-import { data, tuning } from './config.js';
+import { data, tuning, say } from './config.js';
 import { fill } from './fill.js';
 import { createRng } from './rng.js';
 import { uniqueNames } from './generate.js';
@@ -172,7 +172,7 @@ export function coldOpenStop(state) {
 resolvers.coldOpen = (state, p, choice) => {
   if (p.phase !== 'count') return;
   const n = p.night;
-  log(state, `Election night in ${n.riding}: elected by ${fmt(n.margin)} votes. ${n.minority ? 'A minority' : 'A majority'} ${n.govName} government.`, 'career');
+  log(state, say(n.minority ? 'log.coldOpen.minority' : 'log.coldOpen.majority', { riding: n.riding, margin: fmt(n.margin), gov: n.govName }), 'career');
   const rival = n.candidates[1];
   const N = data().memoir.notes;
   remember(state, 'electionNight', {

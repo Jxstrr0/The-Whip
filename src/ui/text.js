@@ -1,7 +1,7 @@
 // UI text: strings from data/strings.en.json with {slot} filling, plus shared formatting for MPs and parties.
 import { data, tuning } from '../sim/config.js';
 import { getSettings } from '../settings.js';
-import { isGuidedWeek, actAim, sceneJob } from '../sim/goals.js';
+import { isGuidedWeek, actAim, sceneJob, jobFolds } from '../sim/goals.js';
 import { rowReport } from '../sim/row.js';
 import { fill } from '../sim/fill.js';
 
@@ -68,10 +68,20 @@ export function firstWeekHint(state, key) {
   return isGuidedWeek(state) ? `<p class="tutorial">${t(key)}</p>` : '';
 }
 
-// "Your job here": one line under a scene's title saying what the player is there to do.
+// "Your job here": a line under a scene's title saying what the player is there to do. Once the player knows
+// the rooms it folds to a single line; a tap opens the rest.
 export function jobLine(state, kind, ctx = {}) {
   const j = sceneJob(state, kind, ctx);
-  return j ? `<p class="job"><span class="job-label">${t('job.label')}</span>${esc(t(j.key, j.vars))}</p>` : '';
+  if (!j) return '';
+  const label = `<span class="job-label">${t('job.label')}</span>`;
+  const text = esc(t(j.key, j.vars));
+  return jobFolds(state) ? `<details class="job fold"><summary>${label}<span class="job-text">${text}</span></summary></details>` : `<p class="job">${label}${text}</p>`;
+}
+
+// A section folded shut under its heading, for things worth having to hand but not worth the room: a tap
+// opens it. `open` keeps it open across a re-render.
+export function foldBlock(title, body, { open = false, attr = '' } = {}) {
+  return `<details class="fold-block"${open ? ' open' : ''}${attr ? ` ${attr}` : ''}><summary>${title}</summary>${body}</details>`;
 }
 
 // The act's aim, short: "Act 1 · Get noticed · 3 of 8" for the agenda bar.
@@ -80,6 +90,15 @@ export function aimShort(state) {
   const c = a.counters[0];
   const tail = a.waiting || !c ? '' : ` · ${t('aim.s.' + c.key, c)}`;
   return `${t('career.act', { n: a.act })} · ${t('aim.short.' + a.act)}${tail}`;
+}
+
+// The act's aim as a chip on the date line: "Get noticed 3/8", "Caucus 54/60". With nothing left to count
+// (the next step is up to the House) it shows the aim itself.
+export function aimChip(state) {
+  const a = actAim(state);
+  const c = a.counters[0];
+  if (a.waiting || !c) return `<span class="n">${esc(t('aim.short.' + a.act))}</span>`;
+  return `<span class="n">${esc(t('aim.chip.' + a.act))}</span><b>${esc(t('aim.chip.' + c.key, { ...c, left: Math.max(0, c.need - c.have) }))}</b>`;
 }
 
 // The act's aim in full: the goal, every counter as a bar, and how it's won or lost.

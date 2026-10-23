@@ -1,6 +1,6 @@
 // MPs' own arcs: an ambition, a crisis, trouble at home, a retirement in the air. Each is a moment where
 // showing up for someone builds a bond, and not showing up is remembered. (By-elections come with stage 8.)
-import { data, tuning } from './config.js';
+import { data, tuning, say } from './config.js';
 import { fill } from './fill.js';
 import { hooks, log, resolvers } from './pacing.js';
 import { adjustRapport } from './relationships.js';
@@ -64,15 +64,15 @@ function respond(state, p, choice) {
     state.player.toolTime = Math.max(0, state.player.toolTime - C.showUpTime);
     adjustRapport(state, m.id, C.showUpRapport);
     m.relations[state.player.mpId] = Math.min(100, (m.relations[state.player.mpId] || 0) + 15);
-    log(state, `You showed up for ${fullName(m)}. They won't forget it.`, 'career');
+    log(state, say('log.life.showUp', { name: fullName(m) }), 'career');
     rememberLifeEvent(state, m, e, 'showUp');
   } else if (choice === 'sendNote') {
     adjustRapport(state, m.id, C.noteRapport);
-    log(state, `You sent ${fullName(m)} a note.`, 'career');
+    log(state, say('log.life.sendNote', { name: fullName(m) }), 'career');
   } else {
     adjustRapport(state, m.id, C.ignoreRapport);
     e.ignoredBy = state.player.mpId;
-    log(state, `${fullName(m)} noticed you didn't come by.`, 'career');
+    log(state, say('log.life.ignore', { name: fullName(m) }), 'career');
     rememberLifeEvent(state, m, e, 'ignore');
   }
 }
