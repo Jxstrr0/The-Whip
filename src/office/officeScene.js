@@ -540,7 +540,7 @@ export function create(ctx) {
     colleague = createFigure(ctx.colleague.color, ctx.colleague.id, wardrobe(ctx.colleague.id, ctx.colleague.color), ctx.colleague.face);
     colleague.group.position.set(-mySet.W + 1.2, 0, 0.8);
     colleague.group.rotation.y = -Math.PI / 2;
-    poseFigure(colleague, 'cooperative', 1);
+    poseFigure(colleague, 'typing', 1);
     mine.add(colleague.group);
   }
 
@@ -661,7 +661,7 @@ export function create(ctx) {
     },
     setMood(m) {
       visitor?.setMood(m);
-      if (deskFigure) poseFigure(deskFigure, m, 1);
+      deskFigure?.setPose(m);
     },
     // The slow push-in when the deal table opens.
     pushIn(on) {
@@ -689,16 +689,16 @@ export function create(ctx) {
     },
     update(dt) {
       visitor?.update(dt);
-      deskFigure?.tick(dt);
+      deskFigure?.update(dt);
+      player.update(dt);
       speech.update(dt, visitor ? visitor.phase === 'seated' : !!deskFigure);
       cam.update(dt);
       for (const p of fx) p.update(dt);
       if (colleague) {
-        // Typing, mostly; now and then a glance over at whoever's in the chair.
+        // Typing, mostly: the hands working at the keys (the glances over come with the pose).
         t += dt;
-        colleague.head.rotation.y = Math.sin(t * 0.35) > 0.92 ? -0.9 : Math.sin(t * 1.1) * 0.05;
-        colleague.arms[0].el.rotation.x = -1.3 + Math.sin(t * 7) * 0.05;
-        colleague.arms[1].el.rotation.x = -1.3 + Math.cos(t * 6) * 0.05;
+        colleague.hold({ eLx: Math.sin(t * 7) * 0.05, eRx: Math.cos(t * 6) * 0.05, headY: Math.sin(t * 1.1) * 0.03 });
+        colleague.update(dt);
       }
     },
     resize(w, h) {

@@ -153,7 +153,10 @@ export function create(ctx) {
     read: (fn) => figures.read(fn),
     showPairs: (pairs) => figures.showPairs(pairs),
     empty: (mpId) => figures.empty(mpId),
-    focusHead: (on) => cam.focusHead(on),
+    focusHead: (on) => {
+      cam.focusHead(on);
+      figures.focus(on);
+    },
     update(dt) {
       cam.update(dt);
       figures.update(dt, camera);
