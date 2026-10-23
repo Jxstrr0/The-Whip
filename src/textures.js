@@ -20,7 +20,7 @@ const SURFACES = {
   oak: { tile: 1.2, relief: 0.8, roughness: 0.5, maps: 'cnr', envMapIntensity: 0.5 },
   walnut: { tile: 1.2, relief: 0.8, roughness: 0.45, maps: 'cnr', envMapIntensity: 0.55 },
   // Light veined marble: the chamber's walls and the Speaker's steps.
-  marble: { tile: 3.0, relief: 0.4, roughness: 0.55, maps: 'cnr', envMapIntensity: 0.5 },
+  marble: { tile: 4.0, relief: 0.4, roughness: 0.55, maps: 'cnr', envMapIntensity: 0.5 },
   plaster: { tile: 2.0, relief: 0.5, roughness: 0.92, maps: 'cnr' },
   // Smooth leather, its colour from the vertex colour (the map is grey patina), with a soft sheen.
   leather: { tile: 0.6, relief: 0.6, roughness: 0.5, maps: 'cnr', envMapIntensity: 0.5 },
