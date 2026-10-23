@@ -1176,3 +1176,7 @@ Kelbo asked for a clear verdict after each office meeting. When a one-to-one end
 **Checked:**
 - `tests.html` 116 of 116. The new test covers a deal, a walk-out, closing the card, and at least two partings for every speaker, outcome and mood, with no repeats.
 - Played at phone size, portrait and landscape. The deal and walk-out cards both fit portrait without scrolling. In landscape the side sheet scrolls under its buttons like the other sheets. No console errors.
+
+## Stake chips restyled (small pass)
+
+The riding / whip +/- chips (the little "▲ +4 riding" and "▼ −6 whip" bubbles on the whip's call, the deal table, the count board and the carry-a-case buttons) got a nicer look: a round filled badge carries the arrow, the pill has a tinted paper fill with a fine border and a soft lift, and the numbers are a touch bolder. The flat "no change" chip is darker for contrast. CSS only (`.stake` in `css/style.css`); the arrow and sign still carry the meaning, colour just backs them up.
