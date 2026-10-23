@@ -5,14 +5,12 @@
 // which keepsake a member has comes from their id, so it never changes once earned.
 import * as THREE from 'three';
 import { merge } from './kit3d.js';
-import { jacketFrontZ } from './body.js';
+import { jacketFrontZ, HEAD_R, HEAD_SCALE, HEAD_SQUARE, onHead, squircle } from './body.js';
 import { familiarity } from './sim/knowledge.js';
 import { data } from './sim/config.js';
 
-export const HEAD_R = 0.115;
-// The head is an egg: these stretch the sphere up and forward.
-const HY = 1.12;
-const HZ = 1.02;
+export { HEAD_R };
+const [, HY, HZ] = HEAD_SCALE;
 
 const FEATURES = ['round', 'square', 'halfMoons', 'brows', 'earrings'];
 const WHISKERS = ['beard', 'moustache'];
@@ -89,11 +87,6 @@ function block(w, h, d, x, y, z) {
   g.translate(x, y, z);
   return g;
 }
-// The z of the head's front surface at (x, y) from the head's centre, pushed out by `out`.
-function onHead(x, y, out = 0) {
-  const k = 1 - (x / HEAD_R) ** 2 - (y / (HEAD_R * HY)) ** 2;
-  return HEAD_R * HZ * Math.sqrt(Math.max(0, k)) + out;
-}
 
 // Glasses: two rims, a bridge, the short hinges and the arms back to the ears.
 function frames(rim, y) {
@@ -115,7 +108,7 @@ export function headGeometries() {
     g.translate(0.043 * s, 0.047, onHead(0.043, 0.047, -0.002));
     return g;
   };
-  const beard = new THREE.SphereGeometry(HEAD_R * 1.05, 16, 8, Math.PI / 2 - 1.3, 2.6, Math.PI * 0.6, Math.PI * 0.33);
+  const beard = squircle(new THREE.SphereGeometry(HEAD_R * 1.05, 16, 8, Math.PI / 2 - 1.3, 2.6, Math.PI * 0.6, Math.PI * 0.33), HEAD_R * 1.05, HEAD_SQUARE);
   beard.scale(1, HY, HZ * 1.03);
   return {
     eyes: merge([-1, 1].map((s) => egg(0.0125, 0.041 * s, 0.014, onHead(0.041, 0.014, -0.006), 1, 1.15, 0.6, 8))),
@@ -149,7 +142,7 @@ export function hairCap() {
   const crown = new THREE.SphereGeometry(r, 14, 4, 0, Math.PI * 2, 0, Math.PI * 0.3);
   const open = 1.5;
   const sides = new THREE.SphereGeometry(r, 14, 5, Math.PI / 2 + open / 2, Math.PI * 2 - open, Math.PI * 0.3, Math.PI * 0.34);
-  const g = merge([crown, sides]);
+  const g = squircle(merge([crown, sides]), r, HEAD_SQUARE);
   g.scale(1, 1.1, 1.02);
   g.translate(0, 0.005, -0.012);
   return g;

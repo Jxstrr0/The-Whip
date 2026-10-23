@@ -1,25 +1,92 @@
-// The body kit under every figure: a jacket with real shoulders, a waist and a hem; limbs that taper and
-// meet at a round joint; the seat of the trousers; rounded shoes. Shared by the instanced crowds
-// (figures.js) and the jointed office figure (visitor.js), so one person looks the same in every room.
+// The body kit under every figure: a jacket with square shoulders, a waist and a hem; a head with a flat
+// crown and a jaw rather than an egg; limbs that taper and meet at a round joint; mitts for hands; the seat
+// of the trousers; rounded shoes. Shared by the instanced crowds (figures.js) and the jointed office figure
+// (visitor.js), so one person looks the same in every room. RIG is the skeleton both are built on.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { merge } from './kit3d.js';
 
+// The skeleton, in metres: joint heights above the hips (the body's origin), limb lengths, and the radius
+// of each limb segment at its top and bottom.
+export const RIG = {
+  hip: 0.86, // standing hip height off the floor
+  seat: 0.47, // seated hip height
+  shoulder: 0.54, // the shoulder line above the hips
+  neck: 0.65, // where the head pivots
+  skull: 0.12, // the head's centre above its pivot
+  shoulderX: 0.22,
+  hipX: 0.095,
+  upper: 0.27,
+  fore: 0.26,
+  thigh: 0.39,
+  shin: 0.39,
+  arm: [0.062, 0.052, 0.044], // shoulder, elbow, wrist
+  leg: [0.08, 0.07, 0.06], // hip, knee, ankle
+};
+
+export const HEAD_R = 0.115;
+// The head is taller than it is wide and a touch deeper than wide.
+export const HEAD_SCALE = [1, 1.12, 1.02];
+// How far the head and the seat are pushed from a sphere toward a box: 1 is a sphere, 0 a cube. Puts a
+// flat crown, a jaw and cheeks on the head instead of an egg.
+export const HEAD_SQUARE = 0.74;
+const SEAT_SQUARE = 0.7;
+
+// Move a sphere's points toward the corners of its bounding box: a superellipsoid, in place. `r` is the
+// sphere's radius (the geometry is centred on the origin when this runs).
+export function squircle(g, r, e) {
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const map = (v) => Math.sign(v) * Math.pow(Math.abs(v) / r, e) * r;
+    p.setXYZ(i, map(p.getX(i)), map(p.getY(i)), map(p.getZ(i)));
+  }
+  g.computeVertexNormals();
+  return g;
+}
+
+// The z of the head's front surface at (x, y) from the head's centre, pushed out by `out`: where eyes, a
+// nose and glasses sit.
+export function onHead(x, y, out = 0) {
+  const [, HY, HZ] = HEAD_SCALE;
+  const back = (v) => Math.sign(v) * Math.pow(Math.min(1, Math.abs(v)), 1 / HEAD_SQUARE);
+  const a = back(x / HEAD_R);
+  const b = back(y / (HEAD_R * HY));
+  const c = Math.sqrt(Math.max(0, 1 - a * a - b * b));
+  return HEAD_R * HZ * Math.pow(c, HEAD_SQUARE) + out;
+}
+
+// A sphere of radius r squared off like the head, before the head's own stretch.
+export function headSphere(r, segsW = 14, segsH = 10, ...rest) {
+  const g = new THREE.SphereGeometry(r, segsW, segsH, ...rest);
+  squircle(g, r, HEAD_SQUARE);
+  g.scale(...HEAD_SCALE);
+  return g;
+}
+
+// The head on its neck, centred on the head's pivot: the skull RIG.skull above it, the neck reaching down
+// into the collar.
+export function headGeometry() {
+  const skull = headSphere(HEAD_R).translate(0, RIG.skull, 0);
+  const neck = new THREE.CapsuleGeometry(0.05, 0.1, 3, 8).translate(0, -0.04, 0.01);
+  return merge([skull, neck]);
+}
+
 // The jacket, ring by ring from the collar down: height from the shoulder line, half-width, half-depth,
-// and how far forward the ring's centre sits (the chest leads the waist a little).
+// and how far forward the ring's centre sits (the chest leads the waist a little). The shoulders are a
+// shelf: full width within three centimetres of the collar, the way a padded jacket hangs.
 const JACKET = [
-  [0.072, 0.08, 0.074, 0.0],
-  [0.05, 0.13, 0.094, 0.0],
-  [0.01, 0.2, 0.12, 0.0],
-  [-0.045, 0.205, 0.128, 0.004],
-  [-0.16, 0.185, 0.13, 0.01],
-  [-0.29, 0.168, 0.118, 0.008],
-  [-0.4, 0.18, 0.124, 0.004],
-  [-0.49, 0.178, 0.118, 0.0],
+  [0.072, 0.076, 0.07, 0.0],
+  [0.058, 0.15, 0.1, 0.0],
+  [0.034, 0.205, 0.124, 0.0],
+  [-0.03, 0.208, 0.13, 0.004],
+  [-0.16, 0.19, 0.13, 0.01],
+  [-0.29, 0.172, 0.118, 0.008],
+  [-0.4, 0.18, 0.122, 0.004],
+  [-0.49, 0.182, 0.118, 0.0],
 ];
-// The cross-section is a rounded rectangle rather than an ellipse: cloth over a chest, not a barrel.
-const SQUARE = 0.8;
-const AROUND = 18;
+// The cross-section is a rounded rectangle, not an ellipse: cloth over a chest, not a barrel.
+const SQUARE = 0.62;
+const AROUND = 20;
 
 function ringAt(dy) {
   let lo = JACKET[0];
@@ -98,10 +165,11 @@ export function shirtFront(shoulderY) {
 }
 
 // The seat of the trousers between the hips, mostly under the hem.
-export function pelvis(hipY, { seated = false } = {}) {
+export function pelvis(hipY) {
   const g = new THREE.SphereGeometry(1, 12, 7);
-  g.scale(seated ? 0.17 : 0.145, seated ? 0.09 : 0.07, seated ? 0.12 : 0.095);
-  g.translate(0, hipY + 0.03, seated ? 0.02 : 0);
+  squircle(g, 1, SEAT_SQUARE);
+  g.scale(0.15, 0.072, 0.1);
+  g.translate(0, hipY + 0.03, 0);
   return g;
 }
 
@@ -129,7 +197,23 @@ export function hangingTaper(ra, rb, len, { jointB = false } = {}) {
   return taper([0, 0, 0], [0, -len, 0], ra, rb, { jointB });
 }
 
-export function shoe() {
-  return new RoundedBoxGeometry(0.1, 0.07, 0.26, 2, 0.024);
+// One upper arm hanging from the shoulder; the forearm is the same geometry scaled by FOREARM_SCALE.
+export function armGeometry() {
+  return hangingTaper(RIG.arm[0], RIG.arm[1], RIG.upper);
+}
+export const FOREARM_SCALE = [RIG.arm[1] / RIG.arm[0], RIG.fore / RIG.upper, RIG.arm[1] / RIG.arm[0]];
+// One thigh hanging from the hip; the shin is the same geometry scaled by SHIN_SCALE.
+export function legGeometry() {
+  return hangingTaper(RIG.leg[0], RIG.leg[1], RIG.thigh);
+}
+export const SHIN_SCALE = [RIG.leg[1] / RIG.leg[0], RIG.shin / RIG.thigh, RIG.leg[1] / RIG.leg[0]];
+
+// A hand as a mitt hanging from the wrist: a flattened block, fingers together.
+export function handGeometry() {
+  return new RoundedBoxGeometry(0.064, 0.088, 0.036, 2, 0.014).translate(0, -0.038, 0.004);
 }
 
+// A shoe, hanging from the ankle and pointing forward.
+export function shoeGeometry() {
+  return new RoundedBoxGeometry(0.1, 0.07, 0.26, 2, 0.024).translate(0, -0.04, 0.06);
+}

@@ -260,7 +260,8 @@
     "chandelier": 22,
     "deskLamp": 10,
     "pendant": 16,
-    "walkerEvery": 18
+    "walkerEvery": 18,
+    "fidgetEvery": 14
   },
   "tools": {
     "timePerWeek": 90,
