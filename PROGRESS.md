@@ -1257,8 +1257,21 @@ Kelbo's picks from the second list: 1 yes (one line after a few weeks), 2 yes, 3
 
 **Small calls:**
 - Found while checking landscape: the side sheet had been widened to 500px, but the date bar and the camera aim (`src/framing.js`) still assumed 440px, so the sheet covered the end of the bar. Both now read one width (`--side-w`), and the chip shows in full.
-- Still in the code: the sim's own log lines (about 60, across 15 files: "You crossed the floor to…", the confidence and election lines, and similar). They're specific and read well. Moving them is a bigger, separate job; say if you want it.
+- Still in the code: the sim's own log lines (about 60, across 15 files: "You crossed the floor to…", the confidence and election lines, and similar). They're specific and read well. Moved in the next entry.
 
 **Checked:**
 - `tests.html` 118 of 118 after merging main.
 - Played from week 3 to week 6 at phone size, portrait and landscape: office, caucus with the fold opened, a division with the summary opened, the riding, Question Period and the weekend paper. The bar checked at 360, 375, 390 and 412px wide. No console errors.
+
+## Playtest: the sim's log lines move to data
+
+Kelbo asked for the rest of the text to come out of the code.
+
+- **Every line the sim writes now lives in `data/strings.en.json`.** That covers the log, the ledger notes, the rival whips' leaks, the vote results, the Speaker's question, the stage names ("second reading", "the motion") and the fallback names ("The whip", "someone else"). It's 147 new keys across 17 files in `src/sim/`. They're grouped by prefix: `log.*` for log lines, `who.*` for names, `stage.*`, `question.*` and `tally.*`. The code calls `say('log.meeting.deal', { who, give, get })` and the filler does the rest, including the capital at the start of a sentence.
+- **Nothing reads differently, bar one fix.** Six whole careers played by the bot gave 3,803 log lines, and the before and after logs match word for word, with one exception. A voice vote used to log "carried, carried on a voice vote". It now reads "… at second reading: carried on a voice vote." The lines the bot never reached were checked by matching every `{slot}` in the data against what the code passes.
+
+**Small calls:** the riding thresholds in the town hall line (60 and 40) are still numbers in the code, as they were. Moving them to tuning is a separate change.
+
+**Checked:**
+- `tests.html` 118 of 118.
+- Played at phone size, portrait and landscape: office, caucus, a division, the riding, Question Period and the weekend paper. No console errors.
