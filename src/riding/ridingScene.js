@@ -2,7 +2,7 @@
 // the street (a prairie town, a suburb, a downtown block, a northern settlement). Props from the kits.
 import * as THREE from 'three';
 import { box, slab, panel, cylinder, merge, vertexMaterial, worldUVs, disposeTree, roomLights, lamp, bakeAO, contactShadows, paintedTexture, texturedPanel } from '../kit3d.js';
-import { surface } from '../textures.js';
+import { surface, brass } from '../textures.js';
 import { placeModel } from '../models.js';
 import { t } from '../ui/text.js';
 import { createRidingCamera } from './ridingCamera.js';
@@ -380,7 +380,7 @@ export function create(ctx) {
     if (kinds[kind]) {
       geo = worldUVs(bakeAO(geo, { bounds, ceilY: kind === 'plaster' ? H : null, reach: 0.7 }));
       mat = surface(kinds[kind], kind === 'plaster' ? { roughness: 0.95 } : {});
-    } else mat = vertexMaterial({ metalness: 0.7, roughness: 0.35, envMapIntensity: 1 });
+    } else mat = brass();
     scene.add(new THREE.Mesh(geo, mat));
   }
   // The glass: a faint tinted pane with the riding's name, and the street beyond it.

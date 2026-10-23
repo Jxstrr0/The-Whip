@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { GEOMETRY as G, seatX } from './layout.js';
 import { box, slab, panel, cylinder, sphere, merge, vertexMaterial, glowMaterial, washMaterial, worldUVs, disposeTree, roomLights, lamp, bakeAO, contactShadows } from '../kit3d.js';
-import { surface } from '../textures.js';
+import { surface, brass } from '../textures.js';
 import { PALETTE } from '../look.js';
 import { tuning } from '../sim/config.js';
 import { GREY_SKIES, mix } from '../weatherFx.js';
@@ -159,7 +159,7 @@ function buildShell() {
     if (textured[kind]) {
       geo = worldUVs(bakeAO(geo, { bounds, ceilY: kind === 'stone' ? H : null, reach: kind === 'stone' ? 1.8 : 0.9, strength: kind === 'plaster' ? 0.2 : null }));
       mat = surface(textured[kind]);
-    } else if (kind === 'metal') mat = vertexMaterial({ metalness: 0.7, roughness: 0.35, envMapIntensity: 1 });
+    } else if (kind === 'metal') mat = brass();
     else if (kind === 'glow' || kind === 'pane') mat = glowMaterial();
     else mat = washMaterial(0.5);
     const mesh = new THREE.Mesh(geo, mat);
