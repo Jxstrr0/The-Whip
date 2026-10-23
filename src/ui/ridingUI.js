@@ -1,7 +1,8 @@
 // The riding UI: who's in the chair, carrying cases, the reporter, the president, the town hall, standing.
-import { t, esc, firstWeekHint, jobLine, standingTone } from './text.js';
+import { t, esc, jobLine, standingTone } from './text.js';
 import { data } from '../sim/config.js';
-import { fillRiding } from '../sim/riding.js';
+import { fillRiding, caseStakes } from '../sim/riding.js';
+import { delta } from './stakes.js';
 
 export function createRidingUI(root, { getState, dispatch }) {
   const sheet = document.createElement('section');
@@ -32,10 +33,12 @@ export function createRidingUI(root, { getState, dispatch }) {
       const who = `${lastWord}<h3>${t('role.' + item.role)}</h3>`;
       if (item.kind === 'case') {
         const c = C.cases.find((x) => x.id === item.id);
+        const k = caseStakes(c);
+        const chip = (n) => `<small class="stake-line">${delta(n, t('stake.riding'))}</small>`;
         body = `${who}<blockquote class="line">${esc(fillRiding(state, c.text))}</blockquote>
-          <div class="choices"><button class="btn primary" data-act="carry">${t('riding.carry')} <small class="approach">${esc(fillRiding(state, c.what))}</small></button>
-          ${C.refer[c.role] ? `<button class="btn" data-act="refer">${esc(C.refer[c.role].label)}</button>` : ''}
-          <button class="btn" data-act="decline">${t('riding.decline')}</button></div>`;
+          <div class="choices"><button class="btn primary" data-act="carry">${t('riding.carry')} <small class="approach">${esc(fillRiding(state, c.what))}</small>${chip(k.carry)}</button>
+          ${C.refer[c.role] ? `<button class="btn" data-act="refer">${esc(C.refer[c.role].label)}${chip(k.refer)}</button>` : ''}
+          <button class="btn" data-act="decline">${t('riding.decline')}${chip(k.decline)}</button></div>`;
       } else if (item.kind === 'reporter') {
         const q = C.reporter.find((x) => x.id === item.id);
         body = `${who}<blockquote class="line">${esc(fillRiding(state, q.prompt))}</blockquote>
@@ -60,7 +63,7 @@ export function createRidingUI(root, { getState, dispatch }) {
         <button class="btn primary" data-act="home">${t('riding.home')}</button></div>`;
     }
     sheet.innerHTML = `<div class="sheet-handle"></div><h2>${esc(t('riding.title', { riding: me.riding.name }))}</h2>
-      <div class="tally">${bar(t('riding.standing'), p.ridingStanding)}</div>${jobLine(state, 'riding')}${firstWeekHint(state, 'tutorial.riding')}${body}`;
+      <div class="tally">${bar(t('riding.standing'), p.ridingStanding)}</div>${jobLine(state, 'riding')}${body}`;
     const on = (sel, action) => sheet.querySelector(sel)?.addEventListener('click', () => dispatch(action));
     on('[data-act="carry"]', { type: 'ridingCase', mode: 'carry' });
     on('[data-act="refer"]', { type: 'ridingCase', mode: 'refer' });
