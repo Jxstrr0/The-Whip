@@ -32,6 +32,8 @@ function materials() {
     lamp: glowMaterial({ vertexColors: false, color: PALETTE.paneWarm }),
     plant: figureMaterial({ color: '#4f7a3a', roughness: 0.9 }),
   };
+  // Each keeps the kit's name, so a placement can swap one (a sofa's seat for buttoned leather).
+  for (const [name, m] of Object.entries(mats)) m.name = name;
   return mats;
 }
 
@@ -132,8 +134,10 @@ export function instancedModel(parent, name, placements, { pack = 'furniture', o
 }
 
 // Place a prop. Returns a group added at once (so disposal and visibility work immediately); the model
-// appears inside it when loaded. `onReady` gets the group, for anything that needs the loaded size.
-export function placeModel(parent, name, { pack = 'furniture', x = 0, y = 0, z = 0, rotY = 0, scale = 1, onReady } = {}) {
+// appears inside it when loaded. `onReady` gets the group, for anything that needs the loaded size. `swap`
+// replaces the shared materials by kit name on this copy only ({ carpet: buttonedLeather }); a swapped-in
+// material should ignore vertex colours, since the kit mesh's are painted for the shared one.
+export function placeModel(parent, name, { pack = 'furniture', x = 0, y = 0, z = 0, rotY = 0, scale = 1, swap = null, onReady } = {}) {
   const holder = new THREE.Group();
   holder.position.set(x, y, z);
   holder.rotation.y = rotY;
@@ -144,6 +148,13 @@ export function placeModel(parent, name, { pack = 'furniture', x = 0, y = 0, z =
   template(pack, name).then((root) => {
     if (!alive) return;
     const inst = root.clone(true);
+    if (swap) {
+      inst.traverse((o) => {
+        if (!o.isMesh) return;
+        const pick = (m) => swap[m?.name] || m;
+        o.material = Array.isArray(o.material) ? o.material.map(pick) : pick(o.material);
+      });
+    }
     holder.add(inst);
     onReady?.(holder);
   }).catch((e) => console.warn('model failed', name, e));

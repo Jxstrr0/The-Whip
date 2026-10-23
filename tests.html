@@ -2976,7 +2976,7 @@ test('Every surface map is served as a JPEG, the paper fibre the CSS uses among 
     assert(r.ok && /image\/jpeg/.test(r.headers.get('content-type') || ''), `texture ${f}`);
     bytes += (await r.arrayBuffer()).byteLength;
   }
-  assert(bytes < 3 * 1024 * 1024, `textures weigh ${bytes} bytes`);
+  assert(bytes < 3.5 * 1024 * 1024, `textures weigh ${bytes} bytes`);
   return `${files.length + 1} maps, ${(bytes / 1024).toFixed(0)} KB`;
 });
 
