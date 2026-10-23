@@ -2,7 +2,8 @@
 // player's standing at home. Scandal scores for members whose secrets get used.
 import { data, tuning } from './config.js';
 import { hooks, log, dissolution } from './pacing.js';
-import { lineFor } from './bills.js';
+import { lineFor, billName } from './bills.js';
+import { fill } from './fill.js';
 import { voteOf } from './vote.js';
 
 const SIGN = { yea: 1, nay: -1 };
@@ -15,10 +16,6 @@ const PRIORITY = ['confidenceLost', 'confidenceLostHandover', 'confidenceSurvive
 export const FRONT_PRIORITY = ['confidenceLost', 'confidenceLostHandover', 'confidenceSurvived', 'billDefeated', 'playerRebelled', 'expelled', 'walkout', 'rebellion', 'qpHit', 'leak', 'townHall', 'closeVote', 'absence', 'playerToedLine', 'qpRiding', 'qpParried', 'billPassed', 'qpLob', 'routine'];
 // Stories the player is in: the front page runs their photograph beside these.
 const PLAYER_EVENTS = new Set(['playerRebelled', 'expelled', 'playerToedLine', 'townHall', 'absence', 'qpHit', 'qpParried', 'qpLob', 'qpRiding']);
-
-function fill(text, ctx) {
-  return text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
-}
 
 // Pick a headline for an event, filled in. Rotates papers so the same one isn't quoted every day.
 export function headline(state, rng, event, ctx = {}) {
@@ -47,7 +44,7 @@ function storiesOf(state) {
     const d = state.divisions[id];
     if (!d?.recorded) continue;
     const bill = state.bills[d.billId];
-    const ctx = { bill: bill.title, yeas: d.yeas.length, nays: d.nays.length };
+    const ctx = { bill: billName(bill), yeas: d.yeas.length, nays: d.nays.length };
     if (bill.confidence && bill.kind !== 'oppositionMotion') {
       // A fall early in the Parliament hands the House to the opposition; later it means an election.
       const handover = !d.carried && dissolution.canHandOver?.(state);
@@ -100,7 +97,7 @@ hooks.fallout.push((state, rng) => {
     if (lead.event === 'playerToedLine') p.ridingStanding = clamp(p.ridingStanding + M.playerStanding.playerToedLine, 0, 100);
   } else if ((state.flow.day?.results || []).length && rng.chance(M.routineOdds)) {
     const d = state.divisions[state.flow.day.results[0]];
-    headline(state, rng, 'routine', { bill: state.bills[d.billId].title });
+    headline(state, rng, 'routine', { bill: billName(state.bills[d.billId]) });
   }
   return null;
 });

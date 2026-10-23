@@ -3,12 +3,13 @@ import { data, tuning } from '../sim/config.js';
 import { getSettings } from '../settings.js';
 import { isGuidedWeek, actAim, sceneJob } from '../sim/goals.js';
 import { rowReport } from '../sim/row.js';
+import { fill } from '../sim/fill.js';
 
 export const ROW_GLYPH = { firm: '\u2714', leaning: '\u25D0', lost: '\u2716', absent: '\u25CB', unmarked: '\u2013' };
 
 export function t(key, vars = {}) {
   const s = data().strings[key] ?? key;
-  return s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? `{${k}}`));
+  return fill(s, vars);
 }
 
 // How a riding-standing style number reads: bad, warn, plain or good. The cuts are the ones the riding president's mood uses.

@@ -32,7 +32,7 @@
   "leaderOpeningsNay": {
     "controlling": [
       "{leader} doesn't sit. “We're voting against {bill}. All of us. I'd like that to be the shortest item on today's agenda.”",
-      "{leader} hands round a single page headed {bill}. Under it, one word: “No.” “Those are the words,” {leader} says. “Please use that word.”",
+      "{leader} hands round a single page with {bill} across the top. Under it, one word: “No.” “That’s the line,” {leader} says. “Learn it.”",
       "“I've read {bill}, and the amendments, and the amendments to the amendments,” {leader} says. “We oppose it as written and as rewritten.”",
       "{leader} taps the table twice. “{bill}: whipped against. {whip} will be taking attendance, and so will I.”",
       "“Nobody in this room is voting for {bill},” {leader} says, “and nobody is having a dental appointment that night either.”"

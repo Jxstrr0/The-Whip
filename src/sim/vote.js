@@ -1,7 +1,7 @@
 // Putting the question: the voice vote, the division bells, the standing count, pairs, and the Speaker's tie.
 import { tuning } from './config.js';
 import { intentions } from './mp.js';
-import { STAGE_NAMES, advanceBill, dayIndex } from './bills.js';
+import { STAGE_NAMES, advanceBill, dayIndex, billName } from './bills.js';
 
 const pad = (n) => String(n).padStart(4, '0');
 
@@ -17,7 +17,7 @@ function seatOrder(seatId) {
 
 export function questionText(bill, stage) {
   if (stage === 'motion') return bill.kind === 'supply' ? `That the ${bill.title} be concurred in` : `That the motion be agreed to: ${bill.title}`;
-  return `That ${bill.title} be read ${stage === 'report' ? 'concurred in at report stage' : `a ${stage === 'second' ? 'second' : 'third'} time`}`;
+  return `That ${billName(bill)} be read ${stage === 'report' ? 'concurred in at report stage' : `a ${stage === 'second' ? 'second' : 'third'} time`}`;
 }
 
 // Speaker's casting vote, by convention (Denison's rule): keep the question open for further debate where
