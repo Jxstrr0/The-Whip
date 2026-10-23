@@ -1,5 +1,5 @@
 // The career: creating the player's MP, acts and (later) graduation, vacancies, offers and endings.
-import { data, tuning } from './config.js';
+import { data, tuning, say } from './config.js';
 import { fill } from './fill.js';
 import { withRng, createRng } from './rng.js';
 import { makeBill } from './bills.js';
@@ -236,7 +236,7 @@ function graduateAct1(state) {
   p.rival = pickRival(state);
   p.slots = slotsForAct(2, p.slots);
   const rival = p.rival ? state.mps[p.rival] : null;
-  log(state, `Act 2. The whip's office has you down as ${p.reputation === 'reliable' ? 'reliable' : 'useful trouble'}.${rival ? ` ${fullName(rival)} wants the same things you do.` : ''}`, 'career');
+  log(state, say(p.reputation === 'reliable' ? 'log.act2.reliable' : 'log.act2.trouble', { rival: rival ? say('log.act2.rival', { rival: fullName(rival) }) : '' }).trim(), 'career');
   const M = data().memoir;
   remember(state, 'act2', { sub: p.reputation, people: [person(state, p.rival, M.notes.rival), person(state, whipOf(state), M.notes.whip)], aside: rival ? fill(M.asides.rival, { rival: fullName(rival) }) : '' });
   return { kind: 'career', event: 'act2', important: true, needsChoice: true, reputation: p.reputation, rival: p.rival, text: data().career.act2[p.reputation], rivalText: rival ? fill(data().career.rival, { rival: fullName(rival) }) : '' };
@@ -290,8 +290,8 @@ function openVacancy(state, rng) {
     outgoing.caucusRole = 'parliamentarySecretary';
   }
   const whip = whipOf(state);
-  const ctx = { outgoing: outgoing ? fullName(outgoing) : 'An assistant whip', rival: fullName(state.mps[p.rival]), whip: whip ? fullName(state.mps[whip]) : 'The whip' };
-  log(state, `${ctx.outgoing} is leaving the whip's office. You and ${ctx.rival} are both in for the chair.`, 'career');
+  const ctx = { outgoing: outgoing ? fullName(outgoing) : say('who.assistantWhip'), rival: fullName(state.mps[p.rival]), whip: whip ? fullName(state.mps[whip]) : say('who.whip') };
+  log(state, say('log.vacancy.open', ctx), 'career');
   const V = data().career.vacancy;
   return { kind: 'career', event: 'vacancy', important: true, needsChoice: true, rival: p.rival, text: fill(V.open, ctx), options: [{ id: 'askMentor', label: V.askMentor, note: V.askMentorNote, enabled: !!p.mentor }, { id: 'askClique', label: V.askClique, note: V.askCliqueNote, enabled: !!state.mps[p.mpId].clique }, { id: 'letItRun', label: V.letItRun, note: V.letItRunNote, enabled: true }] };
 }
@@ -318,7 +318,7 @@ function decideVacancy(state, rng, choice) {
     p.slots = slotsForAct(3, p.slots);
     startRow(p);
     if (whip) adjustRapport(state, whip, 5);
-    log(state, `The chair is yours. You're an assistant whip, with a row to answer for.`, 'career');
+    log(state, say('log.vacancy.won'), 'career');
     remember(state, 'act3', { ctx: { whip: ctx.whip, rival: ctx.rival }, people: [person(state, p.rival, data().memoir.notes.lostToYou), person(state, whip, data().memoir.notes.whip)] });
     return { kind: 'career', event: 'act3', important: true, needsChoice: true, text: fill(V.won, ctx) + ' ' + data().career.act3, score: [Math.round(mine), Math.round(theirs)] };
   }
@@ -326,7 +326,7 @@ function decideVacancy(state, rng, choice) {
     rival.caucusRole = 'assistantWhip';
     party.assistantWhips.push(rival.id);
   }
-  log(state, `${ctx.rival} got the chair in the whip's office. 'Next time,' the whip said.`, 'career');
+  log(state, say('log.vacancy.lost', ctx), 'career');
   remember(state, 'vacancyLost', { once: true, ctx: { whip: ctx.whip, rival: ctx.rival }, people: [person(state, p.rival, data().memoir.notes.gotChair), person(state, whip, data().memoir.notes.whip)] });
   return { kind: 'career', event: 'lost', important: true, needsChoice: true, rival: p.rival, text: fill(V.lost, ctx), score: [Math.round(mine), Math.round(theirs)], options: [{ id: 'wait', label: V.wait, note: V.waitNote, enabled: true }, { id: 'changeClique', label: V.changeClique, note: V.changeCliqueNote, enabled: true }, { id: 'committeeChair', label: V.committeeChair, note: V.committeeChairNote, enabled: me.caucusRole !== 'committeeChair' }] };
 }
@@ -347,15 +347,15 @@ function afterLoss(state, choice) {
       me.clique = best.q.id;
       best.q.members.push(me.id);
       for (const id of best.q.members) if (id !== me.id) adjustRapport(state, id, 5);
-      log(state, `You've moved over to the ${best.q.name}. They'll push for you next time.`, 'career');
+      log(state, say('log.vacancy.clique', { clique: best.q.name }), 'career');
     }
   } else if (choice === 'committeeChair') {
     me.caucusRole = 'committeeChair';
     p.standing = Math.min(100, (p.standing || 50) + 5);
-    log(state, `You took the committee chair. A title, a staff, and your name still on the whip's list.`, 'career');
+    log(state, say('log.vacancy.chair'), 'career');
     remember(state, 'committeeChair');
   } else {
-    log(state, `You'll wait for the next vacancy.`, 'career');
+    log(state, say('log.vacancy.wait'), 'career');
   }
 }
 

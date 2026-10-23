@@ -520,7 +520,7 @@ export function finishMeeting(state, result, rng = null) {
       promise(state, pid, mt.mpId, c, mt);
       if (c === 'cosponsor') {
         const signed = applyCosponsor(state, mt.mpId);
-        if (signed?.riding) log(state, `You put your name to ${billName(signed.bill)}. ${signed.riding > 0 ? 'It goes down well at home' : 'Home will not thank you for it'} (riding ${signed.riding > 0 ? '+' : ''}${signed.riding}).`, 'career');
+        if (signed?.riding) log(state, say(signed.riding > 0 ? 'log.cosigned.good' : 'log.cosigned.bad', { bill: billName(signed.bill), d: signed.riding > 0 ? `+${signed.riding}` : signed.riding }), 'career');
       }
     }
     for (const c of mt.deal.asks) {
@@ -570,11 +570,9 @@ export function meetingSummary(state, mt) {
   if (deal.result === 'accepted') {
     const give = deal.offers.map((c) => cardLabel(state, c).toLowerCase()).join(', ');
     const get = deal.asks.map((c) => cardLabel(state, c, true).toLowerCase()).join(', ');
-    return `Meeting with ${who}: deal. You give ${give || 'nothing'}; you get ${get || 'nothing'}.`;
+    return say('log.meeting.deal', { who, give: give || say('log.meeting.nothing'), get: get || say('log.meeting.nothing') });
   }
-  if (deal.result === 'walked') return `Meeting with ${who}: they walked out.`;
-  if (deal.result === 'declined') return `Meeting with ${who}: you turned the whip down.`;
-  return `Meeting with ${who}: talk, no deal.`;
+  return say('log.meeting.' + (deal.result === 'walked' || deal.result === 'declined' ? deal.result : 'talk'), { who });
 }
 
 export function phoneCall(state, rng, mpId) {
@@ -587,7 +585,7 @@ export function phoneCall(state, rng, mpId) {
   revealMany(state, mpId, ['mood'], 'call');
   adjustRapport(state, mpId, 1);
   const m = state.mps[mpId];
-  log(state, `You phoned ${m.name.first} ${m.name.last}. They sounded ${m.mood}.`, 'meeting');
+  log(state, say('log.phoned', { name: `${m.name.first} ${m.name.last}`, mood: m.mood }), 'meeting');
   return { mood: m.mood };
 }
 
@@ -617,12 +615,12 @@ hooks.fallout.push((state) => {
           state.player.record.promisesBroken++;
           const t = state.mps[e.to];
           remember(state, 'brokenPromise', { once: true, ctx: { name: `${t.name.first} ${t.name.last}` }, people: [person(state, e.to, data().memoir.notes.brokenWord)] });
-          log(state, `You broke your word to ${t.name.first} ${t.name.last}. Their friends heard about it.`, 'meeting');
+          log(state, say('log.promise.broke', { name: `${t.name.first} ${t.name.last}` }), 'meeting');
         }
       } else if (e.to === pid && !e.kept) {
         reveal(state, e.from, 'loyalty', 'votes');
         const t = state.mps[e.from];
-        log(state, `${t.name.first} ${t.name.last} didn't vote the way they promised you.`, 'meeting');
+        log(state, say('log.promise.brokeToYou', { name: `${t.name.first} ${t.name.last}` }), 'meeting');
       }
       continue;
     }
@@ -643,16 +641,16 @@ function deliver(state, e) {
   const [k, a] = e.what.split(':');
   if (k === 'qpSlot') {
     p.qpSlot = { from: e.from, week: state.date.absWeek };
-    log(state, "The whip's office has put you down for a question. Next sitting day, you're on your feet.", 'career');
+    log(state, say('log.deliver.qpSlot'), 'career');
   } else if (k === 'committeeSeat') {
     me(state).committee = a;
     p.actProgress.noticed += 1;
-    log(state, `You're now on ${state.committees[a]?.name}.`, 'career');
+    log(state, say('log.deliver.committeeSeat', { committee: state.committees[a]?.name }), 'career');
   } else if (k === 'leave') {
     p.leaveGranted = true;
   } else if (k === 'ridingProject') {
     p.pendingProject = true;
-    log(state, 'A funding announcement for your riding is ready to make at home.', 'career');
+    log(state, say('log.deliver.ridingProject'), 'career');
   } else if (k === 'ridingMention') {
     p.ridingStanding = clamp(p.ridingStanding + tuning().player.ridingMentionStanding, 0, 100);
   }
@@ -714,7 +712,7 @@ resolvers.office = (state) => {
     adjustRapport(state, w.id, -6);
     state.player.whipCalls.push(e.whipCall.billId);
     rememberWhipCall(state, w.id, e.whipCall.billId, 'missed');
-    log(state, `You didn't go when the whip's office called. ${w.name.first} ${w.name.last} noticed.`, 'meeting');
+    log(state, say('log.whipCallMissed', { name: `${w.name.first} ${w.name.last}` }), 'meeting');
   }
   endEvening(state);
 };

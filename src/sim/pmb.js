@@ -1,10 +1,9 @@
 // The private members' lottery and the player's own bill: a draw in Act 2, a bill to choose, votes to find
 // across the aisle, and the whip wanting to know why you're talking to the other side.
-import { data, tuning } from './config.js';
+import { data, tuning, say } from './config.js';
 import { fill } from './fill.js';
 import { hooks, log, resolvers, isSittingWeek, queueStop } from './pacing.js';
 import { makeBill, scheduleVote, billName } from './bills.js';
-import { capFirst } from './fill.js';
 import { baseScore, scoreToVote } from './mp.js';
 import { adjustRapport } from './relationships.js';
 import { reveal } from './knowledge.js';
@@ -31,7 +30,7 @@ export function drawLottery(state, rng) {
   const p = state.player;
   p.lottery = { drawn: true, week: state.date.absWeek };
   const options = lotteryOptions(state, rng);
-  log(state, 'Your name came up in the private members’ lottery.', 'career');
+  log(state, say('log.pmb.drawn'), 'career');
   return { kind: 'career', event: 'lottery', important: true, needsChoice: true, text: data().career.lottery.intro, options: options.map((o) => ({ id: o.title, label: o.title, note: o.summary, enabled: true })) };
 }
 
@@ -44,7 +43,7 @@ export function chooseBill(state, rng, title) {
   scheduleVote(state, bill, rng, 'second', C.pmbVoteWeeks * 5);
   bill.scheduled = true;
   state.player.pmb = { billId: bill.id, asked: [], whipAsked: false, crossAisleDone: false };
-  log(state, `You introduced ${billName(bill)}. It comes to a vote in ${C.pmbVoteWeeks} weeks.`, 'career');
+  log(state, say('log.pmb.introduced', { bill: billName(bill), weeks: C.pmbVoteWeeks }), 'career');
   remember(state, 'pmb', { sub: 'introduced', ctx: { bill: billName(bill) } });
   return bill;
 }
@@ -85,14 +84,14 @@ function askAcross(state, mpId) {
   adjustRapport(state, mpId, 4);
   budget(state);
   p.toolTime = Math.max(0, p.toolTime - C.crossAisleTime);
-  ledgerAdd(state, { from: p.mpId, to: mpId, kind: 'favor', what: `crossAisle:${bill.id}`, note: `You asked ${fullName(m)} for their vote on ${billName(bill)}.`, settled: false, dueWeek: null });
-  log(state, `You asked ${fullName(m)} (${state.parties[m.party]?.short}) to vote for ${billName(bill)}.`, 'career');
+  ledgerAdd(state, { from: p.mpId, to: mpId, kind: 'favor', what: `crossAisle:${bill.id}`, note: say('log.pmb.askedNote', { name: fullName(m), bill: billName(bill) }), settled: false, dueWeek: null });
+  log(state, say('log.pmb.asked', { name: fullName(m), party: state.parties[m.party]?.short, bill: billName(bill) }), 'career');
 }
 
 function whipQuestionStop(state) {
   const W = data().career.whipQuestion;
   const whip = whipOf(state);
-  return { kind: 'career', event: 'whipQuestion', important: true, needsChoice: true, text: fill(W.intro, { whip: whip ? fullName(state.mps[whip]) : 'The whip' }), options: [{ id: 'explain', label: W.explain, note: W.explainNote, enabled: true }, { id: 'dropIt', label: W.dropIt, note: W.dropItNote, enabled: true }] };
+  return { kind: 'career', event: 'whipQuestion', important: true, needsChoice: true, text: fill(W.intro, { whip: whip ? fullName(state.mps[whip]) : say('who.whip') }), options: [{ id: 'explain', label: W.explain, note: W.explainNote, enabled: true }, { id: 'dropIt', label: W.dropIt, note: W.dropItNote, enabled: true }] };
 }
 
 function answerWhip(state, choice) {
@@ -105,10 +104,10 @@ function answerWhip(state, choice) {
     for (const id of p.pmb.asked) if (state.nudges?.[id]) state.nudges[id][bill.id] = 0;
     for (const e of state.ledger) if (e.what === `crossAisle:${bill.id}` && !e.settled) { e.settled = true; e.kept = false; e.processed = true; }
     if (whip) adjustRapport(state, whip, C.dropItRapport);
-    log(state, `You dropped the asks. ${capFirst(billName(bill))} will probably die at second reading.`, 'career');
+    log(state, say('log.pmb.dropped', { bill: billName(bill) }), 'career');
   } else {
     if (whip) adjustRapport(state, whip, C.whipQuestionRapport);
-    log(state, `You told the whip it's your bill and it needs the votes. They didn't like it. They understood it.`, 'career');
+    log(state, say('log.pmb.explained'), 'career');
   }
 }
 
@@ -147,10 +146,10 @@ hooks.fallout.push((state) => {
   if (res.carried) {
     p.actProgress.noticed += C.pmbPassedNoticed;
     p.ridingStanding = Math.min(100, p.ridingStanding + C.pmbPassedStanding);
-    log(state, `${capFirst(billName(bill))} passed second reading. Your name is on something now.`, 'career');
+    log(state, say('log.pmb.passed', { bill: billName(bill) }), 'career');
   } else {
     p.actProgress.noticed += C.pmbFailedNoticed;
-    log(state, `${capFirst(billName(bill))} was defeated. You know who voted for it, and so does the whip.`, 'career');
+    log(state, say('log.pmb.defeated', { bill: billName(bill) }), 'career');
   }
   for (const e of state.ledger) if (e.what === `crossAisle:${bill.id}` && !e.settled) { e.settled = true; e.kept = res.yeas?.includes(e.to) ?? null; e.processed = true; }
   rememberPmb(state, bill, res);
