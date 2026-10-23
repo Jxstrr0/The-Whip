@@ -1,7 +1,8 @@
 // Goals: what the player is working toward in this act, and what each scene is for. Pure reads of state;
 // the UI turns the keys into text. Thresholds come from tuning, so the aim always matches the rules.
-import { tuning } from './config.js';
+import { tuning, say } from './config.js';
 import { fellBack } from './career.js';
+import { dayIndex } from './bills.js';
 
 const weeksInAct = (state) => state.date.absWeek - (state.player.actStart ?? 0);
 
@@ -89,3 +90,25 @@ export function sceneJob(state, kind, ctx = {}) {
 
 const MEETINGS = { whipCall: 1, rebelRecruit: 1, favorAsk: 1, introduction: 1, gossip: 1, complaint: 1, mentorAdvice: 1 };
 
+
+// What matters most in the feed, when a save comes back after a break: a career beat over a vote, a vote over
+// a visit. Kinds not listed never make the note.
+const RESUME_RANK = ['career', 'confidence', 'bill', 'tool', 'meeting', 'riding', 'rival', 'press', 'caucus'];
+
+// "Last time, 3 days ago: …" for a save loaded after a break, or null when the break was short or the recent
+// log has nothing worth saying. `now` is passed in so tests can set the clock.
+export function resumeNote(state, now = Date.now()) {
+  const P = tuning().pacing;
+  if (!state.savedAt) return null;
+  const minutes = (now - state.savedAt) / 60000;
+  if (minutes < P.resumeNoteMinutes) return null;
+  const today = dayIndex(state.date);
+  // A line, not a paragraph: the office descriptions and the like are too long to be a recap.
+  const recent = state.log.filter((l) => today - l.day <= P.resumeNoteDays && RESUME_RANK.includes(l.kind) && l.text.length <= P.resumeNoteChars);
+  if (!recent.length) return null;
+  const pick = [...recent].sort((a, b) => RESUME_RANK.indexOf(a.kind) - RESUME_RANK.indexOf(b.kind) || b.day - a.day)[0];
+  const hours = minutes / 60;
+  const days = Math.round(hours / 24);
+  const ago = hours < 18 ? say('resume.ago.earlier') : hours < 40 ? say('resume.ago.yesterday') : days <= 14 ? say('resume.ago.days', { n: days }) : say('resume.ago.while');
+  return say('resume.line', { ago, text: pick.text });
+}
