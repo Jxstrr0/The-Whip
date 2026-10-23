@@ -13,3 +13,9 @@ export function data() {
 export function tuning() {
   return data().tuning;
 }
+
+// A line from data/strings.en.json with its {slots} filled: the sim's copy of the UI's t(), so text stays in data.
+export function say(key, vars = {}) {
+  const s = data().strings[key] ?? key;
+  return s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? `{${k}}`));
+}

@@ -128,7 +128,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
     }));
     sheet.querySelectorAll('[data-pair]').forEach((b) => (b.onclick = () => {
       const r = dispatch({ type: 'useTool', tool: 'pair', mpId: b.dataset.pair, billId: bill.id, withParty: oppositeParty(state).id });
-      deskNote = r?.note || (r?.reason === 'favor' ? 'No favours left to call in this week.' : null);
+      deskNote = r?.note || (r?.reason === 'favor' ? t('office.noFavours') : null);
     }));
     sheet.querySelector('[data-act="ledger"]').onclick = () => onLedger?.();
     sheet.querySelector('[data-act="whip"]')?.addEventListener('click', () => dispatch({ type: 'meet', whipCall: true }));
