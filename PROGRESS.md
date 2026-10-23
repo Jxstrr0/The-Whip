@@ -1367,3 +1367,22 @@ Kelbo's picks 5 and 6: a "Last time…" line when a save comes back, and a gloss
 **Checked:**
 - `tests.html` 131 of 131. Three new tests: every glossary term has a label, forms and one short sentence, and no two terms claim a form; glossing a sample sheet wraps each term once, never inside a heading, summary, button or stamp, leaves the text reading the same, skips "in confidence" and "independent shops", and unglosses cleanly; the resume note is silent after five minutes, picks the vote over the caucus line, the career beat over the vote, passes over a long description, and dates itself in plain words.
 - Played at phone size in portrait and landscape from week 3: the weekend paper, Question Period, office, caucus, morning paper, a division and the riding. Every sheet checked for terms inside headings or buttons (none) and for a term glossed twice (none). Tapped a term on the caucus and division sheets and read the toast. Loaded an aged save through the menu's Continue and saw the line. No console errors.
+
+## Playtest: more to say at the door
+
+Kelbo asked to expand the dialogue a bit. The mentor and the riding got their pass in batch 3; this one is for the six people who come to the office: the whip's call, a new member introducing themselves, a favour asked, a complaint, gossip, and a rebel recruiting. Before, several of those had one opener for a mood and one reply for an approach, so a long Parliament heard the same lines back.
+
+- **143 new openers.** Every situation, turn and mood now has at least three lines to choose from in every act (the thinnest cells had one). They are written to the mood: an angry complaint about a pair pulled with four hours' notice reads differently from a guarded one.
+- **The room knows where you sit.** Twelve openers are tied to rank. From Act 3 a new member comes to "present themselves to the whip's office"; a favour starts "You've got the whip's ear now, or you are the whip's ear"; a rebel says "I know which office you sit in now. That's why I'm here."
+- **The world notices what you've done.** Eighteen context lines outside the mentor's room, played on the same odds as the mentor's: the whip opens on a fresh rebellion, a bad week at home or a demotion; a new member asks what rebelling looks like up close ("Tired, mostly."); the gossip is about the rival; a recruiter knows you've voted against the line before. They only play when it is true.
+- **108 replies.** Two ways to say each approach on each turn, so "listen" or "push" doesn't read identically across an evening. The second variants carry a style like the first (fixer, operator, conscience, enforcer, loyalist).
+- **30 partings**, so a deal, a walk-out or a "no" has a different last word by mood and by situation.
+
+**Small calls:**
+- One line can run to about 155 characters, up from 128. The talk sheet already scrolls on the longest old lines at phone size (the bill and stake content take the room), and the new ones add a few pixels at most, so the cap stayed there rather than cutting the writing back.
+- Three introduction context lines were narrowed to the moods they fit ("congratulations" never plays angry), which also keeps the mood test honest.
+
+**Checked:**
+- `tests.html` 132 of 132. One new test: every door has at least three openers a mood and two replies for listen and concede in Acts 1, 3 and 5; no text repeats across lines and partings; the whip, introductions, favours and gossip all have context lines.
+- Headless: 4,800 meetings (five acts, forty seeds, every situation and mood, three turns and a deal), with the context odds forced to 1. No unfilled name or bill slot, no silent "…" opener.
+- The talk sheet at phone size in portrait and landscape with the longest new line forced into each cell. No console errors.
