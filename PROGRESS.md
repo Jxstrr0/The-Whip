@@ -1176,3 +1176,29 @@ Kelbo asked for a clear verdict after each office meeting. When a one-to-one end
 **Checked:**
 - `tests.html` 116 of 116. The new test covers a deal, a walk-out, closing the card, and at least two partings for every speaker, outcome and mood, with no repeats.
 - Played at phone size, portrait and landscape. The deal and walk-out cards both fit portrait without scrolling. In landscape the side sheet scrolls under its buttons like the other sheets. No console errors.
+
+## Content pass: Question Period
+
+Question Period is where a backbencher gets the cameras, and it was repeating itself: three questions to a pool, two answers per minister's mood, three reactions. Over a career's 25 to 35 questions the same lines came back within a few weeks.
+
+**No repeats.** Question Period lines are no longer picked at random. Each line you've heard goes on a list (`player.recentQp`, the last 90, `questionPeriod.recentLines`). A line only comes back once every other line in its pool has played, and then the one you heard longest ago comes first. The same rule covers the Speaker's call, the riding issues, the questions, the minister's answer, the benches and the gallery.
+
+**Questions name the part of the bill people are arguing about.** A new `{detail}` slot picks a detail for the bill's category: for a housing bill, "the vacancy rate" or "the co-op housing fund"; for a veterans' bill, "the disability claims backlog". All 20 bill categories have three each. So a pointed question asks "why the grid connection fees changed between the draft and the bill", not just about "the bill".
+
+**About twice the lines.** 277 lines in all, up from about 150:
+- the Speaker's call: 4 → 8
+- issues at home: 4 → 8 for each riding type (the post office closing, the airstrip lights, the interchange that floods every spring, the overdose deaths)
+- questions: 3 → 7 for each side, framing and topic, and off-script ones 3 → 7
+- the minister's answer: 2 → 4 for each outcome and mood
+- the benches: 3 → 6, and the gallery: 3 → 6
+
+**A grammar fix along the way.** Riding issues and carried cases are often plural ("the courthouse delays", "the shelter beds"). Lines like "the minister said {issue} was a provincial matter" read wrong with those. Every line using `{issue}` now reads right either way, old lines included.
+
+**Small calls:**
+- No heckles or Speaker's rulings as a separate beat. The benches line already does that job, and the sheet shouldn't get longer while the readability pass is cutting text. New lines are the same length as the old ones.
+- I left bill titles as they are. The game prints them without "the" everywhere ("waiting for Congestion Charge Enabling Act"). That's game-wide, older than this pass, and worth a look of its own.
+
+**Checked:**
+- `tests.html` 117 of 117. One new test: a pool plays out before anything repeats, the oldest line comes back first, and six Question Periods in a row repeat no line. The fill test now also covers `{detail}` and checks every bill category has details.
+- Played the first Question Period through the real buttons at phone size in portrait (pointed) and landscape (off-script). No console errors. The first Question Period scrolls in portrait by the same amount as on `main`, because of its tutorial note, so that's not new.
+- Effects and odds are untouched. Only the line picking changed.
