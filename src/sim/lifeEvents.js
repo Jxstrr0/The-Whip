@@ -1,6 +1,7 @@
 // MPs' own arcs: an ambition, a crisis, trouble at home, a retirement in the air. Each is a moment where
 // showing up for someone builds a bond, and not showing up is remembered. (By-elections come with stage 8.)
 import { data, tuning } from './config.js';
+import { fill } from './fill.js';
 import { hooks, log, resolvers } from './pacing.js';
 import { adjustRapport } from './relationships.js';
 import { reveal } from './knowledge.js';
@@ -8,7 +9,6 @@ import { budget } from './tools.js';
 import { remember, person } from './memoir.js';
 
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
-const fill = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
 
 export function newLifeEvent(state, rng, m) {
   const C = tuning().career;

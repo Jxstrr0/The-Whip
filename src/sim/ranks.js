@@ -2,9 +2,10 @@
 // confidence vote, the temptation, the chief whip's chair, setting the line with the leader, cabinet offers,
 // and the fall. Graduation and failure are both reachable at every rank.
 import { data, tuning } from './config.js';
+import { fill, capFirst } from './fill.js';
 import { hooks, log, resolvers, queueStop } from './pacing.js';
 import { baseScore } from './mp.js';
-import { lineFor } from './bills.js';
+import { lineFor, billName } from './bills.js';
 import { voteOf } from './vote.js';
 import { adjustRapport, addStyle, reputation } from './relationships.js';
 import { revealMany } from './knowledge.js';
@@ -18,7 +19,6 @@ import { remember, person } from './memoir.js';
 const SIGN = { yea: 1, nay: -1 };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
-const fill = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
 const me = (state) => state.mps[state.player.mpId];
 const partyOf = (state) => state.parties[me(state).party];
 const leaderName = (state) => (partyOf(state)?.leader ? fullName(state.mps[partyOf(state).leader]) : 'The leader');
@@ -118,7 +118,7 @@ hooks.fallout.push((state) => {
     const mattered = bill.confidence || Math.abs(d.yeas.length - d.nays.length) <= tuning().pacing.closeVoteMargin;
     if (rebels >= tuning().ranks.rowRebelsForFailure && mattered) {
       p.rowStats.failures++;
-      if (p.rowStats.failures < tuning().ranks.rowFailuresForDemotion) log(state, fill(data().career.warned.row, { n: rebels, bill: bill.title }), 'career');
+      if (p.rowStats.failures < tuning().ranks.rowFailuresForDemotion) log(state, fill(data().career.warned.row, { n: rebels, bill: billName(bill) }), 'career');
     }
   }
   return null;
@@ -137,7 +137,7 @@ hooks.morning.push((state) => {
   if (!friend) return null;
   p.leanedOn = [...(p.leanedOn || []), bill.id];
   const L = data().career.leanOnFriend;
-  return { kind: 'career', event: 'leanOnFriend', important: true, needsChoice: true, mpId: friend.id, billId: bill.id, text: fill(L.intro, { name: fullName(friend), bill: bill.title, position: position.toUpperCase() }), options: [{ id: 'gentle', label: L.gentle, note: L.gentleNote, enabled: true }, { id: 'hard', label: L.hard, note: L.hardNote, enabled: true }, { id: 'go', label: L.go, note: L.goNote, enabled: true }] };
+  return { kind: 'career', event: 'leanOnFriend', important: true, needsChoice: true, mpId: friend.id, billId: bill.id, text: fill(L.intro, { name: fullName(friend), bill: billName(bill), position: position.toUpperCase() }), options: [{ id: 'gentle', label: L.gentle, note: L.gentleNote, enabled: true }, { id: 'hard', label: L.hard, note: L.hardNote, enabled: true }, { id: 'go', label: L.go, note: L.goNote, enabled: true }] };
 });
 
 function leanOn(state, p, choice) {
@@ -145,7 +145,7 @@ function leanOn(state, p, choice) {
   const bill = state.bills[p.billId];
   const m = state.mps[p.mpId];
   const way = ['hard', 'gentle', 'go'].includes(choice) ? choice : 'go';
-  if (!(state.memoir || []).some((e) => e.key === `leanOn.${way}`)) remember(state, 'leanOn', { sub: way, ctx: { friend: fullName(m), bill: bill.title }, people: [person(state, m.id, NOTE().friend)] });
+  if (!(state.memoir || []).some((e) => e.key === `leanOn.${way}`)) remember(state, 'leanOn', { sub: way, ctx: { friend: fullName(m), bill: billName(bill) }, people: [person(state, m.id, NOTE().friend)] });
   const s = SIGN[lineFor(bill, me(state).party).position];
   state.nudges ||= {};
   state.nudges[m.id] ||= {};
@@ -153,7 +153,7 @@ function leanOn(state, p, choice) {
     state.nudges[m.id][bill.id] = (state.nudges[m.id][bill.id] || 0) + s * R.leanHardNudge;
     adjustRapport(state, m.id, R.leanHardRapport);
     addStyle(state, 'enforcer', 2);
-    log(state, `You leaned on ${fullName(m)}. They'll vote the line on ${bill.title}, and they won't forget how you asked.`, 'career');
+    log(state, `You leaned on ${fullName(m)}. They'll vote the line on ${billName(bill)}, and they won't forget how you asked.`, 'career');
   } else if (choice === 'gentle') {
     state.nudges[m.id][bill.id] = (state.nudges[m.id][bill.id] || 0) + s * R.leanGentleNudge;
     adjustRapport(state, m.id, R.leanGentleRapport);
@@ -161,7 +161,7 @@ function leanOn(state, p, choice) {
     log(state, `You asked ${fullName(m)} as a friend. They said they'd think about it.`, 'career');
   } else {
     addStyle(state, 'conscience', 2);
-    log(state, `You let ${fullName(m)} vote their riding on ${bill.title}. The deputy whip will see the gap.`, 'career');
+    log(state, `You let ${fullName(m)} vote their riding on ${billName(bill)}. The deputy whip will see the gap.`, 'career');
   }
 }
 
@@ -191,7 +191,7 @@ hooks.fallout.push((state) => {
     if (bill.confidence && !lost && SIGN[pos] && state.house.government === m.party) p.leaderTrust = clamp(p.leaderTrust + tuning().ranks.confidenceCarriedTrust, 0, 100);
     if (lost && (bill.confidence || bill.kind === 'government') && p.predicted?.[bill.id] === 0) {
       p.wrongCounts = (p.wrongCounts || 0) + 1;
-      log(state, p.act === 4 && p.wrongCounts < tuning().ranks.wrongCountsForFailure ? fill(data().career.warned.count, { bill: bill.title }) : `You had ${bill.title} down as safe. It wasn't.`, 'career');
+      log(state, p.act === 4 && p.wrongCounts < tuning().ranks.wrongCountsForFailure ? fill(data().career.warned.count, { bill: billName(bill) }) : `You had ${billName(bill)} down as safe. It wasn't.`, 'career');
     }
   }
   return null;
@@ -208,7 +208,7 @@ hooks.morning.push((state) => {
   if (!absent || !opp) return null;
   p.pairOffered = [...(p.pairOffered || []), bill.id];
   const C = data().career.confidencePair;
-  const ctx = { bill: bill.title, absent: fullName(absent), opposite: fullName(state.mps[opp.deputyWhip || opp.chiefWhip]), party: opp.name };
+  const ctx = { bill: billName(bill), absent: fullName(absent), opposite: fullName(state.mps[opp.deputyWhip || opp.chiefWhip]), party: opp.name };
   return { kind: 'career', event: 'confidencePair', important: true, needsChoice: true, mpId: absent.id, billId: bill.id, party: opp.id, text: fill(C.intro, ctx), options: [{ id: 'accept', label: C.accept, note: C.acceptNote, enabled: true }, { id: 'decline', label: C.decline, note: fill(C.declineNote, ctx), enabled: true }] };
 });
 
@@ -331,7 +331,7 @@ hooks.morning.push((state) => {
   p.linesSet = [...(p.linesSet || []), bill.id].slice(-20);
   const S = data().career.setLine;
   const gov = state.house.government === m.party && bill.kind === 'government' && !bill.confidence;
-  return { kind: 'career', event: 'setLine', important: true, needsChoice: true, billId: bill.id, text: fill(S.intro, { bill: bill.title, leader: leaderName(state) }), options: [{ id: 'whip', label: fill(S.whip, { position: position.toUpperCase() }), note: S.whipNote, enabled: true }, { id: 'free', label: S.free, note: S.freeNote, enabled: true }, { id: 'confidence', label: S.confidence, note: S.confidenceNote, enabled: gov }] };
+  return { kind: 'career', event: 'setLine', important: true, needsChoice: true, billId: bill.id, text: fill(S.intro, { bill: billName(bill), leader: leaderName(state) }), options: [{ id: 'whip', label: fill(S.whip, { position: position.toUpperCase() }), note: S.whipNote, enabled: true }, { id: 'free', label: S.free, note: S.freeNote, enabled: true }, { id: 'confidence', label: S.confidence, note: S.confidenceNote, enabled: gov }] };
 });
 
 function setLine(state, p, choice) {
@@ -343,15 +343,15 @@ function setLine(state, p, choice) {
     bill.lines[m.party] = 'free';
     for (const x of Object.values(state.mps)) if (x.party === m.party) x.loyalty = clamp(x.loyalty + 1, 0, 100);
     state.player.leaderTrust = clamp(state.player.leaderTrust + (R.freeVoteTrust[party.leaderPersonality] ?? -3), 0, 100);
-    log(state, `A free vote on ${bill.title}.`, 'career');
+    log(state, `A free vote on ${billName(bill)}.`, 'career');
   } else if (choice === 'confidence' && p.options.find((o) => o.id === 'confidence')?.enabled) {
     bill.confidence = true;
     bill.lines[m.party] = 'whipped';
     state.player.leaderTrust = clamp(state.player.leaderTrust + R.confidenceTrust, 0, 100);
-    log(state, `${bill.title} is a matter of confidence. Everyone comes home for it.`, 'career');
+    log(state, `${capFirst(billName(bill))} is a matter of confidence. Everyone comes home for it.`, 'career');
   } else {
     bill.lines[m.party] = 'whipped';
-    log(state, `${bill.title} is whipped ${lineFor(bill, m.party).position.toUpperCase()}.`, 'career');
+    log(state, `${capFirst(billName(bill))} is whipped ${lineFor(bill, m.party).position.toUpperCase()}.`, 'career');
   }
 }
 
@@ -362,7 +362,7 @@ hooks.fallout.push((state) => {
   p.fallen = true;
   const F = data().career.fall;
   const d = (state.flow.day?.results || []).map((id) => state.divisions[id]).find((x) => x && state.bills[x.billId]?.confidence);
-  return { kind: 'career', event: 'fall', important: true, needsChoice: true, text: fill(F.intro, { bill: d ? state.bills[d.billId].title : 'the confidence vote', leader: leaderName(state) }), options: [{ id: 'stay', label: F.stay, note: F.stayNote, enabled: true }, { id: 'retire', label: F.retire, note: F.retireNote, enabled: true }] };
+  return { kind: 'career', event: 'fall', important: true, needsChoice: true, text: fill(F.intro, { bill: d ? billName(state.bills[d.billId]) : 'the confidence vote', leader: leaderName(state) }), options: [{ id: 'stay', label: F.stay, note: F.stayNote, enabled: true }, { id: 'retire', label: F.retire, note: F.retireNote, enabled: true }] };
 });
 
 export function demoteToBackbench(state, reputationLabel = null) {

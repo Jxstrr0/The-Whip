@@ -3,6 +3,7 @@
 // the new member into the chamber for the first time. The night is built from the Parliament already generated
 // (the player's margin, the House's seats), on its own seeded stream so the game's RNG is untouched.
 import { data, tuning } from './config.js';
+import { fill } from './fill.js';
 import { createRng } from './rng.js';
 import { uniqueNames } from './generate.js';
 import { resolvers, queueStop, log } from './pacing.js';
@@ -10,7 +11,6 @@ import { remember, person } from './memoir.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
-const fill = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
 const ordinal = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
 const fmt = (n) => Math.round(n).toLocaleString('en-US');
 
