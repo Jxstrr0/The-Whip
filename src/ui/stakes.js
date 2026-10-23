@@ -45,6 +45,20 @@ export function stakeLine(state, bill) {
   return `<p class="stakes-line"><span class="lean">${lean}</span>${way(t('stake.withLine', { pos: t('vote.' + s.position) }), s.line)}${way(t('stake.against', { pos: t('vote.' + other) }), s.rebel)}</p>`;
 }
 
+// The same thing rubber-stamped on a memo: the riding's lean as a line, then one stamp per way of voting
+// with its label small above the numbers. The numbers are the same signed inks as everywhere else.
+export function stakeStamps(state, bill) {
+  const me = state.mps[state.player.mpId];
+  const s = billStakes(state, bill);
+  const lean = s.lean
+    ? t('stake.lean.' + s.lean.level, { riding: esc(me.riding.name), side: sideWord(s.lean.side) })
+    : t('stake.lean.none', { riding: esc(me.riding.name) });
+  if (!s.whipped) return `<p class="stakes-line"><span class="lean">${lean}</span><span class="free">${esc(t('stake.free'))}</span></p>`;
+  const stampOf = (label, st, k) => `<span class="stake-stamp ${k}"><small>${esc(label)}</small><span class="ink">${delta(st.riding, t('stake.riding'))}<i>·</i>${delta(st.whip, t('stake.whip'))}</span></span>`;
+  const other = s.position === 'yea' ? 'nay' : 'yea';
+  return `<div class="stake-stamps"><p class="lean">${lean}</p><div class="row">${stampOf(t('stake.withLine', { pos: t('vote.' + s.position) }), s.line, 'a')}${stampOf(t('stake.against', { pos: t('vote.' + other) }), s.rebel, 'b')}</div></div>`;
+}
+
 // The same thing in one short block, for a card that only needs to hint at it (the whip's call on the evening board).
 export function stakeBrief(state, bill) {
   const s = billStakes(state, bill);

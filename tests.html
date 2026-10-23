@@ -54,6 +54,7 @@ import * as ridingSim from './src/sim/riding.js';
 import { calendarOf, weatherOf } from './src/sim/calendar.js';
 import { lightFor, hourOf, LIGHTS } from './src/light.js';
 import { snapStop, STOPS } from './src/ui/drawer.js';
+import { stakeStamps } from './src/ui/stakes.js';
 import { readNumber, writeNumber } from './src/ui/feel.js';
 import { botAct } from './src/sim/bot.js';
 import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo } from './src/save.js';
@@ -3026,6 +3027,22 @@ test('The feel pass: timings in tuning, a dragged sheet settles on the nearest s
   assert(readNumber('+4') === 4 && readNumber('\u22126') === -6 && readNumber('12') === 12 && readNumber('12 / 24') === null && readNumber('+') === null, 'reads signed numbers only');
   assert(writeNumber(3, '+4') === '+3' && writeNumber(-2, '+4') === '\u22122' && writeNumber(0, '\u22126') === '0' && writeNumber(7, '12') === '7', 'writes them the same way');
   return `sheet ${F.sheet}ms, tick ${F.tick}ms, stamp ${F.stamp}ms, press ${F.press}ms, dolly ${F.dolly}s`;
+});
+
+test('The desk: a whipped bill is stamped twice on the memo (the line, then the break), a free vote is one line', () => {
+  const { s: state, me } = whipScenario(4, 'TEST-DESK');
+  const party = me.party;
+  const whipped = Object.values(state.bills).find((b) => b.status === 'active' && stakes.billStakes(state, b).whipped);
+  assert(whipped, 'a whipped bill to stamp');
+  const html = stakeStamps(state, whipped);
+  const count = (re) => (html.match(re) || []).length;
+  assert(count(/class="stake-stamp a"/g) === 1 && count(/class="stake-stamp b"/g) === 1, 'one stamp each way');
+  assert(count(/class="stake (up|down|flat)"/g) === 4, 'riding and whip inks on both');
+  assert(html.includes(uiText('vote.' + whipped.positions[party]).toUpperCase()) || html.includes(uiText('vote.' + whipped.positions[party])), 'the line names the vote');
+  const free = { ...whipped, lines: { ...whipped.lines, [party]: 'free' } };
+  const freeHtml = stakeStamps(state, free);
+  assert(!freeHtml.includes('stake-stamp') && freeHtml.includes('class="free"'), 'a free vote is not stamped');
+  return `${whipped.title}: stamped ${whipped.positions[party]}`;
 });
 
 test('The paper takes the room\'s light: bells pale, the office by lamp (a strip light while shared), a grey winter morning', () => {

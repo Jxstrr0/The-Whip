@@ -1537,3 +1537,32 @@ The fourth of Kelbo's five picks. The paper was handled by cuts: a sheet appeare
 - Headless frames run at a few a second here, so the settle and the dolly were checked by their numbers (the height keyframes, the stop reached, the camera's end shot) rather than by eye; the motion itself needs Kelbo's phone.
 
 **Next:** D (the desk): the whip's call as a memo pad with a clip, index-card replies, the desk calendar.
+
+## UI refresh, part five: the desk
+
+The last of Kelbo's five picks, and the one the pitch called the ambitious one. The paper stops being a sheet laid over the room and starts being the things on your desk. It is built on part two's discipline (ink, not boxes) and goes only as far as a 390 px screen can carry without losing legibility: the objects tilt, the sheet you drag does not.
+
+**What changed.**
+
+- **A one-to-one is a memo on the pad.** The office sheet takes a perforated top edge, a paper clip over the corner, and a letterhead rule: *Member's memo* (or *Whip's office · memo* when the whip has called you in) on the left, *Turn 1 of 3* on the right. The name sits under it with the member's riding and their mood. The memo slides onto the desk with a slight settle and straightens as it lands; the deal table is still a plain sheet, and the debrief comes back as the same memo headed *Meeting record*.
+- **The stakes are rubber-stamped on it** (`stakeStamps` in `src/ui/stakes.js`). The riding's lean stays as a line; under it two stamps, each a little crooked, carry the two ways of voting: *With the party (nay) · −5 riding · +2 whip* and *Break with the line (yea) · +4 riding · −8 whip*. They come down with part four's stamp stroke, the second a beat after the first. A free vote is one italic line, unstamped.
+- **Your replies are on an index card.** The talk choices sit on a cream card laid on the memo: blue rules every 28 px, a red rule at the top, a slight tilt the other way from the stamps. Each reply takes whole lines, with its approach (*push*, *warm*, *listen*) in italic brass at the start of the first one. The pressed-reply ink from part four still runs across the card.
+- **The constituency office has its own pad.** A visitor's hour at home is a memo too: *Constituency office* on the letterhead with *1 of 4 waiting* on the right, the riding's name as the heading, the standing bar and the job line, then the visitor. A reporter's or the riding president's replies go on the index card. A case keeps its three buttons (carry, refer, decline) because they carry the riding numbers and the primary one needs to read as the main thing; the town hall and the end of the day are a plain sheet.
+- **The date on the bar is a desk calendar's leaf.** The month on its red band, the date large under it, and *Mon · evening* (and *· at home* in a constituency week) beside it, in the bar's height. The button still carries the full date in words for a screen reader.
+- **The whip's call is a folded note.** On the evening board the call is its own slip of paper, set down a little crooked with a crease across the middle: *The whip's office is calling* in red, the bill, the stake brief, Go.
+
+**Small calls:**
+- The memo sheet stays square to the screen. The drawer is dragged by its top edge and a tilt there cost reading width at 390 px and made the bottom edge sit wrong on the bar; the tilt went onto the stamps, the card and the folded note instead.
+- The paper clip is two wire loops in dull steel, inside the sheet rather than over its edge, because the sheet clips what hangs outside it. It is drawn in CSS; no image.
+- The index card's rules are 28 px and the replies are set on that leading, so a two-line reply fills two rules exactly. At the card's 15.5 px the longest replies take three.
+- The Book, the ledger and the front page were already objects (a bound book, a ruled ledger, a folded paper) from the art pass and the earlier parts, so they were left alone. The timeline's cards were not touched; if Kelbo wants them on the desk too, that is a small follow-up.
+- Question Period and caucus keep their ruled rows: they are the chamber's and the room's business, not something on your desk.
+- `agenda.day` in the strings went unused once the leaf took over and was removed; the long date (`agenda.date`) still reads out on the button.
+
+**Checked:**
+- `tests.html` green (132; a new test pins the two stamps on a whipped bill, their four inks, and the unstamped free vote).
+- At phone size in portrait, from a new game: the leaf on the bar from the first morning; the evening board's folded note; the whip's memo at half (letterhead, clip, name, job line, the lean, both stamps, the card's first reply in view), pulled to a peek (handle, letterhead and name within 104 px), tapped to full; a reply pressed and the next turn's letterhead reading *Turn 2 of 3*; the deal table as a plain sheet and the record as a memo again. From the *Home truths* scenario: the constituency memo with a case, with a reporter's card, and the plain sheet at the day's end. No console errors.
+- In landscape the memo is the side sheet with the same letterhead and clip; the card fits its width.
+- With reduced motion on the memo appears in place and the stamps are set without a stroke.
+
+**Next:** the five picks are built and stacked as PRs in merge order (B → A → C → E → D). After that, the chamber and textures pass, which I'll scope with Kelbo before building.

@@ -3836,3 +3836,281 @@ body.cold-open .topbar {
   font-size: 14px;
   line-height: 1.3;
 }
+
+/* ---- The desk: paper as things ------------------------------------------------------------------------ */
+/* A one-to-one is a memo on the pad: a perforated top edge, a clip at the corner, a letterhead rule with
+   whose paper it is and where in the meeting you are. The sheet itself stays straight (a drawer is dragged by
+   its top edge, and tilt costs reading room at 390px); the tilt is on the stamps and the index card. It
+   comes onto the desk with a small settle, and goes back to a plain sheet for the deal table. */
+.sheet.memo {
+  padding-top: 12px;
+  border-radius: 3px 3px 0 0;
+  animation: memo-in var(--feel-sheet, 340ms) cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sheet.memo.dragging {
+  animation: none;
+}
+@keyframes memo-in {
+  from {
+    transform: translateY(28px) rotate(-1.2deg);
+    opacity: 0;
+  }
+}
+.sheet.memo::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 9px;
+  background: repeating-linear-gradient(90deg, transparent 0 7px, var(--paper-3) 7px 9px);
+  opacity: 0.7;
+  pointer-events: none;
+}
+/* A paper clip over the top edge: two wire loops, the inner one shorter, in a dull steel. */
+.memo-clip {
+  position: absolute;
+  top: 0;
+  right: 24px;
+  width: 18px;
+  height: 46px;
+  border: 2.5px solid #8a867e;
+  border-top: 0;
+  border-radius: 0 0 9px 9px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+.memo-clip::before {
+  content: '';
+  position: absolute;
+  left: 2.5px;
+  right: 2.5px;
+  top: 0;
+  bottom: 9px;
+  border: 2.5px solid #8a867e;
+  border-top: 0;
+  border-radius: 0 0 6px 6px;
+}
+.sheet .lh {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 36px 10px 0;
+  padding: 2px 0 6px;
+  border-bottom: 1px solid var(--brass);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brass-ink);
+  white-space: nowrap;
+}
+.sheet .lh span:last-child {
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sheet.memo .card-head {
+  margin-right: 40px;
+}
+.sheet.memo .job {
+  margin-right: 24px;
+}
+
+/* The stakes rubber-stamped on the memo: the riding's lean as a line, then one stamp per way of voting, each
+   with its label small above the two signed inks. */
+.stake-stamps {
+  margin: 8px 0 2px;
+}
+.stake-stamps .lean {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.35;
+  color: var(--ink-2);
+}
+.stake-stamps .lean b {
+  font-style: normal;
+  color: var(--yea);
+}
+.stake-stamps .lean b.nay {
+  color: var(--nay);
+}
+.stake-stamps .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 4px 6px 6px;
+}
+.stake-stamp {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 10px 4px;
+  border: 2.5px solid currentColor;
+  border-radius: 6px;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  opacity: 0.88;
+  transform: rotate(-3deg);
+  -webkit-mask-image: var(--stamp-mask);
+  mask-image: var(--stamp-mask);
+  animation: stamp-in var(--feel-stamp, 260ms) cubic-bezier(0.3, 0.7, 0.3, 1) both;
+}
+.stake-stamp.b {
+  transform: rotate(2.5deg);
+  animation-delay: 60ms;
+}
+.stake-stamp small {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+.stake-stamp .ink {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.stake-stamp .ink i {
+  font-style: normal;
+  opacity: 0.6;
+}
+.stake-stamp .stake {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.stake-stamp .stake b {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* What you say back is written on an index card laid on the memo: cream stock, blue rules every 28px, a red
+   top rule, a slight tilt. Each reply takes whole lines, with its approach in italic brass at the start. */
+.sheet.memo .talk-choices,
+.sheet.memo .choices.replies {
+  --card: #fbf7ec;
+  --rule: rgba(43, 108, 196, 0.22);
+  display: block;
+  margin: 14px -4px 4px;
+  padding: 4px 12px 0;
+  border: 0;
+  border-top: 2px solid rgba(168, 50, 45, 0.5);
+  border-radius: 2px;
+  background: repeating-linear-gradient(180deg, transparent 0 27px, var(--rule) 27px 28px) var(--card);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14), 0 6px 18px rgba(0, 0, 0, 0.14);
+  transform: rotate(0.6deg);
+}
+.sheet.memo .talk-choices .btn,
+.sheet.memo .choices.replies .btn {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
+  padding: 0 30px 0 0;
+  border: 0;
+  font-size: 15.5px;
+  line-height: 28px;
+  color: var(--ink);
+}
+.sheet.memo .talk-choices .btn small.approach,
+.sheet.memo .choices.replies .btn small.approach {
+  display: inline;
+  margin: 0 6px 0 0;
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.sheet.memo .talk-choices .btn::after,
+.sheet.memo .choices.replies .btn::after {
+  transform: translateY(-50%);
+}
+.sheet.memo .talk-choices .btn:active,
+.sheet.memo .choices.replies .btn:active,
+.sheet.memo .talk-choices .btn.taken,
+.sheet.memo .choices.replies .btn.taken {
+  margin: 0 -12px;
+  width: calc(100% + 24px);
+  padding-left: 9px;
+  padding-right: 42px;
+}
+.sheet.memo .choices.replies .btn.primary {
+  background: none;
+  color: var(--ink);
+}
+
+/* The whip's call on the evening board is a folded note pushed under the door: its own slip of paper, a
+   crease across the middle, set down a little crooked. */
+.whip-call.slip {
+  position: relative;
+  margin: 12px 2px 10px;
+  padding: 12px 14px 14px;
+  border: 0;
+  border-radius: 2px;
+  background:
+    linear-gradient(180deg, transparent 0 48%, rgba(0, 0, 0, 0.07) 48% 50%, rgba(255, 255, 255, 0.35) 50% 52%, transparent 52%),
+    var(--grain),
+    #faf3e3;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14), 0 8px 20px rgba(0, 0, 0, 0.16);
+  transform: rotate(-1.2deg);
+}
+.whip-call.slip .whip-call-label {
+  color: var(--red);
+}
+
+/* The date on the bar is a desk calendar's leaf: the month on its red band, the date large, and the weekday
+   and the hour beside it. */
+.agenda-date .day {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: visible;
+}
+.agenda-date .leaf {
+  display: inline-flex;
+  flex: none;
+  flex-direction: column;
+  align-items: stretch;
+  width: 34px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--paper-2);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  line-height: 1;
+  text-align: center;
+}
+.agenda-date .leaf b {
+  padding: 2.5px 0 1.5px;
+  background: var(--red);
+  color: var(--paper);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.agenda-date .leaf span {
+  padding: 2px 0 3px;
+  font-size: 17px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.agenda-date .when {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet.memo,
+  .stake-stamp {
+    animation: none;
+  }
+}
