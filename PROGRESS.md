@@ -1275,3 +1275,65 @@ Kelbo asked for the rest of the text to come out of the code.
 **Checked:**
 - `tests.html` 118 of 118.
 - Played at phone size, portrait and landscape: office, caucus, a division, the riding, Question Period and the weekend paper. No console errors.
+
+## The week's vote (part one: the sim)
+
+Every sitting week now builds to one vote. On Monday the House leader picks the whipped vote that will decide the week and puts it down for Thursday. The pick goes to a confidence vote first, then the closest and most watched. All week the rooms point at that vote. On Thursday it goes last on the paper as a recorded division you stand for, and the members you brought over since Monday are read out as yours. This answers "the core loop needs a little something": the week now has a spine, and what you do Monday to Wednesday pays off on Thursday.
+
+**What changed:**
+- **`src/sim/bigVote.js` (new).**
+  - **The pick (Monday).** It counts the House as it stands. It sets an outlook: close (within 6 either way), safe, or long (the line is well behind). It logs the morning's line and runs a paper story. The vote comes off the paper until Thursday, then goes last.
+  - **When there's no pick.** None in the guided first week, none in a week that isn't sitting, and none once Thursday has passed. In a scenario, the scenario's own vote is the week's vote. All three scenarios are already set on a Thursday.
+- **Everything else points at the same vote:**
+  - the persuade and lean-on targets, the deputy's count and the rival whips' poaching (through `nextVote`);
+  - caucus's key bill;
+  - what the riding is talking about;
+  - the government bill in Question Period;
+  - the badge on the Order Paper ("The week's vote");
+  - the "Your job here" lines on Thursday morning and at the bells.
+- **Whose names they were.** A member who wasn't with the line on Monday counts as yours if you talked to them that week and they voted with the line. A member you chased in on the bells counts too. If you voted against the line yourself, none of the names count.
+- **What it's worth, by act (all in `data/tuning.json` under `bigVote`).**
+
+  | Act | What the vote pays in |
+  |---|---|
+  | Acts 1–2 | Being noticed |
+  | Act 3 | The Chief Whip's regard |
+  | Act 4 | The leader's trust |
+  | Act 5 | The pressure on the office |
+
+  - Winning a close vote, or one that was lost on Monday's count, pays most. A safe win pays a little.
+  - Losing a close vote costs something, and losing a safe one costs more. Losing a long shot costs nothing.
+  - Each of your names adds a little, up to three.
+  - A confidence vote already moves trust and pressure on its own, so it isn't paid twice.
+- **The record and the memoir.**
+  - The record keeps big votes won, big votes lost and names.
+  - The memoir keeps the nights your own names made the difference, and the close ones you lost.
+  - New writing: Monday, result and names lines in `career.json`, 23 headlines with decks (ahead, safe, long shot, won, lost), and memoir entries.
+
+**Numbers (40 Parliaments, headless):**
+- **About 120 big votes per Parliament.**
+- **Names.**
+  - A bot that just votes the line almost never turns anyone. The payouts barely move the act timings: Act 2 at week 12, Act 3 at 31, Act 4 at 99.
+  - A bot that persuades Monday's holdouts every evening turns 0–8 names a week. It reaches each act sooner (Act 4 at 80, Act 5 at 114), which is the point: working the vote is rewarded, and the per-name cap stops it running away.
+- **Long shots.** With long shots costing nothing to lose, no act pays out negatively for a passive player except Act 3, where a whip whose row loses close votes slowly loses the Chief Whip's regard (average −0.4 a week). That's deliberate.
+
+**Small calls:**
+- The vote is always Thursday, and it starts from week two, as agreed.
+- A freed (free) vote is nobody's to win: no payout and no record.
+- Names lines were written to fit both kinds of name (turned and chased).
+
+**Checked:**
+- `tests.html`: 124 of 124. There's a new section, "Content · The week's vote", with six tests:
+  - there's no pick in the guided week, and the pick is whipped and set for Thursday;
+  - the bill isn't voted before Thursday, and the Thursday division is the last item, a recorded stop, and is settled on the record;
+  - who counts as yours;
+  - payouts by act;
+  - each scenario's vote is the week's vote;
+  - a whole Parliament settles its big votes with no unfilled lines.
+- Played week two at phone size in portrait and landscape (Monday, Thursday's paper, the bells, the result) with no console errors.
+
+**Next (part two, UI):**
+- a count meter by the date bar all week;
+- Monday's front page leading with the vote;
+- the Clerk marking your names as they're read;
+- a result card that says what the vote did for you.

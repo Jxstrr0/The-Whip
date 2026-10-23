@@ -431,6 +431,20 @@
     "crossFloorRapport": -40,
     "retireFromAct": 2
   },
+  "bigVote": {
+    "fromWeek": 1,
+    "visibility": 70,
+    "closeMargin": 6,
+    "namesCap": 3,
+    "weights": { "visibility": 0.4, "margin": 1.5, "confidence": 200, "dilemma": 25 },
+    "payoutByAct": [
+      { "stat": "noticed", "win": 1, "winSafe": 0.25, "lose": 0, "loseSafe": 0, "perName": 0.5 },
+      { "stat": "noticed", "win": 1, "winSafe": 0.25, "lose": 0, "loseSafe": 0, "perName": 0.5 },
+      { "stat": "whipRapport", "win": 3, "winSafe": 1, "lose": -2, "loseSafe": -4, "perName": 1 },
+      { "stat": "leaderTrust", "win": 2, "winSafe": 0, "lose": -3, "loseSafe": -5, "perName": 1 },
+      { "stat": "pressure", "win": -4, "winSafe": -1, "lose": 5, "loseSafe": 8, "perName": -1 }
+    ]
+  },
   "media": {
     "pollSwing": {
       "confidenceLost": -2.5,

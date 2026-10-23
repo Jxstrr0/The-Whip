@@ -37,7 +37,7 @@ import { parliamentHash } from './src/sim/generate.js';
 import { cardView, HIDDEN_FIELDS, reveal, decayKnowledge, touch, familiarity } from './src/sim/knowledge.js';
 import { faceFor, faceOf, partsFor } from './src/faces.js';
 import { buildSeats, deskPairOffset, walkerPath, GEOMETRY } from './src/chamber/layout.js';
-import { introduceBill, makeBill, setLines, billName } from './src/sim/bills.js';
+import { introduceBill, makeBill, setLines, billName, lineFor } from './src/sim/bills.js';
 import { fill } from './src/sim/fill.js';
 import { intentions, baseScore } from './src/sim/mp.js';
 import { putQuestion, runDivision, recordResult, speakerCastingVote } from './src/sim/vote.js';
@@ -74,6 +74,7 @@ import * as memoir from './src/sim/memoir.js';
 import * as goals from './src/sim/goals.js';
 import * as stakes from './src/sim/stakes.js';
 import * as rowSim from './src/sim/row.js';
+import * as bigVote from './src/sim/bigVote.js';
 import { t as uiText, rowLine } from './src/ui/text.js';
 
 const sections = [];
@@ -2734,6 +2735,163 @@ test('A bill reads as "the … Act" mid-sentence, motions by their spoken name, 
   const hit = texts.find((x) => bare.test(x));
   assert(!hit, 'bare title: ' + hit);
   return `${lines.length} lines with a bill, ${texts.length} log and memoir entries checked`;
+});
+
+section("Content · The week's vote");
+
+// Plays a game forward a stop at a time, toeing the line, until `until` says stop.
+function playUntil(s, until, limit = 4000) {
+  for (let i = 0; i < limit; i++) {
+    const p = pacing.skip(s);
+    if (p?.kind === 'dissolved' || p?.kind === 'ending') return p;
+    if (until(s, p)) return p;
+    pacing.resolve(s, p?.kind === 'division' ? 'line' : null);
+  }
+  throw new Error('ran out of stops at week ' + s.date.absWeek);
+}
+
+test('The guided first week has no big vote; from week two Monday puts a whipped vote down for Thursday', () => {
+  const notes = [];
+  for (const seed of ['BIG-1', 'BIG-2', 'BIG-3']) {
+    const s = newGame({ seed, party: 'p1' });
+    assert(!s.bigVote?.billId, `${seed}: a big vote in week one`);
+    let guided = false;
+    playUntil(s, (st) => {
+      if (st.date.absWeek === 0 && st.bigVote?.billId) guided = true;
+      return st.date.absWeek >= 1;
+    });
+    assert(!guided, `${seed}: the guided week got a big vote`);
+    playUntil(s, (st) => st.bigVote?.billId && st.bigVote.week === st.date.absWeek);
+    const bv = s.bigVote;
+    assert(bv.week <= 3, `${seed}: no vote picked until week ${bv.week + 1}`);
+    const bill = s.bills[bv.billId];
+    const { line, position } = lineFor(bill, s.mps[s.player.mpId].party);
+    assert(line === 'whipped' && position === bv.side, `${seed}: the week's vote isn't whipped ${bv.side}`);
+    assert(bv.day === bv.week * 5 + 3 && bill.nextVote === bv.day && bill.scheduled, `${seed}: not down for Thursday`);
+    assert(['close', 'safe', 'long'].includes(bv.outlook) && !bv.against.includes(s.player.mpId), `${seed}: outlook ${bv.outlook}`);
+    assert(s.log.some((l) => l.week === bv.week && l.text.includes(billName(bill))), `${seed}: Monday's log doesn't name it`);
+    notes.push(`${seed}: ${bv.outlook}, ${bv.start.ours}–${bv.start.theirs}`);
+  }
+  return notes.join(' · ');
+});
+
+test("Thursday's vote is the last division of the day, a recorded stop for the player, and settles on the record", () => {
+  const s = newGame({ seed: 'BIG-1', party: 'p1' });
+  playUntil(s, (st) => st.date.absWeek >= 1 && st.bigVote?.billId);
+  const bv = s.bigVote;
+  const early = [];
+  const p = playUntil(s, (st, stop) => {
+    for (const d of Object.values(st.divisions)) if (d.billId === bv.billId && d.day >= bv.week * 5 && d.day < bv.day) early.push(d.day);
+    return stop?.kind === 'division' && stop.billId === bv.billId;
+  });
+  assert(!early.length, 'the bill was voted before Thursday');
+  assert(s.date.dayOfWeek === 4, `the stop came on day ${s.date.dayOfWeek}`);
+  assert(['bigVote', 'ownBill'].includes(p.reason), `stop reason ${p.reason}`);
+  assert(s.flow.queue[s.flow.queue.length - 1].billId === bv.billId, 'not last on the paper');
+  pacing.resolve(s, 'line');
+  // Hold on to this week's vote: skipping on can run into next week's.
+  playUntil(s, () => bv.result);
+  const r = bv.result;
+  assert(r, 'no result after Thursday');
+  const d = s.divisions[r.divisionId];
+  assert(d.recorded && d.billId === bv.billId && d.day === bv.day, 'not a recorded division on Thursday');
+  assert(r.won === ((bv.side === 'yea') === d.carried), 'won is wrong');
+  const rec = s.player.record.bigVotes;
+  assert(rec && rec.won + rec.lost === 1, 'the record does not count it');
+  assert(!s.log.some((l) => /\{\w+\}/.test(l.text)), 'a placeholder is left in the log');
+  return `${billName(s.bills[bv.billId])}: ${d.yeas.length}–${d.nays.length}, ${r.won ? 'won' : 'lost'}`;
+});
+
+test('Names are yours only if you talked to them that week and they came into the lobby with you, or you chased them in', () => {
+  const s = newGame({ seed: 'BIG-1', party: 'p1' });
+  playUntil(s, (st) => st.date.absWeek >= 1 && st.bigVote?.billId);
+  const bv = s.bigVote;
+  const [a, b, c] = bv.against;
+  const ours = Object.values(s.mps).find((m) => m.id !== s.player.mpId && !bv.against.includes(m.id)).id;
+  s.player.contact = { ...(s.player.contact || {}), [a]: bv.week, [b]: bv.week - 1 };
+  s.chased = { [bv.billId]: { [ours]: true, [c]: true } };
+  const yes = bv.side;
+  const no = yes === 'yea' ? 'nay' : 'yea';
+  const d = { recorded: true, billId: bv.billId, day: bv.day, paired: [], yeas: [], nays: [] };
+  const put = (id, v) => d[v + 's'].push(id);
+  put(a, yes); put(b, yes); put(ours, yes); put(c, no);
+  const n = bigVote.bigVoteNames(s, d);
+  assert(JSON.stringify(n.turned) === JSON.stringify([a]), `turned ${n.turned}`);
+  assert(JSON.stringify(n.chased) === JSON.stringify([ours]), `chased ${n.chased}`);
+  assert(!bigVote.bigVoteNames(s, { ...d, day: bv.day - 1 }).turned.length, 'counted a vote on another day');
+  assert(!bigVote.bigVoteNames(s, { ...d, compact: true }).turned.length, 'counted a compact division');
+  return '1 turned, 1 chased; last week\'s talk and a vote against don\'t count';
+});
+
+test('What the vote is worth follows the job: a long shot lost costs nothing, a safe one lost costs most, names add up to a cap', () => {
+  const B = tuning().bigVote;
+  const s = newGame({ seed: 'BIG-1', party: 'p1' });
+  playUntil(s, (st) => st.date.absWeek >= 1 && st.bigVote?.billId);
+  const bill = s.bills[s.bigVote.billId];
+  const good = { noticed: 1, whipRapport: 1, leaderTrust: 1, pressure: -1 };
+  const notes = [];
+  for (let act = 1; act <= 5; act++) {
+    const P = B.payoutByAct[act - 1];
+    assert(P.stat in good, `act ${act}: unknown stat ${P.stat}`);
+    const k = good[P.stat];
+    const pay = (outlook, won, names = []) => {
+      const g = JSON.parse(JSON.stringify(s));
+      g.player.act = act;
+      g.player.leaderTrust = 50;
+      g.pressure = 50;
+      g.bigVote.outlook = outlook;
+      // Act 3's rapport is with a chief whip who isn't the player.
+      const whip = g.parties[g.mps[g.player.mpId].party].chiefWhip;
+      if (whip === g.player.mpId) return null;
+      return bigVote.payout(g, { ...bill, confidence: false }, won, names).delta * k;
+    };
+    const res = { closeWon: pay('close', true), safeWon: pay('safe', true), closeLost: pay('close', false), safeLost: pay('safe', false), longLost: pay('long', false) };
+    if (res.closeWon == null) continue;
+    assert(res.closeWon > 0 && res.safeWon >= 0 && res.closeWon >= res.safeWon, `act ${act}: winning ${JSON.stringify(res)}`);
+    assert(res.longLost === 0, `act ${act}: a long shot lost costs ${res.longLost}`);
+    assert(res.closeLost <= 0 && res.safeLost <= res.closeLost, `act ${act}: losing ${JSON.stringify(res)}`);
+    const many = pay('close', true, Array(B.namesCap + 3).fill('x'));
+    const capped = pay('close', true, Array(B.namesCap).fill('x'));
+    assert(many === capped && capped > res.closeWon, `act ${act}: names ${capped} vs ${many}`);
+    notes.push(`${act}: ${P.stat}`);
+  }
+  assert(notes.length >= 4, 'too few acts checked');
+  return notes.join(' · ');
+});
+
+test("Every scenario's own vote is the week's vote, on Thursday", () => {
+  const notes = [];
+  for (const sc of scenarioList()) {
+    const s = scenarioGame(sc.id);
+    pacing.skip(s);
+    const bv = s.bigVote;
+    assert(bv?.billId === s.mode.billId, `${sc.id}: the week's vote is ${bv?.billId}, not ${s.mode.billId}`);
+    assert(bv.day === bv.week * 5 + 3 && s.bills[bv.billId].nextVote === bv.day, `${sc.id}: not on Thursday`);
+    notes.push(`${sc.id} ${bv.outlook}`);
+  }
+  return notes.join(' · ');
+});
+
+test('A whole Parliament: most sitting weeks have a big vote, each one settles once, and no line is left unfilled', () => {
+  const s = newGame({ seed: 'BIG-PARL', party: 'p2' });
+  const rng = createRng('bigparl');
+  const weeks = new Set();
+  const settled = new Set();
+  for (let i = 0; i < 400000; i++) {
+    const p = s.flow.pending;
+    if (p?.kind === 'dissolved' || p?.kind === 'ending') break;
+    botAct(s, rng);
+    const bv = s.bigVote;
+    if (bv?.billId) weeks.add(bv.week);
+    if (bv?.result) settled.add(bv.week);
+  }
+  const sitting = new Set(Object.values(s.divisions).map((d) => Math.floor(d.day / 5))).size;
+  assert(weeks.size >= sitting * 0.6, `${weeks.size} big votes in ${sitting} sitting weeks`);
+  assert(settled.size >= weeks.size * 0.85, `${settled.size} of ${weeks.size} settled`);
+  const rec = s.player.record.bigVotes;
+  assert(rec.won + rec.lost <= settled.size, 'the record counts more than were settled');
+  assert(!s.log.some((l) => /\{\w+\}/.test(l.text)), 'a placeholder is left in the log');
+  return `${weeks.size} big votes in ${sitting} sitting weeks, ${rec.won} won, ${rec.lost} lost, ${rec.names} names`;
 });
 
 async function run() {
