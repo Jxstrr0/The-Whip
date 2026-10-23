@@ -4,7 +4,7 @@
 // in). Furniture from the Kenney kit, retinted; cabinets, rugs, flags and nameplates built here.
 import * as THREE from 'three';
 import { box, slab, panel, cylinder, merge, vertexMaterial, glowMaterial, worldUVs, disposeTree, roomLights, lamp, bakeAO, contactShadows, paintedTexture, texturedPanel } from '../kit3d.js';
-import { surface } from '../textures.js';
+import { surface, brass } from '../textures.js';
 import { placeModel } from '../models.js';
 import { tuning } from '../sim/config.js';
 import { createOfficeCamera } from './officeCamera.js';
@@ -298,7 +298,7 @@ function rug(w, d, color, x = 0, z = -0.1) {
 
 // A flag in the party colour on a brass pole, furled a little.
 function flag(x, z, color) {
-  const pole = new THREE.Mesh(merge([cylinder(0.025, 0.025, 2.4, x, 1.2, z, C.brass, 10), cylinder(0.3, 0.3, 0.05, x, 0.025, z, C.brass, 16), cylinder(0.05, 0.02, 0.1, x, 2.45, z, C.brass, 8)]), vertexMaterial({ metalness: 0.7, roughness: 0.35, envMapIntensity: 1 }));
+  const pole = new THREE.Mesh(merge([cylinder(0.025, 0.025, 2.4, x, 1.2, z, C.brass, 10), cylinder(0.3, 0.3, 0.05, x, 0.025, z, C.brass, 16), cylinder(0.05, 0.02, 0.1, x, 2.45, z, C.brass, 8)]), brass());
   const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.9), new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide, roughness: 0.9 }));
   cloth.position.set(x + 0.26, 1.95, z);
   cloth.rotation.y = -0.4;
@@ -315,14 +315,14 @@ function walnutDesk(bounds, s = 1) {
 
 // A standing lamp: a pole, a drum shade that glows, and a pool of light from the shade.
 function floorLamp(scene, group, x, z) {
-  group.add(new THREE.Mesh(merge([cylinder(0.02, 0.02, 1.5, x, 0.75, z, C.brass, 8), cylinder(0.16, 0.16, 0.03, x, 0.015, z, C.brass, 12)]), vertexMaterial({ metalness: 0.6, roughness: 0.4 })));
+  group.add(new THREE.Mesh(merge([cylinder(0.02, 0.02, 1.5, x, 0.75, z, C.brass, 8), cylinder(0.16, 0.16, 0.03, x, 0.015, z, C.brass, 12)]), brass({ roughness: 0.4 })));
   group.add(new THREE.Mesh(cylinder(0.17, 0.2, 0.3, x, 1.55, z, '#f6e3b8', 16), glowMaterial()));
   return lamp(scene, { intensity: tuning().look.deskLamp * 0.6, distance: 4, x, y: 1.45, z });
 }
 
 function nameplate(group, name, x, y, z) {
   if (!name) return;
-  group.add(new THREE.Mesh(box(0.28, 0.065, 0.03, x, y + 0.035, z, C.brass), vertexMaterial({ metalness: 0.7, roughness: 0.35, envMapIntensity: 1 })));
+  group.add(new THREE.Mesh(box(0.28, 0.065, 0.03, x, y + 0.035, z, C.brass), brass()));
   group.add(texturedPanel(0.26, 0.055, paintNameplate(name), { x, y: y + 0.037, z: z - 0.017, rotY: Math.PI }));
 }
 

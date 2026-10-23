@@ -42,7 +42,12 @@
   --brand-paper: #e1ded5;
   --bg: #15130f;
   --serif: "Newsreader", Georgia, "Iowan Old Style", "Times New Roman", serif;
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.12 0 0 0 0 0.09 0 0 0 0 0.05 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* Paper fibre: a CC0 laid-paper scan (assets/textures/paper_c.jpg) multiplied under the paper colour, so the
+     room's light tints the fibre too. --grain-soft is the old noise, kept for the two translucent surfaces. */
+  --grain: url("../assets/textures/paper_c.jpg");
+  --grain-size: 256px;
+  --card-grain: url("../assets/textures/card_c.jpg");
+  --grain-soft: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.12 0 0 0 0 0.09 0 0 0 0 0.05 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --stamp-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.6 -0.25'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
   --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' fill='none' stroke='%231d1a16' stroke-width='1.6'/%3E%3C/svg%3E");
   --agenda-h: calc(60px + env(safe-area-inset-bottom));
@@ -131,6 +136,8 @@ html, body {
 .seat-label {
   background-color: var(--paper);
   background-image: var(--grain);
+  background-size: var(--grain-size);
+  background-blend-mode: multiply;
   color: var(--ink);
 }
 
@@ -291,6 +298,8 @@ html, body {
   padding: 0 11px 0 9px;
   background-color: var(--paper);
   background-image: var(--grain);
+  background-size: var(--grain-size);
+  background-blend-mode: multiply;
   color: var(--ink);
   border-radius: var(--r-sm);
   font-size: 15px;
@@ -306,7 +315,7 @@ html, body {
   white-space: nowrap;
   padding: 0 10px;
   background-color: color-mix(in srgb, var(--paper) 88%, transparent);
-  background-image: var(--grain);
+  background-image: var(--grain-soft);
   border: 0;
   border-radius: var(--r-sm);
   color: var(--ink);
@@ -419,6 +428,8 @@ html, body {
     radial-gradient(ellipse 70% 45% at var(--glow-x) var(--glow-y), var(--glow), transparent 70%),
     linear-gradient(180deg, transparent 55%, var(--shade)),
     var(--grain);
+  background-size: auto, auto, var(--grain-size);
+  background-blend-mode: normal, normal, multiply;
 }
 @keyframes sheet-in {
   from {
@@ -654,6 +665,8 @@ blockquote.line::before {
   padding: 2px 18px 0;
   background-color: var(--paper);
   background-image: var(--grain);
+  background-size: var(--grain-size);
+  background-blend-mode: multiply;
 }
 .bells-head .bells {
   margin: 0;
@@ -2128,6 +2141,8 @@ blockquote.line.scenario-verdict::before {
   border: 1px solid var(--ink-3);
   background-color: var(--paper);
   background-image: var(--grain);
+  background-size: var(--grain-size);
+  background-blend-mode: multiply;
   color: var(--ink);
   font: inherit;
   font-size: 14px;
@@ -3422,7 +3437,7 @@ body.cold-open .topbar {
   padding: 9px 13px 10px;
   border-radius: var(--r-md);
   background-color: color-mix(in srgb, var(--paper) 95%, transparent);
-  background-image: var(--grain);
+  background-image: var(--grain-soft);
   color: var(--ink);
   font-family: var(--serif);
   font-size: 15.5px;
@@ -4002,7 +4017,9 @@ body.cold-open .topbar {
   border: 0;
   border-top: 2px solid rgba(168, 50, 45, 0.5);
   border-radius: 2px;
-  background: repeating-linear-gradient(180deg, transparent 0 27px, var(--rule) 27px 28px) var(--card);
+  background: repeating-linear-gradient(180deg, transparent 0 27px, var(--rule) 27px 28px), var(--card-grain) var(--card);
+  background-size: auto, 220px;
+  background-blend-mode: normal, multiply;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14), 0 6px 18px rgba(0, 0, 0, 0.14);
   transform: rotate(0.6deg);
 }
@@ -4058,6 +4075,8 @@ body.cold-open .topbar {
     linear-gradient(180deg, transparent 0 48%, rgba(0, 0, 0, 0.07) 48% 50%, rgba(255, 255, 255, 0.35) 50% 52%, transparent 52%),
     var(--grain),
     #faf3e3;
+  background-size: auto, var(--grain-size);
+  background-blend-mode: normal, multiply;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14), 0 8px 20px rgba(0, 0, 0, 0.16);
   transform: rotate(-1.2deg);
 }

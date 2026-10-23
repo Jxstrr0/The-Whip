@@ -1566,3 +1566,27 @@ The last of Kelbo's five picks, and the one the pitch called the ambitious one. 
 - With reduced motion on the memo appears in place and the stamps are set without a stroke.
 
 **Next:** the five picks are built and stacked as PRs in merge order (B → A → C → E → D). After that, the chamber and textures pass, which I'll scope with Kelbo before building.
+
+## Surfaces: the texture pass
+
+Kelbo asked, after the UI refresh, for the textures to come up too, and then for the paper, the desks and the small items to be in it. This is the first tier of the chamber-and-office pass I proposed (richer surfaces, no new geometry); the chamber dressing and the office's clutter wait on Kelbo's answers to the questions in that proposal. Branch `art/t1-surfaces`, stacked on part five.
+
+**What changed:**
+- **The maps carry colour and wear now.** Every surface's colour map was greyscale grain before, with the hue painted on by the room's palette. They are now the ambientCG scans in colour, desaturated part-way and normalised to the same brightness, so the palette still decides the hue (oak stays the chamber's oak, the baize stays bench green) but the grain has the warm and cool streaks of real wood, the flecks of real stone, the weave of real cloth. Each surface also has a roughness map, so a tabletop is shinier along the grain and duller across it, and light catches a carpet unevenly instead of flatly.
+- **Brass and steel are brushed.** One brushed-metal surface (Metal034, normal and roughness only) is used for everything that was a plain shiny material: the chamber's rails, chandelier rings, Mace and finial, the caucus room's picture rail and lamps, the riding office's fittings, the office flag pole, lamp stem and nameplate, and the Kenney props' steel (lamp stems, chair legs, the coat rack, the laptop's hinge) in its three shades.
+- **Paper in the rooms is paper.** The pads along the caucus table and the pages of the kit's books use a laid-paper map with its own relief, instead of a flat cream. The books' cloth spines use the wool map.
+- **The UI paper has fibre.** The `--grain` noise under every sheet, bar, chip and the whip's folded note is now the same laid-paper scan, multiplied under the paper colour so the room's light (lamplight, bells, a grey morning) tints the fibre too. The index card you write replies on sits on recycled stock with its flecks. The two translucent surfaces (the top bar's buttons, the speech note) keep the old soft noise, because a scan would make them opaque.
+
+**Small calls:**
+- The brass's hue still comes from the palette; Metal034's own colour is a flat yellow and would have fought the room's gold. The green leather keeps its normal map only, for the same reason (Leather037 is salmon), and gains the roughness map.
+- The chamber desks' green tops stay part of the oak desk mesh (one instanced draw) rather than becoming a second mesh with baize of their own.
+- The paper scan is pushed harder than the others (about three times the contrast of the original) because at phone size a subtle fibre read as nothing at all; at the first try the before and after sheets were the same pixel colours.
+- The whole texture set is 1.4 MB, up from 0.6 MB, inside the 3 MB budget in `ART-PASS.md`. A new test fetches every map and checks the budget and the CSS references.
+- Q1 of the proposal (stay stylised, or go towards real materials) is answered here as "stylised, with richer surfaces": the figures and the kit props are unchanged and the palette is unchanged. If Kelbo wants to go further towards real materials, that is the second tier.
+
+**Checked:**
+- `tests.html` green (133).
+- Before and after shots of all four rooms at phone size, portrait and landscape, from a new game (riding rally, the House on the first morning, the office under the strip light, the caucus room), plus the election-night sheet, the menu and the whip's memo with its index card. Draw calls unchanged (chamber 48, office 59–62, caucus 32–33, rally 34–40). No console errors.
+- Pixel-sampled the paper under lamplight before and after: same colour, so the light tints are untouched.
+
+**Next:** Kelbo's answers to the proposal's questions decide the second tier (the chamber dressed: galleries, table, dispatch boxes, the Clerk's table, the windows) and the third (the office lived in).
