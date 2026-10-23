@@ -1378,4 +1378,6 @@ Kelbo asked for a UI refresh and picked all five options from the pitch (A room 
 - `tests.html` 128 of 128.
 - Played at phone size in portrait and landscape, a fresh game and the "Three short" scenario: Question Period, caucus, the evening board with and without the whip's call, a one-to-one on the whip's call (the table) and on a walk-in, the deal table, the riding, the weekend paper, Monday's paper, the bells with the count and your row, the ledger, the Book, an MP's card, the aim sheet, the menu, election night and the record. No console errors in play.
 
+**Also fixed on the way:** a crash that predates this pass. When you lose your seat at an election, the sim removed the departed members but never re-seated the House before the memoir, so the chamber behind it tried to dress seats whose members were gone and stopped with a console error. It now seats the new House first. Found by a headless run of "Three short" ending in a lost seat; it happened the same way on `main`.
+
 **Next:** A (room first): meeting sheets at half height with the visitor framed, the speech line in the room, slimmer top bar and one-line date bar. The five "regardless" fixes from the pitch go in with A (the clipped visitor's head, the date bar's news line, the ledger's height, the aim chip, and the top bar wrapping at 390px in Acts 3+ when it carries five items).
