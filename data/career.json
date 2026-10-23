@@ -78,7 +78,7 @@
     "wrongCount": "You said the count was safe. It wasn't, and the House knew it before the leader did. The Chief Whip has moved you sideways; you'll run a row again, if you can hold one."
   },
   "warned": {
-    "row": "{n} of your row went the other way on {bill}. The deputy whip stops you in the corridor: \u201cOnce is a bad night. Twice is a pattern.\u201d",
+    "row": "{n} of your row went the other way on {bill}. The deputy whip stops you in the corridor: “Once is a bad night. Twice is a pattern.”",
     "count": "You had {bill} down as safe. It wasn't. The Chief Whip says nothing, which is worse. Another one like it and the count goes to someone else."
   },
   "confidencePair": {
@@ -173,5 +173,15 @@
     "3": "The annex off the whip's office. The files for your row came up in two steel cabinets, and there's a coffee machine that someone will tell you is yours to keep topped up.",
     "4": "The deputy's room. Walnut, a rug, the party's flag in the corner and a board the size of a wall. Three cabinets of other people's secrets, and a chair for the ones who'd rather not sit across a desk.",
     "5": "The corner office. Two windows, the whips' table under the board, and the chair at the head of it. The sofa is for the conversations that aren't meetings."
+  },
+  "leave": {
+    "reasons": [
+      "a hospital appointment",
+      "a funeral in the riding",
+      "a trade mission",
+      "their daughter’s graduation",
+      "a riding association dinner",
+      "a long-booked holiday"
+    ]
   }
 }

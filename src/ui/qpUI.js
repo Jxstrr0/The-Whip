@@ -41,9 +41,10 @@ export function createQpUI(root, { getState, dispatch, getRoom, onBenches }) {
     let body = '';
     let phase = 'stand';
     if (qp.phase === 'stand') {
-      body = `<p class="muted">${esc(t('qp.slot', { day }))}${qp.source === 'deal' ? ` · ${esc(t('qp.deal'))}` : ''}</p>
+      // One line for the slot and who answers it, then the Speaker's call.
+      const slot = minister ? t('qp.slotTo', { day, minister: mpName(minister), role: roleName(state, minister) }) : t('qp.slot', { day });
+      body = `<p class="muted to">${esc(slot)}${qp.source === 'deal' ? ` · ${esc(t('qp.deal'))}` : ''}</p>
         <blockquote class="line call">${esc(qp.call)}</blockquote>
-        ${minister ? `<p class="muted to">${esc(t('qp.to', { minister: mpName(minister), role: roleName(state, minister) }))}</p>` : ''}
         ${jobLine(state, 'questionPeriod')}${firstWeekHint(state, 'tutorial.qp')}
         <div class="choices">${FRAMINGS.map((f) => `<button class="btn" data-framing="${f}"><small class="approach">${t('qp.' + f)}</small>${esc(qp.questions[f])}</button>`).join('')}</div>`;
     } else if (verdictFor !== key) {

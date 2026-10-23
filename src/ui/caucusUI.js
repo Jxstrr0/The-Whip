@@ -1,7 +1,7 @@
 // The caucus room UI: the leader's line, grievances, the player's three moves (listen, speak, whisper), and
 // from Act 5 the Chief Whip's business: free a whipped vote, or put a member out of caucus.
-import { t, esc, mpName, jobLine } from './text.js';
-import { neighbours, fillStance, stanceChoices } from '../sim/caucus.js';
+import { t, esc, mpName, jobLine, foldBlock } from './text.js';
+import { neighbours, fillStance, stanceChoices, lineName } from '../sim/caucus.js';
 import { canUse, canRelease, expelCandidates } from '../sim/tools.js';
 import { data, tuning } from '../sim/config.js';
 import { openPaperList } from './picker.js';
@@ -14,6 +14,7 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
   let open = null;
   let lastNote = null;
   let expelling = null;
+  let griefOpen = false; // the grievances fold away; this keeps them open across a re-render once opened
 
   function render(state) {
     if (state.flow.pending?.kind !== 'caucus' || !state.caucus) {
@@ -21,11 +22,12 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
       open = null;
       lastNote = null;
       expelling = null;
+      griefOpen = false;
       return;
     }
     const c = state.caucus;
     const bill = c.billId && state.bills[c.billId];
-    const lineText = c.line ? (c.line.line === 'whipped' ? `whipped ${c.line.position.toUpperCase()}` : 'a free vote') : '';
+    const lineText = c.line ? lineName(c.line) : '';
     const stances = stanceChoices(state).map((id) => data().caucus.stances.find((s) => s.id === id));
     const nb = neighbours(state);
     sheet.classList.remove('hidden');
@@ -36,7 +38,7 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
       <blockquote class="line">${esc(c.opening)}</blockquote>
       <p><b>${bill ? esc(t('caucus.line', { bill: billName(bill), line: lineText })) : t('caucus.noLine')}</b></p>
       ${c.revolt ? revoltHtml(c.revolt) : ''}
-      ${c.grievances.length ? `<h3>${t('caucus.grievances')}</h3><ul class="feed">${c.grievances.map((g) => `<li>${esc(g.text)}</li>`).join('')}</ul>` : ''}
+      ${c.grievances.length ? foldBlock(`${t('caucus.grievances')} <span class="fold-n">${c.grievances.length}</span>`, `<ul class="feed">${c.grievances.map((g) => `<li>${esc(g.text)}</li>`).join('')}</ul>`, { open: griefOpen, attr: 'data-grief' }) : ''}
       <h3>${t('caucus.actions')} <span class="slots">${'●'.repeat(c.actions)}${'○'.repeat(3 - c.actions)}</span></h3>
       ${lastNote ? `<p class="note good">${esc(lastNote)}</p>` : ''}
       <div class="choices">
@@ -50,6 +52,7 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
       <div class="choices"><button class="btn primary" data-act="leave">${t('caucus.leave')}</button></div>
       <p class="hint">${t('caucus.hint')}</p>`;
     const on = (sel, fn) => sheet.querySelector(sel)?.addEventListener('click', fn);
+    sheet.querySelector('[data-grief]')?.addEventListener('toggle', (e) => (griefOpen = e.target.open));
     on('[data-act="listen"]', () => {
       const r = dispatch({ type: 'caucusListen' });
       lastNote = r?.note;
@@ -69,7 +72,7 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
     sheet.querySelectorAll('[data-stance]').forEach((b) =>
       b.addEventListener('click', () => {
         const r = dispatch({ type: 'caucusSpeak', stance: b.dataset.stance });
-        lastNote = r ? `You said it. ${r.kind === 'support' ? 'The front bench nods.' : r.kind === 'challenge' ? 'The leader writes something down.' : 'A few heads turn your way.'}` : null;
+        lastNote = r ? t('caucus.said.' + (r.kind === 'support' || r.kind === 'challenge' ? r.kind : 'other')) : null;
         open = null;
         setTimeout(() => getRoom?.()?.focusHead(false), 2500);
         render(getState());
