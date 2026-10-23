@@ -9,6 +9,7 @@ import { placeModel } from '../models.js';
 import { tuning } from '../sim/config.js';
 import { createOfficeCamera } from './officeCamera.js';
 import { createSpeech } from '../speech.js';
+import { reducedMotion } from '../ui/feel.js';
 import { createVisitor, createFigure, poseFigure } from './visitor.js';
 import { wardrobe } from '../figures.js';
 import { createPrecipitation, DEFAULT_WEATHER, GREY_SKIES, mix } from '../weatherFx.js';
@@ -642,8 +643,13 @@ export function create(ctx) {
       visitor.mpId = v.mpId;
       visitor.setMood(v.mood);
       speech.attach(visitor.figure);
-      if (v.snap) visitor.sitNow();
-      cam.shot('host', v.snap);
+      // Someone shown already seated is cut to; someone walking in is followed: the camera dollies from the
+      // door view to its place over your shoulder while they cross the room and sit.
+      if (v.snap) {
+        visitor.sitNow();
+        cam.shot('host', true);
+      } else if (reducedMotion()) cam.shot('host');
+      else cam.dolly('host', tuning().look.feel.dolly);
     },
     // Their current line, or nothing. It shows once they're in the chair.
     setSpeech(text) {

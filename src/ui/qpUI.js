@@ -2,6 +2,7 @@
 // and the benches react; the gallery's verdict and what it cost or bought you. The chamber plays along: you
 // stand, the minister stands, the gavel falls when you sit.
 import { t, esc, stamp, firstWeekHint, jobLine, mpName, roleName } from './text.js';
+import { take } from './feel.js';
 import { tuning } from '../sim/config.js';
 import { FRAMINGS } from '../sim/questionPeriod.js';
 
@@ -76,7 +77,7 @@ export function createQpUI(root, { getState, dispatch, getRoom, onBenches }) {
     }
     sheet.innerHTML = `<div class="sheet-handle"></div><h2>${t('qp.title')}</h2>${body}`;
     stage(phase, qp, state);
-    sheet.querySelectorAll('[data-framing]').forEach((b) => b.addEventListener('click', () => dispatch({ type: 'qpAsk', framing: b.dataset.framing })));
+    sheet.querySelectorAll('[data-framing]').forEach((b) => b.addEventListener('click', () => take(b, () => dispatch({ type: 'qpAsk', framing: b.dataset.framing }))));
     sheet.querySelector('[data-act="verdict"]')?.addEventListener('click', () => {
       verdictFor = key;
       getRoom?.()?.gavel();

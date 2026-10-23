@@ -4,6 +4,7 @@ import { fillLine, cardLabel } from '../sim/meetings.js';
 import { renderDealTable } from './dealTable.js';
 import { stakeLine, stakeBrief, delta, cardChip, tableTotal } from './stakes.js';
 import { drawer, HANDLE } from './drawer.js';
+import { take } from './feel.js';
 import { billStakes } from '../sim/stakes.js';
 import { tuning } from '../sim/config.js';
 import { prediction } from '../sim/count.js';
@@ -95,6 +96,8 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
         ${owed ? `<button class="btn" data-act="ledger">${t('tool.ledger')}</button>` : ''}
         <button class="btn primary" data-act="back">${t('debrief.back')}</button>
       </div>`;
+    // A deal has its own buzz (above); the stamp's would double it.
+    if (dealt) sheet.querySelector('.stamp').dataset.felt = '';
     sheet.querySelector('[data-act="ledger"]')?.addEventListener('click', () => onLedger?.());
     sheet.querySelector('[data-act="back"]').onclick = () => dispatch({ type: 'closeDebrief' });
     sheet.scrollTop = 0;
@@ -177,11 +180,11 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
       sheet.innerHTML = `${head}${note}<blockquote class="line in-room">${esc(mt.talk.current.text)}</blockquote>
         <div class="choices talk-choices">${mt.talk.options.map((o, i) => `<button class="btn" data-i="${i}"><small class="approach">${t('approach.' + o.approach)}</small>${esc(o.text)}</button>`).join('')}</div>`;
       sheet.querySelectorAll('[data-i]').forEach((b) => {
-        b.onclick = () => {
+        b.onclick = () => take(b, () => {
           const r = dispatch({ type: 'talk', index: Number(b.dataset.i) });
           lastNote = r?.note || 'ok';
           render(getState());
-        };
+        });
       });
       // Each new turn opens on the replies: from the top if they're in view there, otherwise scrolled to them.
       const said = sheet.querySelector('.note') || sheet.querySelector('.talk-choices');
