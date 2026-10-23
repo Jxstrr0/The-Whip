@@ -9,6 +9,10 @@ import { adjustRapport, addStyle } from './relationships.js';
 import { headline } from './media.js';
 import { ridingVars } from './riding.js';
 import { remember, person } from './memoir.js';
+import { billName } from './bills.js';
+import { fill, capFirst } from './fill.js';
+
+export { capFirst };
 
 export const FRAMINGS = ['soft', 'pointed', 'offScript'];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -39,13 +43,7 @@ export function freshLine(state, rng, pool, key) {
 }
 
 export function fillQp(state, text, qp) {
-  const vars = qpVars(state, qp);
-  return text.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
-}
-
-// A sentence can't open with "the rent"; the data keeps issues lower-case so they read mid-sentence.
-export function capFirst(s) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  return fill(text, qpVars(state, qp));
 }
 
 // The minister who answers: a cabinet member with the interest, else any minister, else the Prime Minister.
@@ -103,7 +101,7 @@ export function startQuestionPeriod(state, rng, source = 'rota') {
     side,
     phase: 'stand',
     billId: bill?.id || null,
-    bill: bill?.title || null,
+    bill: bill ? billName(bill) : null,
     detail: bill ? freshLine(state, rng, Q.details[bill.category] || Q.details.default, 'detail.' + (Q.details[bill.category] ? bill.category : 'default')) : null,
     local,
     ministerId: ministerFor(state, bill ? bill.category : local.interest, bill?.sponsor),

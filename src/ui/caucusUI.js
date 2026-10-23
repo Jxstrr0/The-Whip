@@ -5,6 +5,7 @@ import { neighbours, fillStance, stanceChoices } from '../sim/caucus.js';
 import { canUse, canRelease, expelCandidates } from '../sim/tools.js';
 import { data, tuning } from '../sim/config.js';
 import { openPaperList } from './picker.js';
+import { billName } from '../sim/bills.js';
 
 export function createCaucusUI(root, { getState, dispatch, getRoom }) {
   const sheet = document.createElement('section');
@@ -33,7 +34,7 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
       ${jobLine(state, 'caucus', { revolt: c.revolt })}
       <p class="muted">${esc(c.moodText)}</p>
       <blockquote class="line">${esc(c.opening)}</blockquote>
-      <p><b>${bill ? esc(t('caucus.line', { bill: bill.title, line: lineText })) : t('caucus.noLine')}</b></p>
+      <p><b>${bill ? esc(t('caucus.line', { bill: billName(bill), line: lineText })) : t('caucus.noLine')}</b></p>
       ${c.revolt ? revoltHtml(c.revolt) : ''}
       ${c.grievances.length ? `<h3>${t('caucus.grievances')}</h3><ul class="feed">${c.grievances.map((g) => `<li>${esc(g.text)}</li>`).join('')}</ul>` : ''}
       <h3>${t('caucus.actions')} <span class="slots">${'●'.repeat(c.actions)}${'○'.repeat(3 - c.actions)}</span></h3>
@@ -93,7 +94,7 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
     on('[data-act="leave"]', () => dispatch({ type: 'resolve' }));
     on('[data-chief="release"]', () => {
       const r = dispatch({ type: 'useTool', tool: 'freeVote', billId: c.billId });
-      lastNote = r?.ok ? t('caucus.released', { bill: bill.title }) : null;
+      lastNote = r?.ok ? t('caucus.released', { bill: billName(bill) }) : null;
       render(getState());
     });
     on('[data-chief="expel"]', () => {
@@ -145,7 +146,7 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
     if (state.player.act < 5) return '';
     const T = tuning().tools;
     const rows = [];
-    if (bill && canRelease(state, bill.id) && canUse(state, 'freeVote').ok) rows.push(`<div class="choices"><button class="btn" data-chief="release">${esc(t('caucus.release', { bill: bill.title }))}</button></div><p class="muted small">${t('caucus.releaseNote')}</p>`);
+    if (bill && canRelease(state, bill.id) && canUse(state, 'freeVote').ok) rows.push(`<div class="choices"><button class="btn" data-chief="release">${esc(t('caucus.release', { bill: billName(bill) }))}</button></div><p class="muted small">${t('caucus.releaseNote')}</p>`);
     const ex = canUse(state, 'expel');
     const again = c.expelled?.length > 0;
     const pool = ex.ok ? expelCandidates(state) : [];

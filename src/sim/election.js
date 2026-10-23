@@ -3,6 +3,7 @@
 // rebuilt around the survivors: new cohort, roles and cliques reassigned, the ledger carried over. A fallen
 // government early in a Parliament may hand over instead, with no election.
 import { data, tuning } from './config.js';
+import { fill } from './fill.js';
 import { log, resolvers, queueStop, initFlow, dissolution } from './pacing.js';
 import { withRng } from './rng.js';
 import { makeMp, assignRoles, assignCommittees, uniqueNames, affinity } from './generate.js';
@@ -14,7 +15,6 @@ import { remember, ordinal } from './memoir.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
-const fill = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
 const pad = (n) => String(n).padStart(3, '0');
 
 // Seats by polling share with largest remainders, over the seats independents don't hold.

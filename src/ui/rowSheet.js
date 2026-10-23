@@ -2,6 +2,7 @@
 // the side the whip needs from them.
 import { t, esc, mpName, partyColor, ROW_GLYPH as GLYPH } from './text.js';
 import { rowReport } from '../sim/row.js';
+import { billName } from '../sim/bills.js';
 
 const side = (v) => `<b class="${v}">${esc(t('vote.' + v).toUpperCase())}</b>`;
 
@@ -51,7 +52,7 @@ export function createRowSheet(root, { getState, onPick }) {
     el.innerHTML = `<div class="sheet-handle"></div>
       <header class="card-head"><div class="who"><h2>${t('row.title')}</h2><p>${esc(t('row.sub', { n: members.length }))}</p></div>
         <button class="btn icon" data-act="close" aria-label="${t('btn.close')}">✕</button></header>
-      <p class="row-bill">${bill ? esc(t('row.bill', { bill: bill.title })) : esc(t('row.noBill'))}</p>
+      <p class="row-bill">${bill ? esc(t('row.bill', { bill: billName(bill) })) : esc(t('row.noBill'))}</p>
       ${bill ? `<p class="row-need">${t('row.need', { side: side(want) })}</p><p class="row-tally">${tally}</p><p class="muted small">${esc(t('row.legend'))}</p>` : ''}
       ${members.length ? `<ul class="book-list row-list">${list}</ul>` : `<p class="muted">${t('row.empty')}</p>`}`;
     el.querySelector('[data-act="close"]').onclick = api.close;
