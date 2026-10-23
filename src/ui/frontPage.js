@@ -1,6 +1,7 @@
 // The weekend edition: the week in review as the front page of an Ostrava paper. The lead story is the
 // week's biggest headline from the press gallery, the rest run below the fold, with the polls as a chart,
-// the week's numbers, and the player's photograph when the story is theirs.
+// the week's numbers, and the player's photograph when the story is theirs. The player's own numbers come first,
+// under the masthead: it's their week the paper is closing.
 import { t, esc, scenarioVerdict, aimShort } from './text.js';
 import { data, tuning } from '../sim/config.js';
 import { quietLead } from '../sim/media.js';
@@ -85,6 +86,17 @@ export function renderFrontPage(state, p, photoUrl) {
         <div class="dateline">${t('front.dateline', { polls: pollTicker(state, polling) })}</div>
       </header>
       ${scenarioVerdict(state)}
+      <section class="front-numbers">
+        <h4>${t('front.numbers')}</h4>
+        <div class="kvs">
+          <div class="kv"><span class="k">${t('week.riding')}</span><span class="v">${delta(s.ridingStanding)}</span></div>
+          <div class="kv"><span class="k">${t('week.whip')}</span><span class="v">${delta(s.whipRapport)}</span></div>
+          <div class="kv"><span class="k">${t('week.rebellions')}</span><span class="v">${s.rebellions}</span></div>
+          <div class="kv"><span class="k">${t('week.divisions')}</span><span class="v">${s.divisions}</span></div>
+          ${state.player.act >= 3 ? `<div class="kv${(state.pressure || 0) >= 70 ? ' stale' : ''}"><span class="k">${t('week.pressure')}</span><span class="v">${Math.round(state.pressure || 0)} / 100</span></div>` : ''}
+        </div>
+        <p class="aim-week"><span class="k">${t('week.aim')}</span>${esc(aimShort(state))}</p>
+      </section>
       <section class="lead${photo ? ' with-photo' : ''}">
         ${photo}
         <div class="lead-text">
@@ -94,23 +106,10 @@ export function renderFrontPage(state, p, photoUrl) {
         </div>
       </section>
       ${elsewhere}
-      <div class="front-grid">
-        <section class="front-numbers">
-          <h4>${t('front.numbers')}</h4>
-          <div class="kvs">
-            <div class="kv"><span class="k">${t('week.riding')}</span><span class="v">${delta(s.ridingStanding)}</span></div>
-            <div class="kv"><span class="k">${t('week.whip')}</span><span class="v">${delta(s.whipRapport)}</span></div>
-            <div class="kv"><span class="k">${t('week.rebellions')}</span><span class="v">${s.rebellions}</span></div>
-            <div class="kv"><span class="k">${t('week.divisions')}</span><span class="v">${s.divisions}</span></div>
-            ${state.player.act >= 3 ? `<div class="kv${(state.pressure || 0) >= 70 ? ' stale' : ''}"><span class="k">${t('week.pressure')}</span><span class="v">${Math.round(state.pressure || 0)} / 100</span></div>` : ''}
-          </div>
-          <p class="aim-week"><span class="k">${t('week.aim')}</span>${esc(aimShort(state))}</p>
-        </section>
-        <section class="front-polls">
-          <h4>${t('front.polls')}</h4>
-          ${pollChart(state, polling)}
-        </section>
-      </div>
+      <section class="front-polls">
+        <h4>${t('front.polls')}</h4>
+        ${pollChart(state, polling)}
+      </section>
       <section class="front-brief">
         <h4>${t('front.brief')}</h4>
         ${s.lines.length ? `<ol class="feed">${s.lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ol>` : `<p class="muted small">${t('front.quietBrief')}</p>`}
