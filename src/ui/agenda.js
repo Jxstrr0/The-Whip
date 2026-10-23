@@ -47,13 +47,15 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
     const state = getState();
     const p = state.flow.pending;
     const blocked = p && p.needsChoice;
+    // The morning paper and the weekly front page carry their own way on; a second Continue under them is noise.
+    const ownButton = p?.kind === 'morning' || p?.kind === 'weekSummary';
     const last = state.log.slice(-1)[0]?.text || '';
     const feed = expanded ? `<p class="feed-head">${esc(dateText(state))}</p><ol class="feed">${state.log.slice(-25).reverse().map((l) => `<li class="${l.kind}">${esc(l.text)}</li>`).join('')}</ol>` : '';
     bar.innerHTML = `
       <button class="agenda-aim" data-act="aim" aria-expanded="${aimOpen}" aria-label="${esc(t('aim.open', { text: aimShort(state) }))}"><span class="k">${t('aim.label')}</span><span class="v">${esc(aimShort(state))}</span></button>
       <div class="agenda-row">
         <button class="agenda-date" data-act="expand" aria-expanded="${expanded}" aria-label="${esc(dateText(state))}"><span class="day">${dayText(state)}</span><small>${esc(last)}</small></button>
-        ${blocked ? '' : `<button class="btn primary" data-act="continue">${t('agenda.continue')}</button>
+        ${blocked ? '' : `${ownButton ? '' : `<button class="btn primary" data-act="continue">${t('agenda.continue')}</button>`}
         <button class="btn" data-act="skip" title="${t('agenda.skipHint')}" aria-label="${t('agenda.skipHint')}"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5l5 5-5 5M10 5l5 5-5 5"/></svg></button>`}
       </div>${feed}`;
     bar.querySelector('[data-act="aim"]').onclick = () => {
@@ -66,7 +68,7 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
       renderBar();
     };
     if (!blocked) {
-      bar.querySelector('[data-act="continue"]').onclick = onContinue;
+      bar.querySelector('[data-act="continue"]')?.addEventListener('click', onContinue);
       bar.querySelector('[data-act="skip"]').onclick = onSkip;
     }
     fit();
