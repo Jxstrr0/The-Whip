@@ -1590,3 +1590,28 @@ Kelbo asked, after the UI refresh, for the textures to come up too, and then for
 - Pixel-sampled the paper under lamplight before and after: same colour, so the light tints are untouched.
 
 **Next:** Kelbo's answers to the proposal's questions decide the second tier (the chamber dressed: galleries, table, dispatch boxes, the Clerk's table, the windows) and the third (the office lived in).
+
+## The rooms: chamber dressed, office lived in
+
+Kelbo answered the proposal's six questions in one go, and this is the pass they set. Branch `art/t2-rooms`, stacked on the surfaces pass. The answers, for the record: the chamber and the office go together in one pass; the chamber is green and oak with lighter stone; new CC0 assets are fine; the coffered ceiling is in; assume the phone has headroom and go richer; and push the surfaces more photographic. So the rooms now carry more than the art pass budgeted for, with a switch to pull them back.
+
+**What changed:**
+- **The surfaces went photographic.** The three surfaces that fill a phone screen (oak, walnut, marble) are 1024² maps now, carpet and leather 768², and every map keeps more of its own colour and relief than the first tier did, so grain, veining and weave read as the thing itself and the speculars are sharper. New surfaces: marble for the chamber's walls and surrounds, a heavy wool drape, deep-buttoned leather, and a suiting weave on the figures' cloth (normal map only, a light touch so the figures stay the figures). The texture set is 3.0 MB; the budget in `ART-PASS.md` went to 3.5 MB and the test that checks it follows. Every file is in `assets/LICENSES.md`.
+- **The chamber is dressed.** A coffered ceiling of oak beams with inner mouldings and gold bosses; paler marble walls with surrounds to every window; the gallery hung with green drape and a fringe on corbels, a painted PRESS GALLERY plaque above the press; the Table with its dispatch boxes and papers; the chandeliers with their arms. With rich rooms on: brass sconces between the windows, two more lamps over the Table and the bar (`look.tableLamp` in tuning), and a fuller gallery with two doorkeepers standing at the bar.
+- **The office is lived in.** Every room gets a picture rail, a framed map of your riding with its name on the mount, and the better rooms get landscapes and portraits (each room paints one atlas and hangs them in one go), curtains either side of the window, a radiator under it and a cornice. Act 1 gets chequered carpet tiles. Acts 4 and 5 and the whip's room go to walnut wainscot on a warmer wall, with a buttoned oxblood chesterfield in Act 5. With rich rooms on the desk is a working desk: a leather blotter with a memo on it, a wire in-tray with the day's papers, a black telephone, a cup, and the pool of the lamp on the wood, laid out for each desk shape.
+- **A Rich rooms switch.** In Settings, on by default, and `?lite=1` forces it off for a frame-rate check. Turning it off rebuilds the room you're in without the sconces, the extra lamps, the fuller gallery, the curtains, the radiators and the desk dressing. Saved under `whip:settings` with the rest.
+
+**Small calls:**
+- The two doorkeepers are part of the gallery crowd (standing pose) rather than figures of their own, so they cost nothing extra; a first try as a separate crowd put the chamber at 81 draw calls.
+- The marble is tiled at four metres so the veining reads as stone across a wall, not as noise; at three it was busy.
+- The office blinds stay as they were (static slats); the curtains hang beside them.
+- The kit desk in Acts 1 to 3 runs from the origin toward the window side, not centred, so the desk dressing has its own layout for it. The first try put the in-tray on the floor.
+- The Act 5 chesterfield sits 27 cm further into the room than first placed, so its back no longer goes through the wall.
+- The coffered ceiling is always there, rich or not: it's merged into the oak mesh and costs no draw call, only vertices.
+
+**Checked:**
+- `tests.html` green (137).
+- All four rooms shot before and after at phone size, portrait and landscape, from the same script and the same game; the office in all five acts plus the whip's room, empty and with a visitor; the settings sheet with the new switch; the chamber and the Act 5 office with the switch flipped in place. No console errors anywhere.
+- Draw calls, portrait / landscape, before → after (rich): riding 40 / 44 → 40 / 43; chamber 58 / 58 → 63 / 65 (up to 69 on the overview mid-session, 75 on the division shot); office 54 / 53 → 60 / 60; caucus 36 / 35 → 36 / 34. Flipping the switch off in the same game: chamber 69 → 67 (and eight lights to six), Act 5 office 52 → 45. The chamber's cost with rich rooms on is in the lights more than the draws, which is what the switch is for.
+
+**Next:** Kelbo's frame-rate check on the phone with `?debug=1`, rich and then `?lite=1`, decides whether the default stays on. Then the playtest notes.
