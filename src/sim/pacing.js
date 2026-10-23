@@ -3,7 +3,7 @@
 import { tuning } from './config.js';
 import { withRng } from './rng.js';
 import { registerActions } from './actions.js';
-import { weeklyBusiness, committeeTick, todaysItems, reportStageAmendments, shoreUpConfidence, dayIndex } from './bills.js';
+import { weeklyBusiness, committeeTick, todaysItems, reportStageAmendments, shoreUpConfidence, dayIndex, billName } from './bills.js';
 import { baseScore, intentions } from './mp.js';
 import { putQuestion, runDivision, voiceResult, recordResult, voteOf, stageLabel, tally } from './vote.js';
 import { dilemmaFor, applyPlayerVote } from './career.js';
@@ -130,7 +130,7 @@ function decide(state, rng, item, choice, dilemma) {
   const bill = state.bills[item.billId];
   if (item.stage === 'report') {
     const a = reportStageAmendments(state, bill, rng);
-    if (a) log(state, `Report stage amendment on ${bill.title} ${a.adopted ? 'carried' : 'defeated'}: ${a.text}.`, 'bill');
+    if (a) log(state, `Report stage amendment on ${billName(bill)} ${a.adopted ? 'carried' : 'defeated'}: ${a.text}.`, 'bill');
   }
   const me = state.player.mpId;
   const ov = playerOverride(state, bill, choice);

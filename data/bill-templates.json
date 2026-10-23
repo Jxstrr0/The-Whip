@@ -1263,6 +1263,7 @@
     {
       "id": "t073",
       "title": "Opposition motion: Cancel the carbon levy increase",
+      "prose": "the motion to cancel the carbon levy increase",
       "kind": "oppositionMotion",
       "category": "environment",
       "axis": "economy",
@@ -1280,6 +1281,7 @@
     {
       "id": "t074",
       "title": "That the House call on the government to restore rural passenger rail",
+      "prose": "the motion to restore rural passenger rail",
       "kind": "oppositionMotion",
       "category": "transit",
       "axis": "economy",
@@ -1297,6 +1299,7 @@
     {
       "id": "t075",
       "title": "Opposition motion: Emergency rent freeze",
+      "prose": "the rent freeze motion",
       "kind": "oppositionMotion",
       "category": "housing",
       "axis": "economy",
@@ -1314,6 +1317,7 @@
     {
       "id": "t076",
       "title": "That the House call on the government to cut payroll taxes for small employers",
+      "prose": "the motion to cut payroll taxes for small employers",
       "kind": "oppositionMotion",
       "category": "smallBusiness",
       "axis": "economy",
@@ -1331,6 +1335,7 @@
     {
       "id": "t077",
       "title": "Opposition motion: Condemn defence procurement delays",
+      "prose": "the motion on defence procurement delays",
       "kind": "oppositionMotion",
       "category": "defence",
       "axis": "economy",
@@ -1348,6 +1353,7 @@
     {
       "id": "t078",
       "title": "That the House call on the government to protect supply management in all trade talks",
+      "prose": "the supply management motion",
       "kind": "oppositionMotion",
       "category": "trade",
       "axis": "economy",
@@ -1365,6 +1371,7 @@
     {
       "id": "t079",
       "title": "Opposition motion: Lower immigration targets until housing catches up",
+      "prose": "the motion to lower immigration targets",
       "kind": "oppositionMotion",
       "category": "immigration",
       "axis": "social",
@@ -1382,6 +1389,7 @@
     {
       "id": "t080",
       "title": "That the House call on the government to establish universal pharmacare",
+      "prose": "the pharmacare motion",
       "kind": "oppositionMotion",
       "category": "health",
       "axis": "economy",
@@ -1399,6 +1407,7 @@
     {
       "id": "t081",
       "title": "Opposition motion: Repeal the firearms buyback",
+      "prose": "the motion to repeal the firearms buyback",
       "kind": "oppositionMotion",
       "category": "justice",
       "axis": "social",
@@ -1416,6 +1425,7 @@
     {
       "id": "t082",
       "title": "That the House call on the government to reopen veterans' service offices",
+      "prose": "the motion to reopen veterans' service offices",
       "kind": "oppositionMotion",
       "category": "veterans",
       "axis": "economy",
@@ -1433,6 +1443,7 @@
     {
       "id": "t083",
       "title": "That the House call on the government to lift the groundfish moratorium",
+      "prose": "the groundfish motion",
       "kind": "oppositionMotion",
       "category": "fisheries",
       "axis": "economy",
@@ -1453,6 +1464,7 @@
     {
       "id": "t084",
       "title": "Opposition motion: Fund northern airstrips and winter roads",
+      "prose": "the northern airstrips motion",
       "kind": "oppositionMotion",
       "category": "northern",
       "axis": "economy",
@@ -1473,6 +1485,7 @@
     {
       "id": "t085",
       "title": "That the House call on the government to revoke the pipeline approval",
+      "prose": "the motion to revoke the pipeline approval",
       "kind": "oppositionMotion",
       "category": "energy",
       "axis": "economy",
@@ -1494,6 +1507,7 @@
     {
       "id": "t086",
       "title": "Opposition motion: Index pensions to wages, not prices",
+      "prose": "the pension indexing motion",
       "kind": "oppositionMotion",
       "category": "seniors",
       "axis": "economy",
@@ -1511,6 +1525,7 @@
     {
       "id": "t087",
       "title": "That the House call on the government to redirect arts subsidies to seniors' care",
+      "prose": "the motion on arts subsidies",
       "kind": "oppositionMotion",
       "category": "arts",
       "axis": "economy",
@@ -1528,6 +1543,7 @@
     {
       "id": "t088",
       "title": "Opposition motion: Fix the highways before building more transit",
+      "prose": "the highways-first motion",
       "kind": "oppositionMotion",
       "category": "roads",
       "axis": "economy",
@@ -1545,6 +1561,7 @@
     {
       "id": "t089",
       "title": "That the House call on the government to cap tuition increases",
+      "prose": "the tuition cap motion",
       "kind": "oppositionMotion",
       "category": "education",
       "axis": "economy",
@@ -1562,6 +1579,7 @@
     {
       "id": "t090",
       "title": "Opposition motion: Restore police funding for transit safety",
+      "prose": "the transit policing motion",
       "kind": "oppositionMotion",
       "category": "justice",
       "axis": "social",
@@ -1681,6 +1699,7 @@
     {
       "id": "t097",
       "title": "Address in Reply to the Speech from the Throne",
+      "prose": "the Address in Reply",
       "kind": "supply",
       "category": "labour",
       "axis": "economy",

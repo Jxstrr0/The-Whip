@@ -7,7 +7,8 @@ import { createPlayer, setupFirstWeek } from './career.js';
 import { assignSeats } from '../chamber/layout.js';
 import { initFlow, hooks, log } from './pacing.js';
 import { data, tuning } from './config.js';
-import { makeBill } from './bills.js';
+import { fill, capFirst } from './fill.js';
+import { makeBill, billName } from './bills.js';
 import { prediction } from './count.js';
 import { assignRank, shareFiles } from './ranks.js';
 import { signAgreement, breakAgreement } from './confidence.js';
@@ -107,7 +108,6 @@ export function dailyGame({ date = new Date(), first, last, age } = {}) {
 // ---------- scenarios ----------
 
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
-const fill = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
 const listNames = (ids, state) => {
   const names = ids.map((id) => fullName(state.mps[id]));
   return names.length <= 1 ? names.join('') : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
@@ -177,8 +177,8 @@ const SETUPS = {
     }
     const count = prediction(state, bill.id);
     state.mode.billId = bill.id;
-    state.mode.brief = fill(sc.brief, { bill: bill.title, partner: deal ? state.parties[deal.with].name : 'The third party', ours: count.ours, theirs: count.side === 'yea' ? count.nays : count.yeas, short: count.short, away: away.length ? `${listNames(away, state)} ${away.length === 1 ? 'is' : 'are'} away.` : 'Nobody of ours is away.' });
-    log(state, `${bill.title} is down for Thursday. The count says ${count.short} short.`, 'career');
+    state.mode.brief = fill(sc.brief, { bill: billName(bill), partner: deal ? state.parties[deal.with].name : 'The third party', ours: count.ours, theirs: count.side === 'yea' ? count.nays : count.yeas, short: count.short, away: away.length ? `${listNames(away, state)} ${away.length === 1 ? 'is' : 'are'} away.` : 'Nobody of ours is away.' });
+    log(state, `${capFirst(billName(bill))} is down for Thursday. The count says ${count.short} short.`, 'career');
   },
 
   // Chief whip, Wednesday, a bill the benches hate, and a caucus that has had enough of you.
@@ -207,8 +207,8 @@ const SETUPS = {
     }
     state.forceRevolt = true;
     state.mode.billId = bill.id;
-    state.mode.brief = fill(sc.brief, { bill: bill.title, ringleader: fullName(sore[0]) });
-    log(state, `${bill.title} is down for Thursday. Caucus at ten.`, 'career');
+    state.mode.brief = fill(sc.brief, { bill: billName(bill), ringleader: fullName(sore[0]) });
+    log(state, `${capFirst(billName(bill))} is down for Thursday. Caucus at ten.`, 'career');
   },
 
   // A rookie, the first-week dilemma without the first-week script, and a riding already on the phone.
@@ -222,8 +222,8 @@ const SETUPS = {
     state.flow.week.start.ridingStanding = p.ridingStanding;
     const bill = state.bills[p.forceDilemma];
     state.mode.billId = bill?.id || null;
-    state.mode.brief = fill(sc.brief, { bill: bill?.title || 'The bill', position: (bill?.positions[me.party] || 'yea').toUpperCase() });
-    if (bill) log(state, `${bill.title} is down for Thursday. The riding has noticed.`, 'career');
+    state.mode.brief = fill(sc.brief, { bill: billName(bill), position: (bill?.positions[me.party] || 'yea').toUpperCase() });
+    if (bill) log(state, `${capFirst(billName(bill))} is down for Thursday. The riding has noticed.`, 'career');
   },
 };
 

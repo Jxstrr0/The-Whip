@@ -7,6 +7,12 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const VOTE_STAGES = ['second', 'report', 'third'];
 export const STAGE_NAMES = { first: 'first reading', second: 'second reading', committee: 'committee', report: 'report stage', third: 'third reading', motion: 'the motion' };
 
+// How a bill reads mid-sentence: "the Rural Roads Fund Act", or a motion's spoken name ("the rent freeze motion").
+export function billName(bill) {
+  if (!bill) return 'the bill';
+  return data().billTemplates.templates.find((x) => x.id === bill.template)?.prose || `the ${bill.title}`;
+}
+
 export function dayIndex(date) {
   return date.absWeek * 5 + (date.dayOfWeek - 1);
 }
@@ -317,12 +323,12 @@ export function shoreUpConfidence(state, bill, predict) {
     // The price: something for the partner's ridings.
     const theirs = Object.values(state.mps).filter((m) => m.party === p.id).map((m) => m.riding.id);
     for (const r of theirs.slice(0, 6)) if (!bill.beneficiaryRidings.includes(r)) bill.beneficiaryRidings.push(r);
-    notes.push(`The government wins ${p.name} support for ${bill.title} with concessions for their ridings.`);
+    notes.push(`The government wins ${p.name} support for ${billName(bill)} with concessions for their ridings.`);
     if (margin() > 1) return notes;
   }
   if (bill.kind !== 'supply' && margin() <= 0) {
     bill.confidence = false;
-    notes.push(`The government says ${bill.title} is not a matter of confidence.`);
+    notes.push(`The government says ${billName(bill)} is not a matter of confidence.`);
   }
   return notes;
 }

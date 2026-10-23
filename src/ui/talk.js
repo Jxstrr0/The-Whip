@@ -7,6 +7,7 @@ import { billStakes } from '../sim/stakes.js';
 import { tuning } from '../sim/config.js';
 import { prediction } from '../sim/count.js';
 import { canUse, likelyAbsentees, budget, nextVote } from '../sim/tools.js';
+import { billName } from '../sim/bills.js';
 import { countLine, rowLine } from './text.js';
 
 // Which ink the verdict is stamped in: a deal is good news, a door slammed is bad, a polite no is neither.
@@ -42,7 +43,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
       const away = likelyAbsentees(state, bill.id).filter((m) => !paired.has(m.id)).slice(0, 4);
       const opp = oppositeParty(state);
       html += `<h3>${t('tool.pairsTitle')}</h3>`;
-      if (reqs.length) html += `<p class="muted">${t('tool.leaveRequests')}</p><ul class="book-list">${reqs.map((r) => { const m = state.mps[r.mpId]; return `<li><span class="bar" style="background:${partyColor(state, m)}"></span><span class="main"><b>${esc(mpName(m))}</b><small>${esc(t('tool.leaveReason', { reason: r.reason, bill: bill.title }))}</small></span><button class="btn" data-leave="${m.id}" data-grant="1">${t('tool.grant')}</button><button class="btn" data-leave="${m.id}" data-grant="0">${t('tool.refuse')}</button></li>`; }).join('')}</ul>`;
+      if (reqs.length) html += `<p class="muted">${t('tool.leaveRequests')}</p><ul class="book-list">${reqs.map((r) => { const m = state.mps[r.mpId]; return `<li><span class="bar" style="background:${partyColor(state, m)}"></span><span class="main"><b>${esc(mpName(m))}</b><small>${esc(t('tool.leaveReason', { reason: r.reason, bill: billName(bill) }))}</small></span><button class="btn" data-leave="${m.id}" data-grant="1">${t('tool.grant')}</button><button class="btn" data-leave="${m.id}" data-grant="0">${t('tool.refuse')}</button></li>`; }).join('')}</ul>`;
       if (opp && canUse(state, 'pair').ok) html += away.length ? `<p class="muted">${t('tool.absentees')}</p><ul class="book-list">${away.map((m) => `<li><span class="bar" style="background:${partyColor(state, m)}"></span><span class="main"><b>${esc(mpName(m))}</b><small>${esc(t('tool.attendance', { n: m.attendance }))}</small></span><button class="btn" data-pair="${m.id}">${esc(t('tool.pair', { party: opp.short }))}</button></li>`).join('')}</ul>` : `<p class="muted">${t('tool.nobody')}</p>`;
     }
     return html;

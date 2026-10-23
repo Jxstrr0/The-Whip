@@ -8,6 +8,8 @@ import { adjustRapport } from './relationships.js';
 import { dilemmaFor } from './career.js';
 import { baseScore } from './mp.js';
 import { headline } from './media.js';
+import { billName } from './bills.js';
+import { fill } from './fill.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => (m ? `${m.name.first} ${m.name.last}` : '');
@@ -17,7 +19,7 @@ export function ridingVars(state) {
   const party = state.parties[me.party];
   const r = state.ridings[me.riding.id];
   const v = state.ridingVisit;
-  const bill = v?.billId ? state.bills[v.billId]?.title : 'the bill';
+  const bill = billName(v?.billId && state.bills[v.billId]);
   return {
     riding: me.riding.name,
     playerRiding: me.riding.name,
@@ -33,8 +35,7 @@ export function ridingVars(state) {
 }
 
 export function fillRiding(state, text) {
-  const vars = ridingVars(state);
-  return text.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
+  return fill(text, ridingVars(state));
 }
 
 // The bill people at home are talking about: your dilemma, or the week's most visible vote.
@@ -194,7 +195,7 @@ export function answerTownHall(state, index) {
     log(state, `Town hall in ${v.town}: the crowd ended ${th.crowd >= 60 ? 'on your side' : th.crowd <= 40 ? 'against you' : 'unconvinced'}.`, 'riding');
     // A full hall is sometimes a story in the weekend paper.
     withRng(state, (rng) => {
-      if (rng.chance(tuning().media.townHallPress)) headline(state, rng, 'townHall', { bill: v.billId ? state.bills[v.billId]?.title || 'the bill' : 'the bill' });
+      if (rng.chance(tuning().media.townHallPress)) headline(state, rng, 'townHall', { bill: billName(v.billId && state.bills[v.billId]) });
     });
     v.phase = 'choose';
   }

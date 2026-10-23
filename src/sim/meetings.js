@@ -7,7 +7,8 @@ import { reveal, revealMany, touch } from './knowledge.js';
 import { adjustRapport, addStyle, spreadBrokenPromise } from './relationships.js';
 import { dilemmaFor } from './career.js';
 import { baseScore } from './mp.js';
-import { dayIndex, sittingDayAfter } from './bills.js';
+import { dayIndex, sittingDayAfter, billName } from './bills.js';
+import { fill } from './fill.js';
 import { remember, person } from './memoir.js';
 import { applyCosponsor, voteStakes } from './stakes.js';
 
@@ -39,7 +40,7 @@ export function fillLine(state, text, ctx = {}) {
     name: name(m),
     riding: m?.riding.name,
     province: m?.riding.province,
-    bill: ctx.bill ? state.bills[ctx.bill]?.title : 'the bill',
+    bill: billName(ctx.bill && state.bills[ctx.bill]),
     mentor: name(state.mps[state.player.mentor]) || 'your mentor',
     whip: name(state.mps[party?.chiefWhip]) || 'the whip',
     leader: name(state.mps[party?.leader]) || 'the leader',
@@ -52,7 +53,7 @@ export function fillLine(state, text, ctx = {}) {
     otherRiding: other?.riding.name || 'their riding',
     rival: name(state.mps[state.player.rival]) || 'your rival',
   };
-  return text.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
+  return fill(text, vars);
 }
 
 // ---------- cards ----------
@@ -63,7 +64,7 @@ export function cardLabel(state, card, toYou = false) {
   const key = 'deal.card.' + k;
   if (!data().strings[key]) return card;
   const whose = say(toYou ? 'deal.card.yours' : 'deal.card.theirs');
-  return say(key, { side: b, bill: state.bills[a]?.title, committee: state.committees[a]?.name || say('deal.card.aCommittee'), whose });
+  return say(key, { side: b, bill: billName(state.bills[a]), committee: state.committees[a]?.name || say('deal.card.aCommittee'), whose });
 }
 
 // How much the counterpart wants a card the player gives them.
@@ -503,7 +504,7 @@ function promise(state, from, to, what, mt) {
 // The first time the whip's office calls you in goes in the memoir, however it went.
 function rememberWhipCall(state, whipId, billId, sub) {
   const w = state.mps[whipId];
-  remember(state, 'whipCall', { sub, once: true, ctx: { whip: w ? `${w.name.first} ${w.name.last}` : 'The whip', bill: state.bills[billId]?.title || 'the bill' }, people: [person(state, whipId, data().memoir.notes.whip)] });
+  remember(state, 'whipCall', { sub, once: true, ctx: { whip: w ? `${w.name.first} ${w.name.last}` : 'The whip', bill: billName(state.bills[billId]) }, people: [person(state, whipId, data().memoir.notes.whip)] });
 }
 
 // rng is there when the player ended the meeting; a meeting cut short by the evening ending gets no verdict card.
@@ -519,7 +520,7 @@ export function finishMeeting(state, result, rng = null) {
       promise(state, pid, mt.mpId, c, mt);
       if (c === 'cosponsor') {
         const signed = applyCosponsor(state, mt.mpId);
-        if (signed?.riding) log(state, `You put your name to ${signed.bill.title}. ${signed.riding > 0 ? 'It goes down well at home' : 'Home will not thank you for it'} (riding ${signed.riding > 0 ? '+' : ''}${signed.riding}).`, 'career');
+        if (signed?.riding) log(state, `You put your name to ${billName(signed.bill)}. ${signed.riding > 0 ? 'It goes down well at home' : 'Home will not thank you for it'} (riding ${signed.riding > 0 ? '+' : ''}${signed.riding}).`, 'career');
       }
     }
     for (const c of mt.deal.asks) {

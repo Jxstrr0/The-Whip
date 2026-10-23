@@ -1192,6 +1192,57 @@ Kelbo asked for a look for bloat in the content and for the UI to read more clea
 - `tests.html` 116 of 116. The riding case test now also checks that the Carry chip matches what carrying does.
 - Played the guided first week and weeks 3–5 at phone size, portrait and landscape. No console errors.
 
+## Stake chips restyled (small pass)
+
+The riding / whip +/- chips (the little "▲ +4 riding" and "▼ −6 whip" bubbles on the whip's call, the deal table, the count board and the carry-a-case buttons) got a nicer look: a round filled badge carries the arrow, the pill has a tinted paper fill with a fine border and a soft lift, and the numbers are a touch bolder. The flat "no change" chip is darker for contrast. CSS only (`.stake` in `css/style.css`); the arrow and sign still carry the meaning, colour just backs them up.
+
+## Content pass: Question Period
+
+Question Period is where a backbencher gets the cameras, and it was repeating itself: three questions to a pool, two answers per minister's mood, three reactions. Over a career's 25 to 35 questions the same lines came back within a few weeks.
+
+**No repeats.** Question Period lines are no longer picked at random. Each line you've heard goes on a list (`player.recentQp`, the last 90, `questionPeriod.recentLines`). A line only comes back once every other line in its pool has played, and then the one you heard longest ago comes first. The same rule covers the Speaker's call, the riding issues, the questions, the minister's answer, the benches and the gallery.
+
+**Questions name the part of the bill people are arguing about.** A new `{detail}` slot picks a detail for the bill's category: for a housing bill, "the vacancy rate" or "the co-op housing fund"; for a veterans' bill, "the disability claims backlog". All 20 bill categories have three each. So a pointed question asks "why the grid connection fees changed between the draft and the bill", not just about "the bill".
+
+**About twice the lines.** 277 lines in all, up from about 150:
+- the Speaker's call: 4 → 8
+- issues at home: 4 → 8 for each riding type (the post office closing, the airstrip lights, the interchange that floods every spring, the overdose deaths)
+- questions: 3 → 7 for each side, framing and topic, and off-script ones 3 → 7
+- the minister's answer: 2 → 4 for each outcome and mood
+- the benches: 3 → 6, and the gallery: 3 → 6
+
+**A grammar fix along the way.** Riding issues and carried cases are often plural ("the courthouse delays", "the shelter beds"). Lines like "the minister said {issue} was a provincial matter" read wrong with those. Every line using `{issue}` now reads right either way, old lines included.
+
+**Small calls:**
+- No heckles or Speaker's rulings as a separate beat. The benches line already does that job, and the sheet shouldn't get longer while the readability pass is cutting text. New lines are the same length as the old ones.
+- I left bill titles as they are. The game prints them without "the" everywhere ("waiting for Congestion Charge Enabling Act"). That's game-wide, older than this pass, and worth a look of its own.
+
+**Checked:**
+- `tests.html` 117 of 117. One new test: a pool plays out before anything repeats, the oldest line comes back first, and six Question Periods in a row repeat no line. The fill test now also covers `{detail}` and checks every bill category has details.
+- Played the first Question Period through the real buttons at phone size in portrait (pointed) and landscape (off-script). No console errors. The first Question Period scrolls in portrait by the same amount as on `main`, because of its tutorial note, so that's not new.
+- Effects and odds are untouched. Only the line picking changed.
+
+## Small fix: "the" before bill names
+
+Bill titles went into sentences bare: "waiting for Congestion Charge Enabling Act", "the line on Rural Roads Fund Act". Opposition motions were worse, because their titles are the motion's own wording: "a vote on That the House call on the government to cap tuition increases".
+
+**What changed:**
+- **One way to name a bill in a sentence.** `billName(bill)` in `src/sim/bills.js` gives "the Congestion Charge Enabling Act". Each opposition motion now has a spoken name in `data/bill-templates.json` (`prose`), the way members actually say it: "the rent freeze motion", "the motion to repeal the firearms buyback". The Address in Reply is "the Address in Reply". Every sentence that names a bill uses it: meetings, caucus, Question Period, the riding, headlines, the log, the memoir, career beats and the UI strings.
+- **Names that open a sentence get a capital.** There were 18 separate copies of the `{slot}` filler. They now share one (`src/sim/fill.js`), which capitalises a slot that starts a sentence or opens a quote: "The Housing Supply Acceleration Act is whipped YEA", "“Now. The Rural Roads Fund Act.”". The fallbacks ("the whip", "the leader") get the same treatment.
+- **Headers stay as titles.** The count board, the Order Paper, the whip's call card and "First reading: …" still show the bare title, because that's how a title reads as a label. The Speaker's question now reads "That the Rural Roads Fund Act be read a second time".
+- One caucus line had the leader hand round a page "headed" the bill, which doesn't work with a spoken name. It now has the bill "across the top", and the leader's closing line was tidied ("That's the line. Learn it.").
+
+**Checked:**
+- `tests.html` 118 of 118. One new test:
+  - every motion has a spoken name;
+  - the filler capitalises sentence openings and nothing else;
+  - every data line naming a bill reads without "the the" or a lower-case opening, for an Act and for a motion;
+  - a whole Parliament played headless leaves no bill title straight after "on", "for", "to" or "about" in the log or the memoir.
+- The caucus test was updated to expect the bill's name, not its bare title.
+- Played at phone size in portrait and landscape with no console errors.
+
+**Noticed, not fixed:** a rival whip's "was seen leaving the … whip's office" note can land several times in a row in the log, once for each party they visit. It's in `src/sim/rivals.js`, not in this change.
+
 ## Playtest: readability pass two
 
 Kelbo's picks from the second list: 1 yes (one line after a few weeks), 2 yes, 3 fold away, 4 fold away, 5 yes, numbers first, 6 shorten a touch, 7 tidy it up.
@@ -1201,7 +1252,7 @@ Kelbo's picks from the second list: 1 yes (one line after a few weeks), 2 yes, 3
 - **Caucus grievances fold away.** They now sit under "Grievances 3" with an arrow. Once opened they stay open while you listen, speak or whisper.
 - **The bill summary folds away on the vote.** "What the bill does" is one line until you tap it. The bells, the party line and your choices move up the screen.
 - **The weekend paper leads with the numbers.** "By the numbers" (riding standing, the whip's view, times you broke with the line, recorded divisions, your aim) is now a boxed panel right under the masthead. The lead story and the polls follow.
-- **Question Period is shorter.** The slot and the minister share one line ("Wednesday afternoon · to Brigid Burrell, Minister"). The 14 longest questions were trimmed by a clause each. On a Pixel 7 the sheet now fits without scrolling (569 of 569px; it was 609 of 580).
+- **Question Period is shorter.** The slot and the minister share one line ("Wednesday afternoon · to Brigid Burrell, Minister"). I had trimmed the 14 longest questions too, but the Question Period content pass above replaced the questions first. Its longest runs to about 150 characters, so its writing stays as is. On a Pixel 7 the sheet now fits without scrolling (569 of 569px; it was 609 of 580).
 - **Text out of the code.** These lines moved into `data/strings.en.json`: the reasons people come to your door ("The whip's office wants to see you about…"), the names of deal cards, the caucus line ("whipped YEA" / "a free vote"), what you hear when you listen, the notes after you speak, the "no favours left" desk note, and a few MP card fields. Excuses for Friday leave moved to `career.json`. The sim reads strings through a small `say()` in `src/sim/config.js`, which works like the UI's `t()`.
 
 **Small calls:**
@@ -1209,5 +1260,5 @@ Kelbo's picks from the second list: 1 yes (one line after a few weeks), 2 yes, 3
 - Still in the code: the sim's own log lines (about 60, across 15 files: "You crossed the floor to…", the confidence and election lines, and similar). They're specific and read well. Moving them is a bigger, separate job; say if you want it.
 
 **Checked:**
-- `tests.html` 116 of 116.
+- `tests.html` 118 of 118 after merging main.
 - Played from week 3 to week 6 at phone size, portrait and landscape: office, caucus with the fold opened, a division with the summary opened, the riding, Question Period and the weekend paper. The bar checked at 360, 375, 390 and 412px wide. No console errors.

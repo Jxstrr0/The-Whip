@@ -4,11 +4,11 @@
 // from a stream seeded by the game's seed and the kind of moment, never from the game's RNG, so writing
 // something down can't change what happens next.
 import { data, tuning } from './config.js';
+import { fill, capFirst } from './fill.js';
+import { billName } from './bills.js';
 import { createRng } from './rng.js';
 
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
-const fill = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
-const capFirst = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 export const ordinal = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
 const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
 
@@ -114,7 +114,7 @@ export function rememberDivision(state, result) {
   const rebelled = whipped && mine && mine !== pos;
   const ours = (ids) => (ids || []).filter((id) => id !== pid && state.mps[id]?.party === me.party && state.mps[id].caucusRole !== 'speaker');
   const rebels = whipped ? ours(pos === 'yea' ? result.nays : result.yeas) : [];
-  const ctx = { bill: bill.title, line: (pos || '').toUpperCase(), vote: (mine || '').toUpperCase(), yeas: result.yeas.length, nays: result.nays.length };
+  const ctx = { bill: billName(bill), line: (pos || '').toUpperCase(), vote: (mine || '').toUpperCase(), yeas: result.yeas.length, nays: result.nays.length };
 
   if (bill.confidence) {
     const margin = Math.abs(result.yeas.length - result.nays.length);
@@ -164,5 +164,5 @@ export function rememberPmb(state, bill, res) {
   const kept = asked.filter((id) => res.yeas?.includes(id)).length;
   const margin = Math.abs((res.yeas?.length ?? res.yeasCount ?? 0) - (res.nays?.length ?? res.naysCount ?? 0));
   const aside = asked.length ? fill(kept === asked.length ? M.asides.askedAll : kept ? M.asides.askedSome : M.asides.askedNone, { n: inWords(asked.length), kept: inWords(kept) }) : M.asides.askedNobody;
-  remember(state, 'pmb', { sub: res.carried ? 'passed' : 'defeated', ctx: { bill: bill.title, by: margin ? `by ${inWords(margin)}` : 'on the Speaker’s casting vote' }, people: asked.map((id) => person(state, id, how(id))), aside });
+  remember(state, 'pmb', { sub: res.carried ? 'passed' : 'defeated', ctx: { bill: billName(bill), by: margin ? `by ${inWords(margin)}` : 'on the Speaker’s casting vote' }, people: asked.map((id) => person(state, id, how(id))), aside });
 }
