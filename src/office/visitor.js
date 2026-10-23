@@ -8,6 +8,7 @@ import { RIG, jacketGeometry, shirtFront, pelvis, headGeometry, armGeometry, leg
 import { headGeometries, bodyGeometries, hairCap, partsFor, partColour, tieColour, growScale, HEAD_PARTS } from '../faces.js';
 import { NCH, IX, POSES, poseChannels, startFidget, endFidget, stepFidget, pickFidget, breathe, stride as strideChannels, addChannels, wrapAngle } from '../motion.js';
 import { tuning } from '../sim/config.js';
+import { cloth } from '../textures.js';
 
 // `outfit` is a wardrobe() result: its suit replaces `color`, and its tie and pin are worn; without one the
 // figure is a plain suit (the player seen from behind, a constituent). `face` is a faces.js result: how much
@@ -21,7 +22,7 @@ export function createFigure(color, mpId = 'x', outfit = null, face = null) {
   const trousers = trouserColour(suit);
   // Every moving part is one mesh with its colours painted into the vertices (jacket, shirt and pin as one
   // body; sleeve and hand as one forearm), so a figure costs a dozen draw calls rather than twenty.
-  const mat = vertexMaterial({ roughness: 0.78 });
+  const mat = cloth(vertexMaterial({ roughness: 0.78 }));
   const mats = { body: mat };
   const part = (pieces) => new THREE.Mesh(merge(pieces.map(([geo, colour]) => paint(geo, colour))), mat);
   const g = new THREE.Group();
