@@ -1386,3 +1386,22 @@ Kelbo asked to expand the dialogue a bit. The mentor and the riding got their pa
 - `tests.html` 132 of 132. One new test: every door has at least three openers a mood and two replies for listen and concede in Acts 1, 3 and 5; no text repeats across lines and partings; the whip, introductions, favours and gossip all have context lines.
 - Headless: 4,800 meetings (five acts, forty seeds, every situation and mood, three turns and a deal), with the context odds forced to 1. No unfilled name or bill slot, no silent "…" opener.
 - The talk sheet at phone size in portrait and landscape with the longest new line forced into each cell. No console errors.
+
+## Playtest: the MPs' bodies
+
+Kelbo: "The MPs body shapes look rough rn." The figures were an egg for a torso with a bar across the top for shoulders, a white block for a collar that read as a badge, capsule limbs that bulged at the elbow and knee, and a hard box for a seated lap. This pass rebuilds the body under every figure in the game, keeping the chess-piece look: no faces until earned, one colour per suit.
+
+- **A jacket with a shape.** The torso is now a proper suit jacket: squared shoulders, a chest that sits forward of the belly, a slight waist, a hem that flares over the hips. Shirt, tie, pin, pocket square, bow tie and flower all sit on its surface rather than floating in front of it.
+- **A shirt and collar.** A white V opens under a round collar at the neck, so the head sits on something instead of a dark rim.
+- **Arms and legs that bend.** Upper arm, forearm, thigh and shin are tapered tubes that share a ball at each joint, so an elbow or a knee reads as one bent limb. Hands are small ovals, feet are rounded shoes.
+- **Trousers in their own colour**, a shade darker than the jacket, so the hem and the lap read on the benches.
+- **A seat.** Seated figures get a pelvis the jacket hangs over; standing ones a narrower one, so nothing pokes through the hem.
+- **One body, every room.** The benches, the caucus table, the galleries, the town hall and the Speaker all draw from the same kit (`src/body.js`), and so does the jointed visitor in the office and the riding, so the person at your desk matches the person on the bench.
+
+**Small calls:**
+- Trousers are one more instanced draw per crowd (about five in the chamber). The budget has room.
+- The crowd poses were nudged while the limbs were being rebuilt: seated hands rest on the lap, standing arms hang with a slight bend.
+
+**Checked:**
+- `tests.html` 132 of 132.
+- Played at phone size in portrait and landscape: the chamber from your seat, the overview and a framed block; the office with a visitor walking in and seated, angry and cooperative, with and without a face; the caucus table; the town hall. No console errors.
