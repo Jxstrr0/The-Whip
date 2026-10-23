@@ -1,6 +1,6 @@
 // The press gallery: one headline a day for the vote that mattered most, moving national polling and the
 // player's standing at home. Scandal scores for members whose secrets get used.
-import { data, tuning } from './config.js';
+import { data, tuning, say } from './config.js';
 import { hooks, log, dissolution } from './pacing.js';
 import { lineFor, billName } from './bills.js';
 import { fill } from './fill.js';
@@ -50,8 +50,8 @@ function storiesOf(state) {
     const big = bv?.billId === bill.id && bv.day === d.day && !(bill.confidence && bill.kind !== 'oppositionMotion');
     if (big) {
       const party = state.parties[me.party];
-      const whip = party?.chiefWhip ? fullName(state.mps[party.chiefWhip]) : 'the Chief Whip';
-      out.push({ event: (bv.side === 'yea') === d.carried ? 'bigVoteWon' : 'bigVoteLost', ctx: { ...ctx, ours: party?.name || 'the party', whip }, bill });
+      const whip = party?.chiefWhip ? fullName(state.mps[party.chiefWhip]) : say('who.chiefWhip');
+      out.push({ event: (bv.side === 'yea') === d.carried ? 'bigVoteWon' : 'bigVoteLost', ctx: { ...ctx, ours: party?.name || say('who.party'), whip }, bill });
     }
     else if (bill.confidence && bill.kind !== 'oppositionMotion') {
       // A fall early in the Parliament hands the House to the opposition; later it means an election.
