@@ -5,6 +5,7 @@
 // which keepsake a member has comes from their id, so it never changes once earned.
 import * as THREE from 'three';
 import { merge } from './kit3d.js';
+import { jacketFrontZ } from './body.js';
 import { familiarity } from './sim/knowledge.js';
 import { data } from './sim/config.js';
 
@@ -138,7 +139,7 @@ export function bodyGeometries(shoulderY) {
   const flower = merge([[0, 0.008], [-0.008, -0.004], [0.008, -0.004], [0, 0]].map(([x, y], i) => egg(i === 3 ? 0.007 : 0.01, x, y, i === 3 ? 0.006 : 0, 1, 1, 0.7, 8)));
   return {
     geos: { bowtie, pocket, flower },
-    anchors: { bowtie: [0, shoulderY - 0.1, 0.139], pocket: [0.088, shoulderY - 0.2, 0.127], flower: [-0.083, shoulderY - 0.075, 0.123] },
+    anchors: { bowtie: [0, shoulderY - 0.1, jacketFrontZ(0, -0.1) + 0.012], pocket: [0.088, shoulderY - 0.2, jacketFrontZ(0.088, -0.2) + 0.004], flower: [-0.083, shoulderY - 0.075, jacketFrontZ(0.083, -0.075) + 0.004] },
   };
 }
 
