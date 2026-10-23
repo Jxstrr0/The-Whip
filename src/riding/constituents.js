@@ -85,7 +85,12 @@ export function createCrowd(count, colorFor) {
       g.position.z = v < 40 ? 0.5 : v > 60 ? -0.35 : 0;
       // The first two boards (one per topic) go up as the room cools; all four once it has turned.
       const up = signs ?? (v < 35 ? 4 : v < 45 ? 2 : 0);
-      placards.forEach((p, k) => (p.group.visible = k < up));
+      placards.forEach((p, k) => {
+        p.group.visible = k < up;
+        // The holder's arm comes up with the board (the hand that holds it depends on which side it's on).
+        const { i, dx } = PLACARD_SPOTS[k];
+        crowd.hold(i, k < up ? (dx > 0 ? { aLz: -0.1, eLx: -1.2 } : { aRz: 0.1, eRx: -1.2 }) : null);
+      });
       place(v);
     },
     // What the weather calls for: 0 shirtsleeves and jackets, 1 coats, 2 winter coats and, for most, a toque.
@@ -110,6 +115,11 @@ export function createCrowd(count, colorFor) {
     },
     // 0 to 1: how hard the crowd is cheering. Eases in and out; the signs bob with their holders.
     setCheer(v) {
+      // A cheer going up: arms raised and hands clapping across the crowd, each on their own beat.
+      if (v > 0.3 && cheerGoal <= 0.3) {
+        crowd.react('raise', { chance: 0.35, delay: 2 });
+        crowd.react('clap', { chance: 0.4, delay: 1.5 });
+      }
       cheerGoal = v;
     },
     update(dt) {
@@ -119,13 +129,13 @@ export function createCrowd(count, colorFor) {
         if (cheer) {
           cheer = 0;
           place(mood);
-          placards.forEach((p) => (p.group.position.y = 1.1));
+          placards.forEach((p) => (p.group.position.y = HAND_Y));
         }
         return;
       }
       beat += dt;
       place(mood);
-      PLACARD_SPOTS.forEach(({ i }, k) => (placards[k].group.position.y = 1.1 + hop(i) * 1.6 + cheer * 0.12));
+      PLACARD_SPOTS.forEach(({ i }, k) => (placards[k].group.position.y = HAND_Y + hop(i) * 1.6 + cheer * 0.12));
     },
   };
 }
@@ -150,13 +160,17 @@ const PLACARD_LOOKS = [
 ];
 const BOARD_W = 0.55;
 const BOARD_H = 0.4;
+// Where a raised hand holds the stick: a forearm's reach in front of the shoulder, out to one side.
+const HAND_Y = 1.03;
+const HAND_OUT = 0.24;
+const HAND_AHEAD = 0.22;
 
 // A board on a stick, pivoting at the hand so the whole sign leans with its holder. The crowd faces
 // the podium (-z), so the lettered face turns the same way to meet the camera.
 function createPlacard(spot, dx, k) {
   const look = PLACARD_LOOKS[k];
   const group = new THREE.Group();
-  group.position.set(spot.x + dx, 1.1, spot.z + 0.05);
+  group.position.set(spot.x + Math.sign(dx) * HAND_OUT, HAND_Y, spot.z - HAND_AHEAD);
   group.rotation.set(0, Math.PI + look.turn, look.tiltZ);
   group.add(new THREE.Mesh(merge([box(0.04, 0.9, 0.04, 0, 0.4, 0, '#6e4a2b'), box(BOARD_W, BOARD_H, 0.03, 0, 0.95, 0, look.paper)]), vertexMaterial({ roughness: 0.9 })));
   const tex = paintedTexture(512, 372, () => {});
