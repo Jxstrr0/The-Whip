@@ -9,6 +9,7 @@ import { dilemmaFor } from './career.js';
 import { baseScore } from './mp.js';
 import { headline } from './media.js';
 import { billName } from './bills.js';
+import { bigVoteBill } from './bigVote.js';
 import { fill } from './fill.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -38,9 +39,11 @@ export function fillRiding(state, text) {
   return fill(text, ridingVars(state));
 }
 
-// The bill people at home are talking about: your dilemma, or the week's most visible vote.
+// The bill people at home are talking about: the week's big vote, your dilemma, or the most visible vote.
 function talkedAbout(state) {
   if (state.player.forceDilemma && state.bills[state.player.forceDilemma]) return state.player.forceDilemma;
+  const big = bigVoteBill(state);
+  if (big) return big.id;
   const recent = Object.values(state.bills).filter((b) => b.introduced >= (state.date.absWeek - 2) * 5);
   const d = recent.find((b) => b.status === 'active' && dilemmaFor(state, b, baseScore, tuning().pacing));
   return (d || recent.sort((a, b) => b.visibility - a.visibility)[0])?.id || null;
