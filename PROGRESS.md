@@ -1191,3 +1191,7 @@ Kelbo asked for a look for bloat in the content and for the UI to read more clea
 **Checked:**
 - `tests.html` 116 of 116. The riding case test now also checks that the Carry chip matches what carrying does.
 - Played the guided first week and weeks 3–5 at phone size, portrait and landscape. No console errors.
+
+## Stake chips restyled (small pass)
+
+The riding / whip +/- chips (the little "▲ +4 riding" and "▼ −6 whip" bubbles on the whip's call, the deal table, the count board and the carry-a-case buttons) got a nicer look: a round filled badge carries the arrow, the pill has a tinted paper fill with a fine border and a soft lift, and the numbers are a touch bolder. The flat "no change" chip is darker for contrast. CSS only (`.stake` in `css/style.css`); the arrow and sign still carry the meaning, colour just backs them up.
