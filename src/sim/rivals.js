@@ -30,13 +30,13 @@ function pick(rng, weights) {
   return entries[entries.length - 1]?.[0];
 }
 
-// The member of the player's caucus closest to breaking on the next whipped vote.
-function wobbliest(state, bill, party) {
+// The member of the player's caucus closest to breaking on the next whipped vote, skipping anyone in `taken`.
+function wobbliest(state, bill, party, taken = new Set()) {
   const { line, position } = lineFor(bill, party);
   if (line !== 'whipped' || !SIGN[position]) return null;
   let best = null;
   for (const m of Object.values(state.mps)) {
-    if (m.party !== party || m.id === state.player.mpId || m.caucusRole === 'speaker') continue;
+    if (m.party !== party || m.id === state.player.mpId || m.caucusRole === 'speaker' || taken.has(m.id)) continue;
     const d = SIGN[position] * baseScore(state, m, bill).score;
     if (best == null || d < best.d) best = { m, d };
   }
@@ -46,16 +46,21 @@ function wobbliest(state, bill, party) {
 function poach(state, rng, party, whip, bill) {
   const R = tuning().rivals;
   const mine = state.mps[state.player.mpId].party;
-  const w = wobbliest(state, bill, mine);
+  // Two whips don't queue at the same door in one week: each works the wobbliest member nobody else has been at.
+  const week = state.date.absWeek;
+  const taken = new Set(state.ledger.filter((e) => e.kind === 'rival' && e.what === `poach:${bill.id}` && e.created === week).map((e) => e.to));
+  const w = wobbliest(state, bill, mine, taken) || wobbliest(state, bill, mine);
   if (!w) return false;
   const { position } = lineFor(bill, mine);
   state.nudges ||= {};
   state.nudges[w.m.id] ||= {};
   state.nudges[w.m.id][bill.id] = (state.nudges[w.m.id][bill.id] || 0) - SIGN[position] * R.poachNudge;
   party.whipAI.targets = [...new Set([...party.whipAI.targets, w.m.id])].slice(-6);
-  const note = say('log.rival.poach', { name: fullName(w.m), party: party.short, bill: billName(bill) });
+  // The same whip at the same door again reads as a return visit; after that it's in the ledger only.
+  const visits = state.ledger.filter((e) => e.kind === 'rival' && e.what === `poach:${bill.id}` && e.from === whip && e.to === w.m.id).length;
+  const note = say(visits ? 'log.rival.poachAgain' : 'log.rival.poach', { name: fullName(w.m), party: party.short, bill: billName(bill) });
   ledgerAdd(state, { from: whip, to: w.m.id, kind: 'rival', what: `poach:${bill.id}`, note });
-  log(state, note, 'rival');
+  if (visits < 2) log(state, note, 'rival');
   return true;
 }
 

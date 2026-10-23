@@ -1,5 +1,6 @@
 // Menus: the start screen (continue, or a new career: name, party, background, riding, age, seed) and the
 // in-game menu.
+import { canBuzz } from '../haptics.js';
 import { t, esc, longlightMark } from './text.js';
 import { pickerHtml, wirePickers } from './picker.js';
 
@@ -248,7 +249,7 @@ export function createGameMenu(root, { getState, onQuit, onLedger, onMemoir, onR
   };
 }
 
-// The settings sheet: sound, volume, colour-blind colours, larger text. get() returns the current settings,
+// The settings sheet: sound, volume, haptics (only on phones that can buzz), colour-blind colours, larger text. get() returns the current settings,
 // set(key, value) stores one. Opens over the title page or the game.
 export function createSettingsSheet(root, { get, set }) {
   const el = document.createElement('section');
@@ -260,6 +261,7 @@ export function createSettingsSheet(root, { get, set }) {
     el.innerHTML = `<div class="sheet-handle"></div><h2>${t('settings.title')}</h2>
       ${toggle('sound', 'settings.sound', 'settings.soundNote')}
       <label class="setting"><div class="what"><b>${t('settings.volume')}</b></div><input type="range" name="volume" min="0" max="1" step="0.05" value="${s.volume}" aria-label="${t('settings.volume')}"${s.sound ? '' : ' disabled'}></label>
+      ${canBuzz ? toggle('haptics', 'settings.haptics', 'settings.hapticsNote') : ''}
       ${toggle('colourBlind', 'settings.colourBlind', 'settings.colourBlindNote')}
       ${toggle('largeText', 'settings.largeText', 'settings.largeTextNote')}
       <div class="choices"><button class="btn primary" data-act="close">${t('settings.done')}</button></div>`;

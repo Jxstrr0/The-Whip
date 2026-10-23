@@ -151,7 +151,8 @@
     "closeShort": 3,
     "standingLow": 35,
     "standingMid": 48,
-    "standingHigh": 62
+    "standingHigh": 62,
+    "townHall": { "won": 60, "lost": 40 }
   },
   "player": {
     "rebelWhipRapport": -8,

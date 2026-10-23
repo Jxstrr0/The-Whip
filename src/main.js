@@ -35,6 +35,7 @@ import { createColdOpenUI } from './ui/coldOpen.js';
 import { createStartMenu, createGameMenu, createSettingsSheet } from './ui/menus.js';
 import { createAudio } from './audio.js';
 import { getSettings, setSetting, onSettings, applySettings } from './settings.js';
+import { buzz } from './haptics.js';
 import { createLedger } from './ui/ledger.js';
 import { createCareerUI } from './ui/careerUI.js';
 import { createRecordUI } from './ui/recordUI.js';
@@ -120,8 +121,14 @@ function buildWorld() {
         else card.hide();
       },
       onMpTap: (mpId) => card.show(mpId),
-      onBells: (on) => audio.bells(on),
-      onGavel: () => audio.gavel(),
+      onBells: (on) => {
+        audio.bells(on);
+        if (on) buzz('bells');
+      },
+      onGavel: () => {
+        audio.gavel();
+        buzz('gavel');
+      },
     },
     onChange(name, room) {
       audio.room(name);

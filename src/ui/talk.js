@@ -9,6 +9,7 @@ import { prediction } from '../sim/count.js';
 import { canUse, likelyAbsentees, budget, nextVote } from '../sim/tools.js';
 import { billName } from '../sim/bills.js';
 import { countLine, rowLine } from './text.js';
+import { buzz } from '../haptics.js';
 
 // Which ink the verdict is stamped in: a deal is good news, a door slammed is bad, a polite no is neither.
 const INK = { deal: 'yea', theyWalked: 'nay', youDeclined: 'nay', refused: 'nay' };
@@ -56,10 +57,20 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
   }
 
   // After a one-to-one: DEAL or NO DEAL in ink, their parting words, the terms, and what it did between you.
+  // Each meeting buzzes at most once for the whip's call and once for a deal, however often the sheet redraws.
+  let buzzed = '';
+  function buzzOnce(state, kind) {
+    const key = `${state.meeting}:${kind}`;
+    if (buzzed === key) return;
+    buzzed = key;
+    buzz(kind);
+  }
+
   function verdict(state, mt) {
     const m = state.mps[mt.mpId];
     const o = mt.outcome;
     const dealt = o === 'deal';
+    if (dealt) buzzOnce(state, 'deal');
     const terms = (list, label, toYou) => `<div class="deal-col"><h4>${label}</h4>${list.length ? list.map((c) => `<div class="card-chip settled"><span class="lbl">${esc(cardLabel(state, c, toYou))}</span>${cardChip(state, c, toYou ? 'get' : 'give', mt.mpId)}</div>`).join('') : `<p class="muted">${t('debrief.nothing')}</p>`}</div>`;
     const theirs = mt.revealed.filter((f) => !f.includes('.') && f !== 'mood' && f !== 'rapport').length;
     const others = new Set(mt.revealed.filter((f) => f.includes('.')).map((f) => f.split('.')[0])).size;
@@ -142,6 +153,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
   function meeting(state) {
     const mt = state.meetings[state.meeting];
     const m = state.mps[mt.mpId];
+    if (mt.reversal && mt.phase !== 'debrief') buzzOnce(state, 'reversal');
     // After the first turn the job and the full stakes have been read: keep one short stakes line so the talk has the room.
     const later = mt.phase === 'talk' && mt.turn > 1;
     const bill = ['whipCall', 'rebelRecruit'].includes(mt.situation) ? state.bills[mt.billId] : null;

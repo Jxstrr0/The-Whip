@@ -55,6 +55,7 @@ import { calendarOf, weatherOf } from './src/sim/calendar.js';
 import { botAct } from './src/sim/bot.js';
 import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo } from './src/save.js';
 import { getSettings, setSetting } from './src/settings.js';
+import { canBuzz, buzz } from './src/haptics.js';
 import { partyColor } from './src/ui/text.js';
 import { createAudio } from './src/audio.js';
 import * as tools from './src/sim/tools.js';
@@ -2892,6 +2893,72 @@ test('A whole Parliament: most sitting weeks have a big vote, each one settles o
   assert(rec.won + rec.lost <= settled.size, 'the record counts more than were settled');
   assert(!s.log.some((l) => /\{\w+\}/.test(l.text)), 'a placeholder is left in the log');
   return `${weeks.size} big votes in ${sitting} sitting weeks, ${rec.won} won, ${rec.lost} lost, ${rec.names} names`;
+});
+
+// ---------- Playtest: on the phone ----------
+section('Playtest · On the phone');
+
+test('The home-screen manifest and its icons are served, and index.html links them', async () => {
+  const man = await (await fetch('manifest.webmanifest')).json();
+  assert(man.display === 'standalone' && man.name === 'The Whip', 'manifest basics');
+  assert(man.icons.some((i) => i.purpose === 'maskable') && man.icons.some((i) => i.sizes === '192x192'), 'maskable and 192 icons');
+  for (const i of man.icons) {
+    const r = await fetch(i.src);
+    assert(r.ok && /image\/png/.test(r.headers.get('content-type') || ''), `icon ${i.src}`);
+  }
+  const html = await (await fetch('index.html')).text();
+  assert(/rel="manifest"/.test(html) && /apple-touch-icon/.test(html) && /apple-mobile-web-app-capable/.test(html), 'index links');
+  assert(/rel="manifest" href="manifest\.webmanifest"/.test(html), 'manifest path is relative');
+  return `${man.icons.length} icons`;
+});
+
+test('Haptics are a setting: on by default, silent when off, and never throw', () => {
+  const before = { ...getSettings() };
+  try {
+    localStorage.removeItem('whip:settings');
+    assert(typeof canBuzz === 'boolean', 'canBuzz');
+    setSetting('haptics', true);
+    assert(getSettings().haptics === true, 'stored on');
+    setSetting('haptics', false);
+    assert(buzz('bells') === false && buzz('gavel') === false, 'silent when off');
+    assert(JSON.parse(localStorage.getItem('whip:settings')).haptics === false, 'stored off');
+    setSetting('haptics', true);
+    assert(buzz('nope') === false, 'unknown beat is a no-op');
+    return canBuzz ? 'this browser can buzz' : 'this browser cannot buzz; the toggle is hidden';
+  } finally {
+    for (const k of Object.keys(before)) setSetting(k, before[k]);
+  }
+});
+
+test('Rival whips work different members in the same week, so the feed does not repeat itself', () =>
+  quiet(() => {
+    const { s, me, rng } = whipScenario(4, 'TEST-3');
+    for (const party of Object.values(s.parties)) {
+      if (party.id !== me.party && party.chiefWhip) party.whipAI = { style: 'fixer', weeklyBudget: { time: 0, favors: 0 }, targets: [], digging: 0, moves: [] };
+    }
+    let busiest = 0;
+    for (let i = 0; i < 8; i++) {
+      s.date.absWeek = 10 + i;
+      rivals.rivalsWeek(s, rng);
+      const poaches = s.ledger.filter((e) => e.kind === 'rival' && e.what.startsWith('poach:') && e.created === s.date.absWeek);
+      busiest = Math.max(busiest, poaches.length);
+      const targets = poaches.map((e) => e.to);
+      assert(new Set(targets).size === targets.length, `week ${s.date.absWeek}: two whips at the same door`);
+    }
+    assert(busiest >= 2, 'the test should see a week with more than one poach');
+    const lines = s.log.filter((l) => l.kind === 'rival' && /whip's office/.test(l.text)).map((l) => l.text);
+    assert(new Set(lines).size === lines.length, 'a poach line repeated word for word');
+    const visits = s.ledger.filter((e) => e.what.startsWith('poach:')).length;
+    assert(visits > lines.length, 'a third visit should be ledger only');
+    return `busiest week ${busiest} poaches, ${visits} visits in the ledger, ${lines.length} lines in the feed, none repeated`;
+  }));
+
+test('The town hall won / lost cuts come from tuning', async () => {
+  const TH = tuning().stakes.townHall;
+  assert(TH && TH.won > TH.lost && TH.lost > 0 && TH.won < 100, 'townHall cuts');
+  const src = await (await fetch('src/sim/riding.js')).text();
+  assert(!/crowd >= 60|crowd <= 40/.test(src), 'riding.js still has the numbers');
+  return `won at ${TH.won}, lost at ${TH.lost}`;
 });
 
 async function run() {
