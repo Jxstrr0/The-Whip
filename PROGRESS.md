@@ -1352,6 +1352,80 @@ Kelbo's picks from the "anything else obvious" list: 1 (home screen), 2 (haptics
 - Played at phone size in portrait and landscape from week 4: the weekend paper, office, caucus, morning paper, a division and the riding. No console errors. The settings sheet shows the new toggle in Chromium (which can buzz).
 - Not checked here: the install itself and the buzz need a real phone. Kelbo, try "Add to Home Screen" from Safari's share sheet or Chrome's menu, and listen for the buzz when the bells go.
 
+## Playtest: finding your feet again
+
+Kelbo's picks 5 and 6: a "Last time…" line when a save comes back, and a glossary for the terms of art.
+
+- **"Last time, 3 days ago: You broke with the line on the rent freeze."** When a save is loaded from the menu after a break of more than half an hour (`pacing.resumeNoteMinutes`), one line comes up at the top for twelve seconds, or until tapped. It's the weightiest short line from the last five sitting days (`pacing.resumeNoteDays`): a career beat over a confidence vote, a vote over a tool, a tool over a meeting, then the riding, the rival whips, the press and caucus. Lines longer than 150 characters (`pacing.resumeNoteChars`) are passed over, so the office descriptions never make it. The break reads as "earlier today", "yesterday", "3 days ago" or "a while back". Reloading the tab a minute later shows nothing. `resumeNote` lives in `src/sim/goals.js` with the aim and the job lines.
+- **A glossary.** `data/glossary.json` has 29 terms, one sentence each, in the game's voice: whipped vote, free vote, the whip, the line, pairing, division, the bells, lobby, second and third reading, committee, confidence, the Address in Reply and the Throne Speech, the Speaker, Question Period, the Order Paper, backbench and front bench, House leader, parliamentary secretary, private member's bill, opposition motion, caucus, riding, by-election, nomination, crossing the floor and independent. The first use of each on a sheet gets a dotted underline; a tap shows "Whipped vote: The party has decided how its members vote on this one, and breaking with it has a cost." at the top. Headings, buttons, labels, fold titles, stamps and badges are left alone, so a term never lands inside something that already does something when tapped. A term can rule out its everyday sense: "in confidence" and "independent shops" stay plain.
+- **"Explain the terms" in settings**, on by default. Off, the underlines go at once; on, they come back.
+
+**Small calls:**
+- The glossing is one `MutationObserver` on the overlay (`src/ui/gloss.js`), so every sheet, the book and the cards get it without each render knowing. It walks text nodes only, and a sheet that already has a term doesn't get it again.
+- "Division bells" glosses as a division rather than as the bells; both sentences say the same thing.
+
+**Checked:**
+- `tests.html` 131 of 131. Three new tests: every glossary term has a label, forms and one short sentence, and no two terms claim a form; glossing a sample sheet wraps each term once, never inside a heading, summary, button or stamp, leaves the text reading the same, skips "in confidence" and "independent shops", and unglosses cleanly; the resume note is silent after five minutes, picks the vote over the caucus line, the career beat over the vote, passes over a long description, and dates itself in plain words.
+- Played at phone size in portrait and landscape from week 3: the weekend paper, Question Period, office, caucus, morning paper, a division and the riding. Every sheet checked for terms inside headings or buttons (none) and for a term glossed twice (none). Tapped a term on the caucus and division sheets and read the toast. Loaded an aged save through the menu's Continue and saw the line. No console errors.
+
+## Playtest: more to say at the door
+
+Kelbo asked to expand the dialogue a bit. The mentor and the riding got their pass in batch 3; this one is for the six people who come to the office: the whip's call, a new member introducing themselves, a favour asked, a complaint, gossip, and a rebel recruiting. Before, several of those had one opener for a mood and one reply for an approach, so a long Parliament heard the same lines back.
+
+- **143 new openers.** Every situation, turn and mood now has at least three lines to choose from in every act (the thinnest cells had one). They are written to the mood: an angry complaint about a pair pulled with four hours' notice reads differently from a guarded one.
+- **The room knows where you sit.** Twelve openers are tied to rank. From Act 3 a new member comes to "present themselves to the whip's office"; a favour starts "You've got the whip's ear now, or you are the whip's ear"; a rebel says "I know which office you sit in now. That's why I'm here."
+- **The world notices what you've done.** Eighteen context lines outside the mentor's room, played on the same odds as the mentor's: the whip opens on a fresh rebellion, a bad week at home or a demotion; a new member asks what rebelling looks like up close ("Tired, mostly."); the gossip is about the rival; a recruiter knows you've voted against the line before. They only play when it is true.
+- **108 replies.** Two ways to say each approach on each turn, so "listen" or "push" doesn't read identically across an evening. The second variants carry a style like the first (fixer, operator, conscience, enforcer, loyalist).
+- **30 partings**, so a deal, a walk-out or a "no" has a different last word by mood and by situation.
+
+**Small calls:**
+- One line can run to about 155 characters, up from 128. The talk sheet already scrolls on the longest old lines at phone size (the bill and stake content take the room), and the new ones add a few pixels at most, so the cap stayed there rather than cutting the writing back.
+- Three introduction context lines were narrowed to the moods they fit ("congratulations" never plays angry), which also keeps the mood test honest.
+
+**Checked:**
+- `tests.html` 132 of 132. One new test: every door has at least three openers a mood and two replies for listen and concede in Acts 1, 3 and 5; no text repeats across lines and partings; the whip, introductions, favours and gossip all have context lines.
+- Headless: 4,800 meetings (five acts, forty seeds, every situation and mood, three turns and a deal), with the context odds forced to 1. No unfilled name or bill slot, no silent "…" opener.
+- The talk sheet at phone size in portrait and landscape with the longest new line forced into each cell. No console errors.
+
+## Playtest: the MPs' bodies
+
+Kelbo: "The MPs body shapes look rough rn." The figures were an egg for a torso with a bar across the top for shoulders, a white block for a collar that read as a badge, capsule limbs that bulged at the elbow and knee, and a hard box for a seated lap. This pass rebuilds the body under every figure in the game, keeping the chess-piece look: no faces until earned, one colour per suit.
+
+- **A jacket with a shape.** The torso is now a proper suit jacket: squared shoulders, a chest that sits forward of the belly, a slight waist, a hem that flares over the hips. Shirt, tie, pin, pocket square, bow tie and flower all sit on its surface rather than floating in front of it.
+- **A shirt and collar.** A white V opens under a round collar at the neck, so the head sits on something instead of a dark rim.
+- **Arms and legs that bend.** Upper arm, forearm, thigh and shin are tapered tubes that share a ball at each joint, so an elbow or a knee reads as one bent limb. Hands are small ovals, feet are rounded shoes.
+- **Trousers in their own colour**, a shade darker than the jacket, so the hem and the lap read on the benches.
+- **A seat.** Seated figures get a pelvis the jacket hangs over; standing ones a narrower one, so nothing pokes through the hem.
+- **One body, every room.** The benches, the caucus table, the galleries, the town hall and the Speaker all draw from the same kit (`src/body.js`), and so does the jointed visitor in the office and the riding, so the person at your desk matches the person on the bench.
+
+**Small calls:**
+- Trousers are one more instanced draw per crowd (about five in the chamber). The budget has room.
+- The crowd poses were nudged while the limbs were being rebuilt: seated hands rest on the lap, standing arms hang with a slight bend.
+
+**Checked:**
+- `tests.html` 132 of 132.
+- Played at phone size in portrait and landscape: the chamber from your seat, the overview and a framed block; the office with a visitor walking in and seated, angry and cooperative, with and without a face; the caucus table; the town hall. No console errors.
+
+## Playtest: crisper bodies, and figures that move
+
+Kelbo: "they're very oval and rounded. Can we animate them well too?" Two passes in one. The shapes first: the head is now a squircle with a flat crown and a jaw rather than an egg, the jacket's shoulders and chest are squarer, hands are flat mitts rather than balls, and the joints are tighter. Then the motion: every figure in the game is now jointed (neck, shoulders, elbows, hips, knees) and driven by one small motion kit, `src/motion.js`, so the benches, the caucus table, the town hall and the visitor at your desk all move the same way.
+
+- **Crowds that are alive.** Every member breathes, and every ten seconds or so someone glances along the bench, shifts in their seat, nods, looks down at their papers, folds their arms or props a chin. The timing is scattered, so it reads as a room, not a drill.
+- **The House reacts as a House.** During Question Period everyone turns to whoever is on their feet; a member stands to put their question and works one hand while they speak; the minister's side thumps the desks after the answer. In a division, members stand as the Clerk counts them and the winning side thumps when the result is read; the bells send a stir along the benches.
+- **The visitor at your desk** walks in with a real stride, turns into the chair, sits down (a proper stand-up and sit-down, not a snap), and settles into the mood of the meeting: leaning in with you, arms folded, hands wringing. Moods change mid-meeting with a blend, and they fidget while they wait for your next line.
+- **The caucus table** turns to the head of the table while someone speaks there, and two neighbours lean in toward each other when the whisper lands.
+- **The town hall** holds its placards up by hand (the holder's arm comes up with the board), and a warm room cheers with raised arms and clapping across the crowd.
+- **The player's office colleague** types at their desk; the desk figure takes your mood.
+
+**Small calls:**
+- One tuning number: `look.fidgetEvery` (seconds between a figure's idle fidgets, scattered by half either way).
+- The jointed figure paints its colours into one mesh per moving part, so a visitor costs a dozen draw calls rather than twenty. Draw calls now: chamber 60 from your seat and in the overview (was 52), office 44 empty and 56 with a visitor (was 52 and 54), caucus 32, town hall 31. The chamber sits at the top of its budget rather than under it; Kelbo's phone has the headroom, and the frame-rate check with `?debug=1` is still owed.
+- The headless tour runs at about one frame a second, so walk-ins and blends look slow in screenshots; on a phone they run at full speed.
+
+**Checked:**
+- `tests.html` 132 of 132.
+- Played at phone size in portrait and landscape: the chamber from your seat and the overview, Question Period (a member standing, the minister answering, the thumps), a full division counted and cleared, the office with a visitor walking in and seated through cooperative, angry, guarded and anxious, the caucus table with the head of the table speaking and a pair leaning in, the town hall cold with placards, warm, and cheering on election night. No console errors.
+
 ## UI refresh, part one: ink, not boxes
 
 Kelbo asked for a UI refresh and picked all five options from the pitch (A room first, B ink not boxes, C lamplight, D the desk, E feel pass), plus a textures and chamber pass after. Order: B, A, C, E, D. B first because the others sit on it.
