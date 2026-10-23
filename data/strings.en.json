@@ -566,6 +566,8 @@
   "settings.colourBlindNote": "Swaps the party colours and the yea/nay marks for a palette that stays apart under every common colour vision.",
   "settings.largeText": "Larger text",
   "settings.largeTextNote": "Scales the whole Order Paper up a notch.",
+  "settings.richRooms": "Rich rooms",
+  "settings.richRoomsNote": "The sconces and extra lamps in the House, the fuller gallery, the curtains, the radiators and the things on the desks. Turn it off if an older phone stutters.",
   "settings.done": "Done",
   "front.edition": "Weekend edition",
   "front.date": "{date} {month} · Year {year}",

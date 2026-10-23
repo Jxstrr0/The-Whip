@@ -21,8 +21,8 @@ export const PALETTE = {
   paneWarm: '#f1dfb0',
 };
 
-// How much a room builds: `rich` adds the coffered ceiling, the sconces, the extra lamps and the dressing on
-// the desks. main.js sets it from the settings (and `?lite=1`) before any room is built; rooms read it as they
+// How much a room builds: `rich` adds the sconces, the extra lamps, the fuller gallery, the curtains, the
+// radiators and the dressing on the desks. main.js sets it from the settings (and `?lite=1`) before any room is built; rooms read it as they
 // build, so a change rebuilds the current room.
 export const DETAIL = { rich: true };
 
