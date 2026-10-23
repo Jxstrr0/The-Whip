@@ -11,10 +11,12 @@ import { dilemmaFor } from './career.js';
 import { baseScore, scoreToVote } from './mp.js';
 import { remember, person } from './memoir.js';
 import { canUse, canRelease, expelCandidates } from './tools.js';
+import { billName } from './bills.js';
+import { fill as fillSlots } from './fill.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
-const fillText = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
+const fillText = fillSlots;
 // The caucus line in words: "whipped YEA" or "a free vote".
 export const lineName = (line) => (line.line === 'whipped' ? say('caucus.lineWhipped', { pos: line.position.toUpperCase() }) : say('caucus.lineFree'));
 
@@ -79,7 +81,7 @@ export function startCaucus(state, rng) {
   const leader = state.mps[party.leader];
   const { head, rest } = caucusSeating(state, me.party);
   const fill = (text, extra = {}) =>
-    text.replace(/\{(\w+)\}/g, (_, k) => ({ leader: leader ? fullName(leader) : 'The leader', bill: bill?.title || 'this week\'s business', whip: party.chiefWhip ? fullName(state.mps[party.chiefWhip]) : 'the whip', party: party.name, ...extra })[k] ?? `{${k}}`);
+    fillSlots(text, { leader: leader ? fullName(leader) : 'the leader', bill: bill ? billName(bill) : 'this week\'s business', whip: party.chiefWhip ? fullName(state.mps[party.chiefWhip]) : 'the whip', party: party.name, ...extra });
   // Grievances come from the unhappiest members: low rapport with the leader or whip, or a riding the bill hurts.
   const sore = rest
     .map((id) => state.mps[id])
@@ -206,8 +208,7 @@ export function caucusSpeak(state, rng, stanceId) {
 
 export function fillStance(state, text) {
   const c = state.caucus;
-  const bill = c?.billId ? state.bills[c.billId].title : "this week's business";
-  return text.replace(/\{bill\}/g, bill).replace(/\{(\w+)\}/g, (m) => m);
+  return fillSlots(text, { bill: c?.billId ? billName(state.bills[c.billId]) : "this week's business" });
 }
 
 export function caucusWhisper(state, rng, mpId) {
@@ -221,8 +222,8 @@ export function caucusWhisper(state, rng, mpId) {
   const pool = data().caucus.whispers.filter((w) => w.mood === m.mood);
   const w = rng.pick(pool.length ? pool : data().caucus.whispers);
   const party = state.parties[m.party];
-  const bill = c.billId ? state.bills[c.billId].title : "this week's business";
-  const text = w.text.replace(/\{(\w+)\}/g, (_, k) => ({ bill, whip: party.chiefWhip ? fullName(state.mps[party.chiefWhip]) : 'the whip', leader: party.leader ? fullName(state.mps[party.leader]) : 'the leader', name: fullName(m), other: 'someone down the table' })[k] ?? `{${k}}`);
+  const bill = c.billId ? billName(state.bills[c.billId]) : "this week's business";
+  const text = fillSlots(w.text, { bill, whip: party.chiefWhip ? fullName(state.mps[party.chiefWhip]) : 'the whip', leader: party.leader ? fullName(state.mps[party.leader]) : 'the leader', name: fullName(m), other: 'someone down the table' });
   c.whispers.push({ mpId, text });
   return { text };
 }
@@ -287,7 +288,7 @@ export function endCaucus(state) {
   if (c.revolt && !c.revolt.resolved) withRng(state, (rng) => resolveRevolt(state, rng));
   if (c.billId) {
     const b = state.bills[c.billId];
-    log(state, say('caucus.lineLog', { bill: b.title, line: lineName(c.line) }), 'caucus');
+    log(state, say('caucus.lineLog', { bill: billName(b), line: lineName(c.line) }), 'caucus');
   }
   state.caucus = null;
 }

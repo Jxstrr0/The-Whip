@@ -1,5 +1,6 @@
 // The career: creating the player's MP, acts and (later) graduation, vacancies, offers and endings.
 import { data, tuning } from './config.js';
+import { fill } from './fill.js';
 import { withRng, createRng } from './rng.js';
 import { makeBill } from './bills.js';
 import { hooks, log, resolvers, queueStop } from './pacing.js';
@@ -210,7 +211,6 @@ export function startRow(p) {
 }
 
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
-const fill = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
 const whipOf = (state) => state.parties[state.mps[state.player.mpId].party]?.chiefWhip;
 
 // The cohort-mate who wants what you want: same party, your election, the most ambitious of them.

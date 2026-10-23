@@ -37,7 +37,8 @@ import { parliamentHash } from './src/sim/generate.js';
 import { cardView, HIDDEN_FIELDS, reveal, decayKnowledge, touch, familiarity } from './src/sim/knowledge.js';
 import { faceFor, faceOf, partsFor } from './src/faces.js';
 import { buildSeats, deskPairOffset, walkerPath, GEOMETRY } from './src/chamber/layout.js';
-import { introduceBill, makeBill, setLines } from './src/sim/bills.js';
+import { introduceBill, makeBill, setLines, billName } from './src/sim/bills.js';
+import { fill } from './src/sim/fill.js';
 import { intentions, baseScore } from './src/sim/mp.js';
 import { putQuestion, runDivision, recordResult, speakerCastingVote } from './src/sim/vote.js';
 import * as pacing from './src/sim/pacing.js';
@@ -1281,8 +1282,9 @@ test('Anyone but the leader and the Speaker can be expelled; the front bench nee
 test('The leader opens caucus on the line the party has actually taken', () => {
   const C = data().caucus;
   const reEsc = (x) => x.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
-  // Names stand for anything; the bill must be the bill's own title.
-  const matches = (pool, text, title) => pool.some((tpl) => new RegExp('^' + tpl.split('{bill}').map((part) => part.split(/\{\w+\}/).map(reEsc).join('.+')).join(reEsc(title)) + '$').test(text));
+  // Names stand for anything; the bill must be the bill's own name ("the … Act", capitalised when it opens a sentence).
+  const named = (b) => { const n = billName(b); return `[${n[0].toUpperCase()}${n[0]}]${reEsc(n.slice(1))}`; };
+  const matches = (pool, text, bill) => pool.some((tpl) => new RegExp('^' + tpl.split('{bill}').map((part) => part.split(/\{\w+\}/).map(reEsc).join('.+')).join(named(bill)) + '$').test(text));
   const cases = [['whipped', 'yea', (x) => C.leaderOpenings[x]], ['whipped', 'nay', (x) => C.leaderOpeningsNay[x]], ['free', 'yea', (x) => C.leaderOpeningsFree[x]], ['whipped', 'abstain', () => C.leaderOpeningsAbstain]];
   let n = 0;
   for (const temper of data().parties.leaderPersonalities) {
@@ -1295,9 +1297,9 @@ test('The leader opens caucus on the line the party has actually taken', () => {
       bill.lines[party.id] = line;
       bill.positions[party.id] = position;
       const { opening } = caucusSim.startCaucus(s, createRng('open-' + n++));
-      assert(matches(pool(temper), opening, bill.title), `${temper} ${line} ${position}: ${opening}`);
+      assert(matches(pool(temper), opening, bill), `${temper} ${line} ${position}: ${opening}`);
       assert(!/\{/.test(opening) && opening.includes(bill.title), 'filled in: ' + opening);
-      for (const [l2, p2, other] of cases) if (other(temper) !== pool(temper)) assert(!matches(other(temper), opening, bill.title), `not from the ${l2} ${p2} set: ${opening}`);
+      for (const [l2, p2, other] of cases) if (other(temper) !== pool(temper)) assert(!matches(other(temper), opening, bill), `not from the ${l2} ${p2} set: ${opening}`);
       // What you can say back fits the same line.
       const ctx = line === 'free' ? 'free' : position;
       const said = caucusSim.stanceChoices(s).map((id) => C.stances.find((x) => x.id === id));
@@ -2233,11 +2235,40 @@ test('Every Question Period line and headline fills with no placeholder left ove
   walk(Q.benches);
   walk(Q.gallery);
   for (const list of Object.values(Q.issues)) for (const i of list) assert(i.issue && data().world.interestNames[i.interest], 'issue with a known interest: ' + i.issue);
+  const cats = new Set(data().billTemplates.templates.map((b) => b.category));
+  for (const c of cats) assert(Q.details[c]?.length >= 2, 'details for bill category ' + c);
+  walk(Q.details);
   const H = data().headlines.headlines.filter((h) => h.event.startsWith('qp'));
   assert(H.length >= 10, 'Question Period headlines');
   const rng = createRng('h');
   for (const h of H) assert(!/[{}]/.test(media.headline(s, rng, h.event, { minister: 'A. Minister', issue: 'the bridge', bill: 'An Act' })), 'headline fills: ' + h.text);
   return `${n} lines, ${H.length} headlines`;
+});
+
+test('Question Period doesn\'t repeat itself: no line comes back until its pool runs dry, then the oldest does', () => {
+  const s = toQuestionPeriod('p1');
+  const Q = data().questionPeriod;
+  const rng = createRng('fresh');
+  const pool = Q.questions.government.offScript;
+  s.player.recentQp = [];
+  const seen = pool.map(() => qp.freshLine(s, rng, pool, 'test'));
+  assert(new Set(seen).size === pool.length, `all ${pool.length} heard once before any repeat`);
+  assert(qp.freshLine(s, rng, pool, 'test') === seen[0], 'then the one heard longest ago');
+  // Six Question Periods in a row on the same state: no question, answer or gallery line twice.
+  const s2 = toQuestionPeriod('p2');
+  const heard = [];
+  for (let i = 0; i < 6; i++) {
+    const r = createRng('qp' + i);
+    qp.startQuestionPeriod(s2, r, 'rota');
+    const q = s2.questionPeriod;
+    assert(!q.bill || (q.detail && !/[{}]/.test(q.questions.pointed)), 'a bill question names a detail');
+    qp.ask(s2, r, ['soft', 'pointed', 'offScript'][i % 3]);
+    heard.push(...Object.values(q.questions), q.answer, q.gallery);
+    s2.questionPeriod = null;
+  }
+  const dup = heard.filter((x, i) => heard.indexOf(x) !== i);
+  assert(!dup.length, 'repeated: ' + dup[0]);
+  return `${heard.length} lines over six Question Periods, none twice`;
 });
 
 section('Round two · The front page');
@@ -2663,6 +2694,46 @@ test('Your row shows the side you need and where each member stands against it',
   }
   assert(rowLine(s, bill.id).includes(r.want.toUpperCase()), 'the count line says which side');
   return `need ${r.want} · ${JSON.stringify(r.counts)}`;
+});
+
+section('Round three · Bill names in prose');
+
+test('A bill reads as "the … Act" mid-sentence, motions by their spoken name, and a sentence that opens on one gets its capital', () => {
+  const tpls = data().billTemplates.templates;
+  const motions = tpls.filter((x) => x.kind === 'oppositionMotion');
+  assert(motions.every((x) => x.prose), 'a motion has no spoken name: ' + motions.find((x) => !x.prose)?.title);
+  assert(tpls.every((x) => !x.prose || /^the [a-zA-Z]/.test(x.prose)), 'a spoken name should start "the …"');
+  const s = newGame({ seed: 'NAMES-1' });
+  const act = makeBill(s, createRng('n1'), tpls.find((x) => x.title === 'Congestion Charge Enabling Act'));
+  const motion = makeBill(s, createRng('n2'), motions.find((x) => x.prose === 'the rent freeze motion'));
+  assert(billName(act) === 'the Congestion Charge Enabling Act', billName(act));
+  assert(billName(motion) === 'the rent freeze motion', billName(motion));
+  assert(billName(null) === 'the bill', 'no bill reads as "the bill"');
+  assert(fill('{bill} passes.', { bill: 'the X Act' }) === 'The X Act passes.', 'opening slot');
+  assert(fill('A vote on {bill}.', { bill: 'the X Act' }) === 'A vote on the X Act.', 'mid-sentence slot');
+  assert(fill('“Now. {bill}.”', { bill: 'the X Act' }) === '“Now. The X Act.”', 'after a full stop');
+  assert(fill('“{bill} is whipped.”', { bill: 'the X Act' }) === '“The X Act is whipped.”', 'inside an opening quote');
+  assert(fill('{a} and {b}', { a: 3 }) === '3 and {b}', 'numbers pass through and missing slots stay');
+  // Every line in the data that names a bill, filled with each kind: no "the the", no sentence opening lower-case.
+  const lines = [];
+  const walk = (v) => (typeof v === 'string' ? v.includes('{bill}') && lines.push(v) : v && typeof v === 'object' && Object.values(v).forEach(walk));
+  walk(data());
+  for (const b of [act, motion]) {
+    for (const line of lines) {
+      const out = fill(line, { bill: billName(b) });
+      assert(!/\b[Tt]he the\b/.test(out), 'doubled article: ' + out);
+      assert(!/(^["“‘]?|[.!?]["”’]?\s+["“‘]?)the /.test(out), 'sentence opens lower-case: ' + out);
+    }
+  }
+  // A whole Parliament played headless: nothing in the log puts a bill title straight after a preposition.
+  const g = newGame({ seed: 'NAMES-2' });
+  botPlayParliament(g, createRng('names2'));
+  const texts = [...g.log.map((l) => l.text), ...(g.memoir || []).map((e) => JSON.stringify(e))];
+  const titles = Object.values(g.bills).map((b) => b.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const bare = new RegExp(`\\b(on|for|to|about|against|of|before) (${titles.join('|')})`);
+  const hit = texts.find((x) => bare.test(x));
+  assert(!hit, 'bare title: ' + hit);
+  return `${lines.length} lines with a bill, ${texts.length} log and memoir entries checked`;
 });
 
 async function run() {

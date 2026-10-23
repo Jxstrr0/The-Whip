@@ -1,6 +1,7 @@
 // Confidence: confidence-and-supply agreements a minority government signs and either side can break,
 // and the pressure meter: how close the leader's office is to replacing the whip.
 import { data, tuning } from './config.js';
+import { fill } from './fill.js';
 import { hooks, log } from './pacing.js';
 import { lineFor } from './bills.js';
 import { voteOf } from './vote.js';
@@ -10,7 +11,6 @@ import { headline } from './media.js';
 const SIGN = { yea: 1, nay: -1 };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fullName = (m) => `${m.name.first} ${m.name.last}`;
-const fill = (text, ctx) => text.replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? `{${k}}`);
 
 export function activeAgreement(state, partyId = null) {
   const gov = state.parties[state.house.government];

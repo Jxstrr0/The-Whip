@@ -459,6 +459,7 @@
     "guidedDay": 2,
     "hitOdds": { "cooperative": 0.4, "guarded": 0.5, "angry": 0.65, "anxious": 0.75 },
     "dealRiding": 2,
+    "recentLines": 90,
     "effects": {
       "government": {
         "lob": { "whip": 4, "noticed": 1, "riding": 0, "press": 0.15, "style": "loyalist" },

@@ -9,6 +9,10 @@ import { adjustRapport, addStyle } from './relationships.js';
 import { headline } from './media.js';
 import { ridingVars } from './riding.js';
 import { remember, person } from './memoir.js';
+import { billName } from './bills.js';
+import { fill, capFirst } from './fill.js';
+
+export { capFirst };
 
 export const FRAMINGS = ['soft', 'pointed', 'offScript'];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -20,20 +24,26 @@ export function sideOf(state) {
   return state.mps[state.player.mpId].party === state.house.government ? 'government' : 'opposition';
 }
 
-// The slots: {bill}, {issue} and {minister} on top of the riding's own words.
+// The slots: {bill}, {detail} (the part of the bill people argue about), {issue} and {minister} on top of the
+// riding's own words.
 export function qpVars(state, qp = state.questionPeriod) {
   const minister = qp ? state.mps[qp.ministerId] : null;
-  return { ...ridingVars(state), bill: qp?.bill || 'the bill', issue: qp?.local?.issue || 'the file', minister: fullName(minister) || 'the minister' };
+  return { ...ridingVars(state), bill: qp?.bill || 'the bill', detail: qp?.detail || 'the costing', issue: qp?.local?.issue || 'the file', minister: fullName(minister) || 'the minister' };
+}
+
+// A line from `pool` the player hasn't heard lately. Once every line in a pool is recent, the one heard
+// longest ago comes back first. `key` names the pool so the same index in two pools doesn't collide.
+export function freshLine(state, rng, pool, key) {
+  const recent = state.player.recentQp || [];
+  const ids = pool.map((_, i) => `${key}:${i}`);
+  const open = ids.filter((id) => !recent.includes(id));
+  const id = open.length ? rng.pick(open) : ids.reduce((a, b) => (recent.indexOf(a) <= recent.indexOf(b) ? a : b));
+  state.player.recentQp = [...recent.filter((x) => x !== id), id].slice(-tuning().questionPeriod.recentLines);
+  return pool[Number(id.slice(id.lastIndexOf(':') + 1))];
 }
 
 export function fillQp(state, text, qp) {
-  const vars = qpVars(state, qp);
-  return text.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
-}
-
-// A sentence can't open with "the rent"; the data keeps issues lower-case so they read mid-sentence.
-export function capFirst(s) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  return fill(text, qpVars(state, qp));
 }
 
 // The minister who answers: a cabinet member with the interest, else any minister, else the Prime Minister.
@@ -61,8 +71,8 @@ function localIssue(state, rng) {
   }
   const me = state.mps[state.player.mpId];
   const Q = data().questionPeriod;
-  const pool = Q.issues[me.riding.type] || Q.issues.rural;
-  return { ...rng.pick(pool), caseId: null };
+  const type = Q.issues[me.riding.type] ? me.riding.type : 'rural';
+  return { ...freshLine(state, rng, Q.issues[type], 'issue.' + type), caseId: null };
 }
 
 // Does a slot come today? The whip's promise first, the guided week's Tuesday, then the rota.
@@ -91,7 +101,8 @@ export function startQuestionPeriod(state, rng, source = 'rota') {
     side,
     phase: 'stand',
     billId: bill?.id || null,
-    bill: bill?.title || null,
+    bill: bill ? billName(bill) : null,
+    detail: bill ? freshLine(state, rng, Q.details[bill.category] || Q.details.default, 'detail.' + (Q.details[bill.category] ? bill.category : 'default')) : null,
     local,
     ministerId: ministerFor(state, bill ? bill.category : local.interest, bill?.sponsor),
     localMinisterId: ministerFor(state, local.interest, null),
@@ -104,11 +115,12 @@ export function startQuestionPeriod(state, rng, source = 'rota') {
     gallery: '',
     effects: null,
   };
-  qp.call = fillQp(state, rng.pick(Q.call), qp);
+  qp.call = fillQp(state, freshLine(state, rng, Q.call, 'call'), qp);
   const topic = bill ? 'bill' : 'issue';
   for (const f of FRAMINGS) {
     const pool = f === 'offScript' ? Q.questions[side].offScript : Q.questions[side][f][topic];
-    qp.questions[f] = capFirst(fillQp(state, rng.pick(pool), qp));
+    const key = f === 'offScript' ? `q.${side}.offScript` : `q.${side}.${f}.${topic}`;
+    qp.questions[f] = capFirst(fillQp(state, freshLine(state, rng, pool, key), qp));
   }
   state.questionPeriod = qp;
   state.player.qpSlot = null;
@@ -131,9 +143,9 @@ export function ask(state, rng, framing) {
   qp.framing = framing;
   qp.phase = 'answer';
   qp.outcome = outcome;
-  qp.answer = capFirst(fillQp(state, rng.pick(Q.answers[outcome][mood]), qp));
-  qp.benches = fillQp(state, rng.pick(Q.benches[qp.side][outcome]), qp);
-  qp.gallery = fillQp(state, rng.pick(Q.gallery[outcome]), qp);
+  qp.answer = capFirst(fillQp(state, freshLine(state, rng, Q.answers[outcome][mood], `a.${outcome}.${mood}`), qp));
+  qp.benches = capFirst(fillQp(state, freshLine(state, rng, Q.benches[qp.side][outcome], `b.${qp.side}.${outcome}`), qp));
+  qp.gallery = fillQp(state, freshLine(state, rng, Q.gallery[outcome], `g.${outcome}`), qp);
 
   const E = T.effects[qp.side][outcome];
   const party = state.parties[me.party];
