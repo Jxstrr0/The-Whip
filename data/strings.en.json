@@ -69,6 +69,7 @@
   "mood.angry": "Angry",
   "mood.anxious": "Anxious",
   "debug.hash": "Parliament {hash}",
+  "sheet.handle": "More or less of the sheet",
   "agenda.continue": "Continue",
   "agenda.skipHint": "to the next thing that matters",
   "agenda.date": "{day} {date} {month} · Week {week}, Year {year}",

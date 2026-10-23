@@ -1455,3 +1455,30 @@ Kelbo asked for a UI refresh and picked all five options from the pitch (A room 
 **Also fixed on the way:** a crash that predates this pass. When you lose your seat at an election, the sim removed the departed members but never re-seated the House before the memoir, so the chamber behind it tried to dress seats whose members were gone and stopped with a console error. It now gives the parties their new leaders and whips, picks a Speaker and seats the new House first. Found by a headless run of "Three short" ending in a lost seat; it happened the same way on `main`.
 
 **Next:** A (room first): meeting sheets at half height with the visitor framed, the speech line in the room, slimmer top bar and one-line date bar. The five "regardless" fixes from the pitch go in with A (the clipped visitor's head, the date bar's news line, the ledger's height, the aim chip, and the top bar wrapping at 390px in Acts 3+ when it carries five items).
+
+## UI refresh, part two: room first
+
+The second of Kelbo's five picks. The rooms were built to be looked at and the paper kept covering them; this pass gives the room the top of the screen back in the scenes where someone is sitting across from you.
+
+**What changed.**
+
+- **Talking sheets open at half height.** A one-to-one in the office and a visitor in the riding office open with the paper at a little under half the screen (46% of its height, set in `css/style.css`), so the person you are dealing with is framed head to lap above it. Reading sheets (the evening board, the deal table, the verdict, the town hall, the riding's end-of-day) still open full. The handle at the top of the sheet is now a real button: a tap swaps between half and full, the choice holds for that scene and the next scene starts afresh.
+- **The camera frames from the sheet's real height.** Each sheet reports how much of an upright screen it leaves clear (a ResizeObserver in `src/main.js`), and the office and riding cameras aim from that (`dropFor` in `src/framing.js`): a half sheet shows the visitor head to lap, a full sheet still keeps their face under the top bar, and a sheet growing or shrinking tilts the view rather than cutting it. On a low sheet the camera also eases back along its own line of sight (the rooms are small, so only a little), and turns so the person sits a third of the way left of the middle with room beside them.
+- **Their line is set beside them in the room.** On an upright phone, what the visitor is saying is a small paper note beside their head (`src/speech.js`, a label in the 3D scene) rather than a quotation on the sheet, and the sheet holds your replies. It shows once they are in the chair, fits itself to the screen's edge, and goes away when they leave. The parting line stays beside them while the verdict is up. Pulling the sheet to full puts the line back on the paper, where the quotation reads as before. In landscape the line stays on the paper: a side sheet already leaves the room clear, and a note over the figure ran under the sheet or off the top.
+- **The stakes are one ruled line** on a talking sheet (the riding's lean, then each way of voting with its two numbers), so the replies come sooner. The division sheet keeps the ruled table from part one.
+- **"Your job here" and the name** keep part one's set; each turn now opens scrolled to the replies rather than to the line, since the line is in the room.
+- **Top bar and date bar.** The masthead stays; the top bar's buttons are lighter than it (smaller tags, thinner paper, a shorter shadow), and nothing in the bar wraps, so Acts 3 and up with five items fit at 390px on one line. The date bar is one line: the date, the act's aim, Continue and Skip. The aim is its name in brass over a thin rule that fills as the count comes in (no more "Get noticed 0/8" chip); a tap still opens the aim sheet. A counter that is a line to stay above or below, or a wait of so many weeks, still says so in words. The latest news rides the same line where there is room (a tablet, a phone on its side) and is hidden on an upright phone, where it was an ellipsis anyway; it is still in the paper.
+- **The five "regardless" fixes from the pitch** are in: the visitor's head is no longer clipped in portrait (the framing above), the date bar's news no longer ellipsises, the ledger is as tall as what is in it (the Book is still a full page), the aim chip is the name and rule, and the top bar's controls are lighter than the masthead.
+
+**Small calls:**
+- The pitch's third height, "peek", is not in yet. It comes with E's handle drag, where it belongs; a tap on the handle has two stops.
+- The note in the room is for upright phones only. In landscape the paper carries the line, as it did.
+- A line the room is showing is still in the sheet's markup, hidden; a screen reader or a pulled-full sheet gets the text either way.
+- The riding office visitor sits closer to the desk than the office's, so its camera backs off a touch further.
+- In headless testing the eases run slow, so the note appears a few seconds after a visitor is announced; on a phone it comes in with them.
+
+**Checked:**
+- `tests.html` green.
+- Played at phone size in portrait and landscape: the cold open, the whip's call (half and full, the stakes line), a walk-in, a verdict with the parting line, the evening board, the deal table, the ledger, the riding's visitors (farmer, union steward, the reporter) and its end of day, the Act 4 top bar at 390px and 360px. No console errors in play.
+
+**Next:** C (lamplight): the paper tinted by the room and the time of day.

@@ -6,7 +6,8 @@ import { surface } from '../textures.js';
 import { placeModel } from '../models.js';
 import { t } from '../ui/text.js';
 import { createRidingCamera } from './ridingCamera.js';
-import { createConstituent, createCrowd } from './constituents.js';
+import { createSpeech } from '../speech.js';
+import { createConstituent, createCrowd, stands } from './constituents.js';
 import { wardrobe } from '../figures.js';
 import { createFigure, poseFigure } from '../office/visitor.js';
 import { drawBoard } from '../office/officeScene.js';
@@ -488,6 +489,7 @@ export function create(ctx) {
   cam.shot('desk', true);
   let visitor = null;
   let visitorKey = null;
+  const speech = createSpeech();
   let townHall = false;
   let night = false;
   let lastWx = DEFAULT_WEATHER;
@@ -502,9 +504,18 @@ export function create(ctx) {
       const old = visitor;
       visitor = null;
       if (old) old.leave(() => old.dispose());
+      cam.standing(!!v && stands(v.role));
       if (!v) return;
       visitor = createConstituent(scene, { role: v.role, id: v.key, path: PATH, seat: VISITOR_SEAT, facing: VISITOR_FACING, partyColor: ctx.playerColor || '#555' });
       visitor.setMood(v.mood || 'cooperative');
+      speech.attach(visitor.figure, stands(v.role) ? 0.38 : 0);
+    },
+    // The visitor's line, set beside them once they've sat down (or stood, for those who stand).
+    setSpeech(text) {
+      speech.set(text);
+    },
+    setClear(f) {
+      cam.setClear(f);
     },
     // Cut outside to face the crowd on the pavement; the glass goes so the camera can stand in the street.
     setTownHall(on, crowdMood = 50, placards = []) {
@@ -575,6 +586,7 @@ export function create(ctx) {
     update(dt) {
       visitor?.update(dt);
       me.update(dt);
+      speech.update(dt, visitor?.phase === 'seated');
       if (townHall) crowd.update(dt);
       precipitation.update(dt);
       cam.update(dt);
@@ -584,6 +596,7 @@ export function create(ctx) {
       cam.fitAspect(camera.aspect, w);
     },
     dispose() {
+      speech.dispose();
       visitor?.dispose();
       scene.traverse((o) => o.userData.cancel?.());
       disposeTree(scene);

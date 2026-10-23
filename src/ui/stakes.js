@@ -31,6 +31,20 @@ export function stakePanel(state, bill) {
   return `<table class="stakes"><caption class="stake-lean">${lean}</caption>${rows}</table>`;
 }
 
+// The same thing as one ruled line, for a talk that needs the room: the riding's lean, then each way of voting
+// with both its numbers. It wraps on a narrow phone and stays one block.
+export function stakeLine(state, bill) {
+  const me = state.mps[state.player.mpId];
+  const s = billStakes(state, bill);
+  const lean = s.lean
+    ? t('stake.lean.' + s.lean.level, { riding: esc(me.riding.name), side: sideWord(s.lean.side) })
+    : t('stake.lean.none', { riding: esc(me.riding.name) });
+  if (!s.whipped) return `<p class="stakes-line"><span class="lean">${lean}</span><span class="free">${esc(t('stake.free'))}</span></p>`;
+  const way = (label, st) => `<span class="way"><span class="side">${esc(label)}</span> ${delta(st.riding, t('stake.riding'))} ${delta(st.whip, t('stake.whip'))}</span>`;
+  const other = s.position === 'yea' ? 'nay' : 'yea';
+  return `<p class="stakes-line"><span class="lean">${lean}</span>${way(t('stake.withLine', { pos: t('vote.' + s.position) }), s.line)}${way(t('stake.against', { pos: t('vote.' + other) }), s.rebel)}</p>`;
+}
+
 // The same thing in one short block, for a card that only needs to hint at it (the whip's call on the evening board).
 export function stakeBrief(state, bill) {
   const s = billStakes(state, bill);

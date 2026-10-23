@@ -2,7 +2,8 @@
 import { t, esc, mpName, partyColor, partyShort, jobLine, stamp } from './text.js';
 import { fillLine, cardLabel } from '../sim/meetings.js';
 import { renderDealTable } from './dealTable.js';
-import { stakePanel, stakeBrief, delta, cardChip, tableTotal } from './stakes.js';
+import { stakeLine, stakeBrief, delta, cardChip, tableTotal } from './stakes.js';
+import { drawer, HANDLE } from './drawer.js';
 import { billStakes } from '../sim/stakes.js';
 import { tuning } from '../sim/config.js';
 import { prediction } from '../sim/count.js';
@@ -14,10 +15,14 @@ import { buzz } from '../haptics.js';
 // Which ink the verdict is stamped in: a deal is good news, a door slammed is bad, a polite no is neither.
 const INK = { deal: 'yea', theyWalked: 'nay', youDeclined: 'nay', refused: 'nay' };
 
-export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onVerdict }) {
+export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onVerdict, getRoom = () => null }) {
   const sheet = document.createElement('section');
   sheet.className = 'sheet office-sheet hidden';
   root.appendChild(sheet);
+  // Pulled to full height, the paper carries the line and the room's note goes away.
+  let said = null;
+  const speak = () => getRoom()?.setSpeech?.(sheet.dataset.h === 'full' ? null : said);
+  const heights = drawer(sheet, { onChange: speak });
   let local = null;
   let localFor = null;
   let lastNote = null;
@@ -77,11 +82,12 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
     const learned = [theirs ? t(theirs === 1 ? 'debrief.learnedOne' : 'debrief.learned', { n: theirs }) : '', others ? t(others === 1 ? 'debrief.othersOne' : 'debrief.others', { n: others }) : ''].filter(Boolean).join(' ');
     const r = mt.after?.rapport ?? 0;
     const owed = dealt && [...mt.deal.offers, ...mt.deal.asks].some((c) => c !== 'info');
-    sheet.innerHTML = `<div class="sheet-handle"></div>
+    heights.set('half', mt.id);
+    sheet.innerHTML = `${HANDLE()}
       <header class="card-head"><span class="chip" style="background:${partyColor(state, m)}"></span>
         <div class="who"><h2>${esc(mpName(m))}</h2><p>${esc(partyShort(state, m))}</p></div></header>
       <div class="verdict-row">${stamp(t(dealt ? 'debrief.stamp.deal' : 'debrief.stamp.noDeal'), INK[o] || 'grey', true)}<p class="verdict-line">${esc(t('debrief.' + (dealt && mt.reversal ? 'dealWhip' : o), { first: m.name.first }))}</p></div>
-      ${mt.after?.parting ? `<blockquote class="line">${esc(mt.after.parting)}</blockquote>` : ''}
+      ${mt.after?.parting ? `<blockquote class="line in-room">${esc(mt.after.parting)}</blockquote>` : ''}
       ${dealt ? `<div class="deal-cols">${terms(mt.deal.offers, t('deal.youGive'), false)}${terms(mt.deal.asks, t('deal.youGet'), true)}</div>${tableTotal(state, mt.deal, mt.mpId)}` : ''}
       <p class="debrief-facts"><span class="k">${esc(t('debrief.rapport'))}</span> ${delta(r, '')}${learned ? ` <span class="muted">${esc(learned)}</span>` : ''}</p>
       ${owed ? `<p class="hint">${t('debrief.ledger')}</p>` : ''}
@@ -122,7 +128,8 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
           })
           .join('')
       : `<li class="muted">${t('office.none')}</li>`;
-    sheet.innerHTML = `<div class="sheet-handle"></div>
+    heights.set('full', 'evening');
+    sheet.innerHTML = `${HANDLE()}
       <header class="card-head"><div class="who"><h2>${t(`office.title.${Math.max(1, Math.min(5, state.player.act))}`)}</h2><p>${t('office.slots')}: <span class="slots">${slotDots(e)}</span></p></div></header>
       ${jobLine(state, 'office', { slots: e.slots, whipCall: !!e.whipCall })}
       ${whip}
@@ -154,18 +161,20 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
     const mt = state.meetings[state.meeting];
     const m = state.mps[mt.mpId];
     if (mt.reversal && mt.phase !== 'debrief') buzzOnce(state, 'reversal');
-    // After the first turn the job and the full stakes have been read: keep one short stakes line so the talk has the room.
+    // After the first turn the job has been read: the talk gets the room.
     const later = mt.phase === 'talk' && mt.turn > 1;
     const bill = ['whipCall', 'rebelRecruit'].includes(mt.situation) ? state.bills[mt.billId] : null;
-    const stakes = bill ? (later ? stakeBrief(state, bill) : stakePanel(state, bill)) : '';
-    const head = `<div class="sheet-handle"></div>
+    const head = `${HANDLE()}
       <header class="card-head"><span class="chip" style="background:${partyColor(state, m)}"></span>
         <div class="who"><h2>${esc(mpName(m))}</h2><p><span class="badge mood-${mt.mood}">${t('mood.' + mt.mood)}</span>${mt.phase === 'talk' ? ` · ${t('talk.turn', { n: mt.turn, max: mt.maxTurns })}` : ''}</p></div></header>
       ${later ? '' : jobLine(state, 'meeting', { situation: mt.situation, pos: mt.billId ? t('vote.' + state.bills[mt.billId]?.positions[state.mps[state.player.mpId].party]) : '' })}
-      ${stakes}`;
+      ${bill ? stakeLine(state, bill) : ''}`;
     if (mt.phase === 'talk') {
+      // The talk opens at half height: their line is set beside them in the room, and the sheet holds the replies.
+      // Where the room can't show it (a phone on its side under a bottom sheet) the line stays on the paper.
+      heights.set('half', mt.id);
       const note = lastNote ? `<p class="note ${lastNote}">${t(lastNote === 'good' ? 'talk.good' : lastNote === 'bad' ? 'talk.bad' : 'talk.ok')}</p>` : '';
-      sheet.innerHTML = `${head}${note}<blockquote class="line">${esc(mt.talk.current.text)}</blockquote>
+      sheet.innerHTML = `${head}${note}<blockquote class="line in-room">${esc(mt.talk.current.text)}</blockquote>
         <div class="choices talk-choices">${mt.talk.options.map((o, i) => `<button class="btn" data-i="${i}"><small class="approach">${t('approach.' + o.approach)}</small>${esc(o.text)}</button>`).join('')}</div>`;
       sheet.querySelectorAll('[data-i]').forEach((b) => {
         b.onclick = () => {
@@ -174,12 +183,13 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
           render(getState());
         };
       });
-      // Each new turn opens on what they just said: from the top if it's in view there, otherwise scrolled to it.
-      const said = sheet.querySelector('blockquote.line');
-      const fits = said.offsetTop + said.offsetHeight + 60 <= sheet.clientHeight;
-      sheet.scrollTop = later && !fits ? Math.max(0, (sheet.querySelector('.note') || said).offsetTop - 8) : 0;
+      // Each new turn opens on the replies: from the top if they're in view there, otherwise scrolled to them.
+      const said = sheet.querySelector('.note') || sheet.querySelector('.talk-choices');
+      const fits = said.offsetTop + 60 <= sheet.clientHeight;
+      sheet.scrollTop = later && !fits ? Math.max(0, said.offsetTop - 8) : 0;
       return;
     }
+    heights.set('full', mt.id);
     if (localFor !== mt.id) {
       local = { offers: [...mt.deal.offers], asks: [...mt.deal.asks] };
       localFor = mt.id;
@@ -197,14 +207,21 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
 
   function render(state) {
     const p = state.flow.pending;
+    const mt = p?.kind === 'meeting' && state.meeting ? state.meetings[state.meeting] : null;
     if (p?.kind === 'office') {
       lastNote = null;
       sheet.classList.remove('hidden');
       evening(state);
-    } else if (p?.kind === 'meeting' && state.meeting) {
+    } else if (mt) {
       sheet.classList.remove('hidden');
       meeting(state);
     } else sheet.classList.add('hidden');
+    // Their line goes to the room, beside them: what they're saying while the talk is on, and their parting
+    // words while the verdict is up and they're still in the chair.
+    const done = p?.kind === 'office' && state.evening?.debrief ? state.meetings[state.evening.debrief] : null;
+    const parting = done?.outcome && done.outcome !== 'theyWalked' ? done.after?.parting : null;
+    said = mt?.phase === 'talk' ? mt.talk.current.text : parting || null;
+    speak();
   }
-  return { render };
+  return { render, sheet };
 }
