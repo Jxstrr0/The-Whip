@@ -4,6 +4,8 @@ Longlight Interactive · October 20, 2026 · Version 3.1 (career rewrite + gap f
 
 This file tells a Claude Code session how to build The Whip. What the game *is* lives in `DESIGN.md`. This file covers how: constraints, setup, conventions, geometry specs for all four rooms, data contracts, the stage plan, testing, build advice and kickoff prompts.
 
+**Status (October 24, 2026).** Every stage in section 8 is done and merged, and the game is in playtest; `CLAUDE.md` has the current status and a map of where things live. Section 4's layout and section 7's contracts are the original plan. The code has grown past them (more files, more fields), so where they and `src/` differ, the code is authoritative and the note belongs in `PROGRESS.md`.
+
 ---
 
 ## 1. Mission
@@ -67,7 +69,7 @@ Stage 0 gets an empty page live at `https://jxstrr0.github.io/the-whip/`. A few 
 </script>
 ```
 
-**Kelbo, after the push**
+**Kelbo, after the push** (how it was first set up; since then `.github/workflows/pages.yml` deploys every push to `main` through GitHub Actions, and the Pages source is "GitHub Actions")
 
 1. In the repo, go to Settings, then Pages. Under Build and deployment, set Source to "Deploy from a branch", pick `main` and `/ (root)`, and save.
 2. Wait a minute or two, then open the live URL on your phone.
@@ -82,59 +84,78 @@ Keep files small and single-purpose, and put every file where this layout says. 
 
 ```text
 the-whip/
-  index.html            canvas, import map, UI root
+  index.html            canvas, import map, UI root, home-screen metas
   tests.html            browser-run sim checks
+  manifest.webmanifest  add to home screen
   .nojekyll
-  DESIGN.md  HANDOFF.md  PROGRESS.md  README.md
-  css/style.css         UI overlays, safe-area padding, dark theme
+  .github/workflows/pages.yml   deploys main to Pages on every push
+  DESIGN.md  HANDOFF.md  PROGRESS.md  README.md  CLAUDE.md  ART-PASS.md
+  css/style.css         UI overlays, Order Paper tokens, safe-area padding, large text, colour-blind
+  tools/lineup.html     dev page: the figure in every pose
   src/
-    main.js             boot: load save or new game, start loop
+    main.js             boot: menu or ?seed=, build the world, URL switches, run the loop
     state.js            the single game-state object + dispatch(action)
-    save.js             localStorage read/write, schema version, export/import
+    save.js             localStorage read/write, schema version, migrations, export/import
+    settings.js         sound, volume, haptics, glossary, colour-blind, large text
     rooms.js            which room is active; transitions between scenes
+    framing.js          how a room camera aims around the sheet
+    loadData.js         fetches data/*.json
+    look.js  kit3d.js  textures.js  models.js   shared rendering: palette, tone mapping, merged parts, CC0 textures and props
+    body.js  figures.js  motion.js  faces.js    the shared figure kit: body, instanced crowds, poses and motion, faces you earn
+    weatherFx.js  pressPhoto.js  audio.js  haptics.js
     chamber/
       scene.js          renderer, lights, chamber shell, Speaker's dais, table, bar
       layout.js         pure math: seat positions from the geometry spec
       seats.js          instanced desks and chairs
       mps3d.js          instanced MP figures, outline on select
-      camera.js         orbit limits, pinch zoom, focus on a party block
+      camera.js         two views (own seat, overview), orbit limits, pinch zoom, focus on a party block
       picking.js        raycast tap -> seat index -> MP id
-      voteLights.js     per-seat color during divisions
+      voteLights.js     per-seat color and icon during divisions
+      life.js           members slipping in and out on ordinary days
     office/
-      officeScene.js    the office room, desk, chairs, count board, window; two tiers
+      officeScene.js    the office room, one set per act (five), the whip's office for the reversal
       officeCamera.js   fixed over-the-shoulder camera, small eases
-      visitor.js        the visiting MP figure: enter, sit, leave, mood pose
+      visitor.js        the jointed visiting MP figure: enter, sit, leave, mood pose
     riding/
-      ridingScene.js    the constituency office; window variant per riding type
-      ridingCamera.js   fixed camera, small eases
-      constituents.js   visitor figures for constituents and local press
+      ridingScene.js    the constituency office; street painted per riding type
+      ridingCamera.js   fixed camera, a cut to the town hall
+      constituents.js   visitor figures for constituents and local press, the town hall crowd
     caucus/
       caucusScene.js    the caucus room: long table, seating by clique
       caucusCamera.js   from the player's seat; pan along the table
-      caucusFigures.js  instanced seated MPs, mood colors for the whip's read
+      caucusFigures.js  instanced seated MPs, mood glow and marks for the whip's read
     sim/
       rng.js            seeded RNG (sfc32)
+      config.js         static data loaded once: tuning(), data(), say()
+      actions.js        the action table every module registers into
       generate.js       Parliament from a seed: parties, ridings, MPs, cohorts, cliques
       mp.js             the MP decision model
-      relationships.js  rapport, cohorts, cliques, mentor arc, opposite numbers, reputation style
+      relationships.js  rapport, cohorts, cliques, mentor arc, reputation style
       knowledge.js      what the player knows about each MP; reveal sources; decay
       rivals.js         rival whip AI: weekly budgets, poaching, leaks, digs, pair tests
-      pacing.js         which days stop the player; auto-resolve of routine days
-      lifeEvents.js     MP arcs: ambition, crisis, riding trouble, retirement, by-elections
-      bills.js          bill kinds, stages, templates, amendments, PMB lottery
+      pacing.js         the day loop; which days stop the player; auto-resolve of routine days
+      lifeEvents.js     MP arcs: ambition, crisis, riding trouble, retirement
+      bills.js          bill kinds, stages, templates, amendments, billName()
       vote.js           voice vote, division bells, standing count, pairing, ties
       tools.js          chamber and office tools, gated by act
-      meetings.js       talk phase lines, deal table rules, outcomes
-      riding.js         riding standing, cases, town halls, nomination
-      caucus.js         caucus meeting: mood, speaking, whispers, revolts, expulsion
-      career.js         acts, graduation checks, vacancies, cabinet offers, demotion, floor-crossing, retirement
-      confidence.js     confidence votes, agreements, government falls
-      media.js  election.js  record.js  modes.js
+      count.js          the count board's marks and the whip's prediction
+      meetings.js       the office evening, talk phase, deal table, outcomes
+      riding.js         riding standing, cases, the reporter, the president, town halls, nomination
+      caucus.js         caucus meeting: mood, speaking, whispers, revolts
+      career.js         acts 1 and 2, graduation, vacancies, the rival, slotsForAct
+      ranks.js          acts 3 to 5: the row, the count, the pair, offers, demotion
+      record.js         the whip's record, endings, floor-crossing
+      confidence.js  election.js  media.js  modes.js  memoir.js
+      questionPeriod.js  pmb.js  bigVote.js  goals.js  stakes.js  row.js  coldOpen.js  calendar.js  fill.js  bot.js
     ui/
-      hud.js  mpCard.js  book.js  countBoard.js  agenda.js  ledger.js
-      talk.js  dealTable.js  caucusUI.js  ridingUI.js  careerUI.js  menus.js
-  data/                 name pools, ridings, bill templates, dialogue lines, cliques, backgrounds, scenarios, tuning.json (JSON)
-  assets/               models (.glb), textures, audio
+      hud.js  mpCard.js  book.js  rowSheet.js  countBoard.js  agenda.js  ledger.js
+      talk.js  dealTable.js  caucusUI.js  ridingUI.js  qpUI.js  careerUI.js  electionUI.js
+      recordUI.js  memoirUI.js  frontPage.js  coldOpen.js  hillMap.js  menus.js  picker.js  stakes.js  gloss.js  text.js
+  data/                 tuning.json, strings.en.json, dialogue-lines.json, caucus.json, constituents.json,
+                        question-period.json, career.json, headlines.json, memoir.json, glossary.json, cold-open.json,
+                        hill.json, seasons.json, bill-templates.json, scenarios.json, world.json, parties.json,
+                        party-names.json, ridings.json, names.json, backgrounds.json, cliques.json
+  assets/               fonts (Newsreader, self-hosted), icons, CC0 models and textures (LICENSES.md)
 ```
 
 **Conventions**
@@ -147,7 +168,7 @@ the-whip/
 - **Names.** camelCase for variables and functions, PascalCase for classes, kebab-case for data files.
 - **Comments.** Each file starts with a one-line comment saying what it's for. Comment the why, not the what.
 - **Tuning lives in data.** Every weight, threshold, budget and timer goes in `data/tuning.json`, never as a literal in sim code, and `?debug=1` exposes sliders for them.
-- **Dialogue is data.** Lines are templates in `data/dialogue-lines.json` with slots (`{riding}`, `{bill}`, `{mentor}`) and tags (mood, style, situation, act). The talk phase filters by tags and fills slots. Budget about 150 lines per act. There's no runtime AI on Pages.
+- **Dialogue is data.** Office lines are templates in `data/dialogue-lines.json` with slots (`{riding}`, `{bill}`, `{mentor}`) and tags (mood, style, situation, act, and `when` for context lines). The talk phase filters by tags and fills slots through `src/sim/fill.js`. Caucus, riding, Question Period, career beats, headlines and the memoir have their own data files, and every UI and sim string is in `data/strings.en.json`. There's no runtime AI on Pages.
 - **Commits.** Small commits with plain messages, for example "Stage 1: seat layout math".
 
 ---
@@ -182,7 +203,7 @@ A rectangular chamber with a centre aisle, the Speaker at one end and the bar at
 5. Within a party block, seat MPs by clique so cliques sit together, which makes the chamber readable at a glance.
 6. Return `{seatId, side, row, index, x, y, z, rotationY}`, every seat facing the aisle.
 
-**MP figures.** A seated figure about 1.3 m tall from an instanced capsule torso and an instanced sphere head: two draw calls for all 120. Desks and chairs are one instanced mesh each.
+**MP figures.** A seated figure from the shared body kit (`src/body.js`, `src/figures.js`, posed and animated by `src/motion.js`): jacket, shirt, trousers, jointed limbs and a head, drawn as a handful of instanced meshes for all 120. Desks and chairs are one instanced mesh each.
 
 **Camera** (`chamber/camera.js`)
 
@@ -193,7 +214,7 @@ A rectangular chamber with a centre aisle, the Speaker at one end and the bar at
 
 **Division animation** (`chamber/voteLights.js`). The yeas light up row by row, Speaker's end first, about 0.08 s per seat, then the nays. The count board in the HUD ticks up in step. Absent seats stay grey; paired seats pulse once in white. Every lit seat also shows a small icon (check for yea, cross for nay, dash for absent) so votes read without color.
 
-**Colors (placeholders until the art pass)**
+**Colors** (still in use; the colour-blind alternates are `cbColor` in `data/parties.json`)
 
 | Use | Color |
 | --- | --- |
@@ -227,7 +248,7 @@ Three smaller rooms share one approach: a fixed camera, a seated or standing vis
 
 - **Camera** (`office/officeCamera.js`): fixed over the player's shoulder at (0.6, 1.6, 1.9), looking at the visitor chair. A slow push-in when the deal table opens, a settle when the visitor sits. No orbit.
 - **Visitor** (`office/visitor.js`): enters through the door, walks to the chair and sits, about 2 s. Mood sets the pose: upright (cooperative), arms folded (guarded), forward and tense (angry), small and still (anxious). Stands and leaves on accept, decline or walk-out.
-- **Two tiers:** a plain shared room (Acts 1–3) and a corner office with a second meeting table and a larger board (Acts 4–5).
+- **One set per act (five):** a shared room in Act 1, your own room in Act 2, the annex off the whip's office in Act 3, the deputy's room in Act 4 and the Chief Whip's corner office in Act 5 (`SETS` in `office/officeScene.js`).
 - **Act 1 reversal:** when the whip's office calls the rookie in, the camera moves to the visitor's side of the desk and the whip sits behind it.
 
 ### The riding office
@@ -254,7 +275,7 @@ Three smaller rooms share one approach: a fixed camera, a seated or standing vis
 | Head of table | At z = −7: leader centered, Chief Whip at the leader's right, House Leader at the left |
 
 - **Seating** (`caucus/caucusScene.js`): MPs seated by clique, each clique a contiguous block; the player's seat moves closer to the head with rank.
-- **Figures** (`caucus/caucusFigures.js`): instanced seated figures. In the whip's read mode, each figure tints by mood (cooperative green, guarded grey, angry red, anxious amber).
+- **Figures** (`caucus/caucusFigures.js`): instanced seated figures. In the whip's read mode, each readable seat gets a coloured glow on the floor and a shaped mark above the head (cooperative green circle, guarded grey square, angry red triangle, anxious amber diamond), so moods read without colour.
 - **Camera** (`caucus/caucusCamera.js`): from the player's seat, looking along the table; one-finger drag pans along the table within limits, no orbit.
 - **UI** (`ui/caucusUI.js`): listen (reveals mood and who's whispering to whom), speak (a stance sheet with three options), whisper (pick a neighbour), and the revolt sheet when a revolt is called.
 
@@ -544,13 +565,14 @@ No test framework and no build step, so testing runs in the browser: URL switche
 
 | Switch | What it does |
 | --- | --- |
-| `?seed=TEST-1` | Starts a new game from a fixed seed |
-| `?debug=1` | FPS counter (`three/addons/libs/stats.module.js`), seat ids on tap, a hash of the generated Parliament, and `window.whip` exposing `state`, `dispatch` and the sim modules |
-| `?scenario=<name>` | Loads a preset state from `data/scenarios/`, for example a confidence vote three short in Act 5, or the Act 3 friend dilemma |
-| `?room=office`, `?room=riding`, `?room=caucus` | Boots straight into that room with test visitors |
-| `?act=N` | Starts a new game already at act N with a plausible history |
+| `?seed=TEST-1` | Starts a new game from a fixed seed, skipping the menu (no guided week, no cold open) |
+| `?seed=TEST-1&guided=1` | The same with the guided first week; `&coldopen=1` opens on election night; `&party=p2` picks the party |
+| `?seed=TEST-1&act=N` | Starts already at act N |
+| `?scenario=<id>` | Starts a scenario from `data/scenarios.json`: `threeShort` (Act 4), `roomTurns` (Act 5), `homeTruths` (Act 1) |
+| `?daily=1` | Starts today's daily seed |
+| `?debug=1` | FPS counter (`three/addons/libs/stats.module.js`), the Parliament hash on the top bar, tuning sliders for `data/tuning.json`, and `window.whip` exposing `state`, `dispatch` and the sim modules |
 
-**`tests.html`.** A plain page that imports the sim modules and runs assertions, listing pass or fail on screen. Add checks with each stage:
+**`tests.html`.** A plain page that imports the sim modules and runs assertions, listing pass or fail on screen. Serve the repo root over http (`python3 -m http.server 8000`) and open `http://localhost:8000/tests.html`; it needs the CDN for Three.js and finishes in about 30 seconds with `N passed, M failed` at the top (132 passed, 0 failed on October 24, 2026). `CLAUDE.md` has the headless Playwright notes. Add checks with each piece of work:
 
 - The same seed gives the same Parliament hash, including cohorts and cliques.
 - Seat counts per party equal the party seat totals, whips sit where section 5 says, and cliques are contiguous.
@@ -580,20 +602,20 @@ Until Kelbo decides, use these defaults and keep each one a one-line change.
 | Country name | Dominion of Caledor (decided) | `data/world.json` |
 | Seat count | 120, 60 a side, 4 rows of 15 (decided) | `data/world.json` |
 | Party names and colors | Four fixed core parties (National Union blue, Commonwealth Party red, Labour Democrats orange, Eastern Compact teal) + a generated fifth party per seed (decided) | `data/parties.json`, `data/party-names.json` |
-| Title | The Whip (decided) | one constant in `main.js` |
+| Title | The Whip (decided) | `title` in `data/strings.en.json` |
 | UI language | English only (decided); UI strings still live in `data/strings.en.json` | `data/` |
 | Declining a cabinet offer | No cost; offers keep coming | `sim/career.js` |
 | Running for leader | Phase 3 only (decided) | n/a |
 | Division bells in play | 30 s unscheduled, 15 s scheduled, real time | `sim/vote.js` |
 | Riding visits | Fridays and constituency weeks; leave needed while the House sits | `sim/riding.js` |
 | Retirement age pressure | Starts at 65 (Kelbo will tune later) | `sim/career.js` |
-| Office tiers | Two | `office/officeScene.js` |
-| Art assets | Primitives until the art pass; real GLB models later | `assets/` |
+| Office sets | One per act, five in all | `office/officeScene.js` |
+| Art assets | CC0 GLB props and textures, self-hosted | `assets/`, `assets/LICENSES.md` |
 | Whips' seats | Row 2, index 1 and 2; assistant whips at index 1 of rows 3–4 and index 2 of row 1 | `chamber/layout.js` |
 | Knowledge staleness | 26 weeks without contact | `data/tuning.json` |
 | Rival whip budgets | 45 minutes and 2 favors per week; scales with party size | `data/tuning.json` |
 | Pacing stops | Own vote, walk-in, life event, caucus fight, riding crisis, rival move | `sim/pacing.js` |
-| Scenarios at launch | Three: minority budget vote, caucus revolt, rookie riding dilemma | `data/scenarios/` |
+| Scenarios at launch | Three: minority budget vote, caucus revolt, rookie riding dilemma | `data/scenarios.json` |
 
 ---
 
@@ -604,7 +626,7 @@ Until Kelbo decides, use these defaults and keep each one a one-line change.
 - **Expect stages 4 to 7 to take two or three sessions each.** Split a stage if a session runs long; a half-stage that passes its checks is better than a whole stage that doesn't.
 - **Branch per stage, merge to `main` when checks pass.** Pages serves `main`, so a bad push breaks the live game.
 - **Mobile 3D specifics.** No real-time shadows (bake them). Nameplates and labels through the CSS2DRenderer addon, not 3D text. Pointer events with `preventDefault`. `100dvh` instead of `100vh` for iOS Safari. Raycast against instanced meshes using `instanceId`. Dispose geometries and materials when leaving a room.
-- **Performance budget per room.** Chamber under 60 draw calls; office, riding and caucus under 40 each. Check `?debug=1` on the phone every stage.
+- **Performance budget per room.** Chamber under 60 draw calls; office, riding and caucus under 40 each. Check `?debug=1` on the phone every stage. (October 2026: the chamber sits at 60 and the office at 44 empty, 56 with a visitor, so the office is over this line. `CLAUDE.md` says Kelbo's phone has headroom and to keep the visual budget up; the phone frame-rate check that would settle it is still owed. Noted in `PROGRESS.md`.)
 - **Keep assets tiny.** Procedural geometry and flat painted textures first; a few small CC0 GLB props later. Never add an asset you can't justify under the 10 MB load budget.
 - **When the docs disagree, the design doc wins** on what the game is, and this file wins on how it's built. Note any contradiction in `PROGRESS.md` for Kelbo.
 
