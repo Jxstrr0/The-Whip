@@ -8,7 +8,7 @@ Best on a phone in portrait. Landscape and desktop work too.
 
 ## Status
 
-**The Act 1 vertical slice (stage 4b) is playable, and the art pass is in** (oak, green leather and stone under baked light; the Order Paper UI). It covers stages 0–4b of the build plan: a start menu, the chamber, the office, the caucus room and the riding, plus a guided first week. After that week the simulation keeps running week to week; elections, the later acts and the whip's tools come in stages 5–9. See [`PROGRESS.md`](PROGRESS.md) for exactly what's built and what to test.
+**The whole build plan is in, and the game is in playtest.** Stages 0 to 9 of the build plan (the four rooms, the five-act career from rookie to Chief Whip, the whip's tools, rival whips, confidence votes, elections, scenarios, the daily seed and saves) and the art pass are done and merged. Since then the work has followed Kelbo's playtest notes: readability passes, more dialogue, the week's vote, home-screen install and haptics, a glossary, and new figures that move. The latest entries in [`PROGRESS.md`](PROGRESS.md) say exactly what changed and what to test. `CLAUDE.md` has the current status in short form.
 
 ## How to play
 
@@ -49,12 +49,16 @@ Opening `index.html` straight from the file system won't work, because browsers 
 
 | URL | What it does |
 | --- | --- |
-| `?seed=TEST-1` | Skip the menu and start a game from a fixed seed (not guided) |
+| `?seed=TEST-1` | Skip the menu and start a game from a fixed seed (not guided, no cold open) |
 | `?seed=TEST-1&guided=1` | The same, with the guided first week |
+| `?seed=TEST-1&coldopen=1` | The same, opening on election night (the cold open) |
+| `?seed=TEST-1&act=3` | The same, starting already at that act |
 | `?party=p2` | With `?seed`, play for a given party (`p1` National Union, `p2` Commonwealth, `p3` Labour Democrats, `p4` Eastern Compact) |
+| `?scenario=threeShort` | Skip the menu and start a scenario (`threeShort`, `roomTurns` or `homeTruths`, from `data/scenarios.json`) |
+| `?daily=1` | Skip the menu and start today's daily seed |
 | `?debug=1` | FPS counter, the Parliament hash, tuning sliders for every number in `data/tuning.json`, and `window.whip` in the console (`state`, `dispatch`, the sim modules) |
 | `?v=<anything>` | Dodge a cached old version after a push |
-| `tests.html` | Run the sim test suite in the browser |
+| `tests.html` | Run the sim test suite in the browser (serve the folder over http first; see Running locally) |
 | `tools/lineup.html` | Dev page: the figure in every pose, side by side, for checking the look |
 
 ## Code layout

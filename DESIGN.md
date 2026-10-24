@@ -1,12 +1,14 @@
 # The Whip - Design Doc
 
-Longlight Interactive · October 20, 2026 · Version 3.1 (career rewrite + gap fixes)
+Longlight Interactive · October 20, 2026 · Version 3.1 (career rewrite + gap fixes) · checked against the build on October 24, 2026
 
 The Whip is a career game. You start as a rookie backbench MP in a fictional Canadian-style House of Commons and spend a political lifetime climbing to Chief Whip: the person who counts votes, enforces the line, and gets the caucus into the chamber when it matters. The career is open-ended. It takes at least a Parliament and a half to reach the whip's desk, and how long you last after that is up to you, your caucus and your voters.
 
 You play in four rooms: the chamber, where you read the room and run the count; your office, where you meet MPs one on one; your riding, where the people who elected you wait; and the caucus room, where your party decides what it is each week. Every phase of the career asks a different question, and the relationships you build in one phase decide what's possible in the next.
 
 The country, parties, ridings and MPs are fictional. The procedures are Canadian.
+
+**How to read this.** This document describes the game as built. Where a part of the design is not in the game yet, it is marked **Not built yet**. Numbers quoted here come from `data/tuning.json` and the other `data/*.json` files, with the key named so you can find them.
 
 ---
 
@@ -19,7 +21,7 @@ The country, parties, ridings and MPs are fictional. The procedures are Canadian
 5. **Depth from rules, not content.** MPs, ridings, bills, cliques and crises are generated from a seed. Nothing is a hand-written campaign.
 6. **Discipline cuts both ways.** Punishing rebels works until caucus turns on you. In a minority Parliament, losing one vote can bring down the government.
 
-**Scope by phase.** Phase 1 is the full career inside the House: chamber, office, riding and caucus room. Phase 2 adds the Senate. Phase 3 adds the Leader's Office and leadership politics.
+**Scope by phase.** Phase 1 is the full career inside the House: chamber, office, riding and caucus room. It is built. Phase 2 adds the Senate. Phase 3 adds the Leader's Office and leadership politics. **Not built yet:** Phases 2 and 3.
 
 ---
 
@@ -48,7 +50,7 @@ Roles by election result:
 | Official Opposition | 30–50 | Speaker's left, front rows |
 | Third party | 8–18 | Speaker's left, behind the Official Opposition |
 | Regional party | 4–14 | Speaker's left, one block of seats |
-| Minor party | 0–5 | Back rows, assigned by the Speaker |
+| Minor party | 1–5 | Back rows, assigned by the Speaker |
 | Independents | 0–4 | Back rows near the bar, assigned by the Speaker |
 
 If the government has more members than fit on its side, the overflow sits in the back rows on the opposition side nearest the bar. Majority Parliaments are quiet; **minority Parliaments are the heart of the game**, because every confidence vote needs votes you don't own.
@@ -56,14 +58,14 @@ If the government has more members than fit on its side, the overflow sits in th
 ### Minority government rules
 
 - A majority is 61 of 120. A government survives as long as it wins confidence votes: the budget, supply bills, the Throne Speech reply, and anything it declares a matter of confidence.
-- Losing a confidence vote triggers an election, or early in a Parliament, a chance for the Opposition to form a government.
+- Losing a confidence vote triggers an election, or early in a Parliament (the first 26 weeks: `confidence.handoverWeeks`), a chance for the Opposition to form a government.
 - Parties can sign a **confidence-and-supply agreement**: a smaller party pledges support on confidence votes in exchange for policy wins. The terms are explicit, and either side can break them.
 
 ---
 
 ## 3. The career
 
-You create an MP at the start: party, riding (type and province), age, and a background (local councillor, lawyer, farmer, union organizer, business owner, teacher, veteran). Background sets starting interests, a few relationships and one strength. Then the career runs in five acts.
+You create an MP at the start: party, riding (type and province), age, and a background (local councillor, lawyer, farmer, union organizer, business owner, teacher, veteran). Background sets starting interests, a few relationships and one strength. A new career opens on your own election night, the cold open: the count comes in poll by poll before the first sitting week. Then the career runs in five acts.
 
 ### Act 1: Rookie
 
@@ -136,7 +138,7 @@ You set the line with the leader. The caucus remembers everything you did to the
 - **Age.** Your MP ages. Past sixty-five, retirement pressure rises: health events, a riding association looking for renewal, and younger MPs circling.
 - **Cabinet is a real exit.** Offers come in Acts 4 and 5. Taking one ends the whip career with an epilogue. Declining is always allowed and costs nothing; the leader keeps asking.
 - **Demotion and comebacks.** Every rank can be lost. A demoted whip can rebuild through the riding and the clique, and the game is as much about the comeback as the climb.
-- **Floor-crossing** is allowed, as in Canada. It costs your rank, most of your ledger with your old caucus, and riding standing, but it can save a career in a party that's turned on you. A floor-crosser starts Act 1 again in a new caucus with a reputation that precedes them.
+- **Floor-crossing** is allowed from Act 2 on, as in Canada. It costs your rank, most of your ledger with your old caucus, and riding standing, but it can save a career in a party that's turned on you. A floor-crosser starts Act 1 again in a new caucus with a reputation that precedes them.
 - **Your own skeleton.** Your background seeds one vulnerability of your own: a business debt, an old council vote, a relative on the payroll. Rival whips can dig for it just as you dig for theirs, and a found skeleton is leverage against you until you deal with it.
 - **The leader is a person.** Each party leader has a personality (controlling, hands-off, paranoid, loyal) that changes how lines get set, how often they overrule the whip, how they handle a revolt, and what a cabinet offer looks like.
 - **Reputation style** emerges from what you do and is visible to every MP: **fixer** (deals), **enforcer** (threats), **conscience** (principled rebel), **operator** (quiet, feared), **loyalist**. Style changes which lines MPs offer you and how your opposite numbers treat you.
@@ -163,13 +165,13 @@ Knowledge is earned. A rookie's MP card shows name, party, riding and seat, and 
 - **Your mentor** tells you about the MPs they know.
 - **Cohort and clique gossip** reveals moods, grudges and who's talking to whom.
 - **The whip's office** shares its files with you from Act 3 on, which is the single biggest jump in knowledge in the game.
-- **Digging** reveals secrets.
+- **Digging** reveals secrets. **Not built yet** for the player: in the build only the rival whips dig, for your skeleton, and nothing yet reveals another MP's secrets to you, so the leverage tool has no way to be unlocked.
 
-Knowledge decays. An MP you haven't talked to in a year drifts, and your card for them goes stale (shown as faded values). A Chief Whip who stops meeting people loses the caucus without noticing.
+Knowledge decays. An MP you haven't talked to in 26 weeks (`knowledge.staleWeeks`) drifts, and your card for them goes stale (shown as faded values). A Chief Whip who stops meeting people loses the caucus without noticing.
 
 ### Rival whips
 
-The other parties' whips are actors, not stats. Each has a budget of time and favors per week and uses the same tools you do: poaching your wobbly MPs with pairing offers and cross-aisle favors, leaking to the press, digging for your skeleton, and testing whether your pairs hold. Their style (fixer, enforcer, operator) is generated per seed and visible once you've dealt with them. In a minority, the government whip and the third-party whip are both working your caucus every week.
+The other parties' whips are actors, not stats. Each has a budget of time and favors per week (45 minutes and 2 favours, scaled by party size: `rivals.timePerWeek`, `rivals.favorsPerWeek`, `rivals.sizeScale`) and uses the same tools you do: poaching your wobbly MPs with pairing offers and cross-aisle favors, leaking to the press, digging for your skeleton, and testing whether your pairs hold. Their style (fixer, enforcer, operator) is generated per seed and visible once you've dealt with them. In a minority, the government whip and the third-party whip are both working your caucus every week.
 
 Rapport with any MP is a number from −100 to 100, but it's only the surface. What an MP will do for you depends on rapport, your ledger, your style, their clique's view of you, and whether you showed up when it mattered.
 
@@ -185,27 +187,27 @@ A long rectangular room with a centre aisle, modeled on the Canadian House of Co
 - **Opposition side** to the Speaker's left, the Official Opposition in front, smaller parties behind and beside them, independents in the back rows nearest the bar.
 - **Whips' seats:** the Chief Whip at the aisle end of the second row on their side nearest the Speaker, the Deputy Whip beside them, assistant whips one per row. (A design choice modeled on provincial seating plans.)
 
-**How votes look.** The Speaker puts the question; MPs shout yea or nay. If five or more members rise, a **recorded division** is called and the division bells ring: 30 minutes for an unscheduled vote, 15 for a scheduled one (shortened to real seconds in play). That window is the whip's: chase attendance, confirm pairs, work the count. Then the doors close and members vote by **standing**, the yeas row by row while the Clerk reads their names, then the nays, seats lighting up as each name is read (color plus an icon, so yea and nay read without relying on red and green). A tie goes to the Speaker, who by convention votes to keep the question open.
+**How votes look.** The Speaker puts the question; MPs shout yea or nay. If five or more members rise, a **recorded division** is called and the division bells ring: 30 minutes for an unscheduled vote, 15 for a scheduled one (in play, 30 and 15 real seconds: `vote.bellsUnscheduled`, `vote.bellsScheduled`). That window is the whip's: chase attendance, confirm pairs, work the count. From Act 3 the bells are a chase across the Hill: you pick who to send for and where to look. Then the doors close and members vote by **standing**, the yeas row by row while the Clerk reads their names, then the nays, seats lighting up as each name is read (color plus an icon, so yea and nay read without relying on red and green). A tie goes to the Speaker, who by convention votes to keep the question open.
 
-**Camera and style.** Semi-realistic oak, green leather and stone under baked lighting. The default camera looks down the chamber from above the bar toward the Speaker. One finger orbits within limits, pinch zooms, a tap selects an MP, a double-tap on a party block frames it.
+**Camera and style.** Semi-realistic oak, green leather and stone under baked lighting. In Acts 1 and 2 the chamber opens from your own seat, so the backbench feels like a seat and not a map; from Act 3, and with the Overview button at any time, the camera looks down the chamber from above the bar toward the Speaker. One finger orbits within limits, pinch zooms, a tap selects an MP, a double-tap on a party block frames it, and My seat takes you home.
 
 ### The office
 
 After every sitting day you go to your office. One-on-one meetings happen here, with the MPs you invite and the ones who show up uninvited.
 
-- **The room** has a desk, two visitor chairs, a window onto the lawn, and the **count board**, where tomorrow's votes are tallied by name. It grows with rank: a shared cramped room in Act 1, a corner office with a second meeting table in Act 5.
-- **Evening slots.** Two as a rookie, up to five as Chief Whip. Walk-ins appear on the board first, each with a one-line reason.
-- **Meetings play in two phases.** **Talk:** the MP sits down with a visible mood (cooperative, guarded, angry, anxious) and you pick from three or four lines per turn over two or three turns. Lines come from their situation, your history and your style. Good reads raise rapport and reveal what they actually need. **Deal:** a table with two columns, *You offer* and *You ask*, where you drag cards in: committee seats, QP slots, travel, riding projects, pairs, leave, pledges, protection. The MP counters, accepts or walks. Agreed deals become ledger promises with due dates.
-- **Other actions:** phone calls (half a slot), working the count board directly, and **dig** (staff look into an MP over several evenings).
+- **The room** has a desk, two visitor chairs, a window onto the lawn, and the **count board**, where tomorrow's votes are tallied by name. It grows with rank, one room per act: a shared room in Act 1, your own room in Act 2, the annex off the whip's office in Act 3, the deputy's room in Act 4, and the Chief Whip's corner office with the whips' table in Act 5.
+- **Evening slots.** Two as a rookie, up to five as Chief Whip (2, 3, 3, 4, 5 by act: `meetings.slotsByAct`). Walk-ins appear on the board first, each with a one-line reason.
+- **Meetings play in two phases.** **Talk:** the MP sits down with a visible mood (cooperative, guarded, angry, anxious) and you pick from three or four lines per turn over two or three turns. Lines come from their situation, your history and your style. Good reads raise rapport and reveal what they actually need. **Deal:** a table with two columns, *You offer* and *You ask*, where you tap cards in and out: committee seats, QP slots, travel, riding projects, pairs, leave, pledges, protection. Each card shows what it costs or pays at home. The MP counters, accepts or walks. Agreed deals become ledger promises with due dates. The meeting ends on a verdict card: DEAL or NO DEAL, their parting line, the terms, and what changed.
+- **Other actions:** phone calls (half a slot: `meetings.phoneCallCost`) and working the count board directly (from Act 3). **Dig** (staff look into an MP over several evenings): **not built yet**.
 - **Act 1 twist.** As a rookie, the office is where the whip's office calls *you*. You're on the other side of the desk, and some meetings are you being leaned on.
 
 ### The riding
 
-Your constituency office back home. You go on Fridays and during constituency weeks, and leaving Ottawa needs the whip's sign-off when the House is sitting, so the trip is always a small negotiation.
+Your constituency office back home. You go on Fridays and during constituency weeks, and leaving Ostrava (the capital) needs the whip's sign-off when the House is sitting, so the trip is always a small negotiation.
 
 - **The room** is a storefront office on a main street: a desk, a waiting area, a wall of local photos, and the window onto whatever your riding type looks like (a prairie town, a suburb, a downtown block, a northern settlement).
 - **Who comes in:** the mayor, a farmer or a plant manager, a union steward, a school board chair, the local reporter, and the **riding association president**, who controls your nomination.
-- **What you do:** hear cases and pick which to carry back to Ottawa, hold a town hall (a short talk-phase scene with a crowd mood), announce a project you won, and campaign when an election nears.
+- **What you do:** hear cases and carry them back to Ostrava, pass them on to the right office, or turn them down; hold a town hall (a short talk-phase scene with a crowd mood), announce a project you won, and campaign when an election nears.
 - **What it drives:** **riding standing** (your margin at the next election) and the **nomination**, which can be challenged if standing falls or you've voted against the riding too often. A whip who never goes home loses their seat; a backbencher who's always home never gets noticed.
 
 ### The caucus room
@@ -213,8 +215,8 @@ Your constituency office back home. You go on Fridays and during constituency we
 Every Wednesday morning the party meets behind closed doors. This is where revolts actually happen.
 
 - **The room** is a long table with the leader at the head, the whip and House Leader beside them, and MPs seated by clique, so the room's politics are visible in where people sit.
-- **What you do:** listen (learn the room's mood and who's talking to whom), speak (take a stance on the week's line, which costs or earns standing with the leader and the room), whisper to a neighbour, and as whip, read the room through the colors on every seat.
-- **What happens:** the line for the week is set, grievances get aired, and when enough of the room is against the leader or the whip, a **revolt** can be called. Caucus can vote to expel a member or, in Phase 3, to review the leader.
+- **What you do:** listen (learn the room's mood and who's talking to whom), speak (take a stance on the week's line, which costs or earns standing with the leader and the room), whisper to a neighbour, and as whip, read the room through the colours and shaped marks on every seat.
+- **What happens:** the line for the week is set, grievances get aired, and when enough of the room is against the leader or the whip, a **revolt** can be called. From Act 5 the Chief Whip's business sits on the caucus sheet: free a whipped vote, or with the leader's trust expel a member (anyone but the leader and the Speaker), each expulsion in a morning costing more. A leadership review (Phase 3): **not built yet**.
 
 ---
 
@@ -234,7 +236,7 @@ Every one of the 120 MPs is generated from the seed with these attributes:
 | Ideology | Two axes, −100 to 100 (economy, social) | Which bills they resist |
 | Interests | 1–3 policy areas | Which favors they want |
 | Committee | One seat or none | Where they can push or bury bills |
-| Attendance | 0–100 | Chance they're in Ottawa and in their seat |
+| Attendance | 0–100 | Chance they're in Ostrava and in their seat |
 | Relationships | 3–8 friend or rival links, plus mentor and protégé | Who can persuade whom |
 | Rapport | −100 to 100 with the player | Gates what they'll accept |
 | Mood | Cooperative, guarded, angry, anxious | Changes daily; shapes the talk phase |
@@ -259,11 +261,13 @@ score = wLine·L + wIdeo·I + wRiding·R + wLedger·D + wPeer·P + wClique·Q + 
 
 Above the upper threshold they vote with you, below the lower one against, between the two they abstain or find a reason to be away. Attendance is rolled separately: an MP who means to vote with you but isn't in the building is worth nothing.
 
+The weights live under `vote` in `data/tuning.json` (`wLine` 1.45, `wIdeo` 0.8, `wRiding` 0.6, `wLedger` 1.0, `wPeer` 0.35, `wClique` 0.4, `wPressure` 1.0, `wCost` 0.9, `noise` 0.22; thresholds `upper` 0.15 and `lower` −0.15; a confidence line is boosted by `confidenceLineBoost` 1.6). The model is `src/sim/mp.js`.
+
 ---
 
 ## 7. Core loop
 
-A Parliament runs about four years of sitting weeks, broken by constituency weeks. Each sitting week has a shape:
+A Parliament runs four years of forty weeks each, September to June (`calendar.years`, `calendar.weeksPerYear`), sitting weeks broken by constituency weeks (`calendar.weekPattern`). Each sitting week has a shape:
 
 - **Monday to Thursday: sitting days.** Morning brings the order paper and overnight news. The House has Question Period, debate and the day's votes. The office follows every sitting day.
 - **Wednesday morning: caucus.** The line for the week is set, grievances get aired, revolts brew.
@@ -275,6 +279,8 @@ Each sitting day runs morning → House → office → fallout. Promises come du
 ### Pacing
 
 A Parliament has hundreds of sitting days, and most are routine. Routine days **auto-resolve** into a one-line summary; the game only stops you for days that matter: a vote you're not sure of, a walk-in, a life event, a caucus fight, a riding crisis, a rival's move. A sitting week targets about 10 minutes of play, and a "skip to the next thing that matters" button is always available. What counts as "matters" is tuned by act: a rookie is interrupted for their own dilemmas; a Chief Whip is interrupted for the caucus's.
+
+**The week's vote.** From the second week, Monday's House leader picks the whipped vote that will decide the week and puts it last on Thursday's paper (`bigVote` in tuning). The rooms all point at it: persuade targets, the count, caucus, the riding's talk, Question Period. Members you brought over since Monday are read out as yours, and the result pays into what the act cares about (being noticed, the whip's regard, the leader's trust, the pressure on the office). Built in the sim; its UI (a count meter on the date bar, Monday's front page, the Clerk marking your names, a result card) is **not built yet**.
 
 **Bills** come in four kinds: government bills, private members' bills, opposition motions, and supply and budget bills, which are always confidence. Bills pass through first reading, second reading, committee, report stage and third reading. Amendments at committee and report stage are the main currency of riding favors.
 
@@ -303,7 +309,9 @@ A Parliament has hundreds of sitting days, and most are routine. Routine days **
 
 **The whip's book** is the list screen behind every room: all 120 MPs, searchable and filterable by party, clique, cohort, riding, lean on tomorrow's vote, and what you know about them, sorted by what's at risk. The chamber is for feel; the book is for work.
 
-**The count board** is the whip's instrument from Act 3 on: each MP firm, leaning, lost or absent for each upcoming vote, with the arithmetic against the number you need.
+**The count board** is the whip's instrument from Act 3 on (`tools.officeFilesFromAct`): each MP firm, leaning, lost or absent for each upcoming vote, with the arithmetic against the number you need, and from Act 3 your own row under it.
+
+Every tool in the table is in `src/sim/tools.js`, gated by the act shown.
 
 ---
 
@@ -314,6 +322,7 @@ A Parliament has hundreds of sitting days, and most are routine. Routine days **
 - **Pressure from above.** A meter tracks how much the leader's office trusts you. Lost confidence votes and public rebellions push it up; at the top you're replaced. In Phase 3 the Leader's Office becomes a full actor.
 - **Elections.** Every four years, or earlier if a minority falls, national polling sets seat totals and each riding is decided by its MP's standing and margin. The House is reseated, roles reassigned, cohorts refreshed, and your own seat is on the line.
 - **The whip's record.** Running totals shown at every ending: votes won and lost, confidence votes survived, MPs promoted, MPs expelled, promises kept and broken, rookies mentored, Parliaments served.
+- **The memoir.** The moments that made the career, written down as they happen and shown as a timeline you scroll through, with the people in each.
 
 **The ledger survives elections.** Promises, grudges and secrets carry into the next Parliament. An MP you expelled in Act 3 can come back as the independent whose vote keeps the government alive in Act 5.
 
@@ -322,17 +331,19 @@ A Parliament has hundreds of sitting days, and most are routine. Routine days **
 ## 10. Modes
 
 - **Career.** The main game: a new seed, Act 1, open-ended.
-- **Scenarios.** Preset starts that drop you into a moment: deputy whip in a minority three short on a budget vote; a Chief Whip facing a caucus revolt; a rookie whose riding hates the week's line. Short, replayable, and the best way to learn the tools.
+- **Scenarios.** Preset starts that drop you into a moment: deputy whip in a minority three short on a budget vote (Three short, Act 4); a Chief Whip facing a caucus revolt (The room turns, Act 5); a rookie whose riding hates the week's line (Home truths, Act 1). Short, replayable, and the best way to learn the tools. They live in `data/scenarios.json`.
 - **Shared seeds.** Type a seed to play the same Parliament as a friend and compare records.
 - **Daily seed.** One new Parliament a day, same for everyone.
 
 ## 11. Tech summary
 
-Plain HTML, CSS and JavaScript modules with Three.js from a pinned CDN build. No build step. One repo (`Jxstrr0/the-whip`) deployed to GitHub Pages from `main`, linked from the Kelbo.Website hub. Phone-first UI, instanced rendering for all 120 MPs, seeded generation, localStorage saves. Full specs and the stage plan are in **The Whip - Code Session Handoff**.
+Plain HTML, CSS and JavaScript modules with Three.js `0.160.0` from jsDelivr through an import map. No build step. One repo (`Jxstrr0/the-whip`) deployed to GitHub Pages from `main` by `.github/workflows/pages.yml`, linked from the Kelbo.Website hub. Phone-first UI, instanced rendering for all 120 MPs, seeded generation, localStorage saves in three slots with export and import, a self-hosted Newsreader font, synthesised audio, add-to-home-screen metas and a buzz on the big moments. Full specs and the stage plan are in `HANDOFF.md`; the current status is in `CLAUDE.md`.
 
 ---
 
 ## 12. Later phases
+
+Neither phase is built yet.
 
 - **Phase 2: The Senate.** Bills the House passes go to an appointed upper chamber in its own red room. You lobby senators, and when the Senate amends a bill, you organize the House's response.
 - **Phase 3: The Leader's Office.** The pressure meter becomes a full actor with its own agenda, cabinet shuffles and a leadership review caucus can trigger. The cabinet ending continues here, and a Chief Whip can run for leader.
@@ -341,7 +352,7 @@ Plain HTML, CSS and JavaScript modules with Three.js from a pinned CDN build. No
 
 ## 13. Open questions
 
-- [ ] A remote voting app as a late-game modernization: decide after the stage 4b vertical slice
+- [ ] A remote voting app as a late-game modernization: the stage 4b slice is long done; still undecided
 
 ---
 
