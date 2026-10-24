@@ -1425,3 +1425,27 @@ Kelbo: "they're very oval and rounded. Can we animate them well too?" Two passes
 **Checked:**
 - `tests.html` 132 of 132.
 - Played at phone size in portrait and landscape: the chamber from your seat and the overview, Question Period (a member standing, the minister answering, the thumps), a full division counted and cleared, the office with a visitor walking in and seated through cooperative, angry, guarded and anxious, the caucus table with the head of the table speaking and a pair leaning in, the town hall cold with placards, warm, and cheering on election night. No console errors.
+
+## 2026-10-24 · Docs refresh: the docs match the build again
+
+No game code, data or tuning changed. This pass read the whole tree and the git history (about 98 commits since the docs were last trued up) and fixed every statement in `CLAUDE.md`, `DESIGN.md`, `HANDOFF.md` and `README.md` that the code no longer backed.
+
+**What was stale, and what it says now:**
+- `CLAUDE.md` stopped at the caucus tools (around PR #47). The "Build plan status" now lists what is done (stages 0 to 9, the art pass, round two, and every playtest entry through PR #75), what is not started (the week's vote UI, part two), and what waits on Kelbo (the phone frame-rate check, trying the home-screen install and the buzz, the next playtest notes). It gained a "Where things live" map, one line per folder or file, and the exact way to run the tests.
+- `README.md` said the game was the Act 1 slice (stage 4b). It now says the whole plan is in and the game is in playtest, and its URL switches table lists the ones the code reads (`?scenario=`, `?daily=1`, `?act=`, `?coldopen=1`).
+- `DESIGN.md` now describes the game as built, with **Not built yet** on the parts that aren't: the player's dig action (only rival whips dig, so nothing yet reveals another MP's secrets to you and leverage can't be unlocked), the week's vote UI, Phases 2 and 3, and a leadership review. Fixed to match the code: the deal table is tapped, not dragged; the office is one room per act (five), not two tiers; the chamber opens from your own seat in Acts 1 and 2; the capital is Ostrava, not Ottawa (the old text used the real name); the minor party's seat range is 1 to 5 (`data/parties.json`), not 0 to 5. Numbers were added from `data/tuning.json` with their keys (the vote weights and thresholds, slots by act, the bells, staleness, rival budgets, the handover window, the calendar), the three scenarios are named, and the cold open, the verdict card, the Hill chase, the memoir and the week's vote are described.
+- `HANDOFF.md`: the repo layout in section 4 now lists the files that exist; the Pages note in section 3 says deploys go through `.github/workflows/pages.yml`; the MP figure, office tiers and caucus mood marks in sections 5 and 6 match the code; the URL switches table in section 9 drops `?room=` (never built) and names the real ones; `tests.html` has run instructions; the defaults table points at `data/scenarios.json`, `strings.en.json` for the title, five office sets and the CC0 assets.
+
+**Contradictions, as the rules ask:**
+- `DESIGN.md` described the office growing with rank (shared room to corner office); `HANDOFF.md` said two tiers. The code went with the design and beyond it: five rooms, one per act. Both docs now say five.
+- `DESIGN.md` used "Ottawa" for the capital. `HANDOFF.md` constraint 8 says no real place appears, and `data/world.json` names the capital Ostrava. `DESIGN.md` now says Ostrava.
+- `HANDOFF.md` section 11 budgets the office, riding and caucus at under 40 draw calls. The office is at 44 empty and 56 with a visitor (from the motion-kit entry above), and `CLAUDE.md` says Kelbo's phone has headroom, so keep the visual budget up. The budget line stays with a note; Kelbo's frame-rate check with `?debug=1` on his phone decides it.
+- `DESIGN.md` lists a dig action for the player and a secrets reveal; neither is in the sim. Marked not built rather than removed, since the leverage tool is coded and waiting on it. Kelbo to say whether digging is wanted.
+
+**Checked:**
+- `tests.html` in headless Chromium (Playwright) against a local `python3 -m http.server`: 132 passed, 0 failed, in about 30 seconds, no console errors.
+- `index.html` at 390 × 844 (the menu, and `?seed=TEST-1&guided=1` into the first Monday) and at 844 × 390 (`?seed=TEST-1`): the loading screen cleared, the Order Paper drew, and there were no console errors, page errors or failed requests.
+- The hard constraints in `CLAUDE.md`: no `Math.random` in `src/sim/`; no DOM or Three.js in `src/sim/`; only `src/save.js` touches `localStorage`, under `whip:` keys; the only outside URL is `cdn.jsdelivr.net/npm/three@0.160.0` (in `index.html`, `tests.html` and `tools/lineup.html`).
+- One thing for anyone testing headless: behind an HTTPS-only proxy, Playwright sends localhost through it unless `PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK=1` is set, and the page never loads. It's in `CLAUDE.md`.
+
+**Not verified here:** the live URL (no deploy in this pass), the frame rate on a phone, the home-screen install and the buzz. The HANDOFF geometry numbers (desk sizes, camera positions) were not re-measured against the scenes; only the statements that were plainly false were changed.
