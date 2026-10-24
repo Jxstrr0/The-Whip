@@ -1449,3 +1449,7 @@ No game code, data or tuning changed. This pass read the whole tree and the git 
 - One thing for anyone testing headless: behind an HTTPS-only proxy, Playwright sends localhost through it unless `PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK=1` is set, and the page never loads. It's in `CLAUDE.md`.
 
 **Not verified here:** the live URL (no deploy in this pass), the frame rate on a phone, the home-screen install and the buzz. The HANDOFF geometry numbers (desk sizes, camera positions) were not re-measured against the scenes; only the statements that were plainly false were changed.
+
+## 2026-10-24 · Performance: fine for now
+
+Kelbo's call on the open performance question: **it's fine for now.** The chamber at 60 draw calls and the office at 44 empty, 56 with a visitor stand as they are; nothing gets trimmed, and the office being over `HANDOFF.md`'s 40 is accepted. The frame-rate check is no longer listed as owed. `?debug=1` still shows the numbers, so a room that climbs well past today's figures is worth raising. `CLAUDE.md` and `HANDOFF.md` section 11 now say this. No game code changed.
