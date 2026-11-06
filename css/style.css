@@ -3377,3 +3377,38 @@ body.cold-open .topbar {
   font-size: 14px;
   line-height: 1.3;
 }
+
+/* ---- Backups: the quiet reminder on the title page, and the storage line under the saved games ---------- */
+
+.backup-note {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--brass);
+  border-left-width: 4px;
+  border-radius: var(--r-md);
+  background: var(--paper-2);
+  font-size: 15px;
+  line-height: 1.4;
+}
+.backup-note p {
+  margin: 0 0 10px;
+}
+.backup-note-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.backup-note-actions .btn {
+  min-height: 44px;
+  font-size: 15px;
+}
+.storage-note {
+  margin-top: 12px;
+}
+.storage-note[hidden] {
+  display: none;
+}
+/* "Back up now" moves focus to the Saved games heading for screen readers; it isn't a control, so no ring. */
+.start-menu h3[tabindex] {
+  outline: none;
+}

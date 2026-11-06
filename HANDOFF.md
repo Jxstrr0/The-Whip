@@ -467,7 +467,7 @@ Hidden attributes stay in the MP record; what the player sees is governed by the
 
 `date.phase` is `morning`, `caucus`, `house`, `office`, `riding` or `fallout`. `room` is `chamber`, `office`, `riding` or `caucus`. A top-level `"mode": { "kind": "career" | "scenario" | "daily", "id": null }` records how the game was started.
 
-**Save format.** Store the game state under `whip:save:<slot>` with three slots, plus `whip:settings`. Export is the state as base64 JSON for copy and paste. On load, if `version` is older than current, run migrations in `save.js`; never discard a save.
+**Save format.** Store the game state under `whip:save:<slot>` with three slots, plus `whip:settings`. Export is the state as base64 JSON for copy and paste; the same text can be saved as a backup file (`the-whip-backup-YYYY-MM-DD.txt`) and loaded back through the same import. When the last backup was taken is kept in `whip:settings` (`lastBackup`). On load, if `version` is older than current, run migrations in `save.js`; never discard a save.
 
 ---
 

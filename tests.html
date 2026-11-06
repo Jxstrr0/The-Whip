@@ -53,7 +53,7 @@ window.__caucus = caucusSim;
 import * as ridingSim from './src/sim/riding.js';
 import { calendarOf, weatherOf } from './src/sim/calendar.js';
 import { botAct } from './src/sim/bot.js';
-import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo } from './src/save.js';
+import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo, backupDue, backupFileName, readBackupFile } from './src/save.js';
 import { getSettings, setSetting } from './src/settings.js';
 import { canBuzz, buzz } from './src/haptics.js';
 import { glossTerms, unglossAll } from './src/ui/gloss.js';
@@ -2090,6 +2090,29 @@ test('Saves go to a slot and come back with their slot, time and a one-line desc
   }
   assert(loadGame('test') === null, 'deleted');
   return 'slot test written, read, described and deleted';
+});
+
+test('Backup files carry the save code, and the backup reminder waits for real progress and 14 quiet days', async () => {
+  assert(backupFileName(new Date(2026, 0, 5)) === 'the-whip-backup-2026-01-05.txt', 'file name uses the local date');
+  const s = newGame({ seed: 'BAK-1', party: 'p1' });
+  const code = exportSave(s);
+  const back = importSave(await readBackupFile(new File([code + '\r\n  '], 'x.txt', { type: 'text/plain' })));
+  assert(JSON.stringify(back) === JSON.stringify(s), 'a file with a trailing newline restores the same game');
+  let refused = false;
+  try { importSave(await readBackupFile(new File(['hello, not a save'], 'x.txt'))); } catch { refused = true; }
+  assert(refused, 'a stray text file is refused');
+  const B = tuning().backup;
+  const day = 86400000;
+  const now = Date.UTC(2026, 10, 6);
+  const career = { mode: 'career', act: 1, absWeek: B.progressWeeks, savedAt: now - day };
+  assert(!backupDue([null, null, null], 0, now), 'no saves, no reminder');
+  assert(!backupDue([{ ...career, absWeek: 0 }], 0, now), 'not in the first week');
+  assert(!backupDue([{ ...career, mode: 'scenario', act: 3 }], 0, now), 'not for a one-week scenario');
+  assert(backupDue([career], 0, now), 'progress and never backed up');
+  assert(!backupDue([career], now - 2 * day, now), 'backed up two days ago');
+  assert(backupDue([career], now - B.remindAfterDays * day, now), `${B.remindAfterDays} days since the last backup`);
+  assert(!backupDue([{ ...career, savedAt: now - 30 * day }], now - 20 * day, now), 'nothing played since the last backup');
+  return `reminder after ${B.remindAfterDays} days`;
 });
 
 test('Settings persist under whip:settings and the colour-blind palette swaps every party colour', () => {
