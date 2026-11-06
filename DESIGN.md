@@ -337,7 +337,7 @@ Every tool in the table is in `src/sim/tools.js`, gated by the act shown.
 
 ## 11. Tech summary
 
-Plain HTML, CSS and JavaScript modules with Three.js `0.160.0` from jsDelivr through an import map. No build step. One repo (`Jxstrr0/the-whip`) deployed to GitHub Pages from `main` by `.github/workflows/pages.yml`, linked from the Kelbo.Website hub. Phone-first UI, instanced rendering for all 120 MPs, seeded generation, localStorage saves in three slots with export and import, a self-hosted Newsreader font, synthesised audio, add-to-home-screen metas and a buzz on the big moments. Full specs and the stage plan are in `HANDOFF.md`; the current status is in `CLAUDE.md`.
+Plain HTML, CSS and JavaScript modules with Three.js `0.160.0` from jsDelivr through an import map. No build step. One repo (`Jxstrr0/the-whip`) deployed to GitHub Pages from `main` by `.github/workflows/pages.yml`, linked from the Kelbo.Website hub. Phone-first UI, instanced rendering for all 120 MPs, seeded generation, localStorage saves in three slots with export and import (copied text or a backup file, a quiet reminder after `backup.remindAfterDays` days, and a request that the browser keep the storage), a self-hosted Newsreader font, synthesised audio, add-to-home-screen metas and a buzz on the big moments. Full specs and the stage plan are in `HANDOFF.md`; the current status is in `CLAUDE.md`.
 
 ---
 
