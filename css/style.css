@@ -1890,6 +1890,18 @@ input::placeholder {
   letter-spacing: 0.01em;
   color: var(--ink-2);
 }
+.colophon .version {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+.version-note {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
 .mark {
   display: inline-block;
   width: 22px;
