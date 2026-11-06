@@ -82,6 +82,12 @@ Headless (what the docs refresh used): Playwright's Chromium against the same lo
 
 On the live site, `tests.html` runs the same way at the live URL.
 
+## Version
+
+- `src/version.js` holds `VERSION`, the game's player-facing version, in four numbers: `Major.Minor.Patch.Build` (now `1.0.0.0`). It shows as a quiet "v1.0.0.0" at the right of the start menu's colophon and at the foot of the Settings sheet.
+- Bump it in the same pull request as the change: **Major** = an overhaul, **Minor** = a feature batch, **Patch** = a tweak or fix, **Build** = a republish with no change. Reset the numbers to the right of the one you bump.
+- It is not the save format. `SAVE_VERSION` (in `src/sim/modes.js`) and the migrations in `src/save.js` are separate and change only when the save's shape does.
+
 ## Working on this repo
 
 - Work on a branch and open a pull request into `main`. Pages publishes `main`, so a bad push breaks the live game.
