@@ -1,6 +1,7 @@
 // Menus: the start screen (continue, or a new career: name, party, background, riding, age, seed) and the
 // in-game menu.
 import { canBuzz } from '../haptics.js';
+import { VERSION } from '../version.js';
 import { t, esc, longlightMark } from './text.js';
 import { pickerHtml, wirePickers } from './picker.js';
 import { saveBackupFile, readBackupFile, storageKept, backupFileName, daysSince } from '../save.js';
@@ -104,7 +105,7 @@ export function createStartMenu(root, { saves, latest, scenarios, reminder, onCo
       </details>
       <p class="status muted" aria-live="polite"></p>
       <div class="choices"><button class="btn" data-act="settings">${t('menu.settings')}</button></div>
-      <footer class="colophon">${longlightMark()}${t('menu.studio')}</footer>
+      <footer class="colophon">${longlightMark()}${t('menu.studio')}<span class="version">${esc(t('menu.version', { version: VERSION }))}</span></footer>
     </div>`;
     wire();
   }
@@ -340,7 +341,8 @@ export function createSettingsSheet(root, { get, set }) {
       ${toggle('glossary', 'settings.glossary', 'settings.glossaryNote')}
       ${toggle('colourBlind', 'settings.colourBlind', 'settings.colourBlindNote')}
       ${toggle('largeText', 'settings.largeText', 'settings.largeTextNote')}
-      <div class="choices"><button class="btn primary" data-act="close">${t('settings.done')}</button></div>`;
+      <div class="choices"><button class="btn primary" data-act="close">${t('settings.done')}</button></div>
+      <p class="version-note">${esc(t('settings.version', { version: VERSION }))}</p>`;
     el.querySelectorAll('.switch').forEach((b) => {
       b.onclick = () => {
         set(b.dataset.k, !get()[b.dataset.k]);

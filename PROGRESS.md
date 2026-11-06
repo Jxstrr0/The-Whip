@@ -1474,3 +1474,18 @@ Every Longlight game lives at the same web address (jxstrr0.github.io), so they 
 - At 390 × 844 in headless Chromium against a local server: a game with three weeks played shows the reminder and the storage line on the title page; Back up now scrolls to the saved games; Save file downloads `the-whip-backup-2026-11-06.txt` (about 150 KB) and records the backup; after a reload the reminder stays away; a broken file shows the error; the good file (with an extra newline) loads into an empty slot and into a taken slot after the replace question; the in-game menu's Save a backup file downloads the current game. No console errors.
 
 **For Kelbo to test on the phone (from the home screen):** open the title page and look under Saved games for the Storage line. Tap **Save file** on a saved game, choose **Save to Files** in the share sheet. Then pick an empty slot, tap **Load a backup file into slot N**, choose that file from Files, and the game should open where it was.
+
+## 2026-11-06 · A version number: 1.0.0.0
+
+Versions now use four numbers, Major.Minor.Patch.Build (Kelbo's call, same across all Longlight games). The Whip had no version; it starts at 1.0.0.0.
+
+**What changed:**
+- `src/version.js` is the one place the version lives (`VERSION = '1.0.0.0'`).
+- The start menu's colophon (the Longlight mark at the bottom) now ends in a quiet "v1.0.0.0" on the right, and the Settings sheet has "The Whip, version 1.0.0.0" in small type under Done. The text is `menu.version` and `settings.version` in `data/strings.en.json`.
+- `CLAUDE.md` has a new "Version" section with the bump rule: Major = an overhaul, Minor = a feature batch, Patch = a tweak or fix, Build = a republish.
+
+**Small calls:**
+- The save format is untouched. `SAVE_VERSION` stays what it is; the version is not written into saves or exports, because an export is the game state itself with no separate header to put it in.
+- `manifest.webmanifest` has no version field and there is no service worker, so nothing else needed it.
+
+**For Kelbo to test on the phone:** open https://jxstrr0.github.io/The-Whip/, scroll to the bottom of the title page: "v1.0.0.0" sits at the right of the Longlight line. Tap Settings: the version is under Done.
