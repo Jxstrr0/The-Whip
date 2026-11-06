@@ -20,7 +20,7 @@ Best on a phone in portrait. Landscape and desktop work too.
 - **In the riding** (Fridays, if the whip lets you go): hear cases, face the local reporter, keep your riding association happy, hold a town hall.
 - **The Book** lists all 120 MPs, with search, filters and sorting. Each card shows only what you've actually learned about that MP.
 
-The game saves automatically in your browser.
+The game saves automatically in your browser. Browsers can clear that storage when a phone runs low on space, so keep a backup: **Save file** next to each saved game on the title page (or **Save a backup file** in the in-game menu) makes a small text file, and **Load a backup file** brings it back. The title page says whether the browser has agreed to keep your saves, and suggests a backup if you've never made one or the last is 14 days old.
 
 ## Docs
 
