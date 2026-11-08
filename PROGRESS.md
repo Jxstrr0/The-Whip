@@ -1489,3 +1489,15 @@ Versions now use four numbers, Major.Minor.Patch.Build (Kelbo's call, same acros
 - `manifest.webmanifest` has no version field and there is no service worker, so nothing else needed it.
 
 **For Kelbo to test on the phone:** open https://jxstrr0.github.io/The-Whip/, scroll to the bottom of the title page: "v1.0.0.0" sits at the right of the Longlight line. Tap Settings: the version is under Done.
+
+## 2026-11-08 · New address: thewhip.longlight.games
+
+Every Longlight game now has its own web address. The Whip's is **https://thewhip.longlight.games/**; the old https://jxstrr0.github.io/The-Whip/ forwards there. The studio site is https://longlight.games/.
+
+**What changed (docs only, no code):**
+- `README.md` and `CLAUDE.md` carry the new addresses (the live URL, the studio site, the press kit).
+- `CLAUDE.md` no longer implies the games share one browser storage: each game has its own now. Saves made before the move stay on jxstrr0.github.io (Kelbo accepted that). The `whip:` prefix stays all the same.
+- `LONGLIGHT-STUDIO.md` recopied from the master in Kelbo.Website.
+- The version stays 1.0.0.0: nothing players see changed.
+
+**For Kelbo to test on the phone:** open https://thewhip.longlight.games/ and check the game loads. Saves from the old address won't show there; that's expected.
