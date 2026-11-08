@@ -2,7 +2,7 @@
 
 A phone-first 3D political career game from Longlight Interactive. You start as a rookie backbench MP in the 120-seat House of Commons of the fictional Dominion of Caledor and spend a political lifetime climbing to Chief Whip: the person who counts votes, enforces the line, and gets the caucus into the chamber when it matters.
 
-**Play it:** https://jxstrr0.github.io/The-Whip/
+**Play it:** https://thewhip.longlight.games/
 
 Best on a phone in portrait. Landscape and desktop work too.
 
