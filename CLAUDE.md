@@ -28,8 +28,8 @@ All of these were checked against the code on 2026-10-24 and hold.
 
 - No build step. Plain HTML, CSS and ES modules. No npm, no bundler, no framework. The files in the repo are the files Pages serves.
 - Three.js `0.160.0` only, through the import map from `cdn.jsdelivr.net` (in `index.html`, `tests.html` and `tools/lineup.html`). That CDN is the only outside resource. The Newsreader font is self-hosted in `assets/fonts/`; audio is synthesised in WebAudio, so no sound file is fetched.
-- Phone-first. Deployed to GitHub Pages from `main` at the repo root (`.nojekyll`). `.github/workflows/pages.yml` publishes every push to `main`; after a merge, check the run went green and the live URL loads.
-- Saves in `localStorage` under `whip:` keys (`whip:save:1` to `whip:save:3`, `whip:settings`), always wrapped in try/catch. Only `src/save.js` touches `localStorage`.
+- Phone-first. Deployed to GitHub Pages from `main` at the repo root (`.nojekyll`). `.github/workflows/pages.yml` publishes every push to `main`; after a merge, check the run went green and the live URL (https://thewhip.longlight.games/) loads.
+- Saves in `localStorage` under `whip:` keys (`whip:save:1` to `whip:save:3`, `whip:settings`), always wrapped in try/catch. Only `src/save.js` touches `localStorage`. Since November 2026 every Longlight game has its own subdomain, so The Whip has its own localStorage and quota; saves from before the move stay on the old shared origin, `jxstrr0.github.io` (Kelbo accepted that), and the old address forwards here. Keep the `whip:` prefix all the same.
 - Deterministic sim: no `Math.random` in `src/sim/`; all randomness through the seeded RNG (`src/sim/rng.js`). The renderer may use `Math.random` for cosmetic effects only.
 - `src/sim/` never touches the DOM or Three.js. It reads static data through `src/sim/config.js` (`tuning()`, `data()`, `say()`).
 - Every tuning number lives in `data/tuning.json`. Dialogue and content are data in `data/*.json`. UI and sim text lives in `data/strings.en.json` (`t()` in `src/ui/text.js`, `say()` in `src/sim/config.js`).
@@ -104,7 +104,7 @@ screen, and any link back to the studio site.
 
 - **Logo:** the horizon lockup, a half-set clay sun on a long horizon line
   with LONGLIGHT above INTERACTIVE. Use the official files from the studio
-  site's press kit (https://jxstrr0.github.io/Kelbo.Website/press.html; the
+  site's press kit (https://longlight.games/press.html; the
   files are `assets/press/longlight-logo-dark` and `longlight-logo-light`,
   SVG plus 2x PNG, in `Jxstrr0/Kelbo.Website`). Copy them into this repo;
   never hotlink, redraw or recolour them, or swap the letters for live text.
@@ -116,12 +116,12 @@ screen, and any link back to the studio site.
 - **Name:** always "Longlight Interactive" in full. Credit line:
   "© year Kelbo / Longlight Interactive" (the studio isn't a registered
   business yet). Never Kelbo's real name or initials.
-- **Studio site:** https://jxstrr0.github.io/Kelbo.Website/
+- **Studio site:** https://longlight.games/
 
 ## Studio catalogue
 
 `LONGLIGHT-STUDIO.md` (repo root) covers every Longlight game: looks, names
-already taken, storage and cache prefixes on the shared origin, a reuse map and
+already taken, storage and cache prefixes (once one shared origin), a reuse map and
 improvement ideas. Read it before pitching new ideas, names or looks, and
 before building a system another Longlight game may already have. This file
 wins where the two disagree. Don't edit the copy here: the master is
