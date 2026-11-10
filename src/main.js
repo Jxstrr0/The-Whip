@@ -46,7 +46,7 @@ import { createRecordUI } from './ui/recordUI.js';
 import { createMemoir } from './ui/memoirUI.js';
 import { createElectionUI } from './ui/electionUI.js';
 import { canUse, nextVote } from './sim/tools.js';
-import { t, partyColor, rowIcon } from './ui/text.js';
+import { t, partyColor, rowIcon, quarters } from './ui/text.js';
 import { stageLabel } from './sim/vote.js';
 
 const params = new URLSearchParams(location.search);
@@ -199,9 +199,9 @@ function buildWorld() {
       card.show(mpId);
     },
   });
-  const pickMp = (title, cb) => {
+  const pickMp = (title, cb, suggest = []) => {
     picking = cb;
-    book.open({ title });
+    book.open({ title, suggest });
   };
 
   let ledger;
@@ -390,6 +390,8 @@ function buildWorld() {
 
   // The world can exist before a game does (the menu's preview), so state may still be null here.
   let lastLog = getState()?.log.length ?? 0;
+  // Act 1's noticed tally, to say "+¼ noticed" when a vote or a question adds to it (reset on a new or loaded game).
+  let lastNoticed = { state: null, n: 0 };
   function renderAll(state = getState()) {
     const name = roomFor(state);
     // The paper takes the room's light (css/style.css, "Light").
@@ -438,7 +440,12 @@ function buildWorld() {
     const fresh = state.log.slice(lastLog).filter((l) => (l.kind === 'meeting' || l.kind === 'career') && !l.quiet);
     lastLog = state.log.length;
     // The cold open tells its own story; its log line is for the record, not a toast over the walk in.
-    if (fresh.length && state.flow.pending?.kind !== 'coldOpen') toast.show(fresh.map((l) => l.text).join(' '));
+    const said = fresh.map((l) => l.text);
+    const n = state.player.actProgress?.noticed ?? 0;
+    const gain = lastNoticed.state === state && state.player.act === 1 ? n - lastNoticed.n : 0;
+    lastNoticed = { state, n };
+    if (gain > 0.01) said.push(t('aim.toast.noticed', { n: quarters(gain) }));
+    if (said.length && state.flow.pending?.kind !== 'coldOpen') toast.show(said.join(' '));
   }
 
   // Autosave a moment after things settle, to the game's own slot.

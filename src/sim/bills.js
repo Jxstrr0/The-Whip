@@ -97,11 +97,13 @@ export function setLines(state, bill, rng) {
   const gov = state.house.government;
   const year = Math.floor(state.date.absWeek / tuning().calendar.weeksPerYear) + 1;
   const sponsorParty = state.mps[bill.sponsor]?.party;
+  // Small, low-profile government bills are consensus business: nobody rises against them. Kept on the bill
+  // so the division sheet can say why an opposition party backs it.
+  const consensus = bill.kind === 'government' && Math.abs(bill.position) <= 20 && bill.visibility <= 45;
+  bill.consensus = consensus;
   for (const p of Object.values(state.parties)) {
     const members = Object.values(state.mps).filter((m) => m.party === p.id);
     const avgRiding = members.length ? members.reduce((s, m) => s + (bill.ridingEffects[m.riding.type] || 0) + (bill.regionEffects[regionOfRiding(state, m.riding.id)] || 0), 0) / members.length : 0;
-    // Small, low-profile government bills are consensus business: nobody rises against them.
-    const consensus = bill.kind === 'government' && Math.abs(bill.position) <= 20 && bill.visibility <= 45;
     let support = (consensus ? 0.5 : 0) + ideoFit(p.ideology.economy * (bill.axis === 'economy' ? 1 : 0) + p.ideology.social * (bill.axis === 'social' ? 1 : 0), bill) + avgRiding * 0.5;
     if (p.id === gov && (bill.kind === 'government' || bill.kind === 'supply')) support += 2;
     else if (p.id !== gov && !consensus && (bill.kind === 'government' || bill.kind === 'supply')) support -= T.oppositionReflex;
