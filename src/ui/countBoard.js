@@ -1,5 +1,5 @@
 // The count board: the bells and your choice during a division, then the standing count ticking up by party.
-import { t, esc, stamp, partyShort, partyColor, mpName, countLine, rowLine, jobLine, foldBlock } from './text.js';
+import { t, esc, stamp, partyShort, partyColor, mpName, countLine, rowLine, jobLine, foldBlock, whyWeBack } from './text.js';
 import { tick, readNumber, feelStamps } from './feel.js';
 import { tuning, data } from '../sim/config.js';
 import { stageLabel, questionText } from '../sim/vote.js';
@@ -89,6 +89,7 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
         ${stkLine.lean ? `<div class="kv"><span class="k">${esc(me.riding.name)}</span><span class="v">${esc(leanText(stkLine.lean))}</span></div>` : ''}
         ${d ? `<div class="kv"><span class="k">${t('div.conscience', { feeling: '' }).replace(': ', '')}</span><span class="v">${esc(feeling(d.conscience))}</span></div>` : ''}
       </div>
+      ${whyWeBack(state, bill) ? `<p class="note">${esc(whyWeBack(state, bill))}</p>` : ''}
       <div class="choices">
         <button class="btn primary" data-c="line">${t('div.choose.line', { pos: t('vote.' + pos) })}${impact(stkLine)}</button>
         ${p.line === 'whipped' && pos !== 'abstain' ? `<button class="btn" data-c="rebel">${t('div.choose.rebel', { pos: t('vote.' + other) })}${impact(stkRebel)}</button>` : ''}

@@ -6,6 +6,7 @@ import { stakeStamps, stakeBrief, delta, cardChip, tableTotal } from './stakes.j
 import { drawer, HANDLE } from './drawer.js';
 import { take } from './feel.js';
 import { billStakes } from '../sim/stakes.js';
+import { inviteSuggestions } from '../sim/suggest.js';
 import { tuning } from '../sim/config.js';
 import { prediction } from '../sim/count.js';
 import { canUse, likelyAbsentees, budget, nextVote } from '../sim/tools.js';
@@ -167,7 +168,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
     sheet.querySelector('[data-act="ledger"]').onclick = () => onLedger?.();
     sheet.querySelector('[data-act="whip"]')?.addEventListener('click', () => dispatch({ type: 'meet', whipCall: true }));
     sheet.querySelectorAll('[data-meet]').forEach((b) => (b.onclick = () => dispatch({ type: 'meet', mpId: b.dataset.meet })));
-    sheet.querySelector('[data-act="invite"]').onclick = () => pickMp(t('office.pickInvite'), (id) => dispatch({ type: 'invite', mpId: id }));
+    sheet.querySelector('[data-act="invite"]').onclick = () => pickMp(t('office.pickInvite'), (id) => dispatch({ type: 'invite', mpId: id }), inviteSuggestions(getState()));
     sheet.querySelector('[data-act="call"]').onclick = () => pickMp(t('office.pickCall'), (id) => dispatch({ type: 'call', mpId: id }));
     sheet.querySelector('[data-act="end"]').onclick = () => dispatch({ type: 'resolve' });
   }

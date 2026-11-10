@@ -1711,3 +1711,17 @@ Kelbo asked for the parked drafts to be merged. The stacked branches (UI refresh
 Checked: `tests.html` 138 passed, 0 failed; a new career played to election night at 390 × 844 and 844 × 390 with no console errors.
 
 **For Kelbo to test on the phone:** the office, chamber and Question Period after the refresh; Settings shows Rich rooms and the version; Back up still works.
+
+## 2026-11-10 · First days (v1.1.1.0)
+
+From Kelbo's play-test of the first minutes:
+
+- **Get noticed counts in quarters.** The tally moves a quarter for a loyal vote, but the counter rounded down, so it looked stuck. The chip on the date bar now says the count (2¾/8, `quarters()` in `src/ui/text.js`), and every gain pops a small "+¼ noticed." toast (`src/main.js`, Act 1 only).
+- **Which side you sit on.** The first morning has a card under the walkthrough: government, Official Opposition, or a smaller opposition party, and what that means for your votes (`sideCard`, strings `side.*`).
+- **Why we back it.** Small, low-profile government bills are consensus business, so the opposition whips yea. The bill now keeps that as `bill.consensus` (`setLines` in `src/sim/bills.js`). When your party backs a government bill from opposition, the division sheet and the order paper say why: routine business, or close enough to the platform (`whyWeBack`, strings `why.back.*`).
+- **Question Period presses a bill you oppose.** On the opposition benches, `billInPlay` in `src/sim/questionPeriod.js` prefers a government bill your party votes against (your own dilemma still comes first).
+- **Worth a word.** The invite picker opens with up to three suggestions above everyone: your mentor, the member of your party closest to the fence on the next whipped vote, and your warmest clique friend, each with a one-line reason (`src/sim/suggest.js`, `book.open({ suggest })`).
+
+Checked: `tests.html` 142 passed, 0 failed (four new tests). Played the first morning and the first evening's invite picker at 390 × 844 with no console errors.
+
+Kelbo to test: start a new career; read the side card on day one; vote with the line and watch "+¼ noticed." and the chip count; open Invite in the office and try a suggested name; in opposition, see what Question Period asks about.

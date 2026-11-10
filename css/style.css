@@ -1565,6 +1565,18 @@ input::placeholder {
   margin: 6px 0 0;
   padding: 0;
 }
+/* The invite picker's "Worth a word": a short labelled list above everyone else. */
+.book-suggest {
+  margin: 10px 0 4px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--brass-ink);
+}
+.book-list.suggest .main small {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
 .book-list li {
   display: flex;
   align-items: center;
@@ -1734,6 +1746,12 @@ input::placeholder {
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+.agenda-aim .nrow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
 }
 .agenda-aim .rule {
   display: block;
