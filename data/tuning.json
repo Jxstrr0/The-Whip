@@ -258,6 +258,7 @@
     "aoStrength": 0.5,
     "contactShadow": 0.45,
     "chandelier": 22,
+    "tableLamp": 14,
     "deskLamp": 10,
     "pendant": 16,
     "walkerEvery": 18,
@@ -562,5 +563,10 @@
     "cap": 160,
     "peoplePerEntry": 5,
     "confidencePeople": 4
+  },
+  "backup": {
+    "remindAfterDays": 14,
+    "progressWeeks": 1,
+    "maxFileKb": 20000
   }
 }
