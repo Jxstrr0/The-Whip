@@ -84,11 +84,37 @@ export function foldBlock(title, body, { open = false, attr = '' } = {}) {
   return `<details class="fold-block"${open ? ' open' : ''}${attr ? ` ${attr}` : ''}><summary>${title}</summary>${body}</details>`;
 }
 
+// Why an opposition party backs a government bill, when it does: routine business, or close enough to its own
+// platform. Empty when there's nothing to explain (your own government's bill, or a vote against).
+export function whyWeBack(state, bill) {
+  const party = state.mps[state.player.mpId]?.party;
+  if (!bill || bill.kind !== 'government' || party === state.house.government || bill.positions?.[party] !== 'yea') return '';
+  return t(bill.consensus ? 'why.back.routine' : 'why.back.fit');
+}
+
+// Which side of the House the player sits on, and what that means, for the first morning.
+export function sideCard(state) {
+  const me = state.mps[state.player.mpId];
+  const party = state.parties[me.party];
+  const gov = state.parties[state.house.government];
+  const key = me.party === state.house.government ? 'government' : party?.role === 'opposition' ? 'opposition' : 'other';
+  return `<p class="tutorial side-card"><b>${esc(t('side.title.' + key))}</b> ${esc(t('side.' + key, { party: party?.name || '', gov: gov?.name || '' }))}</p>`;
+}
+
+// A count in quarters, as the noticed tally keeps it: 2.75 reads "2¾", 0.25 reads "¼".
+export function quarters(n) {
+  const q = Math.round(Math.max(0, n) * 4);
+  const whole = Math.floor(q / 4);
+  const part = ['', '¼', '½', '¾'][q % 4];
+  return whole || !part ? `${whole}${part}` : part;
+}
+const shown = (c) => (c.key === 'noticed' ? { ...c, have: quarters(c.have) } : c);
+
 // The act's aim, short: "Act 1 · Get noticed · 3 of 8" for the agenda bar.
 export function aimShort(state) {
   const a = actAim(state);
   const c = a.counters[0];
-  const tail = a.waiting || !c ? '' : ` · ${t('aim.s.' + c.key, c)}`;
+  const tail = a.waiting || !c ? '' : ` · ${t('aim.s.' + c.key, shown(c))}`;
   return `${t('career.act', { n: a.act })} · ${t('aim.short.' + a.act)}${tail}`;
 }
 
@@ -101,7 +127,10 @@ export function aimChip(state) {
   if (a.waiting || !c) return `<span class="n">${esc(t('aim.short.' + a.act))}</span>`;
   if (c.limit || c.key === 'weeks') return `<span class="n">${esc(t('aim.chip.' + a.act))}</span><b>${esc(t('aim.chip.' + c.key, { ...c, left: Math.max(0, c.need - c.have) }))}</b>`;
   const pct = Math.max(0, Math.min(100, Math.round((c.have / Math.max(1, c.need)) * 100)));
-  return `<span class="n">${esc(t('aim.chip.' + a.act))}</span><i class="rule" style="--p:${pct}%"></i>`;
+  // Noticed comes in quarters, so the chip says the count too (a quarter barely moves the rule).
+  const name = `<span class="n">${esc(t('aim.chip.' + a.act))}</span>`;
+  const head = c.key === 'noticed' ? `<span class="nrow">${name}<b>${esc(t('aim.chip.noticed', shown(c)))}</b></span>` : name;
+  return `${head}<i class="rule" style="--p:${pct}%"></i>`;
 }
 
 // The act's aim in full: the goal, every counter as a bar, and how it's won or lost.
@@ -111,7 +140,7 @@ export function aimDetail(state) {
   const row = (c) => {
     const pct = Math.max(0, Math.min(100, (c.have / Math.max(1, c.need)) * 100));
     const ok = c.limit === 'above' ? c.have >= c.need : c.limit === 'below' ? c.have < c.need * 0.7 : c.have >= c.need;
-    return `<div class="aim-row${ok ? ' done' : ''}${c.limit ? ' limit' : ''}"><div class="aim-k"><span>${esc(t('aim.c.' + c.key, { need: c.need }))}</span><b>${esc(c.limit ? String(c.have) : t('aim.of', c))}</b></div><div class="aim-bar"><i style="width:${pct}%"></i></div></div>`;
+    return `<div class="aim-row${ok ? ' done' : ''}${c.limit ? ' limit' : ''}"><div class="aim-k"><span>${esc(t('aim.c.' + c.key, { need: c.need }))}</span><b>${esc(c.limit ? String(c.have) : t('aim.of', shown(c)))}</b></div><div class="aim-bar"><i style="width:${pct}%"></i></div></div>`;
   };
   const either = a.act === 4 ? `<p class="muted small">${t('aim.either')}</p>` : '';
   const counters = a.act === 4 ? `${a.counters.slice(0, 2).map(row).join('')}${either}${a.counters.slice(2).map(row).join('')}` : a.counters.map(row).join('');

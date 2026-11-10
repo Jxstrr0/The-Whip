@@ -15,6 +15,8 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
   root.appendChild(el);
   const ui = { q: '', party: '', clique: '', cohort: '', type: '', sort: 'seat', row: false };
   let title = null;
+  // Picker only: a few names worth a word, each with why ({ id, why, vars }), shown above the full list.
+  let suggest = [];
 
   function knownCount(state, id) {
     const v = cardView(state, id);
@@ -68,6 +70,16 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
     return list;
   }
 
+  function suggestHtml(state) {
+    const list = title && !ui.q ? suggest.filter((x) => state.mps[x.id]) : [];
+    if (!list.length) return '';
+    const li = (x) => {
+      const m = state.mps[x.id];
+      return `<li data-id="${m.id}"><span class="bar" style="background:${partyColor(state, m)}"></span><span class="main"><b>${esc(mpName(m))}</b><small>${esc(t('suggest.' + x.why, x.vars))}</small></span></li>`;
+    };
+    return `<h3 class="book-suggest">${t('suggest.title')}</h3><ul class="book-list suggest">${list.map(li).join('')}</ul><h3 class="book-suggest">${t('suggest.everyone')}</h3>`;
+  }
+
   function render() {
     const state = getState();
     if (!state) return;
@@ -80,6 +92,7 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
         <h2>${esc(title || t('book.title'))}</h2>
         <button class="btn icon" data-act="close" aria-label="${t('btn.close')}">✕</button>
       </header>
+      ${suggestHtml(state)}
       <input class="search" type="search" placeholder="${t('book.search')}" value="${esc(ui.q)}" autocomplete="off">
       <button class="chip-toggle${ui.row ? ' on' : ''}" data-act="row" aria-pressed="${ui.row}">${rowIcon} ${t('book.myRow')}</button>
       <div class="filters">
@@ -136,6 +149,7 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
     // A title turns the book into a picker (whom to invite or call).
     open(opts = {}) {
       title = opts.title || null;
+      suggest = opts.suggest || [];
       el.classList.remove('hidden');
       render();
     },

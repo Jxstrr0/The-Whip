@@ -62,7 +62,9 @@ import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveIn
 import { getSettings, setSetting } from './src/settings.js';
 import { canBuzz, buzz } from './src/haptics.js';
 import { glossTerms, unglossAll } from './src/ui/gloss.js';
-import { partyColor } from './src/ui/text.js';
+import { partyColor, quarters, whyWeBack } from './src/ui/text.js';
+import { inviteSuggestions } from './src/sim/suggest.js';
+import { actAim } from './src/sim/goals.js';
 import { createAudio } from './src/audio.js';
 import * as tools from './src/sim/tools.js';
 import * as count from './src/sim/count.js';
@@ -2211,7 +2213,57 @@ test('The first evening at each rank logs the new room once, and every rank has 
   }
 });
 
+section('Round 3c · First days');
+
+test('Get noticed counts in quarters, and the count reads 2¾', () => {
+  assert(quarters(2.75) === '2¾' && quarters(0.25) === '¼' && quarters(0) === '0' && quarters(3) === '3', 'quarter glyphs');
+  const s = newGame({ seed: 'TEST-1', party: 'p1', guided: true });
+  s.player.actProgress.noticed = 1.6;
+  const c = actAim(s).counters.find((x) => x.key === 'noticed');
+  assert(c.have === 1.5, `quartered: ${c.have}`);
+  return `${quarters(c.have)}/${c.need}`;
+});
+
+test('Consensus bills carry their flag, and an opposition party backing one says why', () => {
+  for (const party of ['p2', 'p3']) {
+    const s = newGame({ seed: 'TEST-1', party, guided: true });
+    for (const b of Object.values(s.bills)) assert(typeof b.consensus === 'boolean', `${b.id}: consensus flag`);
+    const backed = Object.values(s.bills).find((b) => b.kind === 'government' && b.positions[party] === 'yea');
+    if (party !== s.house.government && backed) assert(whyWeBack(s, backed), `${party}: a reason to back ${backed.title}`);
+  }
+  const g = newGame({ seed: 'TEST-1', party: 'p1', guided: true });
+  const own = Object.values(g.bills).find((b) => b.kind === 'government');
+  if (own && g.mps[g.player.mpId].party === g.house.government) assert(!whyWeBack(g, own), 'no reason needed for your own bill');
+});
+
+test('The invite picker suggests up to three different members, mentor first, never yourself', () => {
+  const out = [];
+  for (const party of ['p1', 'p2', 'p3']) {
+    const s = newGame({ seed: 'TEST-1', party, guided: true });
+    const list = inviteSuggestions(s);
+    assert(list.length <= 3 && new Set(list.map((x) => x.id)).size === list.length, `${party}: three or fewer, no repeats`);
+    assert(!list.some((x) => x.id === s.player.mpId), `${party}: not yourself`);
+    if (s.player.mentor) assert(list[0]?.id === s.player.mentor && list[0].why === 'mentor', `${party}: mentor first`);
+    for (const x of list) assert(data().strings['suggest.' + x.why], `${party}: words for ${x.why}`);
+    out.push(`${party}: ${list.map((x) => x.why).join('+')}`);
+  }
+  return out.join(' · ');
+});
+
 section('Round two · Question Period');
+
+test('Round 3c: on the opposition benches, Question Period presses a bill the party votes against', () => {
+  const out = [];
+  for (const party of ['p1', 'p2', 'p3']) {
+    const s = toQuestionPeriod(party);
+    const q = s.questionPeriod;
+    if (party === s.house.government || !q.billId) continue;
+    const opposed = Object.values(s.bills).some((b) => b.status === 'active' && b.kind === 'government' && b.positions[party] === 'nay');
+    if (opposed && q.billId !== s.player.forceDilemma) assert(s.bills[q.billId].positions[party] === 'nay', `${party}: pressed a bill it backs`);
+    out.push(`${party}: ${s.bills[q.billId].positions[party]}`);
+  }
+  return out.join(' · ') || 'no opposition bill in play';
+});
 
 // Play a fresh guided game forward to its first Question Period stop.
 function toQuestionPeriod(party) {

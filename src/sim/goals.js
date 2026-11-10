@@ -30,7 +30,7 @@ export function actAim(state) {
   let waiting = false;
   switch (p.act) {
     case 1:
-      counters.push({ key: 'noticed', have: Math.floor(p.actProgress.noticed), need: C.noticedForAct2 });
+      counters.push({ key: 'noticed', have: Math.floor(p.actProgress.noticed * 4) / 4, need: C.noticedForAct2 });
       if (state.date.absWeek < C.act1MinWeeks) counters.push({ key: 'weeks', have: state.date.absWeek, need: C.act1MinWeeks });
       break;
     case 2:

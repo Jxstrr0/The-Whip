@@ -1,5 +1,5 @@
 // The agenda: the date, Continue and Skip, the day's feed, the morning order paper and the weekly review.
-import { t, esc, scenarioBrief, jobLine, aimShort, aimChip, aimDetail } from './text.js';
+import { t, esc, scenarioBrief, jobLine, aimShort, aimChip, aimDetail, whyWeBack, sideCard } from './text.js';
 import { tuning } from '../sim/config.js';
 import { stageLabel } from '../sim/vote.js';
 import { prediction } from '../sim/count.js';
@@ -106,11 +106,12 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
             const b = state.bills[billId];
             const tags = [b.confidence ? `<span class="badge">${t('agenda.confidence')}</span>` : '', stop === 'ownVote' ? `<span class="badge you">${t('agenda.yourVote')}</span>` : '', stop === 'bigVote' ? `<span class="badge you">${t('agenda.bigVote')}</span>` : ''].join(' ');
             const count = state.player.act >= tuning().tools.officeFilesFromAct && b.lines[state.mps[state.player.mpId].party] === 'whipped' ? countLine(prediction(state, billId)) + rowLine(state, billId) : '';
-            return `<li><b>${esc(b.title)}</b> <small>${esc(stageLabel(stage))}</small> ${tags}<p>${esc(b.summary || '')}</p>${count}</li>`;
+            const why = whyWeBack(state, b);
+            return `<li><b>${esc(b.title)}</b> <small>${esc(stageLabel(stage))}</small> ${tags}<p>${esc(b.summary || '')}</p>${why ? `<p class="muted small">${esc(why)}</p>` : ''}${count}</li>`;
           })
           .join('')
       : `<li>${t('agenda.noVotes')}</li>`;
-    sheet.innerHTML = `<div class="sheet-handle"></div><h2>${esc(dateText(state))}</h2>${jobLine(state, 'morning', { items: p.items })}${scenarioBrief(state)}${p.note ? `<p class="tutorial">${t(p.note)}</p>` : ''}<h3>${t('agenda.orderPaper')}</h3><ul class="order-paper">${rows}</ul>
+    sheet.innerHTML = `<div class="sheet-handle"></div><h2>${esc(dateText(state))}</h2>${jobLine(state, 'morning', { items: p.items })}${scenarioBrief(state)}${p.note ? `<p class="tutorial">${t(p.note)}</p>` : ''}${p.note === 'tutorial.d1' ? sideCard(state) : ''}<h3>${t('agenda.orderPaper')}</h3><ul class="order-paper">${rows}</ul>
       <div class="card-actions"><button class="btn primary" data-act="go">${t('agenda.toHouse')}</button></div>`;
     sheet.querySelector('[data-act="go"]').onclick = onContinue;
     sheet.classList.remove('hidden');

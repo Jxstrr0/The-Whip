@@ -57,12 +57,16 @@ function ministerFor(state, interest, sponsor) {
 }
 
 // The government bill people are talking about: your dilemma if it's live, then the week's big vote if it's
-// the government's, else the most visible one.
+// the government's, else the most visible one. On the opposition benches a bill your party votes against
+// comes first: that is what Question Period is for, and pressing a bill you back reads oddly.
 function billInPlay(state) {
+  const party = state.mps[state.player.mpId]?.party;
   const live = Object.values(state.bills).filter((b) => b.status === 'active' && b.kind === 'government');
   const forced = live.find((b) => b.id === state.player.forceDilemma);
   const big = bigVoteBill(state);
-  return forced || (big?.kind === 'government' ? big : null) || live.sort((a, b) => b.visibility - a.visibility)[0] || null;
+  const fits = (b) => party === state.house.government || b.positions?.[party] === 'nay';
+  const byVis = (list) => list.sort((a, b) => b.visibility - a.visibility)[0] || null;
+  return forced || (big?.kind === 'government' && fits(big) ? big : null) || byVis(live.filter(fits)) || (big?.kind === 'government' ? big : null) || byVis(live);
 }
 
 // The thing at home: a case you carried to Ostrava, else one of the riding type's standing complaints.
