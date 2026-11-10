@@ -76,7 +76,14 @@ export function createRidingUI(root, { getState, dispatch, getRoom = () => null 
     heights.set(v.phase === 'visitors' ? 'half' : 'full', v.phase === 'visitors' ? `${v.week}:${v.at}` : v.phase);
     lastSaid = said;
     speak();
-    sheet.innerHTML = `${HANDLE()}<h2>${esc(t('riding.title', { riding: me.riding.name }))}</h2>
+    // A visitor's hour is a memo on the constituency office's pad (letterhead, clip, the riding's name as the
+    // heading); the town hall and the day's end are a plain sheet with the office's title.
+    const memo = v.phase === 'visitors';
+    sheet.classList.toggle('memo', memo);
+    const head = memo
+      ? `<i class="memo-clip" aria-hidden="true"></i><p class="lh"><span>${t('memo.riding')}</span><span>${esc(t('riding.queue', { n: v.at + 1, of: v.queue.length }))}</span></p><h2>${esc(me.riding.name)}</h2>`
+      : `<h2>${esc(t('riding.title', { riding: me.riding.name }))}</h2>`;
+    sheet.innerHTML = `${HANDLE()}${head}
       <div class="tally">${bar(t('riding.standing'), p.ridingStanding)}</div>${jobLine(state, 'riding')}${body}`;
     const on = (sel, action) => sheet.querySelector(sel)?.addEventListener('click', () => dispatch(action));
     on('[data-act="carry"]', { type: 'ridingCase', mode: 'carry' });
