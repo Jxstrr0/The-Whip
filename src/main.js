@@ -1,7 +1,7 @@
 // Boot: load data, show the start menu (or start straight from ?seed=), build the rooms and UI, run the loop.
 import * as THREE from 'three';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
-import { setupRenderer, sharedEnvironment } from './look.js';
+import { setupRenderer, sharedEnvironment, DETAIL } from './look.js';
 import { loadData } from './loadData.js';
 import { setData, tuning } from './sim/config.js';
 import { newGame, scenarioGame, dailyGame, sharedGame, scenarioList } from './sim/modes.js';
@@ -14,7 +14,7 @@ import { caucusSeating } from './sim/caucus.js';
 import { townHallPlacards } from './sim/riding.js';
 import { weatherOf } from './sim/calendar.js';
 import { lightFor } from './light.js';
-import { saveGame, loadGame, deleteSave, exportSave, importSave, allSaves, latestSave } from './save.js';
+import { saveGame, loadGame, deleteSave, exportSave, importSave, allSaves, latestSave, saveBackupFile, backupFileName, backupDue, remindedThisVisit, markReminded } from './save.js';
 import { createRooms } from './rooms.js';
 import * as chamber from './chamber/scene.js';
 import * as office from './office/officeScene.js';
@@ -54,6 +54,9 @@ const DEBUG = params.get('debug') === '1';
 
 // Sound and settings exist before any game does: the title page has a room tone and a settings sheet too.
 applySettings();
+// How much a room builds. `?lite=1` forces the lean build for a frame-rate check; otherwise it's the setting.
+const LITE = params.get('lite') === '1';
+DETAIL.rich = !LITE && getSettings().richRooms;
 const audio = createAudio(getSettings());
 let settingsSheet = null;
 function openSettings() {
@@ -64,6 +67,10 @@ onSettings((s, key) => {
   if (key === 'sound' || key === 'volume') audio.configure(s);
   // New party colours mean every room redraws; the menu's preview Parliament too.
   if (key === 'colourBlind') world?.recolor();
+  if (key === 'richRooms') {
+    DETAIL.rich = !LITE && s.richRooms;
+    world?.recolor();
+  }
   if (key === 'glossary' && world) (s.glossary ? glossAll : unglossAll)(world.ui);
 });
 
@@ -258,6 +265,15 @@ function buildWorld() {
     onRetire: () => dispatch({ type: 'retire' }),
     onCross: (party) => dispatch({ type: 'crossFloor', party }),
     onSettings: openSettings,
+    // The same backup file the title page makes, for the game in hand.
+    onBackup: async () => {
+      saveGame(getState());
+      const result = await saveBackupFile(exportSave(getState()));
+      if (result === 'saved') {
+        setSetting('lastBackup', Date.now());
+        toast.show(t('menu.fileSaved', { name: backupFileName() }), 7000);
+      } else if (result === 'failed') toast.show(t('menu.fileFailed'));
+    },
   });
   // A row line on a count board (office, bells, order paper) opens the row screen for that vote.
   ui.addEventListener('click', (e) => {
@@ -540,15 +556,30 @@ async function boot() {
     // Debug and shared-seed starts skip the menu; ?guided=1 adds the first-week walkthrough.
     return startGame(newGame({ seed, party: params.get('party') || undefined, guided: params.get('guided') === '1', act: params.get('act'), coldOpen: params.get('coldopen') === '1' }));
   }
+  const saves = allSaves();
+  // A quiet note about backups, at most once a visit, only on the title page (never over a scene).
+  const lastBackup = getSettings().lastBackup;
+  const remind = !remindedThisVisit() && backupDue(saves, lastBackup);
+  if (remind) markReminded();
   const menu = createStartMenu(document.getElementById('ui'), {
-    saves: allSaves(),
+    saves,
     latest: latestSave(),
     scenarios: scenarioList(),
+    reminder: remind ? { lastBackup } : null,
     onContinue: (slot) => startGame(loadGame(slot), slot, { resumed: true }),
     onNew: (opts, slot) => startGame(newGame({ ...opts, guided: true, coldOpen: true }), slot),
     onScenario: (id, person, slot) => startGame(scenarioGame(id, person), slot),
     onDaily: (person, slot) => startGame(dailyGame(person), slot),
     onShared: (opts, slot) => startGame(sharedGame(opts), slot),
+    onCheckImport: (text) => {
+      try {
+        importSave(text);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    onBackedUp: () => setSetting('lastBackup', Date.now()),
     onImport: (text, slot) => {
       try {
         startGame(importSave(text), slot);

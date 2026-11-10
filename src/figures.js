@@ -6,6 +6,7 @@
 // reads anything here, and the randomness is plain Math.random.
 import * as THREE from 'three';
 import { merge, figureMaterial } from './kit3d.js';
+import { cloth } from './textures.js';
 import { RIG, jacketGeometry, jacketFrontZ, shirtFront, pelvis, headGeometry, armGeometry, legGeometry, handGeometry, shoeGeometry, FOREARM_SCALE, SHIN_SCALE } from './body.js';
 import { HEAD_R, HEAD_PARTS, BODY_PARTS, headGeometries, bodyGeometries, hairCap, partsFor, partColour, tieColour, growScale } from './faces.js';
 import { NCH, IX, poseChannels, startFidget, endFidget, stepFidget, pickFidget, breathe, toChannels, wrapAngle } from './motion.js';
@@ -130,16 +131,16 @@ const rnd = Math.random;
 export function createFigureCrowd(n, { pose = 'seated' } = {}) {
   const parts = figureParts();
   const mats = {
-    jacket: figureMaterial({ roughness: 0.82 }),
-    pelvis: figureMaterial({ roughness: 0.85 }),
+    jacket: cloth(figureMaterial({ roughness: 0.82 })),
+    pelvis: cloth(figureMaterial({ roughness: 0.85 }), { around: 4 }),
     shirt: figureMaterial({ color: '#e9e3d8', roughness: 0.7 }),
     tie: figureMaterial({ roughness: 0.55 }),
     pin: figureMaterial({ roughness: 0.3, metalness: 0.6 }),
     head: figureMaterial({ roughness: 0.6 }),
     hair: figureMaterial({ roughness: 0.95 }),
-    arm: figureMaterial({ roughness: 0.82 }),
+    arm: cloth(figureMaterial({ roughness: 0.82 }), { around: 2 }),
     hand: figureMaterial({ roughness: 0.6 }),
-    leg: figureMaterial({ roughness: 0.85 }),
+    leg: cloth(figureMaterial({ roughness: 0.85 }), { around: 2 }),
     shoe: figureMaterial({ color: '#1d1a16', roughness: 0.8 }),
   };
   const meshes = {};

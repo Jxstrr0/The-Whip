@@ -53,10 +53,12 @@ window.__caucus = caucusSim;
 import * as ridingSim from './src/sim/riding.js';
 import { calendarOf, weatherOf } from './src/sim/calendar.js';
 import { lightFor, hourOf, LIGHTS } from './src/light.js';
+import { textureFiles } from './src/textures.js';
 import { snapStop, STOPS } from './src/ui/drawer.js';
+import { stakeStamps } from './src/ui/stakes.js';
 import { readNumber, writeNumber } from './src/ui/feel.js';
 import { botAct } from './src/sim/bot.js';
-import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo } from './src/save.js';
+import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo, backupDue, backupFileName, readBackupFile } from './src/save.js';
 import { getSettings, setSetting } from './src/settings.js';
 import { canBuzz, buzz } from './src/haptics.js';
 import { glossTerms, unglossAll } from './src/ui/gloss.js';
@@ -2117,6 +2119,29 @@ test('Saves go to a slot and come back with their slot, time and a one-line desc
   return 'slot test written, read, described and deleted';
 });
 
+test('Backup files carry the save code, and the backup reminder waits for real progress and 14 quiet days', async () => {
+  assert(backupFileName(new Date(2026, 0, 5)) === 'the-whip-backup-2026-01-05.txt', 'file name uses the local date');
+  const s = newGame({ seed: 'BAK-1', party: 'p1' });
+  const code = exportSave(s);
+  const back = importSave(await readBackupFile(new File([code + '\r\n  '], 'x.txt', { type: 'text/plain' })));
+  assert(JSON.stringify(back) === JSON.stringify(s), 'a file with a trailing newline restores the same game');
+  let refused = false;
+  try { importSave(await readBackupFile(new File(['hello, not a save'], 'x.txt'))); } catch { refused = true; }
+  assert(refused, 'a stray text file is refused');
+  const B = tuning().backup;
+  const day = 86400000;
+  const now = Date.UTC(2026, 10, 6);
+  const career = { mode: 'career', act: 1, absWeek: B.progressWeeks, savedAt: now - day };
+  assert(!backupDue([null, null, null], 0, now), 'no saves, no reminder');
+  assert(!backupDue([{ ...career, absWeek: 0 }], 0, now), 'not in the first week');
+  assert(!backupDue([{ ...career, mode: 'scenario', act: 3 }], 0, now), 'not for a one-week scenario');
+  assert(backupDue([career], 0, now), 'progress and never backed up');
+  assert(!backupDue([career], now - 2 * day, now), 'backed up two days ago');
+  assert(backupDue([career], now - B.remindAfterDays * day, now), `${B.remindAfterDays} days since the last backup`);
+  assert(!backupDue([{ ...career, savedAt: now - 30 * day }], now - 20 * day, now), 'nothing played since the last backup');
+  return `reminder after ${B.remindAfterDays} days`;
+});
+
 test('Settings persist under whip:settings and the colour-blind palette swaps every party colour', () => {
   const before = { ...getSettings() };
   try {
@@ -2962,6 +2987,22 @@ test('The home-screen manifest and its icons are served, and index.html links th
   return `${man.icons.length} icons`;
 });
 
+test('Every surface map is served as a JPEG, the paper fibre the CSS uses among them, inside the texture budget', async () => {
+  const files = textureFiles();
+  assert(files.includes('paper_c.jpg') && files.includes('brass_n.jpg') && files.includes('oak_r.jpg'), 'paper, brass and roughness maps are listed');
+  const css = await (await fetch('css/style.css')).text();
+  assert(/--grain: url\("\.\.\/assets\/textures\/paper_c\.jpg"\)/.test(css), 'the UI paper uses the paper map');
+  assert(/--card-grain: url\("\.\.\/assets\/textures\/card_c\.jpg"\)/.test(css), 'the index card uses the card map');
+  let bytes = 0;
+  for (const f of [...files, 'card_c.jpg']) {
+    const r = await fetch(`assets/textures/${f}`);
+    assert(r.ok && /image\/jpeg/.test(r.headers.get('content-type') || ''), `texture ${f}`);
+    bytes += (await r.arrayBuffer()).byteLength;
+  }
+  assert(bytes < 3.5 * 1024 * 1024, `textures weigh ${bytes} bytes`);
+  return `${files.length + 1} maps, ${(bytes / 1024).toFixed(0)} KB`;
+});
+
 test('Haptics are a setting: on by default, silent when off, and never throw', () => {
   const before = { ...getSettings() };
   try {
@@ -3026,6 +3067,22 @@ test('The feel pass: timings in tuning, a dragged sheet settles on the nearest s
   assert(readNumber('+4') === 4 && readNumber('\u22126') === -6 && readNumber('12') === 12 && readNumber('12 / 24') === null && readNumber('+') === null, 'reads signed numbers only');
   assert(writeNumber(3, '+4') === '+3' && writeNumber(-2, '+4') === '\u22122' && writeNumber(0, '\u22126') === '0' && writeNumber(7, '12') === '7', 'writes them the same way');
   return `sheet ${F.sheet}ms, tick ${F.tick}ms, stamp ${F.stamp}ms, press ${F.press}ms, dolly ${F.dolly}s`;
+});
+
+test('The desk: a whipped bill is stamped twice on the memo (the line, then the break), a free vote is one line', () => {
+  const { s: state, me } = whipScenario(4, 'TEST-DESK');
+  const party = me.party;
+  const whipped = Object.values(state.bills).find((b) => b.status === 'active' && stakes.billStakes(state, b).whipped);
+  assert(whipped, 'a whipped bill to stamp');
+  const html = stakeStamps(state, whipped);
+  const count = (re) => (html.match(re) || []).length;
+  assert(count(/class="stake-stamp a"/g) === 1 && count(/class="stake-stamp b"/g) === 1, 'one stamp each way');
+  assert(count(/class="stake (up|down|flat)"/g) === 4, 'riding and whip inks on both');
+  assert(html.includes(uiText('vote.' + whipped.positions[party]).toUpperCase()) || html.includes(uiText('vote.' + whipped.positions[party])), 'the line names the vote');
+  const free = { ...whipped, lines: { ...whipped.lines, [party]: 'free' } };
+  const freeHtml = stakeStamps(state, free);
+  assert(!freeHtml.includes('stake-stamp') && freeHtml.includes('class="free"'), 'a free vote is not stamped');
+  return `${whipped.title}: stamped ${whipped.positions[party]}`;
 });
 
 test('The paper takes the room\'s light: bells pale, the office by lamp (a strip light while shared), a grey winter morning', () => {
