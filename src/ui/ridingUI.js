@@ -4,6 +4,7 @@ import { data } from '../sim/config.js';
 import { fillRiding, caseStakes } from '../sim/riding.js';
 import { delta } from './stakes.js';
 import { drawer, HANDLE } from './drawer.js';
+import { take } from './feel.js';
 
 export function createRidingUI(root, { getState, dispatch, getRoom = () => null }) {
   const sheet = document.createElement('section');
@@ -75,7 +76,14 @@ export function createRidingUI(root, { getState, dispatch, getRoom = () => null 
     heights.set(v.phase === 'visitors' ? 'half' : 'full', v.phase === 'visitors' ? `${v.week}:${v.at}` : v.phase);
     lastSaid = said;
     speak();
-    sheet.innerHTML = `${HANDLE()}<h2>${esc(t('riding.title', { riding: me.riding.name }))}</h2>
+    // A visitor's hour is a memo on the constituency office's pad (letterhead, clip, the riding's name as the
+    // heading); the town hall and the day's end are a plain sheet with the office's title.
+    const memo = v.phase === 'visitors';
+    sheet.classList.toggle('memo', memo);
+    const head = memo
+      ? `<i class="memo-clip" aria-hidden="true"></i><p class="lh"><span>${t('memo.riding')}</span><span>${esc(t('riding.queue', { n: v.at + 1, of: v.queue.length }))}</span></p><h2>${esc(me.riding.name)}</h2>`
+      : `<h2>${esc(t('riding.title', { riding: me.riding.name }))}</h2>`;
+    sheet.innerHTML = `${HANDLE()}${head}
       <div class="tally">${bar(t('riding.standing'), p.ridingStanding)}</div>${jobLine(state, 'riding')}${body}`;
     const on = (sel, action) => sheet.querySelector(sel)?.addEventListener('click', () => dispatch(action));
     on('[data-act="carry"]', { type: 'ridingCase', mode: 'carry' });
@@ -84,9 +92,9 @@ export function createRidingUI(root, { getState, dispatch, getRoom = () => null 
     on('[data-act="townhall"]', { type: 'ridingTownHall' });
     on('[data-act="announce"]', { type: 'ridingAnnounce' });
     on('[data-act="home"]', { type: 'resolve' });
-    sheet.querySelectorAll('[data-pres]').forEach((b) => b.addEventListener('click', () => dispatch({ type: 'ridingPresident', index: Number(b.dataset.pres) })));
-    sheet.querySelectorAll('[data-rep]').forEach((b) => b.addEventListener('click', () => dispatch({ type: 'ridingReporter', index: Number(b.dataset.rep) })));
-    sheet.querySelectorAll('[data-th]').forEach((b) => b.addEventListener('click', () => dispatch({ type: 'ridingAnswer', index: Number(b.dataset.th) })));
+    sheet.querySelectorAll('[data-pres]').forEach((b) => b.addEventListener('click', () => take(b, () => dispatch({ type: 'ridingPresident', index: Number(b.dataset.pres) }))));
+    sheet.querySelectorAll('[data-rep]').forEach((b) => b.addEventListener('click', () => take(b, () => dispatch({ type: 'ridingReporter', index: Number(b.dataset.rep) }))));
+    sheet.querySelectorAll('[data-th]').forEach((b) => b.addEventListener('click', () => take(b, () => dispatch({ type: 'ridingAnswer', index: Number(b.dataset.th) }))));
   }
   return { render, sheet };
 }

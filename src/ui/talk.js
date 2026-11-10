@@ -2,8 +2,9 @@
 import { t, esc, mpName, partyColor, partyShort, jobLine, stamp } from './text.js';
 import { fillLine, cardLabel } from '../sim/meetings.js';
 import { renderDealTable } from './dealTable.js';
-import { stakeLine, stakeBrief, delta, cardChip, tableTotal } from './stakes.js';
+import { stakeStamps, stakeBrief, delta, cardChip, tableTotal } from './stakes.js';
 import { drawer, HANDLE } from './drawer.js';
+import { take } from './feel.js';
 import { billStakes } from '../sim/stakes.js';
 import { tuning } from '../sim/config.js';
 import { prediction } from '../sim/count.js';
@@ -11,6 +12,13 @@ import { canUse, likelyAbsentees, budget, nextVote } from '../sim/tools.js';
 import { billName } from '../sim/bills.js';
 import { countLine, rowLine } from './text.js';
 import { buzz } from '../haptics.js';
+
+// Blocks still free tonight for the job line ("2 blocks" stayed put after a meeting; playtest, 1.0.0.1). Half blocks read ½.
+function blocksLeft(e) {
+  const left = Math.max(0, e.slots - e.used);
+  const whole = Math.floor(left);
+  return left - whole >= 0.5 ? (whole ? `${whole}½` : '½') : String(whole);
+}
 
 // Which ink the verdict is stamped in: a deal is good news, a door slammed is bad, a polite no is neither.
 const INK = { deal: 'yea', theyWalked: 'nay', youDeclined: 'nay', refused: 'nay' };
@@ -71,6 +79,9 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
     buzz(kind);
   }
 
+  // The memo's letterhead: whose paper it is, and where in the meeting you are.
+  const letterhead = (mt, right) => `<p class="lh"><span>${t(mt.situation === 'whipCall' ? 'memo.whip' : 'memo.member')}</span><span>${right}</span></p>`;
+
   function verdict(state, mt) {
     const m = state.mps[mt.mpId];
     const o = mt.outcome;
@@ -83,7 +94,8 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
     const r = mt.after?.rapport ?? 0;
     const owed = dealt && [...mt.deal.offers, ...mt.deal.asks].some((c) => c !== 'info');
     heights.set('half', mt.id);
-    sheet.innerHTML = `${HANDLE()}
+    sheet.classList.add('memo');
+    sheet.innerHTML = `${HANDLE()}<i class="memo-clip" aria-hidden="true"></i>${letterhead(mt, t('memo.record'))}
       <header class="card-head"><span class="chip" style="background:${partyColor(state, m)}"></span>
         <div class="who"><h2>${esc(mpName(m))}</h2><p>${esc(partyShort(state, m))}</p></div></header>
       <div class="verdict-row">${stamp(t(dealt ? 'debrief.stamp.deal' : 'debrief.stamp.noDeal'), INK[o] || 'grey', true)}<p class="verdict-line">${esc(t('debrief.' + (dealt && mt.reversal ? 'dealWhip' : o), { first: m.name.first }))}</p></div>
@@ -95,6 +107,8 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
         ${owed ? `<button class="btn" data-act="ledger">${t('tool.ledger')}</button>` : ''}
         <button class="btn primary" data-act="back">${t('debrief.back')}</button>
       </div>`;
+    // A deal has its own buzz (above); the stamp's would double it.
+    if (dealt) sheet.querySelector('.stamp').dataset.felt = '';
     sheet.querySelector('[data-act="ledger"]')?.addEventListener('click', () => onLedger?.());
     sheet.querySelector('[data-act="back"]').onclick = () => dispatch({ type: 'closeDebrief' });
     sheet.scrollTop = 0;
@@ -112,7 +126,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
     if (done?.outcome) return verdict(state, done);
     const left = e.slots - e.used;
     const whip = e.whipCall
-      ? `<div class="whip-call"><p class="whip-call-label">${t('office.whipCall')}</p><p class="whip-call-bill">${esc(state.bills[e.whipCall.billId]?.title || '')}</p>
+      ? `<div class="whip-call slip"><p class="whip-call-label">${t('office.whipCall')}</p><p class="whip-call-bill">${esc(state.bills[e.whipCall.billId]?.title || '')}</p>
          ${stakeBrief(state, state.bills[e.whipCall.billId])}
          <button class="btn primary" data-act="whip" ${left < 1 ? 'disabled' : ''}>${t('office.go')}</button></div>`
       : '';
@@ -129,9 +143,10 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
           .join('')
       : `<li class="muted">${t('office.none')}</li>`;
     heights.set('full', 'evening');
+    sheet.classList.remove('memo');
     sheet.innerHTML = `${HANDLE()}
       <header class="card-head"><div class="who"><h2>${t(`office.title.${Math.max(1, Math.min(5, state.player.act))}`)}</h2><p>${t('office.slots')}: <span class="slots">${slotDots(e)}</span></p></div></header>
-      ${jobLine(state, 'office', { slots: e.slots, whipCall: !!e.whipCall })}
+      ${jobLine(state, 'office', { slots: blocksLeft(e), whipCall: !!e.whipCall })}
       ${whip}
       <h3>${t('office.walkIns')}</h3><ul class="book-list">${rows}</ul>
       ${whipsDesk(state)}
@@ -164,11 +179,14 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
     // After the first turn the job has been read: the talk gets the room.
     const later = mt.phase === 'talk' && mt.turn > 1;
     const bill = ['whipCall', 'rebelRecruit'].includes(mt.situation) ? state.bills[mt.billId] : null;
-    const head = `${HANDLE()}
+    // The talk is a memo on the pad (letterhead, clip, the stakes stamped on); the deal table is its own sheet.
+    const memo = mt.phase === 'talk';
+    sheet.classList.toggle('memo', memo);
+    const head = `${HANDLE()}${memo ? `<i class="memo-clip" aria-hidden="true"></i>${letterhead(mt, t('talk.turn', { n: mt.turn, max: mt.maxTurns }))}` : ''}
       <header class="card-head"><span class="chip" style="background:${partyColor(state, m)}"></span>
-        <div class="who"><h2>${esc(mpName(m))}</h2><p><span class="badge mood-${mt.mood}">${t('mood.' + mt.mood)}</span>${mt.phase === 'talk' ? ` · ${t('talk.turn', { n: mt.turn, max: mt.maxTurns })}` : ''}</p></div></header>
+        <div class="who"><h2>${esc(mpName(m))}</h2><p>${memo ? `${esc(m.riding.name)} · ` : ''}<span class="badge mood-${mt.mood}">${t('mood.' + mt.mood)}</span></p></div></header>
       ${later ? '' : jobLine(state, 'meeting', { situation: mt.situation, pos: mt.billId ? t('vote.' + state.bills[mt.billId]?.positions[state.mps[state.player.mpId].party]) : '' })}
-      ${bill ? stakeLine(state, bill) : ''}`;
+      ${bill ? stakeStamps(state, bill) : ''}`;
     if (mt.phase === 'talk') {
       // The talk opens at half height: their line is set beside them in the room, and the sheet holds the replies.
       // Where the room can't show it (a phone on its side under a bottom sheet) the line stays on the paper.
@@ -177,11 +195,11 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
       sheet.innerHTML = `${head}${note}<blockquote class="line in-room">${esc(mt.talk.current.text)}</blockquote>
         <div class="choices talk-choices">${mt.talk.options.map((o, i) => `<button class="btn" data-i="${i}"><small class="approach">${t('approach.' + o.approach)}</small>${esc(o.text)}</button>`).join('')}</div>`;
       sheet.querySelectorAll('[data-i]').forEach((b) => {
-        b.onclick = () => {
+        b.onclick = () => take(b, () => {
           const r = dispatch({ type: 'talk', index: Number(b.dataset.i) });
           lastNote = r?.note || 'ok';
           render(getState());
-        };
+        });
       });
       // Each new turn opens on the replies: from the top if they're in view there, otherwise scrolled to them.
       const said = sheet.querySelector('.note') || sheet.querySelector('.talk-choices');

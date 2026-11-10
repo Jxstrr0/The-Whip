@@ -2,6 +2,7 @@
 // and the benches react; the gallery's verdict and what it cost or bought you. The chamber plays along: you
 // stand, the minister stands, the gavel falls when you sit.
 import { t, esc, stamp, firstWeekHint, jobLine, mpName, roleName } from './text.js';
+import { take } from './feel.js';
 import { tuning } from '../sim/config.js';
 import { FRAMINGS } from '../sim/questionPeriod.js';
 
@@ -45,7 +46,7 @@ export function createQpUI(root, { getState, dispatch, getRoom, onBenches }) {
       const slot = minister ? t('qp.slotTo', { day, minister: mpName(minister), role: roleName(state, minister) }) : t('qp.slot', { day });
       body = `<p class="muted to">${esc(slot)}${qp.source === 'deal' ? ` · ${esc(t('qp.deal'))}` : ''}</p>
         <blockquote class="line call">${esc(qp.call)}</blockquote>
-        ${jobLine(state, 'questionPeriod')}${firstWeekHint(state, 'tutorial.qp')}
+        ${jobLine(state, 'questionPeriod')}${state.memoir?.some((e) => e.kind === 'firstQuestion') ? '' : firstWeekHint(state, 'tutorial.qp')}
         <div class="choices replies">${FRAMINGS.map((f) => `<button class="btn" data-framing="${f}"><small class="approach">${t('qp.' + f)}</small>${esc(qp.questions[f])}</button>`).join('')}</div>`;
     } else if (verdictFor !== key) {
       phase = 'answer';
@@ -76,7 +77,7 @@ export function createQpUI(root, { getState, dispatch, getRoom, onBenches }) {
     }
     sheet.innerHTML = `<div class="sheet-handle"></div><h2>${t('qp.title')}</h2>${body}`;
     stage(phase, qp, state);
-    sheet.querySelectorAll('[data-framing]').forEach((b) => b.addEventListener('click', () => dispatch({ type: 'qpAsk', framing: b.dataset.framing })));
+    sheet.querySelectorAll('[data-framing]').forEach((b) => b.addEventListener('click', () => take(b, () => dispatch({ type: 'qpAsk', framing: b.dataset.framing }))));
     sheet.querySelector('[data-act="verdict"]')?.addEventListener('click', () => {
       verdictFor = key;
       getRoom?.()?.gavel();
