@@ -325,7 +325,7 @@ export function createGameMenu(root, { getState, onQuit, onLedger, onMemoir, onR
   };
 }
 
-// The settings sheet: sound, volume, haptics (only on phones that can buzz), colour-blind colours, larger text. get() returns the current settings,
+// The settings sheet: sound, volume, haptics (only on phones that can buzz), colour-blind colours, larger text, rich rooms. get() returns the current settings,
 // set(key, value) stores one. Opens over the title page or the game.
 export function createSettingsSheet(root, { get, set }) {
   const el = document.createElement('section');
@@ -341,6 +341,7 @@ export function createSettingsSheet(root, { get, set }) {
       ${toggle('glossary', 'settings.glossary', 'settings.glossaryNote')}
       ${toggle('colourBlind', 'settings.colourBlind', 'settings.colourBlindNote')}
       ${toggle('largeText', 'settings.largeText', 'settings.largeTextNote')}
+      ${toggle('richRooms', 'settings.richRooms', 'settings.richRoomsNote')}
       <div class="choices"><button class="btn primary" data-act="close">${t('settings.done')}</button></div>
       <p class="version-note">${esc(t('settings.version', { version: VERSION }))}</p>`;
     el.querySelectorAll('.switch').forEach((b) => {

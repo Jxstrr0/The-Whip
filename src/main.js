@@ -1,7 +1,7 @@
 // Boot: load data, show the start menu (or start straight from ?seed=), build the rooms and UI, run the loop.
 import * as THREE from 'three';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
-import { setupRenderer, sharedEnvironment } from './look.js';
+import { setupRenderer, sharedEnvironment, DETAIL } from './look.js';
 import { loadData } from './loadData.js';
 import { setData, tuning } from './sim/config.js';
 import { newGame, scenarioGame, dailyGame, sharedGame, scenarioList } from './sim/modes.js';
@@ -13,6 +13,7 @@ import './sim/questionPeriod.js';
 import { caucusSeating } from './sim/caucus.js';
 import { townHallPlacards } from './sim/riding.js';
 import { weatherOf } from './sim/calendar.js';
+import { lightFor } from './light.js';
 import { saveGame, loadGame, deleteSave, exportSave, importSave, allSaves, latestSave, saveBackupFile, backupFileName, backupDue, remindedThisVisit, markReminded } from './save.js';
 import { createRooms } from './rooms.js';
 import * as chamber from './chamber/scene.js';
@@ -36,6 +37,7 @@ import { createStartMenu, createGameMenu, createSettingsSheet } from './ui/menus
 import { createAudio } from './audio.js';
 import { getSettings, setSetting, onSettings, applySettings } from './settings.js';
 import { buzz } from './haptics.js';
+import { feelVars, tickSheet, feelStamps } from './ui/feel.js';
 import { watchGlossary, glossAll, unglossAll } from './ui/gloss.js';
 import { resumeNote } from './sim/goals.js';
 import { createLedger } from './ui/ledger.js';
@@ -52,6 +54,9 @@ const DEBUG = params.get('debug') === '1';
 
 // Sound and settings exist before any game does: the title page has a room tone and a settings sheet too.
 applySettings();
+// How much a room builds. `?lite=1` forces the lean build for a frame-rate check; otherwise it's the setting.
+const LITE = params.get('lite') === '1';
+DETAIL.rich = !LITE && getSettings().richRooms;
 const audio = createAudio(getSettings());
 let settingsSheet = null;
 function openSettings() {
@@ -62,6 +67,10 @@ onSettings((s, key) => {
   if (key === 'sound' || key === 'volume') audio.configure(s);
   // New party colours mean every room redraws; the menu's preview Parliament too.
   if (key === 'colourBlind') world?.recolor();
+  if (key === 'richRooms') {
+    DETAIL.rich = !LITE && s.richRooms;
+    world?.recolor();
+  }
   if (key === 'glossary' && world) (s.glossary ? glossAll : unglossAll)(world.ui);
 });
 
@@ -113,6 +122,7 @@ function buildWorld() {
 
   let card;
   let hud = null;
+  let roomBuilt = null;
   let lastRowShown = null;
   const rooms = createRooms({
     factories: { chamber, office, caucus, riding },
@@ -135,6 +145,7 @@ function buildWorld() {
     },
     onChange(name, room) {
       audio.room(name);
+      roomBuilt?.(name, room);
       // Cut through black: cover the swap at once, then fade back in once the new room has drawn a frame.
       const fade = document.getElementById('fade');
       if (fade) {
@@ -310,12 +321,26 @@ function buildWorld() {
     onChoose: (choice) => dispatch({ type: 'resolve', choice }),
     onContinue: () => dispatch({ type: 'advance' }),
   });
-  const officeUI = createOfficeUI(ui, { getState, dispatch, pickMp, onLedger: () => ledger.open(), onVerdict: (deal) => audio.stamp(deal) });
+  const officeUI = createOfficeUI(ui, { getState, dispatch, pickMp, onLedger: () => ledger.open(), onVerdict: (deal) => audio.stamp(deal), getRoom: () => (rooms.name === 'office' ? rooms.room : null) });
   const careerUI = createCareerUI(ui, { getState, dispatch });
   const recordUI = createRecordUI(ui, { getState, onNewGame: () => (location.href = location.pathname), onPerson: (mpId) => card.show(mpId) });
   const electionUI = createElectionUI(ui, { getState, dispatch });
   const caucusUI = createCaucusUI(ui, { getState, dispatch, getRoom: () => (rooms.name === 'caucus' ? rooms.room : null) });
-  const ridingUI = createRidingUI(ui, { getState, dispatch });
+  const ridingUI = createRidingUI(ui, { getState, dispatch, getRoom: () => (rooms.name === 'riding' ? rooms.room : null) });
+  // A room frames its people in the part of a portrait screen the sheet leaves clear, so each sheet reports
+  // its real height as it changes (the drawer, a longer line, a turn of the phone).
+  const clearOf = {};
+  const clearAbove = (name, sheet) => () => {
+    const h = window.innerHeight || 1;
+    const top = sheet.classList.contains('hidden') || !sheet.offsetHeight ? h : sheet.offsetTop;
+    clearOf[name] = Math.max(0, Math.min(1, top / h));
+    if (rooms.name === name) rooms.room?.setClear?.(clearOf[name]);
+  };
+  for (const [name, s] of [['office', officeUI.sheet], ['riding', ridingUI.sheet]]) {
+    if (typeof ResizeObserver === 'function') new ResizeObserver(clearAbove(name, s)).observe(s);
+  }
+  // A room built fresh starts from the height its sheet last had.
+  roomBuilt = (name, room) => room.setClear?.(clearOf[name] ?? 1);
   const qpUI = createQpUI(ui, { getState, dispatch, getRoom: chamberRoom, onBenches: (kind) => audio.benches(kind) });
   const coldOpenUI = createColdOpenUI(ui, { getState, dispatch, getRoom: (name) => (rooms.name === name ? rooms.room : null), audio, colorOf: (party) => partyColor(getState(), { party }) });
 
@@ -367,6 +392,10 @@ function buildWorld() {
   let lastLog = getState()?.log.length ?? 0;
   function renderAll(state = getState()) {
     const name = roomFor(state);
+    // The paper takes the room's light (css/style.css, "Light").
+    document.documentElement.dataset.light = lightFor(state, name);
+    document.documentElement.style.setProperty('--light-fade', `${tuning().look.light.fade}ms`);
+    feelVars();
     const me = state.mps[state.player.mpId];
     const colleague = name === 'office' && state.player.act < 2 ? deskmate(state, me) : null;
     rooms.show(name, {
@@ -402,6 +431,9 @@ function buildWorld() {
       hud?.render();
     }
     ledger.refresh();
+    // Numbers tick to their new values and a fresh stamp is felt (src/ui/feel.js).
+    for (const el of ui.querySelectorAll('.sheet, .count-board, .agenda')) tickSheet(el);
+    feelStamps(ui);
     // Meeting outcomes, calls and deliveries show briefly as a toast.
     const fresh = state.log.slice(lastLog).filter((l) => (l.kind === 'meeting' || l.kind === 'career') && !l.quiet);
     lastLog = state.log.length;

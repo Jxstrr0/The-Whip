@@ -3,7 +3,7 @@
 // carafes from the kits; a party banner and two portraits behind the head of the table.
 import * as THREE from 'three';
 import { box, slab, panel, cylinder, merge, vertexMaterial, glowMaterial, worldUVs, disposeTree, roomLights, lamp, bakeAO, contactShadows } from '../kit3d.js';
-import { surface } from '../textures.js';
+import { surface, brass } from '../textures.js';
 import { PALETTE } from '../look.js';
 import { placeModel, instancedModel } from '../models.js';
 import { tuning } from '../sim/config.js';
@@ -93,7 +93,7 @@ export function create(ctx) {
   for (const z of [-5, 0, 5]) lamp(scene, { color: '#ffe2b0', intensity: tuning().look.pendant, distance: 11, y: 3.1, z });
   const bounds = { x0: -W, x1: W, z0: -L, z1: L };
   const g = buildShell(ctx.playerColor || '#555');
-  const textured = { plaster: 'plaster', oak: 'oak', walnut: 'walnut', wool: 'wool', baize: 'carpet' };
+  const textured = { plaster: 'plaster', oak: 'oak', walnut: 'walnut', wool: 'wool', baize: 'carpet', paper: 'paper' };
   for (const [kind, parts] of Object.entries(g)) {
     if (!parts.length) continue;
     let geo = merge(parts);
@@ -101,7 +101,7 @@ export function create(ctx) {
     if (textured[kind]) {
       geo = worldUVs(bakeAO(geo, { bounds, ceilY: kind === 'plaster' ? H : null, reach: kind === 'plaster' ? 1.6 : 0.8 }));
       mat = surface(textured[kind], kind === 'plaster' ? { roughness: 0.95 } : kind === 'baize' ? { roughness: 1 } : {});
-    } else if (kind === 'metal') mat = vertexMaterial({ metalness: 0.7, roughness: 0.35, envMapIntensity: 1 });
+    } else if (kind === 'metal') mat = brass();
     else if (kind === 'glow') mat = glowMaterial();
     else mat = vertexMaterial({ roughness: 0.92 });
     scene.add(new THREE.Mesh(geo, mat));

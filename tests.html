@@ -52,6 +52,11 @@ import * as caucusSim from './src/sim/caucus.js';
 window.__caucus = caucusSim;
 import * as ridingSim from './src/sim/riding.js';
 import { calendarOf, weatherOf } from './src/sim/calendar.js';
+import { lightFor, hourOf, LIGHTS } from './src/light.js';
+import { textureFiles } from './src/textures.js';
+import { snapStop, STOPS } from './src/ui/drawer.js';
+import { stakeStamps } from './src/ui/stakes.js';
+import { readNumber, writeNumber } from './src/ui/feel.js';
 import { botAct } from './src/sim/bot.js';
 import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo, backupDue, backupFileName, readBackupFile } from './src/save.js';
 import { getSettings, setSetting } from './src/settings.js';
@@ -1877,6 +1882,28 @@ test('A minority government falls on a lost confidence vote and an election is c
   return `${night.governmentName} ${night.minority ? 'minority' : 'majority'} after the fall; ${h.parties[h.house.government].short} took over from ${h.parties[gov0].short} in week 4 (${me.name.last} still seated)`;
 });
 
+test('Losing the nomination at an election still seats the new House behind the memoir', () => {
+  const s = newGame({ seed: 'TEST-1', party: 'p2' });
+  const me = s.mps[s.player.mpId];
+  s.house.minority = true;
+  s.date.absWeek = tuning().confidence.handoverWeeks + 5;
+  s.house.fallen = { day: 1, billId: null, divisionId: null };
+  s.player.nominationThreat = tuning().election.nominationChallengeAt;
+  s.player.ridingStanding = 20;
+  assert(pacing.next(s)?.kind === 'dissolved', 'the writ drops');
+  pacing.resolve(s, 'canvass');
+  const night = pacing.next(s);
+  assert(night?.kind === 'election' && night.player.result === 'deselected' && s.player.lostSeat === 'nomination', 'the nomination is lost');
+  const seated = Object.values(s.seats).map((x) => x.mpId);
+  assert(seated.length > 100 && seated.every((id) => s.mps[id]), 'every seat holds a member who is in the House');
+  for (const q of Object.values(s.parties)) {
+    assert(!q.leader || s.mps[q.leader], `${q.short} has a leader who is in the House`);
+    assert(!q.chiefWhip || s.mps[q.chiefWhip], `${q.short}'s chief whip is in the House`);
+  }
+  assert(s.house.speaker && s.mps[s.house.speaker]?.caucusRole === 'speaker', 'a Speaker is in the chair');
+  return `${me.name.last} lost the nomination; ${seated.length} seated, ${Object.keys(s.mps).length} in the House`;
+});
+
 test('A full four-year Parliament and its election play through with the bot, no errors; the riding can be lost or the nomination', () => {
   const s = newGame({ seed: 'TEST-3', party: 'p1' });
   const rng = createRng('bot8');
@@ -2960,6 +2987,22 @@ test('The home-screen manifest and its icons are served, and index.html links th
   return `${man.icons.length} icons`;
 });
 
+test('Every surface map is served as a JPEG, the paper fibre the CSS uses among them, inside the texture budget', async () => {
+  const files = textureFiles();
+  assert(files.includes('paper_c.jpg') && files.includes('brass_n.jpg') && files.includes('oak_r.jpg'), 'paper, brass and roughness maps are listed');
+  const css = await (await fetch('css/style.css')).text();
+  assert(/--grain: url\("\.\.\/assets\/textures\/paper_c\.jpg"\)/.test(css), 'the UI paper uses the paper map');
+  assert(/--card-grain: url\("\.\.\/assets\/textures\/card_c\.jpg"\)/.test(css), 'the index card uses the card map');
+  let bytes = 0;
+  for (const f of [...files, 'card_c.jpg']) {
+    const r = await fetch(`assets/textures/${f}`);
+    assert(r.ok && /image\/jpeg/.test(r.headers.get('content-type') || ''), `texture ${f}`);
+    bytes += (await r.arrayBuffer()).byteLength;
+  }
+  assert(bytes < 3.5 * 1024 * 1024, `textures weigh ${bytes} bytes`);
+  return `${files.length + 1} maps, ${(bytes / 1024).toFixed(0)} KB`;
+});
+
 test('Haptics are a setting: on by default, silent when off, and never throw', () => {
   const before = { ...getSettings() };
   try {
@@ -3007,6 +3050,78 @@ test('The town hall won / lost cuts come from tuning', async () => {
   const src = await (await fetch('src/sim/riding.js')).text();
   assert(!/crowd >= 60|crowd <= 40/.test(src), 'riding.js still has the numbers');
   return `won at ${TH.won}, lost at ${TH.lost}`;
+});
+
+test('The feel pass: timings in tuning, a dragged sheet settles on the nearest stop or the way it was thrown, numbers keep their sign', () => {
+  const F = tuning().look.feel;
+  for (const k of ['sheet', 'tick', 'tickFast', 'stamp', 'press']) assert(F[k] > 0 && F[k] < 2000, `look.feel.${k}`);
+  assert(F.dolly > 0 && F.dolly < 10, 'look.feel.dolly in seconds');
+  assert(STOPS.join() === 'peek,half,full', 'three stops');
+  const h = { peek: 104, half: 368, full: 560 };
+  assert(snapStop(120, h) === 'peek' && snapStop(300, h) === 'half' && snapStop(500, h) === 'full', 'nearest stop at rest');
+  assert(snapStop(540, h, 1) === 'half', 'thrown down from near full goes to half');
+  assert(snapStop(540, h, 3) === 'half' && snapStop(300, h, 1) === 'peek', 'a throw goes one stop, not to the end');
+  assert(snapStop(120, h, -1) === 'half' && snapStop(368, h, -1) === 'full', 'thrown up goes up');
+  assert(snapStop(104, h, 1) === 'peek' && snapStop(560, h, -1) === 'full', 'nowhere further to go');
+  assert(snapStop(300, h, 0.2) === 'half', 'a slow drag is not a throw');
+  assert(readNumber('+4') === 4 && readNumber('\u22126') === -6 && readNumber('12') === 12 && readNumber('12 / 24') === null && readNumber('+') === null, 'reads signed numbers only');
+  assert(writeNumber(3, '+4') === '+3' && writeNumber(-2, '+4') === '\u22122' && writeNumber(0, '\u22126') === '0' && writeNumber(7, '12') === '7', 'writes them the same way');
+  return `sheet ${F.sheet}ms, tick ${F.tick}ms, stamp ${F.stamp}ms, press ${F.press}ms, dolly ${F.dolly}s`;
+});
+
+test('The desk: a whipped bill is stamped twice on the memo (the line, then the break), a free vote is one line', () => {
+  const { s: state, me } = whipScenario(4, 'TEST-DESK');
+  const party = me.party;
+  const whipped = Object.values(state.bills).find((b) => b.status === 'active' && stakes.billStakes(state, b).whipped);
+  assert(whipped, 'a whipped bill to stamp');
+  const html = stakeStamps(state, whipped);
+  const count = (re) => (html.match(re) || []).length;
+  assert(count(/class="stake-stamp a"/g) === 1 && count(/class="stake-stamp b"/g) === 1, 'one stamp each way');
+  assert(count(/class="stake (up|down|flat)"/g) === 4, 'riding and whip inks on both');
+  assert(html.includes(uiText('vote.' + whipped.positions[party]).toUpperCase()) || html.includes(uiText('vote.' + whipped.positions[party])), 'the line names the vote');
+  const free = { ...whipped, lines: { ...whipped.lines, [party]: 'free' } };
+  const freeHtml = stakeStamps(state, free);
+  assert(!freeHtml.includes('stake-stamp') && freeHtml.includes('class="free"'), 'a free vote is not stamped');
+  return `${whipped.title}: stamped ${whipped.positions[party]}`;
+});
+
+test('The paper takes the room\'s light: bells pale, the office by lamp (a strip light while shared), a grey winter morning', () => {
+  const L = tuning().look.light;
+  assert(L.fade > 0 && L.nightFrom > 0 && L.nightFrom <= 1 && L.lampFromAct >= 1, 'look.light in tuning');
+  const state = newGame({ seed: 'TEST-LIGHT', party: 'p1' });
+  const at = (pending, act = 1, absWeek = 0) => {
+    state.flow.pending = pending;
+    state.player.act = act;
+    state.date.absWeek = absWeek;
+  };
+  at({ kind: 'division' });
+  assert(lightFor(state, 'chamber') === 'bells' && hourOf(state) === 'afternoon', 'the division');
+  at({ kind: 'office' }, 1);
+  assert(lightFor(state, 'office') === 'strip' && hourOf(state) === 'evening', 'the shared room');
+  at({ kind: 'meeting' }, L.lampFromAct);
+  assert(lightFor(state, 'office') === 'lamp', 'your own office, by lamp');
+  at({ kind: 'caucus' });
+  assert(lightFor(state, 'caucus') === 'pendant' && hourOf(state) === 'morning', 'the caucus room');
+  // A clear September morning is day; the same chamber in a winter week is grey, whatever the sky.
+  const clear = [...Array(40).keys()].find((w) => weatherOf(state, w).kind === 'clear' && weatherOf(state, w).season === 'autumn');
+  at({ kind: 'morning' }, 1, clear);
+  assert(lightFor(state, 'chamber') === 'day', 'a clear autumn morning');
+  const winter = [...Array(40).keys()].find((w) => weatherOf(state, w).season === 'winter');
+  at({ kind: 'morning' }, 1, winter);
+  assert(lightFor(state, 'chamber') === 'grey', 'a winter morning');
+  // The riding by day, and lit from inside once the evenings draw in or on election night.
+  at({ kind: 'riding' }, 1, clear);
+  assert(lightFor(state, 'riding') === 'day' && hourOf(state) === 'afternoon', 'the riding by day');
+  const dusk = [...Array(40).keys()].find((w) => weatherOf(state, w).dark >= L.nightFrom);
+  at({ kind: 'riding' }, 1, dusk);
+  assert(lightFor(state, 'riding') === 'lamp', 'the riding after dark');
+  at({ kind: 'coldOpen', phase: 'count' }, 1, clear);
+  assert(lightFor(state, 'riding') === 'lamp', 'election night');
+  for (const k of ['morning', 'division', 'office', 'meeting', 'caucus', 'riding', 'coldOpen', 'weekSummary', 'career', 'questionPeriod']) {
+    at({ kind: k, phase: 'walk' }, 3, clear);
+    for (const room of ['chamber', 'office', 'caucus', 'riding']) assert(LIGHTS.includes(lightFor(state, room)), `${k} in the ${room}`);
+  }
+  return `winter from week ${winter + 1}, dusk from week ${dusk + 1}`;
 });
 
 test('The glossary: every term has a label, forms and one sentence, and no two terms claim the same form', () => {

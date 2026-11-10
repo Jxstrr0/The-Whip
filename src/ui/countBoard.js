@@ -1,5 +1,6 @@
 // The count board: the bells and your choice during a division, then the standing count ticking up by party.
 import { t, esc, stamp, partyShort, partyColor, mpName, countLine, rowLine, jobLine, foldBlock } from './text.js';
+import { tick, readNumber, feelStamps } from './feel.js';
 import { tuning, data } from '../sim/config.js';
 import { stageLabel, questionText } from '../sim/vote.js';
 import { prediction } from '../sim/count.js';
@@ -222,7 +223,11 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
     const { max } = boardScale(result);
     for (const k of ['yea', 'nay']) {
       board.querySelector(`[data-bar="${k}"]`).style.width = `${(100 * counts[k]) / max}%`;
-      board.querySelector(`[data-n="${k}"]`).textContent = counts[k];
+      const n = board.querySelector(`[data-n="${k}"]`);
+      const from = readNumber(n.textContent) ?? 0;
+      n.textContent = counts[k];
+      // The numbers run up to each new count rather than jumping (a short tick: the next is a few seats on).
+      tick(n, from, tuning().look.feel.tickFast);
     }
     board.querySelector('[data-parties]').innerHTML = partyRows(getState(), result, counts);
   }
@@ -236,6 +241,7 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
         ${result.speakerVote ? `<p>${t('div.speaker', { v: t('vote.' + result.speakerVote) })}</p>` : ''}
         <p class="muted">${t('div.you', { v: t('vote.' + mine) })}</p>`;
     board.querySelector('.card-actions').innerHTML = `<button class="btn primary" data-act="cont">${t('div.continue')}</button>`;
+    feelStamps(board);
   }
 
   function showResult(p) {

@@ -1426,6 +1426,196 @@ Kelbo: "they're very oval and rounded. Can we animate them well too?" Two passes
 - `tests.html` 132 of 132.
 - Played at phone size in portrait and landscape: the chamber from your seat and the overview, Question Period (a member standing, the minister answering, the thumps), a full division counted and cleared, the office with a visitor walking in and seated through cooperative, angry, guarded and anxious, the caucus table with the head of the table speaking and a pair leaning in, the town hall cold with placards, warm, and cheering on election night. No console errors.
 
+## UI refresh, part one: ink, not boxes
+
+Kelbo asked for a UI refresh and picked all five options from the pitch (A room first, B ink not boxes, C lamplight, D the desk, E feel pass), plus a textures and chamber pass after. Order: B, A, C, E, D. B first because the others sit on it.
+
+**What changed.** The sheets keep their shape, shadow, heights and tokens; what's gone is the nesting. Hierarchy now comes from size, italics, hairlines and indents, the way a printed order paper does it, not from tinted panels inside the paper.
+
+- **The visitor's name is set large** (26px) with the mood under it in italics and a dot in the mood's colour: "● Guarded · Turn 1 of 3".
+- **"Your job here"** is a small spaced brass label inline with the line, a hairline under it. No tinted box, no bar down the left. Folded, it's the same one line with a chevron.
+- **The stakes are a ruled table.** The riding's lean is the table's heading in italics; each way of voting is a row with the riding and whip numbers in their own columns, so the eye runs down them. The numbers are signed tabular numerals in green or red; the unit stays in plain ink. No more pill chips with arrow badges: the sign carries the meaning, so it still reads without the colour.
+- **Every other stake number** (the bells sheet's choices, the riding's cases, the evening board, deal cards, the debrief's rapport) is the same inked number. On the green button the numbers go to paper.
+- **Speech hangs off a brass opening quotation mark**, set in from the margin. The Speaker's call in QP gets a grey one, a revolt a red one. A scenario's verdict (a stamp and a note, not speech) sits between two rules instead.
+- **Replies are ruled rows.** In a meeting, the riding, Question Period and a caucus revolt, what you say back is read in order: a hairline between each, the approach as a small spaced label above the line, a brass chevron at the end. The one under your thumb takes a green rule down its left edge and a wash that fades across the row. Action buttons (Go, Propose, the evening board's four, the primary) stay the soft paper buttons.
+- **Notes to the player** (the first-week hints, "this is your own bill") are an italic paragraph between two hairlines. The whip's call on the evening board is a labelled entry between two rules with the bill set large.
+- **The whip's count** is a ruled line with the standing in its tone colour (green safe, amber close, red short) rather than a tinted bar; **your row** under it is a ruled line too, and the marks in its tally are inked, not pilled.
+- **Badges are ink**: a role, "confidence", "the week's vote", "you" on your own card are small spaced labels in brass (green for you), not paper tags.
+- **The deal table's two columns** are ruled, not boxed; the cards on it stay cards. The front page's "by the numbers" box keeps a rule and loses its fill. The Book's rules go faint, like everything else's.
+
+**Small calls:**
+- Approach labels on replies are uppercase and letter-spaced (as in the pitch). The scenario cards on the title page keep their sentence-case blurbs.
+- The timeline cards on the whip's record and the memoir keep their panels: they're a different object (a dossier of moments) and round two set them deliberately. Option D will look at them again.
+- The deal cards (`.card-chip`) keep their pill shape: they're the cards you trade, not a panel.
+
+**Checked:**
+- `tests.html` 128 of 128.
+- Played at phone size in portrait and landscape, a fresh game and the "Three short" scenario: Question Period, caucus, the evening board with and without the whip's call, a one-to-one on the whip's call (the table) and on a walk-in, the deal table, the riding, the weekend paper, Monday's paper, the bells with the count and your row, the ledger, the Book, an MP's card, the aim sheet, the menu, election night and the record. No console errors in play.
+
+**Also fixed on the way:** a crash that predates this pass. When you lose your seat at an election, the sim removed the departed members but never re-seated the House before the memoir, so the chamber behind it tried to dress seats whose members were gone and stopped with a console error. It now gives the parties their new leaders and whips, picks a Speaker and seats the new House first. Found by a headless run of "Three short" ending in a lost seat; it happened the same way on `main`.
+
+**Next:** A (room first): meeting sheets at half height with the visitor framed, the speech line in the room, slimmer top bar and one-line date bar. The five "regardless" fixes from the pitch go in with A (the clipped visitor's head, the date bar's news line, the ledger's height, the aim chip, and the top bar wrapping at 390px in Acts 3+ when it carries five items).
+
+## UI refresh, part two: room first
+
+The second of Kelbo's five picks. The rooms were built to be looked at and the paper kept covering them; this pass gives the room the top of the screen back in the scenes where someone is sitting across from you.
+
+**What changed.**
+
+- **Talking sheets open at half height.** A one-to-one in the office and a visitor in the riding office open with the paper at a little under half the screen (46% of its height, set in `css/style.css`), so the person you are dealing with is framed head to lap above it. Reading sheets (the evening board, the deal table, the verdict, the town hall, the riding's end-of-day) still open full. The handle at the top of the sheet is now a real button: a tap swaps between half and full, the choice holds for that scene and the next scene starts afresh.
+- **The camera frames from the sheet's real height.** Each sheet reports how much of an upright screen it leaves clear (a ResizeObserver in `src/main.js`), and the office and riding cameras aim from that (`dropFor` in `src/framing.js`): a half sheet shows the visitor head to lap, a full sheet still keeps their face under the top bar, and a sheet growing or shrinking tilts the view rather than cutting it. On a low sheet the camera also eases back along its own line of sight (the rooms are small, so only a little), and turns so the person sits a third of the way left of the middle with room beside them.
+- **Their line is set beside them in the room.** On an upright phone, what the visitor is saying is a small paper note beside their head (`src/speech.js`, a label in the 3D scene) rather than a quotation on the sheet, and the sheet holds your replies. It shows once they are in the chair, fits itself to the screen's edge, and goes away when they leave. The parting line stays beside them while the verdict is up. Pulling the sheet to full puts the line back on the paper, where the quotation reads as before. In landscape the line stays on the paper: a side sheet already leaves the room clear, and a note over the figure ran under the sheet or off the top.
+- **The stakes are one ruled line** on a talking sheet (the riding's lean, then each way of voting with its two numbers), so the replies come sooner. The division sheet keeps the ruled table from part one.
+- **"Your job here" and the name** keep part one's set; each turn now opens scrolled to the replies rather than to the line, since the line is in the room.
+- **Top bar and date bar.** The masthead stays; the top bar's buttons are lighter than it (smaller tags, thinner paper, a shorter shadow), and nothing in the bar wraps, so Acts 3 and up with five items fit at 390px on one line. The date bar is one line: the date, the act's aim, Continue and Skip. The aim is its name in brass over a thin rule that fills as the count comes in (no more "Get noticed 0/8" chip); a tap still opens the aim sheet. A counter that is a line to stay above or below, or a wait of so many weeks, still says so in words. The latest news rides the same line where there is room (a tablet, a phone on its side) and is hidden on an upright phone, where it was an ellipsis anyway; it is still in the paper.
+- **The five "regardless" fixes from the pitch** are in: the visitor's head is no longer clipped in portrait (the framing above), the date bar's news no longer ellipsises, the ledger is as tall as what is in it (the Book is still a full page), the aim chip is the name and rule, and the top bar's controls are lighter than the masthead.
+
+**Small calls:**
+- The pitch's third height, "peek", is not in yet. It comes with E's handle drag, where it belongs; a tap on the handle has two stops.
+- The note in the room is for upright phones only. In landscape the paper carries the line, as it did.
+- A line the room is showing is still in the sheet's markup, hidden; a screen reader or a pulled-full sheet gets the text either way.
+- The riding office visitor sits closer to the desk than the office's, so its camera backs off a touch further.
+- In headless testing the eases run slow, so the note appears a few seconds after a visitor is announced; on a phone it comes in with them.
+
+**Checked:**
+- `tests.html` green.
+- Played at phone size in portrait and landscape: the cold open, the whip's call (half and full, the stakes line), a walk-in, a verdict with the parting line, the evening board, the deal table, the ledger, the riding's visitors (farmer, union steward, the reporter) and its end of day, the Act 4 top bar at 390px and 360px. No console errors in play.
+
+**Next:** C (lamplight): the paper tinted by the room and the time of day.
+
+## UI refresh, part three: lamplight
+
+The third of Kelbo's five picks. The paper was one cream everywhere: the same sheet at a nine o'clock sitting, under the office lamp at the end of the day, and with the division bells going. Now the room and the hour light it.
+
+**What changed.**
+
+- **Six lights, one set of paper and ink each** (`css/style.css`, the "Light" block). *Day* is the cream the paper has had. *Grey* is a cooler, flatter page for an overcast, wet or winter sitting. *Bells* is pale and hard, with a tighter edge and no glow, for the division. *Lamp* is amber with a warm pool at the top right corner and a shadow gathering at the foot, for the office in the evening and the riding office once the evenings draw in. *Pendant* is the same amber under a softer, centred pool for the caucus room. *Strip* is a cool, slightly green page for the shared room in Act 1, matching the strip light that set has. Each light also moves the vignette on the room (where it sits and how deep it is).
+- **One rule picks the light** (`src/light.js`, `lightFor`): a division is always bells; the office is strip in Act 1 and lamp from Act 2 (`look.light.lampFromAct` in tuning); the caucus room is pendant; the riding office is lamp on election night and once the day is darker than `look.light.nightFrom` (the same threshold at which that set lights its windows); everything else is day, or grey if the weather is overcast, rain, fog, snow or a storm, or it is winter.
+- **The change fades** rather than cuts (`look.light.fade`, 400 ms): the paper and ink are registered custom properties, so the tokens interpolate as the stop changes room. Chrome, Safari and Firefox fade; a browser without `@property` switches.
+- **Inks hold their contrast** on every paper: the brass label ink, the yea and nay, and the grey go darker under the lamp, and all the inks sit at 4.5:1 or better on their papers (the lamp's secondary ink is the tightest, at 5.4:1).
+- **The date bar says the hour**: "Mon 22 Sep · evening". Morning for the House and the caucus, afternoon for Question Period, a division and the riding, evening for the office (`hourOf` in `src/light.js`, words in `data/strings.en.json`). The long date on the order paper does not carry it.
+- **The paper tints with the light wherever it appears**: the sheets, the note in the room, the top bar's tags, the count board, the toast and the fade behind the sticky buttons all read the tokens; the literal cream that was left in the CSS is gone except where it is text on a dark ground.
+
+**Small calls:**
+- The caucus room gets its own pendant variant of the lamp paper rather than the office's corner pool, because its three pendants hang over the middle of the table.
+- Lamp light in the riding office follows the set's own window rule, so the paper and the windows turn together.
+- The fade is kept under `prefers-reduced-motion`: it is a colour change, not movement.
+- The hour is on the bar only. The order paper's long heading already carries the date, the week and the year, and a fourth part made it crowded.
+- No light is darker than the cream; the inks stay dark on light paper throughout, which is what keeps the type readable in the sun. A true night mode is a different pass.
+
+**Checked:**
+- `tests.html` green (a new test pins each room and stop to its light and hour).
+- Each light forced on the meeting sheet at phone size, portrait and landscape, and sampled: the six papers paint as six papers, and the note in the room follows.
+- Played through from election night: the cold open under the lamp, opening day on cream with the fade visible as the chamber comes in, the shared room and the whip's first meeting under the strip light, Question Period and the order paper by day. No console errors in play.
+
+**Next:** E (the feel pass): sheet motion with a drag and a peek, counters that tick, stamps that press, a dolly on the visitor's arrival.
+
+## UI refresh, part four: the feel pass
+
+The fourth of Kelbo's five picks. The paper was handled by cuts: a sheet appeared at its height, a number was its new value the instant the sheet redrew, a stamp blinked on, a reply fired on the tap and the visitor was cut to. Now the paper moves under the thumb, the numbers run to where they are going, a stamp comes down and is felt, a reply is pressed before it goes, and the camera follows a visitor in.
+
+**What changed.**
+
+- **The drawer is dragged** (`src/ui/drawer.js`). The handle still swaps half and full on a tap; now it also follows the thumb, and on release the sheet settles on the nearest stop, or one stop along the way it was thrown. There are three stops: *peek* (the handle, the name and the line under it, with the whole room to look at), *half* and *full*. The settle is a short eased run of the height (`look.feel.sheet`, 340 ms); the camera reframes the person as it goes because the sheet reports its height as it moves. On a phone on its side the sheet is a side sheet and a drag does nothing, as before.
+- **Numbers tick** (`src/ui/feel.js`). The stakes on a sheet (+4 riding, −8 whip) count from their last value to the new one, keeping the sign and the minus, over `look.feel.tick` (520 ms); a sheet freshly shown counts up from nothing. The count board's yeas and nays run up to each new count during the division (`look.feel.tickFast`, 220 ms) instead of jumping every few seats.
+- **Stamps press**. The stamp comes in from above, pressed a touch too far into the paper at the bottom of the stroke, and comes up with the ink bled a hair at the edge (`look.feel.stamp`, 260 ms). The phone gives one short buzz when a stamp that wasn't on the page lands on it: CARRIED and DEFEATED on the count board, HELD and LOST, ELECTED, NO DEAL. A deal keeps its own buzz and doesn't double up.
+- **Replies are pressed before they go**. A tap on a reply inks the row and stands the others down, and the action follows a beat later (`look.feel.press`, 140 ms), so the choice is seen taken before the turn moves. Talk replies, the riding's answers, the Question Period framings and the caucus revolt choices all take it.
+- **The visitor is followed in**. When someone walks into the office the camera dollies from the door view to its place over your shoulder across `look.feel.dolly` seconds (2.2), eased at both ends, arriving as they sit, instead of cutting and settling. Someone already seated (the cold open, a restored game) is still cut to.
+- **Every timing is in tuning** (`look.feel`) and the CSS reads the same numbers through custom properties. Under `prefers-reduced-motion` the sheet goes straight to its stop, numbers are set at once, stamps and sheets don't animate and a reply fires on the tap.
+
+**Small calls:**
+- A throw takes the sheet one stop in the thrown direction, not to the end of the run, so a flick from full lands on half and a second flick on peek. It is easier to control and a peek is rarely what a flick from full means.
+- At peek the person's line stays in the room beside them (it only comes back onto the paper at full), so a peek is a way to look at the room with the line still readable.
+- The riding visitor is not dollied: the riding camera's desk shot already holds while a constituent walks in, and a move there made the small office swim.
+- The count board's tick is short because the next count comes a few seats later; a long one would never catch up.
+- Seen on the way through, not fixed here: on the count board the date bar's aim chip is cut to a letter beside the Continue and skip buttons at 390 px. That is the bar's layout from round two, not this pass; noted for the tidy.
+
+**Checked:**
+- `tests.html` green (a new test pins the timings, the three stops, the snap rule for drags and throws, and the signed number read and write).
+- At phone size in portrait: a slow drag down to peek, a drag with the sheet mid-way under the thumb, a flick up to half, a tap to full and back, a small drag that settles back to half; the number tick from 0 to +8; a reply pressed, its siblings standing down, and the next turn 140 ms later; the office arrival from the door view to over the shoulder. No console errors.
+- In landscape the side sheet ignores a drag. With reduced motion on, the sheet is at its stop the moment the thumb lifts and the reply fires on the tap.
+- Headless frames run at a few a second here, so the settle and the dolly were checked by their numbers (the height keyframes, the stop reached, the camera's end shot) rather than by eye; the motion itself needs Kelbo's phone.
+
+**Next:** D (the desk): the whip's call as a memo pad with a clip, index-card replies, the desk calendar.
+
+## UI refresh, part five: the desk
+
+The last of Kelbo's five picks, and the one the pitch called the ambitious one. The paper stops being a sheet laid over the room and starts being the things on your desk. It is built on part two's discipline (ink, not boxes) and goes only as far as a 390 px screen can carry without losing legibility: the objects tilt, the sheet you drag does not.
+
+**What changed.**
+
+- **A one-to-one is a memo on the pad.** The office sheet takes a perforated top edge, a paper clip over the corner, and a letterhead rule: *Member's memo* (or *Whip's office · memo* when the whip has called you in) on the left, *Turn 1 of 3* on the right. The name sits under it with the member's riding and their mood. The memo slides onto the desk with a slight settle and straightens as it lands; the deal table is still a plain sheet, and the debrief comes back as the same memo headed *Meeting record*.
+- **The stakes are rubber-stamped on it** (`stakeStamps` in `src/ui/stakes.js`). The riding's lean stays as a line; under it two stamps, each a little crooked, carry the two ways of voting: *With the party (nay) · −5 riding · +2 whip* and *Break with the line (yea) · +4 riding · −8 whip*. They come down with part four's stamp stroke, the second a beat after the first. A free vote is one italic line, unstamped.
+- **Your replies are on an index card.** The talk choices sit on a cream card laid on the memo: blue rules every 28 px, a red rule at the top, a slight tilt the other way from the stamps. Each reply takes whole lines, with its approach (*push*, *warm*, *listen*) in italic brass at the start of the first one. The pressed-reply ink from part four still runs across the card.
+- **The constituency office has its own pad.** A visitor's hour at home is a memo too: *Constituency office* on the letterhead with *1 of 4 waiting* on the right, the riding's name as the heading, the standing bar and the job line, then the visitor. A reporter's or the riding president's replies go on the index card. A case keeps its three buttons (carry, refer, decline) because they carry the riding numbers and the primary one needs to read as the main thing; the town hall and the end of the day are a plain sheet.
+- **The date on the bar is a desk calendar's leaf.** The month on its red band, the date large under it, and *Mon · evening* (and *· at home* in a constituency week) beside it, in the bar's height. The button still carries the full date in words for a screen reader.
+- **The whip's call is a folded note.** On the evening board the call is its own slip of paper, set down a little crooked with a crease across the middle: *The whip's office is calling* in red, the bill, the stake brief, Go.
+
+**Small calls:**
+- The memo sheet stays square to the screen. The drawer is dragged by its top edge and a tilt there cost reading width at 390 px and made the bottom edge sit wrong on the bar; the tilt went onto the stamps, the card and the folded note instead.
+- The paper clip is two wire loops in dull steel, inside the sheet rather than over its edge, because the sheet clips what hangs outside it. It is drawn in CSS; no image.
+- The index card's rules are 28 px and the replies are set on that leading, so a two-line reply fills two rules exactly. At the card's 15.5 px the longest replies take three.
+- The Book, the ledger and the front page were already objects (a bound book, a ruled ledger, a folded paper) from the art pass and the earlier parts, so they were left alone. The timeline's cards were not touched; if Kelbo wants them on the desk too, that is a small follow-up.
+- Question Period and caucus keep their ruled rows: they are the chamber's and the room's business, not something on your desk.
+- `agenda.day` in the strings went unused once the leaf took over and was removed; the long date (`agenda.date`) still reads out on the button.
+
+**Checked:**
+- `tests.html` green (132; a new test pins the two stamps on a whipped bill, their four inks, and the unstamped free vote).
+- At phone size in portrait, from a new game: the leaf on the bar from the first morning; the evening board's folded note; the whip's memo at half (letterhead, clip, name, job line, the lean, both stamps, the card's first reply in view), pulled to a peek (handle, letterhead and name within 104 px), tapped to full; a reply pressed and the next turn's letterhead reading *Turn 2 of 3*; the deal table as a plain sheet and the record as a memo again. From the *Home truths* scenario: the constituency memo with a case, with a reporter's card, and the plain sheet at the day's end. No console errors.
+- In landscape the memo is the side sheet with the same letterhead and clip; the card fits its width.
+- With reduced motion on the memo appears in place and the stamps are set without a stroke.
+
+**Next:** the five picks are built and stacked as PRs in merge order (B → A → C → E → D). After that, the chamber and textures pass, which I'll scope with Kelbo before building.
+
+## Surfaces: the texture pass
+
+Kelbo asked, after the UI refresh, for the textures to come up too, and then for the paper, the desks and the small items to be in it. This is the first tier of the chamber-and-office pass I proposed (richer surfaces, no new geometry); the chamber dressing and the office's clutter wait on Kelbo's answers to the questions in that proposal. Branch `art/t1-surfaces`, stacked on part five.
+
+**What changed:**
+- **The maps carry colour and wear now.** Every surface's colour map was greyscale grain before, with the hue painted on by the room's palette. They are now the ambientCG scans in colour, desaturated part-way and normalised to the same brightness, so the palette still decides the hue (oak stays the chamber's oak, the baize stays bench green) but the grain has the warm and cool streaks of real wood, the flecks of real stone, the weave of real cloth. Each surface also has a roughness map, so a tabletop is shinier along the grain and duller across it, and light catches a carpet unevenly instead of flatly.
+- **Brass and steel are brushed.** One brushed-metal surface (Metal034, normal and roughness only) is used for everything that was a plain shiny material: the chamber's rails, chandelier rings, Mace and finial, the caucus room's picture rail and lamps, the riding office's fittings, the office flag pole, lamp stem and nameplate, and the Kenney props' steel (lamp stems, chair legs, the coat rack, the laptop's hinge) in its three shades.
+- **Paper in the rooms is paper.** The pads along the caucus table and the pages of the kit's books use a laid-paper map with its own relief, instead of a flat cream. The books' cloth spines use the wool map.
+- **The UI paper has fibre.** The `--grain` noise under every sheet, bar, chip and the whip's folded note is now the same laid-paper scan, multiplied under the paper colour so the room's light (lamplight, bells, a grey morning) tints the fibre too. The index card you write replies on sits on recycled stock with its flecks. The two translucent surfaces (the top bar's buttons, the speech note) keep the old soft noise, because a scan would make them opaque.
+
+**Small calls:**
+- The brass's hue still comes from the palette; Metal034's own colour is a flat yellow and would have fought the room's gold. The green leather keeps its normal map only, for the same reason (Leather037 is salmon), and gains the roughness map.
+- The chamber desks' green tops stay part of the oak desk mesh (one instanced draw) rather than becoming a second mesh with baize of their own.
+- The paper scan is pushed harder than the others (about three times the contrast of the original) because at phone size a subtle fibre read as nothing at all; at the first try the before and after sheets were the same pixel colours.
+- The whole texture set is 1.4 MB, up from 0.6 MB, inside the 3 MB budget in `ART-PASS.md`. A new test fetches every map and checks the budget and the CSS references.
+- Q1 of the proposal (stay stylised, or go towards real materials) is answered here as "stylised, with richer surfaces": the figures and the kit props are unchanged and the palette is unchanged. If Kelbo wants to go further towards real materials, that is the second tier.
+
+**Checked:**
+- `tests.html` green (133).
+- Before and after shots of all four rooms at phone size, portrait and landscape, from a new game (riding rally, the House on the first morning, the office under the strip light, the caucus room), plus the election-night sheet, the menu and the whip's memo with its index card. Draw calls unchanged (chamber 48, office 59–62, caucus 32–33, rally 34–40). No console errors.
+- Pixel-sampled the paper under lamplight before and after: same colour, so the light tints are untouched.
+
+**Next:** Kelbo's answers to the proposal's questions decide the second tier (the chamber dressed: galleries, table, dispatch boxes, the Clerk's table, the windows) and the third (the office lived in).
+
+## The rooms: chamber dressed, office lived in
+
+Kelbo answered the proposal's six questions in one go, and this is the pass they set. Branch `art/t2-rooms`, stacked on the surfaces pass. The answers, for the record: the chamber and the office go together in one pass; the chamber is green and oak with lighter stone; new CC0 assets are fine; the coffered ceiling is in; assume the phone has headroom and go richer; and push the surfaces more photographic. So the rooms now carry more than the art pass budgeted for, with a switch to pull them back.
+
+**What changed:**
+- **The surfaces went photographic.** The three surfaces that fill a phone screen (oak, walnut, marble) are 1024² maps now, carpet and leather 768², and every map keeps more of its own colour and relief than the first tier did, so grain, veining and weave read as the thing itself and the speculars are sharper. New surfaces: marble for the chamber's walls and surrounds, a heavy wool drape, deep-buttoned leather, and a suiting weave on the figures' cloth (normal map only, a light touch so the figures stay the figures). The texture set is 3.0 MB; the budget in `ART-PASS.md` went to 3.5 MB and the test that checks it follows. Every file is in `assets/LICENSES.md`.
+- **The chamber is dressed.** A coffered ceiling of oak beams with inner mouldings and gold bosses; paler marble walls with surrounds to every window; the gallery hung with green drape and a fringe on corbels, a painted PRESS GALLERY plaque above the press; the Table with its dispatch boxes and papers; the chandeliers with their arms. With rich rooms on: brass sconces between the windows, two more lamps over the Table and the bar (`look.tableLamp` in tuning), and a fuller gallery with two doorkeepers standing at the bar.
+- **The office is lived in.** Every room gets a picture rail, a framed map of your riding with its name on the mount, and the better rooms get landscapes and portraits (each room paints one atlas and hangs them in one go), curtains either side of the window, a radiator under it and a cornice. Act 1 gets chequered carpet tiles. Acts 4 and 5 and the whip's room go to walnut wainscot on a warmer wall, with a buttoned oxblood chesterfield in Act 5. With rich rooms on the desk is a working desk: a leather blotter with a memo on it, a wire in-tray with the day's papers, a black telephone, a cup, and the pool of the lamp on the wood, laid out for each desk shape.
+- **A Rich rooms switch.** In Settings, on by default, and `?lite=1` forces it off for a frame-rate check. Turning it off rebuilds the room you're in without the sconces, the extra lamps, the fuller gallery, the curtains, the radiators and the desk dressing. Saved under `whip:settings` with the rest.
+
+**Small calls:**
+- The two doorkeepers are part of the gallery crowd (standing pose) rather than figures of their own, so they cost nothing extra; a first try as a separate crowd put the chamber at 81 draw calls.
+- The marble is tiled at four metres so the veining reads as stone across a wall, not as noise; at three it was busy.
+- The office blinds stay as they were (static slats); the curtains hang beside them.
+- The kit desk in Acts 1 to 3 runs from the origin toward the window side, not centred, so the desk dressing has its own layout for it. The first try put the in-tray on the floor.
+- The Act 5 chesterfield sits 27 cm further into the room than first placed, so its back no longer goes through the wall.
+- The coffered ceiling is always there, rich or not: it's merged into the oak mesh and costs no draw call, only vertices.
+
+**Checked:**
+- `tests.html` green (137).
+- All four rooms shot before and after at phone size, portrait and landscape, from the same script and the same game; the office in all five acts plus the whip's room, empty and with a visitor; the settings sheet with the new switch; the chamber and the Act 5 office with the switch flipped in place. No console errors anywhere.
+- Draw calls, portrait / landscape, before → after (rich): riding 40 / 44 → 40 / 43; chamber 58 / 58 → 63 / 65 (up to 69 on the overview mid-session, 75 on the division shot); office 54 / 53 → 60 / 60; caucus 36 / 35 → 36 / 34. Flipping the switch off in the same game: chamber 69 → 67 (and eight lights to six), Act 5 office 52 → 45. The chamber's cost with rich rooms on is in the lights more than the draws, which is what the switch is for.
+
+**Next:** Kelbo's frame-rate check on the phone with `?debug=1`, rich and then `?lite=1`, decides whether the default stays on. Then the playtest notes.
+
 ## 2026-10-24 · Docs refresh: the docs match the build again
 
 No game code, data or tuning changed. This pass read the whole tree and the git history (about 98 commits since the docs were last trued up) and fixed every statement in `CLAUDE.md`, `DESIGN.md`, `HANDOFF.md` and `README.md` that the code no longer backed.
@@ -1513,3 +1703,11 @@ Three wording slips from the first-time playtest:
 Checked: `tests.html` 133 passed, 0 failed; the game loads with no console errors.
 
 **For Kelbo to test on the phone:** spend a block in the office and watch the job line drop; ask a question on Monday and check Tuesday's Question Period has no "Your first question" note; whisper in caucus a few times.
+
+## 2026-11-10 · 1.1.0.0: the UI refresh and the rooms pass land
+
+Kelbo asked for the parked drafts to be merged. The stacked branches (UI refresh parts one to five, surfaces, rooms) were brought up to date with `main` (the docs refresh, the Longlight brand and addresses, save safety, the four-number version and the 1.0.0.1 playtest quick wins). Six files overlapped; every one was a both-sides addition and keeps both: the Rich rooms switch beside the backup date in settings, the version line under Settings' Done, the Question Period hint that shows once with the replies styling, the desk styles beside the backup note styles.
+
+Checked: `tests.html` 138 passed, 0 failed; a new career played to election night at 390 × 844 and 844 × 390 with no console errors.
+
+**For Kelbo to test on the phone:** the office, chamber and Question Period after the refresh; Settings shows Rich rooms and the version; Back up still works.
