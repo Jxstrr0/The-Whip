@@ -1455,3 +1455,259 @@ Kelbo asked for a UI refresh and picked all five options from the pitch (A room 
 **Also fixed on the way:** a crash that predates this pass. When you lose your seat at an election, the sim removed the departed members but never re-seated the House before the memoir, so the chamber behind it tried to dress seats whose members were gone and stopped with a console error. It now gives the parties their new leaders and whips, picks a Speaker and seats the new House first. Found by a headless run of "Three short" ending in a lost seat; it happened the same way on `main`.
 
 **Next:** A (room first): meeting sheets at half height with the visitor framed, the speech line in the room, slimmer top bar and one-line date bar. The five "regardless" fixes from the pitch go in with A (the clipped visitor's head, the date bar's news line, the ledger's height, the aim chip, and the top bar wrapping at 390px in Acts 3+ when it carries five items).
+
+## UI refresh, part two: room first
+
+The second of Kelbo's five picks. The rooms were built to be looked at and the paper kept covering them; this pass gives the room the top of the screen back in the scenes where someone is sitting across from you.
+
+**What changed.**
+
+- **Talking sheets open at half height.** A one-to-one in the office and a visitor in the riding office open with the paper at a little under half the screen (46% of its height, set in `css/style.css`), so the person you are dealing with is framed head to lap above it. Reading sheets (the evening board, the deal table, the verdict, the town hall, the riding's end-of-day) still open full. The handle at the top of the sheet is now a real button: a tap swaps between half and full, the choice holds for that scene and the next scene starts afresh.
+- **The camera frames from the sheet's real height.** Each sheet reports how much of an upright screen it leaves clear (a ResizeObserver in `src/main.js`), and the office and riding cameras aim from that (`dropFor` in `src/framing.js`): a half sheet shows the visitor head to lap, a full sheet still keeps their face under the top bar, and a sheet growing or shrinking tilts the view rather than cutting it. On a low sheet the camera also eases back along its own line of sight (the rooms are small, so only a little), and turns so the person sits a third of the way left of the middle with room beside them.
+- **Their line is set beside them in the room.** On an upright phone, what the visitor is saying is a small paper note beside their head (`src/speech.js`, a label in the 3D scene) rather than a quotation on the sheet, and the sheet holds your replies. It shows once they are in the chair, fits itself to the screen's edge, and goes away when they leave. The parting line stays beside them while the verdict is up. Pulling the sheet to full puts the line back on the paper, where the quotation reads as before. In landscape the line stays on the paper: a side sheet already leaves the room clear, and a note over the figure ran under the sheet or off the top.
+- **The stakes are one ruled line** on a talking sheet (the riding's lean, then each way of voting with its two numbers), so the replies come sooner. The division sheet keeps the ruled table from part one.
+- **"Your job here" and the name** keep part one's set; each turn now opens scrolled to the replies rather than to the line, since the line is in the room.
+- **Top bar and date bar.** The masthead stays; the top bar's buttons are lighter than it (smaller tags, thinner paper, a shorter shadow), and nothing in the bar wraps, so Acts 3 and up with five items fit at 390px on one line. The date bar is one line: the date, the act's aim, Continue and Skip. The aim is its name in brass over a thin rule that fills as the count comes in (no more "Get noticed 0/8" chip); a tap still opens the aim sheet. A counter that is a line to stay above or below, or a wait of so many weeks, still says so in words. The latest news rides the same line where there is room (a tablet, a phone on its side) and is hidden on an upright phone, where it was an ellipsis anyway; it is still in the paper.
+- **The five "regardless" fixes from the pitch** are in: the visitor's head is no longer clipped in portrait (the framing above), the date bar's news no longer ellipsises, the ledger is as tall as what is in it (the Book is still a full page), the aim chip is the name and rule, and the top bar's controls are lighter than the masthead.
+
+**Small calls:**
+- The pitch's third height, "peek", is not in yet. It comes with E's handle drag, where it belongs; a tap on the handle has two stops.
+- The note in the room is for upright phones only. In landscape the paper carries the line, as it did.
+- A line the room is showing is still in the sheet's markup, hidden; a screen reader or a pulled-full sheet gets the text either way.
+- The riding office visitor sits closer to the desk than the office's, so its camera backs off a touch further.
+- In headless testing the eases run slow, so the note appears a few seconds after a visitor is announced; on a phone it comes in with them.
+
+**Checked:**
+- `tests.html` green.
+- Played at phone size in portrait and landscape: the cold open, the whip's call (half and full, the stakes line), a walk-in, a verdict with the parting line, the evening board, the deal table, the ledger, the riding's visitors (farmer, union steward, the reporter) and its end of day, the Act 4 top bar at 390px and 360px. No console errors in play.
+
+**Next:** C (lamplight): the paper tinted by the room and the time of day.
+
+## UI refresh, part three: lamplight
+
+The third of Kelbo's five picks. The paper was one cream everywhere: the same sheet at a nine o'clock sitting, under the office lamp at the end of the day, and with the division bells going. Now the room and the hour light it.
+
+**What changed.**
+
+- **Six lights, one set of paper and ink each** (`css/style.css`, the "Light" block). *Day* is the cream the paper has had. *Grey* is a cooler, flatter page for an overcast, wet or winter sitting. *Bells* is pale and hard, with a tighter edge and no glow, for the division. *Lamp* is amber with a warm pool at the top right corner and a shadow gathering at the foot, for the office in the evening and the riding office once the evenings draw in. *Pendant* is the same amber under a softer, centred pool for the caucus room. *Strip* is a cool, slightly green page for the shared room in Act 1, matching the strip light that set has. Each light also moves the vignette on the room (where it sits and how deep it is).
+- **One rule picks the light** (`src/light.js`, `lightFor`): a division is always bells; the office is strip in Act 1 and lamp from Act 2 (`look.light.lampFromAct` in tuning); the caucus room is pendant; the riding office is lamp on election night and once the day is darker than `look.light.nightFrom` (the same threshold at which that set lights its windows); everything else is day, or grey if the weather is overcast, rain, fog, snow or a storm, or it is winter.
+- **The change fades** rather than cuts (`look.light.fade`, 400 ms): the paper and ink are registered custom properties, so the tokens interpolate as the stop changes room. Chrome, Safari and Firefox fade; a browser without `@property` switches.
+- **Inks hold their contrast** on every paper: the brass label ink, the yea and nay, and the grey go darker under the lamp, and all the inks sit at 4.5:1 or better on their papers (the lamp's secondary ink is the tightest, at 5.4:1).
+- **The date bar says the hour**: "Mon 22 Sep · evening". Morning for the House and the caucus, afternoon for Question Period, a division and the riding, evening for the office (`hourOf` in `src/light.js`, words in `data/strings.en.json`). The long date on the order paper does not carry it.
+- **The paper tints with the light wherever it appears**: the sheets, the note in the room, the top bar's tags, the count board, the toast and the fade behind the sticky buttons all read the tokens; the literal cream that was left in the CSS is gone except where it is text on a dark ground.
+
+**Small calls:**
+- The caucus room gets its own pendant variant of the lamp paper rather than the office's corner pool, because its three pendants hang over the middle of the table.
+- Lamp light in the riding office follows the set's own window rule, so the paper and the windows turn together.
+- The fade is kept under `prefers-reduced-motion`: it is a colour change, not movement.
+- The hour is on the bar only. The order paper's long heading already carries the date, the week and the year, and a fourth part made it crowded.
+- No light is darker than the cream; the inks stay dark on light paper throughout, which is what keeps the type readable in the sun. A true night mode is a different pass.
+
+**Checked:**
+- `tests.html` green (a new test pins each room and stop to its light and hour).
+- Each light forced on the meeting sheet at phone size, portrait and landscape, and sampled: the six papers paint as six papers, and the note in the room follows.
+- Played through from election night: the cold open under the lamp, opening day on cream with the fade visible as the chamber comes in, the shared room and the whip's first meeting under the strip light, Question Period and the order paper by day. No console errors in play.
+
+**Next:** E (the feel pass): sheet motion with a drag and a peek, counters that tick, stamps that press, a dolly on the visitor's arrival.
+
+## UI refresh, part four: the feel pass
+
+The fourth of Kelbo's five picks. The paper was handled by cuts: a sheet appeared at its height, a number was its new value the instant the sheet redrew, a stamp blinked on, a reply fired on the tap and the visitor was cut to. Now the paper moves under the thumb, the numbers run to where they are going, a stamp comes down and is felt, a reply is pressed before it goes, and the camera follows a visitor in.
+
+**What changed.**
+
+- **The drawer is dragged** (`src/ui/drawer.js`). The handle still swaps half and full on a tap; now it also follows the thumb, and on release the sheet settles on the nearest stop, or one stop along the way it was thrown. There are three stops: *peek* (the handle, the name and the line under it, with the whole room to look at), *half* and *full*. The settle is a short eased run of the height (`look.feel.sheet`, 340 ms); the camera reframes the person as it goes because the sheet reports its height as it moves. On a phone on its side the sheet is a side sheet and a drag does nothing, as before.
+- **Numbers tick** (`src/ui/feel.js`). The stakes on a sheet (+4 riding, −8 whip) count from their last value to the new one, keeping the sign and the minus, over `look.feel.tick` (520 ms); a sheet freshly shown counts up from nothing. The count board's yeas and nays run up to each new count during the division (`look.feel.tickFast`, 220 ms) instead of jumping every few seats.
+- **Stamps press**. The stamp comes in from above, pressed a touch too far into the paper at the bottom of the stroke, and comes up with the ink bled a hair at the edge (`look.feel.stamp`, 260 ms). The phone gives one short buzz when a stamp that wasn't on the page lands on it: CARRIED and DEFEATED on the count board, HELD and LOST, ELECTED, NO DEAL. A deal keeps its own buzz and doesn't double up.
+- **Replies are pressed before they go**. A tap on a reply inks the row and stands the others down, and the action follows a beat later (`look.feel.press`, 140 ms), so the choice is seen taken before the turn moves. Talk replies, the riding's answers, the Question Period framings and the caucus revolt choices all take it.
+- **The visitor is followed in**. When someone walks into the office the camera dollies from the door view to its place over your shoulder across `look.feel.dolly` seconds (2.2), eased at both ends, arriving as they sit, instead of cutting and settling. Someone already seated (the cold open, a restored game) is still cut to.
+- **Every timing is in tuning** (`look.feel`) and the CSS reads the same numbers through custom properties. Under `prefers-reduced-motion` the sheet goes straight to its stop, numbers are set at once, stamps and sheets don't animate and a reply fires on the tap.
+
+**Small calls:**
+- A throw takes the sheet one stop in the thrown direction, not to the end of the run, so a flick from full lands on half and a second flick on peek. It is easier to control and a peek is rarely what a flick from full means.
+- At peek the person's line stays in the room beside them (it only comes back onto the paper at full), so a peek is a way to look at the room with the line still readable.
+- The riding visitor is not dollied: the riding camera's desk shot already holds while a constituent walks in, and a move there made the small office swim.
+- The count board's tick is short because the next count comes a few seats later; a long one would never catch up.
+- Seen on the way through, not fixed here: on the count board the date bar's aim chip is cut to a letter beside the Continue and skip buttons at 390 px. That is the bar's layout from round two, not this pass; noted for the tidy.
+
+**Checked:**
+- `tests.html` green (a new test pins the timings, the three stops, the snap rule for drags and throws, and the signed number read and write).
+- At phone size in portrait: a slow drag down to peek, a drag with the sheet mid-way under the thumb, a flick up to half, a tap to full and back, a small drag that settles back to half; the number tick from 0 to +8; a reply pressed, its siblings standing down, and the next turn 140 ms later; the office arrival from the door view to over the shoulder. No console errors.
+- In landscape the side sheet ignores a drag. With reduced motion on, the sheet is at its stop the moment the thumb lifts and the reply fires on the tap.
+- Headless frames run at a few a second here, so the settle and the dolly were checked by their numbers (the height keyframes, the stop reached, the camera's end shot) rather than by eye; the motion itself needs Kelbo's phone.
+
+**Next:** D (the desk): the whip's call as a memo pad with a clip, index-card replies, the desk calendar.
+
+## UI refresh, part five: the desk
+
+The last of Kelbo's five picks, and the one the pitch called the ambitious one. The paper stops being a sheet laid over the room and starts being the things on your desk. It is built on part two's discipline (ink, not boxes) and goes only as far as a 390 px screen can carry without losing legibility: the objects tilt, the sheet you drag does not.
+
+**What changed.**
+
+- **A one-to-one is a memo on the pad.** The office sheet takes a perforated top edge, a paper clip over the corner, and a letterhead rule: *Member's memo* (or *Whip's office · memo* when the whip has called you in) on the left, *Turn 1 of 3* on the right. The name sits under it with the member's riding and their mood. The memo slides onto the desk with a slight settle and straightens as it lands; the deal table is still a plain sheet, and the debrief comes back as the same memo headed *Meeting record*.
+- **The stakes are rubber-stamped on it** (`stakeStamps` in `src/ui/stakes.js`). The riding's lean stays as a line; under it two stamps, each a little crooked, carry the two ways of voting: *With the party (nay) · −5 riding · +2 whip* and *Break with the line (yea) · +4 riding · −8 whip*. They come down with part four's stamp stroke, the second a beat after the first. A free vote is one italic line, unstamped.
+- **Your replies are on an index card.** The talk choices sit on a cream card laid on the memo: blue rules every 28 px, a red rule at the top, a slight tilt the other way from the stamps. Each reply takes whole lines, with its approach (*push*, *warm*, *listen*) in italic brass at the start of the first one. The pressed-reply ink from part four still runs across the card.
+- **The constituency office has its own pad.** A visitor's hour at home is a memo too: *Constituency office* on the letterhead with *1 of 4 waiting* on the right, the riding's name as the heading, the standing bar and the job line, then the visitor. A reporter's or the riding president's replies go on the index card. A case keeps its three buttons (carry, refer, decline) because they carry the riding numbers and the primary one needs to read as the main thing; the town hall and the end of the day are a plain sheet.
+- **The date on the bar is a desk calendar's leaf.** The month on its red band, the date large under it, and *Mon · evening* (and *· at home* in a constituency week) beside it, in the bar's height. The button still carries the full date in words for a screen reader.
+- **The whip's call is a folded note.** On the evening board the call is its own slip of paper, set down a little crooked with a crease across the middle: *The whip's office is calling* in red, the bill, the stake brief, Go.
+
+**Small calls:**
+- The memo sheet stays square to the screen. The drawer is dragged by its top edge and a tilt there cost reading width at 390 px and made the bottom edge sit wrong on the bar; the tilt went onto the stamps, the card and the folded note instead.
+- The paper clip is two wire loops in dull steel, inside the sheet rather than over its edge, because the sheet clips what hangs outside it. It is drawn in CSS; no image.
+- The index card's rules are 28 px and the replies are set on that leading, so a two-line reply fills two rules exactly. At the card's 15.5 px the longest replies take three.
+- The Book, the ledger and the front page were already objects (a bound book, a ruled ledger, a folded paper) from the art pass and the earlier parts, so they were left alone. The timeline's cards were not touched; if Kelbo wants them on the desk too, that is a small follow-up.
+- Question Period and caucus keep their ruled rows: they are the chamber's and the room's business, not something on your desk.
+- `agenda.day` in the strings went unused once the leaf took over and was removed; the long date (`agenda.date`) still reads out on the button.
+
+**Checked:**
+- `tests.html` green (132; a new test pins the two stamps on a whipped bill, their four inks, and the unstamped free vote).
+- At phone size in portrait, from a new game: the leaf on the bar from the first morning; the evening board's folded note; the whip's memo at half (letterhead, clip, name, job line, the lean, both stamps, the card's first reply in view), pulled to a peek (handle, letterhead and name within 104 px), tapped to full; a reply pressed and the next turn's letterhead reading *Turn 2 of 3*; the deal table as a plain sheet and the record as a memo again. From the *Home truths* scenario: the constituency memo with a case, with a reporter's card, and the plain sheet at the day's end. No console errors.
+- In landscape the memo is the side sheet with the same letterhead and clip; the card fits its width.
+- With reduced motion on the memo appears in place and the stamps are set without a stroke.
+
+**Next:** the five picks are built and stacked as PRs in merge order (B → A → C → E → D). After that, the chamber and textures pass, which I'll scope with Kelbo before building.
+
+## Surfaces: the texture pass
+
+Kelbo asked, after the UI refresh, for the textures to come up too, and then for the paper, the desks and the small items to be in it. This is the first tier of the chamber-and-office pass I proposed (richer surfaces, no new geometry); the chamber dressing and the office's clutter wait on Kelbo's answers to the questions in that proposal. Branch `art/t1-surfaces`, stacked on part five.
+
+**What changed:**
+- **The maps carry colour and wear now.** Every surface's colour map was greyscale grain before, with the hue painted on by the room's palette. They are now the ambientCG scans in colour, desaturated part-way and normalised to the same brightness, so the palette still decides the hue (oak stays the chamber's oak, the baize stays bench green) but the grain has the warm and cool streaks of real wood, the flecks of real stone, the weave of real cloth. Each surface also has a roughness map, so a tabletop is shinier along the grain and duller across it, and light catches a carpet unevenly instead of flatly.
+- **Brass and steel are brushed.** One brushed-metal surface (Metal034, normal and roughness only) is used for everything that was a plain shiny material: the chamber's rails, chandelier rings, Mace and finial, the caucus room's picture rail and lamps, the riding office's fittings, the office flag pole, lamp stem and nameplate, and the Kenney props' steel (lamp stems, chair legs, the coat rack, the laptop's hinge) in its three shades.
+- **Paper in the rooms is paper.** The pads along the caucus table and the pages of the kit's books use a laid-paper map with its own relief, instead of a flat cream. The books' cloth spines use the wool map.
+- **The UI paper has fibre.** The `--grain` noise under every sheet, bar, chip and the whip's folded note is now the same laid-paper scan, multiplied under the paper colour so the room's light (lamplight, bells, a grey morning) tints the fibre too. The index card you write replies on sits on recycled stock with its flecks. The two translucent surfaces (the top bar's buttons, the speech note) keep the old soft noise, because a scan would make them opaque.
+
+**Small calls:**
+- The brass's hue still comes from the palette; Metal034's own colour is a flat yellow and would have fought the room's gold. The green leather keeps its normal map only, for the same reason (Leather037 is salmon), and gains the roughness map.
+- The chamber desks' green tops stay part of the oak desk mesh (one instanced draw) rather than becoming a second mesh with baize of their own.
+- The paper scan is pushed harder than the others (about three times the contrast of the original) because at phone size a subtle fibre read as nothing at all; at the first try the before and after sheets were the same pixel colours.
+- The whole texture set is 1.4 MB, up from 0.6 MB, inside the 3 MB budget in `ART-PASS.md`. A new test fetches every map and checks the budget and the CSS references.
+- Q1 of the proposal (stay stylised, or go towards real materials) is answered here as "stylised, with richer surfaces": the figures and the kit props are unchanged and the palette is unchanged. If Kelbo wants to go further towards real materials, that is the second tier.
+
+**Checked:**
+- `tests.html` green (133).
+- Before and after shots of all four rooms at phone size, portrait and landscape, from a new game (riding rally, the House on the first morning, the office under the strip light, the caucus room), plus the election-night sheet, the menu and the whip's memo with its index card. Draw calls unchanged (chamber 48, office 59–62, caucus 32–33, rally 34–40). No console errors.
+- Pixel-sampled the paper under lamplight before and after: same colour, so the light tints are untouched.
+
+**Next:** Kelbo's answers to the proposal's questions decide the second tier (the chamber dressed: galleries, table, dispatch boxes, the Clerk's table, the windows) and the third (the office lived in).
+
+## The rooms: chamber dressed, office lived in
+
+Kelbo answered the proposal's six questions in one go, and this is the pass they set. Branch `art/t2-rooms`, stacked on the surfaces pass. The answers, for the record: the chamber and the office go together in one pass; the chamber is green and oak with lighter stone; new CC0 assets are fine; the coffered ceiling is in; assume the phone has headroom and go richer; and push the surfaces more photographic. So the rooms now carry more than the art pass budgeted for, with a switch to pull them back.
+
+**What changed:**
+- **The surfaces went photographic.** The three surfaces that fill a phone screen (oak, walnut, marble) are 1024² maps now, carpet and leather 768², and every map keeps more of its own colour and relief than the first tier did, so grain, veining and weave read as the thing itself and the speculars are sharper. New surfaces: marble for the chamber's walls and surrounds, a heavy wool drape, deep-buttoned leather, and a suiting weave on the figures' cloth (normal map only, a light touch so the figures stay the figures). The texture set is 3.0 MB; the budget in `ART-PASS.md` went to 3.5 MB and the test that checks it follows. Every file is in `assets/LICENSES.md`.
+- **The chamber is dressed.** A coffered ceiling of oak beams with inner mouldings and gold bosses; paler marble walls with surrounds to every window; the gallery hung with green drape and a fringe on corbels, a painted PRESS GALLERY plaque above the press; the Table with its dispatch boxes and papers; the chandeliers with their arms. With rich rooms on: brass sconces between the windows, two more lamps over the Table and the bar (`look.tableLamp` in tuning), and a fuller gallery with two doorkeepers standing at the bar.
+- **The office is lived in.** Every room gets a picture rail, a framed map of your riding with its name on the mount, and the better rooms get landscapes and portraits (each room paints one atlas and hangs them in one go), curtains either side of the window, a radiator under it and a cornice. Act 1 gets chequered carpet tiles. Acts 4 and 5 and the whip's room go to walnut wainscot on a warmer wall, with a buttoned oxblood chesterfield in Act 5. With rich rooms on the desk is a working desk: a leather blotter with a memo on it, a wire in-tray with the day's papers, a black telephone, a cup, and the pool of the lamp on the wood, laid out for each desk shape.
+- **A Rich rooms switch.** In Settings, on by default, and `?lite=1` forces it off for a frame-rate check. Turning it off rebuilds the room you're in without the sconces, the extra lamps, the fuller gallery, the curtains, the radiators and the desk dressing. Saved under `whip:settings` with the rest.
+
+**Small calls:**
+- The two doorkeepers are part of the gallery crowd (standing pose) rather than figures of their own, so they cost nothing extra; a first try as a separate crowd put the chamber at 81 draw calls.
+- The marble is tiled at four metres so the veining reads as stone across a wall, not as noise; at three it was busy.
+- The office blinds stay as they were (static slats); the curtains hang beside them.
+- The kit desk in Acts 1 to 3 runs from the origin toward the window side, not centred, so the desk dressing has its own layout for it. The first try put the in-tray on the floor.
+- The Act 5 chesterfield sits 27 cm further into the room than first placed, so its back no longer goes through the wall.
+- The coffered ceiling is always there, rich or not: it's merged into the oak mesh and costs no draw call, only vertices.
+
+**Checked:**
+- `tests.html` green (137).
+- All four rooms shot before and after at phone size, portrait and landscape, from the same script and the same game; the office in all five acts plus the whip's room, empty and with a visitor; the settings sheet with the new switch; the chamber and the Act 5 office with the switch flipped in place. No console errors anywhere.
+- Draw calls, portrait / landscape, before → after (rich): riding 40 / 44 → 40 / 43; chamber 58 / 58 → 63 / 65 (up to 69 on the overview mid-session, 75 on the division shot); office 54 / 53 → 60 / 60; caucus 36 / 35 → 36 / 34. Flipping the switch off in the same game: chamber 69 → 67 (and eight lights to six), Act 5 office 52 → 45. The chamber's cost with rich rooms on is in the lights more than the draws, which is what the switch is for.
+
+**Next:** Kelbo's frame-rate check on the phone with `?debug=1`, rich and then `?lite=1`, decides whether the default stays on. Then the playtest notes.
+
+## 2026-10-24 · Docs refresh: the docs match the build again
+
+No game code, data or tuning changed. This pass read the whole tree and the git history (about 98 commits since the docs were last trued up) and fixed every statement in `CLAUDE.md`, `DESIGN.md`, `HANDOFF.md` and `README.md` that the code no longer backed.
+
+**What was stale, and what it says now:**
+- `CLAUDE.md` stopped at the caucus tools (around PR #47). The "Build plan status" now lists what is done (stages 0 to 9, the art pass, round two, and every playtest entry through PR #75), what is not started (the week's vote UI, part two), and what waits on Kelbo (the phone frame-rate check, trying the home-screen install and the buzz, the next playtest notes). It gained a "Where things live" map, one line per folder or file, and the exact way to run the tests.
+- `README.md` said the game was the Act 1 slice (stage 4b). It now says the whole plan is in and the game is in playtest, and its URL switches table lists the ones the code reads (`?scenario=`, `?daily=1`, `?act=`, `?coldopen=1`).
+- `DESIGN.md` now describes the game as built, with **Not built yet** on the parts that aren't: the player's dig action (only rival whips dig, so nothing yet reveals another MP's secrets to you and leverage can't be unlocked), the week's vote UI, Phases 2 and 3, and a leadership review. Fixed to match the code: the deal table is tapped, not dragged; the office is one room per act (five), not two tiers; the chamber opens from your own seat in Acts 1 and 2; the capital is Ostrava, not Ottawa (the old text used the real name); the minor party's seat range is 1 to 5 (`data/parties.json`), not 0 to 5. Numbers were added from `data/tuning.json` with their keys (the vote weights and thresholds, slots by act, the bells, staleness, rival budgets, the handover window, the calendar), the three scenarios are named, and the cold open, the verdict card, the Hill chase, the memoir and the week's vote are described.
+- `HANDOFF.md`: the repo layout in section 4 now lists the files that exist; the Pages note in section 3 says deploys go through `.github/workflows/pages.yml`; the MP figure, office tiers and caucus mood marks in sections 5 and 6 match the code; the URL switches table in section 9 drops `?room=` (never built) and names the real ones; `tests.html` has run instructions; the defaults table points at `data/scenarios.json`, `strings.en.json` for the title, five office sets and the CC0 assets.
+
+**Contradictions, as the rules ask:**
+- `DESIGN.md` described the office growing with rank (shared room to corner office); `HANDOFF.md` said two tiers. The code went with the design and beyond it: five rooms, one per act. Both docs now say five.
+- `DESIGN.md` used "Ottawa" for the capital. `HANDOFF.md` constraint 8 says no real place appears, and `data/world.json` names the capital Ostrava. `DESIGN.md` now says Ostrava.
+- `HANDOFF.md` section 11 budgets the office, riding and caucus at under 40 draw calls. The office is at 44 empty and 56 with a visitor (from the motion-kit entry above), and `CLAUDE.md` says Kelbo's phone has headroom, so keep the visual budget up. The budget line stays with a note; Kelbo's frame-rate check with `?debug=1` on his phone decides it.
+- `DESIGN.md` lists a dig action for the player and a secrets reveal; neither is in the sim. Marked not built rather than removed, since the leverage tool is coded and waiting on it. Kelbo to say whether digging is wanted.
+
+**Checked:**
+- `tests.html` in headless Chromium (Playwright) against a local `python3 -m http.server`: 132 passed, 0 failed, in about 30 seconds, no console errors.
+- `index.html` at 390 × 844 (the menu, and `?seed=TEST-1&guided=1` into the first Monday) and at 844 × 390 (`?seed=TEST-1`): the loading screen cleared, the Order Paper drew, and there were no console errors, page errors or failed requests.
+- The hard constraints in `CLAUDE.md`: no `Math.random` in `src/sim/`; no DOM or Three.js in `src/sim/`; only `src/save.js` touches `localStorage`, under `whip:` keys; the only outside URL is `cdn.jsdelivr.net/npm/three@0.160.0` (in `index.html`, `tests.html` and `tools/lineup.html`).
+- One thing for anyone testing headless: behind an HTTPS-only proxy, Playwright sends localhost through it unless `PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK=1` is set, and the page never loads. It's in `CLAUDE.md`.
+
+**Not verified here:** the live URL (no deploy in this pass), the frame rate on a phone, the home-screen install and the buzz. The HANDOFF geometry numbers (desk sizes, camera positions) were not re-measured against the scenes; only the statements that were plainly false were changed.
+
+## 2026-10-24 · Performance: fine for now
+
+Kelbo's call on the open performance question: **it's fine for now.** The chamber at 60 draw calls and the office at 44 empty, 56 with a visitor stand as they are; nothing gets trimmed, and the office being over `HANDOFF.md`'s 40 is accepted. The frame-rate check is no longer listed as owed. `?debug=1` still shows the numbers, so a room that climbs well past today's figures is worth raising. `CLAUDE.md` and `HANDOFF.md` section 11 now say this. No game code changed.
+
+## 2026-11-06 · Save safety: backup files, a backup reminder, and asking the browser to keep the saves
+
+Every Longlight game lives at the same web address (jxstrr0.github.io), so they share one browser storage. If a phone runs low on space, the browser can clear all of it at once, and every game's saves go with it. Kelbo asked for the same two safety nets in every game.
+
+**What changed:**
+- **Asking the browser to keep the storage.** The first time a save is written in a visit (or a backup file is made), the game asks the browser to treat its storage as permanent (`navigator.storage.persist()`), once, quietly, and only if it isn't already. Chrome and Safari decide on their own; Firefox may ask the player, which is why it waits until there's a game worth keeping. Under the saved games on the title page, one line says how it stands: "Storage: protected on this device." or "Storage: the browser may clear these saves if the phone runs low on space. Keep a backup file." Browsers that can't say get no line.
+- **Backup files.** Each saved game on the title page has a **Save file** button next to Copy save. It writes the same text Copy save does into `the-whip-backup-YYYY-MM-DD.txt`. On a phone that can share files (an iPhone, including from the home screen) it opens the share sheet, so "Save to Files" works; elsewhere it downloads. Cancelling the share sheet is not counted as a backup and shows nothing. The in-game menu (☰) has **Save a backup file** for the game in hand.
+- **Loading a backup file.** **Load a backup file into slot N** (under the saved games) opens the file picker and feeds the text through the same import as a pasted save. The text is checked whole before anything happens, then the usual "Start over in this slot?" question if the slot is taken. A wrong or damaged file gets the same line as a bad paste: "That isn't a save this version can read." Pasting now checks the save before asking to replace a slot, too, so a bad paste no longer asks first and fails after.
+- **A quiet reminder.** When a save holds real progress (past its first week, not a one-week scenario), has been played since the last backup, and there has never been a backup or the last one is 14 days old, the title page shows a small brass-edged note: "Back up now" scrolls to the saved games, "Not now" puts it away. It shows at most once a visit (going back to the title doesn't bring it back), never over a scene, and has no animation.
+
+**Small calls:**
+- When the last backup happened is `lastBackup` in `whip:settings`, the existing per-phone settings. No new localStorage key. The "shown this visit" mark is in sessionStorage (`whip:backup-reminded`), which the browser drops when the tab closes. Both are read and written only in `src/save.js` and `src/settings.js` (through `save.js`).
+- A copied save counts as a backup when the clipboard took it; one shown for copying by hand doesn't, since there's no telling it was copied.
+- New tuning: `backup.remindAfterDays` (14), `backup.progressWeeks` (1, the first week doesn't count as progress) and `backup.maxFileKb` (20000, a picked file bigger than that is refused before it's read). New strings are `menu.saveFile`, `menu.backupFile`, `menu.loadFile`, `menu.file*`, `menu.storage*` and `menu.backup*`.
+
+**Checked:**
+- `tests.html` 133 of 133 (one new test: the file name, a file with a trailing newline restores the same game, a stray text file is refused, and when the reminder is and isn't due).
+- At 390 × 844 in headless Chromium against a local server: a game with three weeks played shows the reminder and the storage line on the title page; Back up now scrolls to the saved games; Save file downloads `the-whip-backup-2026-11-06.txt` (about 150 KB) and records the backup; after a reload the reminder stays away; a broken file shows the error; the good file (with an extra newline) loads into an empty slot and into a taken slot after the replace question; the in-game menu's Save a backup file downloads the current game. No console errors.
+
+**For Kelbo to test on the phone (from the home screen):** open the title page and look under Saved games for the Storage line. Tap **Save file** on a saved game, choose **Save to Files** in the share sheet. Then pick an empty slot, tap **Load a backup file into slot N**, choose that file from Files, and the game should open where it was.
+
+## 2026-11-06 · A version number: 1.0.0.0
+
+Versions now use four numbers, Major.Minor.Patch.Build (Kelbo's call, same across all Longlight games). The Whip had no version; it starts at 1.0.0.0.
+
+**What changed:**
+- `src/version.js` is the one place the version lives (`VERSION = '1.0.0.0'`).
+- The start menu's colophon (the Longlight mark at the bottom) now ends in a quiet "v1.0.0.0" on the right, and the Settings sheet has "The Whip, version 1.0.0.0" in small type under Done. The text is `menu.version` and `settings.version` in `data/strings.en.json`.
+- `CLAUDE.md` has a new "Version" section with the bump rule: Major = an overhaul, Minor = a feature batch, Patch = a tweak or fix, Build = a republish.
+
+**Small calls:**
+- The save format is untouched. `SAVE_VERSION` stays what it is; the version is not written into saves or exports, because an export is the game state itself with no separate header to put it in.
+- `manifest.webmanifest` has no version field and there is no service worker, so nothing else needed it.
+
+**For Kelbo to test on the phone:** open https://jxstrr0.github.io/The-Whip/, scroll to the bottom of the title page: "v1.0.0.0" sits at the right of the Longlight line. Tap Settings: the version is under Done.
+
+## 2026-11-08 · New address: thewhip.longlight.games
+
+Every Longlight game now has its own web address. The Whip's is **https://thewhip.longlight.games/**; the old https://jxstrr0.github.io/The-Whip/ forwards there. The studio site is https://longlight.games/.
+
+**What changed (docs only, no code):**
+- `README.md` and `CLAUDE.md` carry the new addresses (the live URL, the studio site, the press kit).
+- `CLAUDE.md` no longer implies the games share one browser storage: each game has its own now. Saves made before the move stay on jxstrr0.github.io (Kelbo accepted that). The `whip:` prefix stays all the same.
+- `LONGLIGHT-STUDIO.md` recopied from the master in Kelbo.Website.
+- The version stays 1.0.0.0: nothing players see changed.
+
+**For Kelbo to test on the phone:** open https://thewhip.longlight.games/ and check the game loads. Saves from the old address won't show there; that's expected.
+
+## 2026-11-10 · Playtest quick wins: 1.0.0.1
+
+Three wording slips from the first-time playtest:
+
+- **The blocks line counts down.** The office's "Your job here" line said "2 blocks" all evening, even after a meeting. It now says how many are left ("1 block", "½ block").
+- **"Your first question" shows once.** The Question Period hint came back on Tuesday. It now goes once you've asked your first question.
+- **Whispers no longer talk about themselves.** A whisper filled `{name}` with the speaker's own name ("Rowan says there's a shuffle coming", said by Rowan). It now names a colleague a few seats away. Picked by seat, so no random draw moved.
+
+Checked: `tests.html` 133 passed, 0 failed; the game loads with no console errors.
+
+**For Kelbo to test on the phone:** spend a block in the office and watch the job line drop; ask a question on Monday and check Tuesday's Question Period has no "Your first question" note; whisper in caucus a few times.
+
+## 2026-11-10 · 1.1.0.0: the UI refresh and the rooms pass land
+
+Kelbo asked for the parked drafts to be merged. The stacked branches (UI refresh parts one to five, surfaces, rooms) were brought up to date with `main` (the docs refresh, the Longlight brand and addresses, save safety, the four-number version and the 1.0.0.1 playtest quick wins). Six files overlapped; every one was a both-sides addition and keeps both: the Rich rooms switch beside the backup date in settings, the version line under Settings' Done, the Question Period hint that shows once with the replies styling, the desk styles beside the backup note styles.
+
+Checked: `tests.html` 138 passed, 0 failed; a new career played to election night at 390 × 844 and 844 × 390 with no console errors.
+
+**For Kelbo to test on the phone:** the office, chamber and Question Period after the refresh; Settings shows Rich rooms and the version; Back up still works.

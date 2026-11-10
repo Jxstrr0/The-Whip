@@ -92,13 +92,16 @@ export function aimShort(state) {
   return `${t('career.act', { n: a.act })} · ${t('aim.short.' + a.act)}${tail}`;
 }
 
-// The act's aim as a chip on the date line: "Get noticed 3/8", "Caucus 54/60". With nothing left to count
-// (the next step is up to the House) it shows the aim itself.
+// The act's aim on the date line: its name over a thin rule that fills as the count comes in ("Get noticed"
+// at three of eight). A counter that is a line to stay above or below, or a wait of so many weeks, says so
+// in words instead. With nothing left to count (the next step is up to the House) it shows the aim itself.
 export function aimChip(state) {
   const a = actAim(state);
   const c = a.counters[0];
   if (a.waiting || !c) return `<span class="n">${esc(t('aim.short.' + a.act))}</span>`;
-  return `<span class="n">${esc(t('aim.chip.' + a.act))}</span><b>${esc(t('aim.chip.' + c.key, { ...c, left: Math.max(0, c.need - c.have) }))}</b>`;
+  if (c.limit || c.key === 'weeks') return `<span class="n">${esc(t('aim.chip.' + a.act))}</span><b>${esc(t('aim.chip.' + c.key, { ...c, left: Math.max(0, c.need - c.have) }))}</b>`;
+  const pct = Math.max(0, Math.min(100, Math.round((c.have / Math.max(1, c.need)) * 100)));
+  return `<span class="n">${esc(t('aim.chip.' + a.act))}</span><i class="rule" style="--p:${pct}%"></i>`;
 }
 
 // The act's aim in full: the goal, every counter as a bar, and how it's won or lost.
