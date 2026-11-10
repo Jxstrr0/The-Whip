@@ -63,7 +63,7 @@ export function sceneJob(state, kind, ctx = {}) {
       if (ctx.items.some((i) => i.stop === 'ownVote')) return { key: 'job.morning.ownVote' };
       return { key: whip ? 'job.morning.whip' : 'job.morning' };
     case 'office':
-      return { key: whip ? 'job.office.whip' : ctx.whipCall ? 'job.office.called' : fellBack(p) && weeksInAct(state) < 1 ? 'job.office.fell' : 'job.office', vars: { n: ctx.slots ?? p.slots } };
+      return { key: whip ? 'job.office.whip' : ctx.whipCall ? 'job.office.called' : fellBack(p) && weeksInAct(state) < 1 ? 'job.office.fell' : 'job.office', vars: blockVars(ctx.slots ?? p.slots) };
     case 'meeting':
       return { key: `job.meeting.${ctx.situation in MEETINGS ? ctx.situation : 'other'}`, vars: { pos: ctx.pos || '' } };
     case 'caucus':
@@ -111,4 +111,9 @@ export function resumeNote(state, now = Date.now()) {
   const days = Math.round(hours / 24);
   const ago = hours < 18 ? say('resume.ago.earlier') : hours < 40 ? say('resume.ago.yesterday') : days <= 14 ? say('resume.ago.days', { n: days }) : say('resume.ago.while');
   return say('resume.line', { ago, text: pick.text });
+}
+
+// {n} and the plural {s} for the office job line ("1 block", "½ block", "2 blocks").
+function blockVars(n) {
+  return { n, s: String(n) === '1' || String(n) === '½' ? '' : 's' };
 }

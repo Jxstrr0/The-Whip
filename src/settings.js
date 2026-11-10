@@ -1,8 +1,9 @@
 // Player settings: sound, volume, haptics, the glossary, colour-blind party colours and large text. Stored under whip:settings.
+// lastBackup (when a save was last copied or saved as a file, ms) rides along here too: it belongs to this phone, not to a game.
 // The CSS side is two classes on <html> (cb, large); the party palette is read by partyColor in ui/text.js.
 import { loadSettings, saveSettings } from './save.js';
 
-const DEFAULTS = { sound: true, volume: 0.7, haptics: true, glossary: true, colourBlind: false, largeText: false };
+const DEFAULTS = { sound: true, volume: 0.7, haptics: true, glossary: true, colourBlind: false, largeText: false, richRooms: true, lastBackup: 0 };
 
 // Only known keys of the right type survive a load, so a stale or hand-edited entry can't break the UI.
 function clean(raw) {

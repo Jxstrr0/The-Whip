@@ -1566,3 +1566,148 @@ The last of Kelbo's five picks, and the one the pitch called the ambitious one. 
 - With reduced motion on the memo appears in place and the stamps are set without a stroke.
 
 **Next:** the five picks are built and stacked as PRs in merge order (B → A → C → E → D). After that, the chamber and textures pass, which I'll scope with Kelbo before building.
+
+## Surfaces: the texture pass
+
+Kelbo asked, after the UI refresh, for the textures to come up too, and then for the paper, the desks and the small items to be in it. This is the first tier of the chamber-and-office pass I proposed (richer surfaces, no new geometry); the chamber dressing and the office's clutter wait on Kelbo's answers to the questions in that proposal. Branch `art/t1-surfaces`, stacked on part five.
+
+**What changed:**
+- **The maps carry colour and wear now.** Every surface's colour map was greyscale grain before, with the hue painted on by the room's palette. They are now the ambientCG scans in colour, desaturated part-way and normalised to the same brightness, so the palette still decides the hue (oak stays the chamber's oak, the baize stays bench green) but the grain has the warm and cool streaks of real wood, the flecks of real stone, the weave of real cloth. Each surface also has a roughness map, so a tabletop is shinier along the grain and duller across it, and light catches a carpet unevenly instead of flatly.
+- **Brass and steel are brushed.** One brushed-metal surface (Metal034, normal and roughness only) is used for everything that was a plain shiny material: the chamber's rails, chandelier rings, Mace and finial, the caucus room's picture rail and lamps, the riding office's fittings, the office flag pole, lamp stem and nameplate, and the Kenney props' steel (lamp stems, chair legs, the coat rack, the laptop's hinge) in its three shades.
+- **Paper in the rooms is paper.** The pads along the caucus table and the pages of the kit's books use a laid-paper map with its own relief, instead of a flat cream. The books' cloth spines use the wool map.
+- **The UI paper has fibre.** The `--grain` noise under every sheet, bar, chip and the whip's folded note is now the same laid-paper scan, multiplied under the paper colour so the room's light (lamplight, bells, a grey morning) tints the fibre too. The index card you write replies on sits on recycled stock with its flecks. The two translucent surfaces (the top bar's buttons, the speech note) keep the old soft noise, because a scan would make them opaque.
+
+**Small calls:**
+- The brass's hue still comes from the palette; Metal034's own colour is a flat yellow and would have fought the room's gold. The green leather keeps its normal map only, for the same reason (Leather037 is salmon), and gains the roughness map.
+- The chamber desks' green tops stay part of the oak desk mesh (one instanced draw) rather than becoming a second mesh with baize of their own.
+- The paper scan is pushed harder than the others (about three times the contrast of the original) because at phone size a subtle fibre read as nothing at all; at the first try the before and after sheets were the same pixel colours.
+- The whole texture set is 1.4 MB, up from 0.6 MB, inside the 3 MB budget in `ART-PASS.md`. A new test fetches every map and checks the budget and the CSS references.
+- Q1 of the proposal (stay stylised, or go towards real materials) is answered here as "stylised, with richer surfaces": the figures and the kit props are unchanged and the palette is unchanged. If Kelbo wants to go further towards real materials, that is the second tier.
+
+**Checked:**
+- `tests.html` green (133).
+- Before and after shots of all four rooms at phone size, portrait and landscape, from a new game (riding rally, the House on the first morning, the office under the strip light, the caucus room), plus the election-night sheet, the menu and the whip's memo with its index card. Draw calls unchanged (chamber 48, office 59–62, caucus 32–33, rally 34–40). No console errors.
+- Pixel-sampled the paper under lamplight before and after: same colour, so the light tints are untouched.
+
+**Next:** Kelbo's answers to the proposal's questions decide the second tier (the chamber dressed: galleries, table, dispatch boxes, the Clerk's table, the windows) and the third (the office lived in).
+
+## The rooms: chamber dressed, office lived in
+
+Kelbo answered the proposal's six questions in one go, and this is the pass they set. Branch `art/t2-rooms`, stacked on the surfaces pass. The answers, for the record: the chamber and the office go together in one pass; the chamber is green and oak with lighter stone; new CC0 assets are fine; the coffered ceiling is in; assume the phone has headroom and go richer; and push the surfaces more photographic. So the rooms now carry more than the art pass budgeted for, with a switch to pull them back.
+
+**What changed:**
+- **The surfaces went photographic.** The three surfaces that fill a phone screen (oak, walnut, marble) are 1024² maps now, carpet and leather 768², and every map keeps more of its own colour and relief than the first tier did, so grain, veining and weave read as the thing itself and the speculars are sharper. New surfaces: marble for the chamber's walls and surrounds, a heavy wool drape, deep-buttoned leather, and a suiting weave on the figures' cloth (normal map only, a light touch so the figures stay the figures). The texture set is 3.0 MB; the budget in `ART-PASS.md` went to 3.5 MB and the test that checks it follows. Every file is in `assets/LICENSES.md`.
+- **The chamber is dressed.** A coffered ceiling of oak beams with inner mouldings and gold bosses; paler marble walls with surrounds to every window; the gallery hung with green drape and a fringe on corbels, a painted PRESS GALLERY plaque above the press; the Table with its dispatch boxes and papers; the chandeliers with their arms. With rich rooms on: brass sconces between the windows, two more lamps over the Table and the bar (`look.tableLamp` in tuning), and a fuller gallery with two doorkeepers standing at the bar.
+- **The office is lived in.** Every room gets a picture rail, a framed map of your riding with its name on the mount, and the better rooms get landscapes and portraits (each room paints one atlas and hangs them in one go), curtains either side of the window, a radiator under it and a cornice. Act 1 gets chequered carpet tiles. Acts 4 and 5 and the whip's room go to walnut wainscot on a warmer wall, with a buttoned oxblood chesterfield in Act 5. With rich rooms on the desk is a working desk: a leather blotter with a memo on it, a wire in-tray with the day's papers, a black telephone, a cup, and the pool of the lamp on the wood, laid out for each desk shape.
+- **A Rich rooms switch.** In Settings, on by default, and `?lite=1` forces it off for a frame-rate check. Turning it off rebuilds the room you're in without the sconces, the extra lamps, the fuller gallery, the curtains, the radiators and the desk dressing. Saved under `whip:settings` with the rest.
+
+**Small calls:**
+- The two doorkeepers are part of the gallery crowd (standing pose) rather than figures of their own, so they cost nothing extra; a first try as a separate crowd put the chamber at 81 draw calls.
+- The marble is tiled at four metres so the veining reads as stone across a wall, not as noise; at three it was busy.
+- The office blinds stay as they were (static slats); the curtains hang beside them.
+- The kit desk in Acts 1 to 3 runs from the origin toward the window side, not centred, so the desk dressing has its own layout for it. The first try put the in-tray on the floor.
+- The Act 5 chesterfield sits 27 cm further into the room than first placed, so its back no longer goes through the wall.
+- The coffered ceiling is always there, rich or not: it's merged into the oak mesh and costs no draw call, only vertices.
+
+**Checked:**
+- `tests.html` green (137).
+- All four rooms shot before and after at phone size, portrait and landscape, from the same script and the same game; the office in all five acts plus the whip's room, empty and with a visitor; the settings sheet with the new switch; the chamber and the Act 5 office with the switch flipped in place. No console errors anywhere.
+- Draw calls, portrait / landscape, before → after (rich): riding 40 / 44 → 40 / 43; chamber 58 / 58 → 63 / 65 (up to 69 on the overview mid-session, 75 on the division shot); office 54 / 53 → 60 / 60; caucus 36 / 35 → 36 / 34. Flipping the switch off in the same game: chamber 69 → 67 (and eight lights to six), Act 5 office 52 → 45. The chamber's cost with rich rooms on is in the lights more than the draws, which is what the switch is for.
+
+**Next:** Kelbo's frame-rate check on the phone with `?debug=1`, rich and then `?lite=1`, decides whether the default stays on. Then the playtest notes.
+
+## 2026-10-24 · Docs refresh: the docs match the build again
+
+No game code, data or tuning changed. This pass read the whole tree and the git history (about 98 commits since the docs were last trued up) and fixed every statement in `CLAUDE.md`, `DESIGN.md`, `HANDOFF.md` and `README.md` that the code no longer backed.
+
+**What was stale, and what it says now:**
+- `CLAUDE.md` stopped at the caucus tools (around PR #47). The "Build plan status" now lists what is done (stages 0 to 9, the art pass, round two, and every playtest entry through PR #75), what is not started (the week's vote UI, part two), and what waits on Kelbo (the phone frame-rate check, trying the home-screen install and the buzz, the next playtest notes). It gained a "Where things live" map, one line per folder or file, and the exact way to run the tests.
+- `README.md` said the game was the Act 1 slice (stage 4b). It now says the whole plan is in and the game is in playtest, and its URL switches table lists the ones the code reads (`?scenario=`, `?daily=1`, `?act=`, `?coldopen=1`).
+- `DESIGN.md` now describes the game as built, with **Not built yet** on the parts that aren't: the player's dig action (only rival whips dig, so nothing yet reveals another MP's secrets to you and leverage can't be unlocked), the week's vote UI, Phases 2 and 3, and a leadership review. Fixed to match the code: the deal table is tapped, not dragged; the office is one room per act (five), not two tiers; the chamber opens from your own seat in Acts 1 and 2; the capital is Ostrava, not Ottawa (the old text used the real name); the minor party's seat range is 1 to 5 (`data/parties.json`), not 0 to 5. Numbers were added from `data/tuning.json` with their keys (the vote weights and thresholds, slots by act, the bells, staleness, rival budgets, the handover window, the calendar), the three scenarios are named, and the cold open, the verdict card, the Hill chase, the memoir and the week's vote are described.
+- `HANDOFF.md`: the repo layout in section 4 now lists the files that exist; the Pages note in section 3 says deploys go through `.github/workflows/pages.yml`; the MP figure, office tiers and caucus mood marks in sections 5 and 6 match the code; the URL switches table in section 9 drops `?room=` (never built) and names the real ones; `tests.html` has run instructions; the defaults table points at `data/scenarios.json`, `strings.en.json` for the title, five office sets and the CC0 assets.
+
+**Contradictions, as the rules ask:**
+- `DESIGN.md` described the office growing with rank (shared room to corner office); `HANDOFF.md` said two tiers. The code went with the design and beyond it: five rooms, one per act. Both docs now say five.
+- `DESIGN.md` used "Ottawa" for the capital. `HANDOFF.md` constraint 8 says no real place appears, and `data/world.json` names the capital Ostrava. `DESIGN.md` now says Ostrava.
+- `HANDOFF.md` section 11 budgets the office, riding and caucus at under 40 draw calls. The office is at 44 empty and 56 with a visitor (from the motion-kit entry above), and `CLAUDE.md` says Kelbo's phone has headroom, so keep the visual budget up. The budget line stays with a note; Kelbo's frame-rate check with `?debug=1` on his phone decides it.
+- `DESIGN.md` lists a dig action for the player and a secrets reveal; neither is in the sim. Marked not built rather than removed, since the leverage tool is coded and waiting on it. Kelbo to say whether digging is wanted.
+
+**Checked:**
+- `tests.html` in headless Chromium (Playwright) against a local `python3 -m http.server`: 132 passed, 0 failed, in about 30 seconds, no console errors.
+- `index.html` at 390 × 844 (the menu, and `?seed=TEST-1&guided=1` into the first Monday) and at 844 × 390 (`?seed=TEST-1`): the loading screen cleared, the Order Paper drew, and there were no console errors, page errors or failed requests.
+- The hard constraints in `CLAUDE.md`: no `Math.random` in `src/sim/`; no DOM or Three.js in `src/sim/`; only `src/save.js` touches `localStorage`, under `whip:` keys; the only outside URL is `cdn.jsdelivr.net/npm/three@0.160.0` (in `index.html`, `tests.html` and `tools/lineup.html`).
+- One thing for anyone testing headless: behind an HTTPS-only proxy, Playwright sends localhost through it unless `PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK=1` is set, and the page never loads. It's in `CLAUDE.md`.
+
+**Not verified here:** the live URL (no deploy in this pass), the frame rate on a phone, the home-screen install and the buzz. The HANDOFF geometry numbers (desk sizes, camera positions) were not re-measured against the scenes; only the statements that were plainly false were changed.
+
+## 2026-10-24 · Performance: fine for now
+
+Kelbo's call on the open performance question: **it's fine for now.** The chamber at 60 draw calls and the office at 44 empty, 56 with a visitor stand as they are; nothing gets trimmed, and the office being over `HANDOFF.md`'s 40 is accepted. The frame-rate check is no longer listed as owed. `?debug=1` still shows the numbers, so a room that climbs well past today's figures is worth raising. `CLAUDE.md` and `HANDOFF.md` section 11 now say this. No game code changed.
+
+## 2026-11-06 · Save safety: backup files, a backup reminder, and asking the browser to keep the saves
+
+Every Longlight game lives at the same web address (jxstrr0.github.io), so they share one browser storage. If a phone runs low on space, the browser can clear all of it at once, and every game's saves go with it. Kelbo asked for the same two safety nets in every game.
+
+**What changed:**
+- **Asking the browser to keep the storage.** The first time a save is written in a visit (or a backup file is made), the game asks the browser to treat its storage as permanent (`navigator.storage.persist()`), once, quietly, and only if it isn't already. Chrome and Safari decide on their own; Firefox may ask the player, which is why it waits until there's a game worth keeping. Under the saved games on the title page, one line says how it stands: "Storage: protected on this device." or "Storage: the browser may clear these saves if the phone runs low on space. Keep a backup file." Browsers that can't say get no line.
+- **Backup files.** Each saved game on the title page has a **Save file** button next to Copy save. It writes the same text Copy save does into `the-whip-backup-YYYY-MM-DD.txt`. On a phone that can share files (an iPhone, including from the home screen) it opens the share sheet, so "Save to Files" works; elsewhere it downloads. Cancelling the share sheet is not counted as a backup and shows nothing. The in-game menu (☰) has **Save a backup file** for the game in hand.
+- **Loading a backup file.** **Load a backup file into slot N** (under the saved games) opens the file picker and feeds the text through the same import as a pasted save. The text is checked whole before anything happens, then the usual "Start over in this slot?" question if the slot is taken. A wrong or damaged file gets the same line as a bad paste: "That isn't a save this version can read." Pasting now checks the save before asking to replace a slot, too, so a bad paste no longer asks first and fails after.
+- **A quiet reminder.** When a save holds real progress (past its first week, not a one-week scenario), has been played since the last backup, and there has never been a backup or the last one is 14 days old, the title page shows a small brass-edged note: "Back up now" scrolls to the saved games, "Not now" puts it away. It shows at most once a visit (going back to the title doesn't bring it back), never over a scene, and has no animation.
+
+**Small calls:**
+- When the last backup happened is `lastBackup` in `whip:settings`, the existing per-phone settings. No new localStorage key. The "shown this visit" mark is in sessionStorage (`whip:backup-reminded`), which the browser drops when the tab closes. Both are read and written only in `src/save.js` and `src/settings.js` (through `save.js`).
+- A copied save counts as a backup when the clipboard took it; one shown for copying by hand doesn't, since there's no telling it was copied.
+- New tuning: `backup.remindAfterDays` (14), `backup.progressWeeks` (1, the first week doesn't count as progress) and `backup.maxFileKb` (20000, a picked file bigger than that is refused before it's read). New strings are `menu.saveFile`, `menu.backupFile`, `menu.loadFile`, `menu.file*`, `menu.storage*` and `menu.backup*`.
+
+**Checked:**
+- `tests.html` 133 of 133 (one new test: the file name, a file with a trailing newline restores the same game, a stray text file is refused, and when the reminder is and isn't due).
+- At 390 × 844 in headless Chromium against a local server: a game with three weeks played shows the reminder and the storage line on the title page; Back up now scrolls to the saved games; Save file downloads `the-whip-backup-2026-11-06.txt` (about 150 KB) and records the backup; after a reload the reminder stays away; a broken file shows the error; the good file (with an extra newline) loads into an empty slot and into a taken slot after the replace question; the in-game menu's Save a backup file downloads the current game. No console errors.
+
+**For Kelbo to test on the phone (from the home screen):** open the title page and look under Saved games for the Storage line. Tap **Save file** on a saved game, choose **Save to Files** in the share sheet. Then pick an empty slot, tap **Load a backup file into slot N**, choose that file from Files, and the game should open where it was.
+
+## 2026-11-06 · A version number: 1.0.0.0
+
+Versions now use four numbers, Major.Minor.Patch.Build (Kelbo's call, same across all Longlight games). The Whip had no version; it starts at 1.0.0.0.
+
+**What changed:**
+- `src/version.js` is the one place the version lives (`VERSION = '1.0.0.0'`).
+- The start menu's colophon (the Longlight mark at the bottom) now ends in a quiet "v1.0.0.0" on the right, and the Settings sheet has "The Whip, version 1.0.0.0" in small type under Done. The text is `menu.version` and `settings.version` in `data/strings.en.json`.
+- `CLAUDE.md` has a new "Version" section with the bump rule: Major = an overhaul, Minor = a feature batch, Patch = a tweak or fix, Build = a republish.
+
+**Small calls:**
+- The save format is untouched. `SAVE_VERSION` stays what it is; the version is not written into saves or exports, because an export is the game state itself with no separate header to put it in.
+- `manifest.webmanifest` has no version field and there is no service worker, so nothing else needed it.
+
+**For Kelbo to test on the phone:** open https://jxstrr0.github.io/The-Whip/, scroll to the bottom of the title page: "v1.0.0.0" sits at the right of the Longlight line. Tap Settings: the version is under Done.
+
+## 2026-11-08 · New address: thewhip.longlight.games
+
+Every Longlight game now has its own web address. The Whip's is **https://thewhip.longlight.games/**; the old https://jxstrr0.github.io/The-Whip/ forwards there. The studio site is https://longlight.games/.
+
+**What changed (docs only, no code):**
+- `README.md` and `CLAUDE.md` carry the new addresses (the live URL, the studio site, the press kit).
+- `CLAUDE.md` no longer implies the games share one browser storage: each game has its own now. Saves made before the move stay on jxstrr0.github.io (Kelbo accepted that). The `whip:` prefix stays all the same.
+- `LONGLIGHT-STUDIO.md` recopied from the master in Kelbo.Website.
+- The version stays 1.0.0.0: nothing players see changed.
+
+**For Kelbo to test on the phone:** open https://thewhip.longlight.games/ and check the game loads. Saves from the old address won't show there; that's expected.
+
+## 2026-11-10 · Playtest quick wins: 1.0.0.1
+
+Three wording slips from the first-time playtest:
+
+- **The blocks line counts down.** The office's "Your job here" line said "2 blocks" all evening, even after a meeting. It now says how many are left ("1 block", "½ block").
+- **"Your first question" shows once.** The Question Period hint came back on Tuesday. It now goes once you've asked your first question.
+- **Whispers no longer talk about themselves.** A whisper filled `{name}` with the speaker's own name ("Rowan says there's a shuffle coming", said by Rowan). It now names a colleague a few seats away. Picked by seat, so no random draw moved.
+
+Checked: `tests.html` 133 passed, 0 failed; the game loads with no console errors.
+
+**For Kelbo to test on the phone:** spend a block in the office and watch the job line drop; ask a question on Monday and check Tuesday's Question Period has no "Your first question" note; whisper in caucus a few times.
+
+## 2026-11-10 · 1.1.0.0: the UI refresh and the rooms pass land
+
+Kelbo asked for the parked drafts to be merged. The stacked branches (UI refresh parts one to five, surfaces, rooms) were brought up to date with `main` (the docs refresh, the Longlight brand and addresses, save safety, the four-number version and the 1.0.0.1 playtest quick wins). Six files overlapped; every one was a both-sides addition and keeps both: the Rich rooms switch beside the backup date in settings, the version line under Settings' Done, the Question Period hint that shows once with the replies styling, the desk styles beside the backup note styles.
+
+Checked: `tests.html` 138 passed, 0 failed; a new career played to election night at 390 × 844 and 844 × 390 with no console errors.
+
+**For Kelbo to test on the phone:** the office, chamber and Question Period after the refresh; Settings shows Rich rooms and the version; Back up still works.

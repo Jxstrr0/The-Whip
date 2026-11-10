@@ -1,8 +1,10 @@
 // Menus: the start screen (continue, or a new career: name, party, background, riding, age, seed) and the
 // in-game menu.
 import { canBuzz } from '../haptics.js';
+import { VERSION } from '../version.js';
 import { t, esc, longlightMark } from './text.js';
 import { pickerHtml, wirePickers } from './picker.js';
+import { saveBackupFile, readBackupFile, storageKept, backupFileName, daysSince } from '../save.js';
 
 // The riding types are written for mid-sentence use; as a field's value they take a capital.
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -20,7 +22,8 @@ function pickName(list) {
 
 // The title page. One sheet, read top to bottom: continue the latest game, pick a slot, then start something
 // (a career, a scenario, today's seed, a friend's seed) or manage the saved games.
-export function createStartMenu(root, { saves, latest, scenarios, onContinue, onNew, onScenario, onDaily, onShared, onImport, onDelete, onExport, onSeed, onSettings }) {
+// reminder: { lastBackup } when a quiet "back up your saves" note is due this visit, else null.
+export function createStartMenu(root, { saves, latest, scenarios, reminder, onContinue, onNew, onScenario, onDaily, onShared, onCheckImport, onImport, onDelete, onExport, onBackedUp, onSeed, onSettings }) {
   const D = data();
   const el = document.createElement('section');
   el.className = 'start-menu';
@@ -35,6 +38,13 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
     const d = new Date(info.savedAt || 0);
     return info.savedAt ? `${t('menu.saved')} ${d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} ${d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}` : '';
   };
+  // Whether the browser has promised to keep the saves (true, false, or null when it can't say). Filled in a moment after the page opens.
+  let kept = null;
+  const storageLine = () => (kept == null ? '' : t(kept ? 'menu.storageKept' : 'menu.storageAtRisk'));
+  const reminderHtml = () => (reminder
+    ? `<div class="backup-note" role="status"><p>${esc(reminder.lastBackup ? t('menu.backupOld', { days: daysSince(reminder.lastBackup) }) : t('menu.backupNever'))}</p>
+      <div class="backup-note-actions"><button class="btn primary" data-act="backup-now">${t('menu.backupNow')}</button><button class="btn" data-act="backup-later">${t('menu.backupLater')}</button></div></div>`
+    : '');
   const modeLabel = (info) => (info.mode === 'scenario' ? info.title : info.mode === 'daily' ? t('menu.daily') : info.mode === 'shared' ? t('menu.shared') : t('menu.career'));
 
   function render() {
@@ -44,6 +54,7 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
       <h1>${t('title')}</h1>
       <p class="muted">${t('subtitle')}</p>
       <p class="tagline">${t('menu.tagline')}</p>
+      ${reminderHtml()}
       ${latest ? `<button class="btn primary wide" data-act="continue" data-slot="${latest.slot}">${t('menu.continue')}<small>${esc(t('menu.continueInfo', latest))} · ${esc(modeLabel(latest))}</small></button>` : ''}
 
       <h3>${t('menu.slot')}</h3>
@@ -77,12 +88,16 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
       <div class="form"><label>${t('menu.sharedSeed')}<input name="sharedSeed" value="" autocomplete="off" placeholder="CALEDOR-1234"></label></div>
       <button class="btn wide" data-act="shared">${t('menu.sharedPlay')}${replaces}</button>
 
-      <h3>${t('menu.savedGames')}</h3>
+      <h3 id="saved-games" tabindex="-1">${t('menu.savedGames')}</h3>
       <ul class="save-list">${[1, 2, 3].map((i) => {
         const info = saves[i - 1];
         return `<li><div class="save-head"><b>${t('menu.slotN', { n: i })}</b>${info ? `<span>${esc(info.name)} · ${esc(info.party)} · ${esc(t('menu.actN', { n: info.act }))} · ${esc(t('menu.weekYear', info))}${info.ended ? ` · ${t('menu.ended')}` : ''}</span><small>${esc(modeLabel(info))} · ${esc(whenSaved(info))} · ${esc(info.seed)}</small>` : `<span class="muted">${t('menu.emptySlot')}</span>`}</div>
-          ${info ? `<div class="save-actions"><button class="btn" data-act="continue" data-slot="${i}">${t('menu.load')}</button><button class="btn" data-act="export" data-slot="${i}">${t('menu.export')}</button><button class="btn danger" data-act="delete" data-slot="${i}">${t('menu.delete')}</button></div>` : ''}</li>`;
+          ${info ? `<div class="save-actions"><button class="btn" data-act="continue" data-slot="${i}">${t('menu.load')}</button><button class="btn" data-act="export" data-slot="${i}">${t('menu.export')}</button><button class="btn" data-act="save-file" data-slot="${i}">${t('menu.saveFile')}</button><button class="btn danger" data-act="delete" data-slot="${i}">${t('menu.delete')}</button></div>` : ''}</li>`;
       }).join('')}</ul>
+      <p class="muted small-note storage-note"${kept == null ? ' hidden' : ''}>${esc(storageLine())}</p>
+      <button class="btn wide" data-act="load-file">${esc(t('menu.loadFile', { n: slot }))}</button>
+      <input type="file" name="backupFile" accept=".txt,text/plain" hidden>
+      <p class="muted small-note">${t('menu.fileNote')}</p>
       <details class="import"${form.importOpen ? ' open' : ''}><summary>${t('menu.import')}</summary>
         <p class="muted small-note">${t('menu.importNote')}</p>
         <textarea name="importText" rows="4" placeholder="${t('menu.importPlaceholder')}">${esc(form.importText)}</textarea>
@@ -90,7 +105,7 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
       </details>
       <p class="status muted" aria-live="polite"></p>
       <div class="choices"><button class="btn" data-act="settings">${t('menu.settings')}</button></div>
-      <footer class="colophon">${longlightMark()}${t('menu.studio')}</footer>
+      <footer class="colophon">${longlightMark()}${t('menu.studio')}<span class="version">${esc(t('menu.version', { version: VERSION }))}</span></footer>
     </div>`;
     wire();
   }
@@ -111,6 +126,25 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
     if (p) p.textContent = msg;
   };
   const confirmReplace = () => !saves[slot - 1] || confirm(t('menu.confirmReplace', { name: saves[slot - 1].name }));
+  // One way in for a pasted save and a backup file alike: check the whole text, ask before replacing a slot, then load.
+  const restore = (text) => {
+    if (!text) return status(t('menu.needImport'));
+    if (onCheckImport && !onCheckImport(text)) return status(t('menu.importFailed'));
+    if (!confirmReplace()) return;
+    const ok = onImport(text, slot);
+    if (!ok) return status(t('menu.importFailed'));
+    el.remove();
+  };
+  const showStorage = () => {
+    const p = el.querySelector('.storage-note');
+    if (!p) return;
+    p.textContent = storageLine();
+    p.hidden = kept == null;
+  };
+  storageKept().then((v) => {
+    kept = v;
+    showStorage();
+  });
 
   function wire() {
     wirePickers(el, picks);
@@ -169,7 +203,10 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
       } catch {
         // No clipboard: show the text to copy by hand.
       }
-      if (copied) return status(t('menu.copied', { kb: Math.round(text.length / 1024) }));
+      if (copied) {
+        onBackedUp?.();
+        return status(t('menu.copied', { kb: Math.round(text.length / 1024) }));
+      }
       const ta = el.querySelector('[name="importText"]');
       el.querySelector('details.import').open = true;
       ta.value = text;
@@ -189,22 +226,57 @@ export function createStartMenu(root, { saves, latest, scenarios, onContinue, on
       el.scrollTop = y;
       status(t('menu.deleted'));
     }));
+    el.querySelectorAll('[data-act="save-file"]').forEach((b) => (b.onclick = async () => {
+      const text = onExport(Number(b.dataset.slot));
+      if (!text) return status(t('menu.exportFailed'));
+      const result = await saveBackupFile(text);
+      // A cancelled share sheet isn't a backup, and isn't an error either.
+      if (result === 'saved') {
+        onBackedUp?.();
+        status(t('menu.fileSaved', { name: backupFileName() }));
+      } else if (result === 'failed') status(t('menu.fileFailed'));
+    }));
+    const picker = el.querySelector('[name="backupFile"]');
+    el.querySelector('[data-act="load-file"]').onclick = () => {
+      readForm();
+      picker.click();
+    };
+    picker.onchange = async () => {
+      const file = picker.files?.[0];
+      picker.value = '';
+      if (!file) return;
+      let text = '';
+      try {
+        text = await readBackupFile(file);
+      } catch {
+        return status(t('menu.importFailed'));
+      }
+      restore(text);
+    };
     el.querySelector('[data-act="import"]').onclick = () => {
       readForm();
-      const text = v('importText');
-      if (!text) return status(t('menu.needImport'));
-      if (!confirmReplace()) return;
-      const ok = onImport(text, slot);
-      if (!ok) return status(t('menu.importFailed'));
-      el.remove();
+      restore(v('importText'));
     };
+    // The backup note: "Back up now" takes you down to the saved games; either button puts it away for this visit.
+    const closeNote = () => {
+      reminder = null;
+      el.querySelector('.backup-note')?.remove();
+    };
+    el.querySelector('[data-act="backup-later"]')?.addEventListener('click', closeNote);
+    el.querySelector('[data-act="backup-now"]')?.addEventListener('click', () => {
+      closeNote();
+      const h = el.querySelector('#saved-games');
+      const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      h.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+      h.focus({ preventScroll: true });
+    });
   }
 
   render();
   return el;
 }
 
-export function createGameMenu(root, { getState, onQuit, onLedger, onMemoir, onRetire, onCross, onSettings }) {
+export function createGameMenu(root, { getState, onQuit, onLedger, onMemoir, onRetire, onCross, onSettings, onBackup }) {
   const el = document.createElement('section');
   el.className = 'sheet game-menu hidden';
   root.appendChild(el);
@@ -214,7 +286,7 @@ export function createGameMenu(root, { getState, onQuit, onLedger, onMemoir, onR
       const career = s.player.act >= tuning().ranks.retireFromAct && !s.ending && s.flow.pending?.kind !== 'ending';
       el.innerHTML = `<div class="sheet-handle"></div><h2>${t('menu.menu')}</h2>
         <p class="muted">Seed ${esc(s.seed)} · ${t('menu.save')}</p>
-        <div class="choices"><button class="btn" data-act="memoir">${t('menu.memoir')}</button><button class="btn" data-act="ledger">${t('menu.ledger')}</button>${career ? `<button class="btn" data-act="cross">${t('menu.cross')}</button><button class="btn" data-act="retire">${t('menu.retire')}</button>` : ''}<button class="btn" data-act="settings">${t('menu.settings')}</button><button class="btn" data-act="close">${t('menu.close')}</button><button class="btn" data-act="quit">${t('menu.quit')}</button></div>`;
+        <div class="choices"><button class="btn" data-act="memoir">${t('menu.memoir')}</button><button class="btn" data-act="ledger">${t('menu.ledger')}</button>${career ? `<button class="btn" data-act="cross">${t('menu.cross')}</button><button class="btn" data-act="retire">${t('menu.retire')}</button>` : ''}<button class="btn" data-act="backup">${t('menu.backupFile')}</button><button class="btn" data-act="settings">${t('menu.settings')}</button><button class="btn" data-act="close">${t('menu.close')}</button><button class="btn" data-act="quit">${t('menu.quit')}</button></div>`;
       // Crossing the floor asks which bench, then asks again; it isn't a thing to do by accident.
       el.querySelector('[data-act="cross"]')?.addEventListener('click', () => {
         const mine = s.mps[s.player.mpId].party;
@@ -240,6 +312,10 @@ export function createGameMenu(root, { getState, onQuit, onLedger, onMemoir, onR
         onLedger?.();
       };
       el.querySelector('[data-act="quit"]').onclick = onQuit;
+      el.querySelector('[data-act="backup"]').onclick = () => {
+        el.classList.add('hidden');
+        onBackup?.();
+      };
       el.querySelector('[data-act="settings"]').onclick = () => {
         el.classList.add('hidden');
         onSettings?.();
@@ -249,7 +325,7 @@ export function createGameMenu(root, { getState, onQuit, onLedger, onMemoir, onR
   };
 }
 
-// The settings sheet: sound, volume, haptics (only on phones that can buzz), colour-blind colours, larger text. get() returns the current settings,
+// The settings sheet: sound, volume, haptics (only on phones that can buzz), colour-blind colours, larger text, rich rooms. get() returns the current settings,
 // set(key, value) stores one. Opens over the title page or the game.
 export function createSettingsSheet(root, { get, set }) {
   const el = document.createElement('section');
@@ -265,7 +341,9 @@ export function createSettingsSheet(root, { get, set }) {
       ${toggle('glossary', 'settings.glossary', 'settings.glossaryNote')}
       ${toggle('colourBlind', 'settings.colourBlind', 'settings.colourBlindNote')}
       ${toggle('largeText', 'settings.largeText', 'settings.largeTextNote')}
-      <div class="choices"><button class="btn primary" data-act="close">${t('settings.done')}</button></div>`;
+      ${toggle('richRooms', 'settings.richRooms', 'settings.richRoomsNote')}
+      <div class="choices"><button class="btn primary" data-act="close">${t('settings.done')}</button></div>
+      <p class="version-note">${esc(t('settings.version', { version: VERSION }))}</p>`;
     el.querySelectorAll('.switch').forEach((b) => {
       b.onclick = () => {
         set(b.dataset.k, !get()[b.dataset.k]);
