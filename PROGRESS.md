@@ -1501,3 +1501,15 @@ Every Longlight game now has its own web address. The Whip's is **https://thewhi
 - The version stays 1.0.0.0: nothing players see changed.
 
 **For Kelbo to test on the phone:** open https://thewhip.longlight.games/ and check the game loads. Saves from the old address won't show there; that's expected.
+
+## 2026-11-10 · Playtest quick wins: 1.0.0.1
+
+Three wording slips from the first-time playtest:
+
+- **The blocks line counts down.** The office's "Your job here" line said "2 blocks" all evening, even after a meeting. It now says how many are left ("1 block", "½ block").
+- **"Your first question" shows once.** The Question Period hint came back on Tuesday. It now goes once you've asked your first question.
+- **Whispers no longer talk about themselves.** A whisper filled `{name}` with the speaker's own name ("Rowan says there's a shuffle coming", said by Rowan). It now names a colleague a few seats away. Picked by seat, so no random draw moved.
+
+Checked: `tests.html` 133 passed, 0 failed; the game loads with no console errors.
+
+**For Kelbo to test on the phone:** spend a block in the office and watch the job line drop; ask a question on Monday and check Tuesday's Question Period has no "Your first question" note; whisper in caucus a few times.
