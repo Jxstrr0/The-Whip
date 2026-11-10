@@ -563,5 +563,10 @@
     "cap": 160,
     "peoplePerEntry": 5,
     "confidencePeople": 4
+  },
+  "backup": {
+    "remindAfterDays": 14,
+    "progressWeeks": 1,
+    "maxFileKb": 20000
   }
 }
