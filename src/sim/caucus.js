@@ -150,6 +150,18 @@ export function stanceChoices(state) {
 }
 
 // The two members either side of the player at the table.
+// Who a whisper talks about as {name}: a colleague a few seats away, never the speaker or the player (the speaker's own
+// name made them talk about themselves in the third person; playtest, 1.0.0.1). Picked by seat, so no RNG draw moves.
+function whisperAbout(state, mpId) {
+  const seats = state.caucus.seats;
+  const i = Math.max(0, seats.indexOf(mpId));
+  for (let k = 5; k < seats.length + 5; k++) {
+    const id = seats[(i + k) % seats.length];
+    if (id && id !== mpId && id !== state.player.mpId && state.mps[id]) return fullName(state.mps[id]);
+  }
+  return 'someone down the table';
+}
+
 export function neighbours(state) {
   const c = state.caucus;
   const i = c.seats.indexOf(state.player.mpId);
@@ -227,7 +239,7 @@ export function caucusWhisper(state, rng, mpId) {
   const w = rng.pick(pool.length ? pool : data().caucus.whispers);
   const party = state.parties[m.party];
   const bill = c.billId ? billName(state.bills[c.billId]) : "this week's business";
-  const text = fillSlots(w.text, { bill, whip: party.chiefWhip ? fullName(state.mps[party.chiefWhip]) : 'the whip', leader: party.leader ? fullName(state.mps[party.leader]) : 'the leader', name: fullName(m), other: 'someone down the table' });
+  const text = fillSlots(w.text, { bill, whip: party.chiefWhip ? fullName(state.mps[party.chiefWhip]) : 'the whip', leader: party.leader ? fullName(state.mps[party.leader]) : 'the leader', name: whisperAbout(state, mpId), other: 'someone down the table' });
   c.whispers.push({ mpId, text });
   return { text };
 }

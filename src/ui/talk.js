@@ -13,6 +13,13 @@ import { billName } from '../sim/bills.js';
 import { countLine, rowLine } from './text.js';
 import { buzz } from '../haptics.js';
 
+// Blocks still free tonight for the job line ("2 blocks" stayed put after a meeting; playtest, 1.0.0.1). Half blocks read ½.
+function blocksLeft(e) {
+  const left = Math.max(0, e.slots - e.used);
+  const whole = Math.floor(left);
+  return left - whole >= 0.5 ? (whole ? `${whole}½` : '½') : String(whole);
+}
+
 // Which ink the verdict is stamped in: a deal is good news, a door slammed is bad, a polite no is neither.
 const INK = { deal: 'yea', theyWalked: 'nay', youDeclined: 'nay', refused: 'nay' };
 
@@ -139,7 +146,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
     sheet.classList.remove('memo');
     sheet.innerHTML = `${HANDLE()}
       <header class="card-head"><div class="who"><h2>${t(`office.title.${Math.max(1, Math.min(5, state.player.act))}`)}</h2><p>${t('office.slots')}: <span class="slots">${slotDots(e)}</span></p></div></header>
-      ${jobLine(state, 'office', { slots: e.slots, whipCall: !!e.whipCall })}
+      ${jobLine(state, 'office', { slots: blocksLeft(e), whipCall: !!e.whipCall })}
       ${whip}
       <h3>${t('office.walkIns')}</h3><ul class="book-list">${rows}</ul>
       ${whipsDesk(state)}
