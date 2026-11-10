@@ -2290,6 +2290,18 @@ blockquote.line.scenario-verdict::before {
   letter-spacing: 0.01em;
   color: var(--ink-2);
 }
+.colophon .version {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+.version-note {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
 .mark {
   display: inline-block;
   width: 22px;
@@ -4132,4 +4144,39 @@ body.cold-open .topbar {
   .stake-stamp {
     animation: none;
   }
+}
+
+/* ---- Backups: the quiet reminder on the title page, and the storage line under the saved games ---------- */
+
+.backup-note {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--brass);
+  border-left-width: 4px;
+  border-radius: var(--r-md);
+  background: var(--paper-2);
+  font-size: 15px;
+  line-height: 1.4;
+}
+.backup-note p {
+  margin: 0 0 10px;
+}
+.backup-note-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.backup-note-actions .btn {
+  min-height: 44px;
+  font-size: 15px;
+}
+.storage-note {
+  margin-top: 12px;
+}
+.storage-note[hidden] {
+  display: none;
+}
+/* "Back up now" moves focus to the Saved games heading for screen readers; it isn't a control, so no ring. */
+.start-menu h3[tabindex] {
+  outline: none;
 }
