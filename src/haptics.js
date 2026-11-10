@@ -8,6 +8,7 @@ const PATTERNS = {
   gavel: [30], // the Speaker's gavel
   deal: [20, 50, 20], // a deal closes at the table
   reversal: [60, 50, 60], // the whip's call: the line has moved
+  stamp: [18], // a stamp comes down on the paper
 };
 
 export const canBuzz = typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';

@@ -4,33 +4,36 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { worldUVs, figureMaterial, glowMaterial } from './kit3d.js';
-import { surface } from './textures.js';
+import { surface, brass } from './textures.js';
 import { PALETTE } from './look.js';
 
 const BASE = new URL('../assets/models/', import.meta.url).href;
 const loader = new GLTFLoader();
 const templates = new Map();
 
-// The hue each textured surface takes on a kit prop: the grain maps are grey, so the colour comes from here.
-const TINTS = { wood: '#6e4a2b', woodDark: '#3b2616', carpet: '#2f5a3c' };
+// The hue each textured surface takes on a kit prop: the maps are normalised to one brightness, so the colour
+// comes from here (Kenney's names: `carpet` is the seat of a chair, `carpetWhite` the pages of a book).
+const TINTS = { wood: '#6e4a2b', woodDark: '#3b2616', carpet: '#2f5a3c', carpetWhite: PALETTE.paper, carpetDarker: '#5b2a2a', metal: '#8a8f98', metalMedium: '#4a4d54', metalDark: '#23252b' };
 
 // One material per Kenney name, shared by every prop (so twenty props cost twenty draw calls, not sixty).
 let mats = null;
 function materials() {
   if (mats) return mats;
-  const metal = figureMaterial({ color: '#8a8f98', metalness: 0.6, roughness: 0.4, envMapIntensity: 0.8 });
   mats = {
     wood: surface('oak', { roughness: 0.55 }),
     woodDark: surface('walnut', { roughness: 0.5 }),
-    metal,
-    metalMedium: figureMaterial({ color: '#4a4d54', metalness: 0.5, roughness: 0.5 }),
-    metalDark: figureMaterial({ color: '#23252b', metalness: 0.4, roughness: 0.6 }),
+    // Steel in three shades, brushed like the brass: lamp stems, chair legs, the coat rack.
+    metal: brass({ metalness: 0.6, roughness: 0.4, envMapIntensity: 0.8 }),
+    metalMedium: brass({ metalness: 0.5, roughness: 0.5, envMapIntensity: 0.8 }),
+    metalDark: brass({ metalness: 0.4, roughness: 0.6, envMapIntensity: 0.8 }),
     carpet: surface('leather', { roughness: 0.6 }),
-    carpetWhite: figureMaterial({ color: PALETTE.paper, roughness: 0.9 }),
-    carpetDarker: figureMaterial({ color: '#5b2a2a', roughness: 0.9 }),
+    carpetWhite: surface('paper'),
+    carpetDarker: surface('wool', { roughness: 0.9 }),
     lamp: glowMaterial({ vertexColors: false, color: PALETTE.paneWarm }),
     plant: figureMaterial({ color: '#4f7a3a', roughness: 0.9 }),
   };
+  // Each keeps the kit's name, so a placement can swap one (a sofa's seat for buttoned leather).
+  for (const [name, m] of Object.entries(mats)) m.name = name;
   return mats;
 }
 
@@ -131,9 +134,12 @@ export function instancedModel(parent, name, placements, { pack = 'furniture', o
 }
 
 // Place a prop. Returns a group added at once (so disposal and visibility work immediately); the model
-// appears inside it when loaded. `onReady` gets the group, for anything that needs the loaded size.
-export function placeModel(parent, name, { pack = 'furniture', x = 0, y = 0, z = 0, rotY = 0, scale = 1, onReady } = {}) {
+// appears inside it when loaded. `onReady` gets the group, for anything that needs the loaded size. `swap`
+// replaces the shared materials by kit name on this copy only ({ carpet: buttonedLeather }); a swapped-in
+// material should ignore vertex colours, since the kit mesh's are painted for the shared one.
+export function placeModel(parent, name, { pack = 'furniture', x = 0, y = 0, z = 0, rotY = 0, scale = 1, swap = null, onReady } = {}) {
   const holder = new THREE.Group();
+  holder.name = name;
   holder.position.set(x, y, z);
   holder.rotation.y = rotY;
   holder.scale.setScalar(scale);
@@ -143,6 +149,13 @@ export function placeModel(parent, name, { pack = 'furniture', x = 0, y = 0, z =
   template(pack, name).then((root) => {
     if (!alive) return;
     const inst = root.clone(true);
+    if (swap) {
+      inst.traverse((o) => {
+        if (!o.isMesh) return;
+        const pick = (m) => swap[m?.name] || m;
+        o.material = Array.isArray(o.material) ? o.material.map(pick) : pick(o.material);
+      });
+    }
     holder.add(inst);
     onReady?.(holder);
   }).catch((e) => console.warn('model failed', name, e));

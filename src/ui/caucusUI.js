@@ -1,6 +1,7 @@
 // The caucus room UI: the leader's line, grievances, the player's three moves (listen, speak, whisper), and
 // from Act 5 the Chief Whip's business: free a whipped vote, or put a member out of caucus.
 import { t, esc, mpName, jobLine, foldBlock } from './text.js';
+import { take } from './feel.js';
 import { neighbours, fillStance, stanceChoices, lineName } from '../sim/caucus.js';
 import { canUse, canRelease, expelCandidates } from '../sim/tools.js';
 import { data, tuning } from '../sim/config.js';
@@ -87,12 +88,12 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
       })
     );
     sheet.querySelectorAll('[data-revolt]').forEach((b) =>
-      b.addEventListener('click', () => {
+      b.addEventListener('click', () => take(b, () => {
         dispatch({ type: 'caucusRevolt', choice: b.dataset.revolt });
         if (b.dataset.revolt !== 'quiet') getRoom?.()?.focusHead(true);
         setTimeout(() => getRoom?.()?.focusHead(false), 2500);
         render(getState());
-      })
+      }))
     );
     on('[data-act="leave"]', () => dispatch({ type: 'resolve' }));
     on('[data-chief="release"]', () => {
@@ -139,7 +140,7 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
     const you = r.target === 'whip';
     const choices = you ? ['back', 'quiet'] : ['back', 'join', 'quiet'];
     const label = (k) => t((you ? 'caucus.revoltYou' : 'caucus.revolt') + k[0].toUpperCase() + k.slice(1));
-    return `<h3>${t('caucus.revolt')}</h3><blockquote class="line revolt">${esc(r.text)}</blockquote>${r.choice ? `<p class="note">${esc(label(r.choice))}.</p>` : `<div class="choices">${choices.map((k) => `<button class="btn" data-revolt="${k}">${label(k)}</button>`).join('')}</div>`}`;
+    return `<h3>${t('caucus.revolt')}</h3><blockquote class="line revolt">${esc(r.text)}</blockquote>${r.choice ? `<p class="note">${esc(label(r.choice))}.</p>` : `<div class="choices replies">${choices.map((k) => `<button class="btn" data-revolt="${k}">${label(k)}</button>`).join('')}</div>`}`;
   }
 
   // From Act 5: free the week's whipped line, or put a member out of caucus (with a confirm, since it can't
