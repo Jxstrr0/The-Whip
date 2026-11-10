@@ -1,9 +1,10 @@
 // The chamber room: shell, Speaker's dais, Clerk's table and Mace, the bar and galleries, plus seats and camera.
 import * as THREE from 'three';
 import { GEOMETRY as G, seatX } from './layout.js';
-import { box, slab, panel, cylinder, sphere, merge, vertexMaterial, glowMaterial, washMaterial, worldUVs, disposeTree, roomLights, lamp, bakeAO, contactShadows } from '../kit3d.js';
+import { paint, box, slab, panel, cylinder, sphere, merge, vertexMaterial, glowMaterial, washMaterial, worldUVs, disposeTree, roomLights, lamp, bakeAO, contactShadows, paintedTexture, texturedPanel } from '../kit3d.js';
 import { surface, brass } from '../textures.js';
-import { PALETTE } from '../look.js';
+import { PALETTE, DETAIL } from '../look.js';
+import { instancedModel } from '../models.js';
 import { tuning } from '../sim/config.js';
 import { GREY_SKIES, mix } from '../weatherFx.js';
 import { createSeats } from './seats.js';
@@ -20,9 +21,11 @@ const C = {
   oak: '#6e4a2b',
   oakLight: '#8a5f38',
   oakDark: '#3f2a17',
-  stone: '#c6b79e',
-  stoneDark: '#9a8c78',
-  plaster: '#e6dcc6',
+  stone: '#d9cdb7',
+  stoneDark: '#bfb097',
+  plaster: '#efe3cb',
+  drape: '#2b5438',
+  paper: '#f1ead8',
   brass: '#c9a24a',
   gold: '#d8b04c',
   speakerChair: '#3c2a1a',
@@ -35,15 +38,20 @@ const PANE_BY_SEASON = { autumn: ['#f1dfb0', 1], winter: ['#cfdbea', 0.7], sprin
 // a grey day; a faint glow in fog.
 const SHAFTS_BY_SEASON = { autumn: ['#ffd49a', 0.32], winter: ['#d3e0f4', 0.22], spring: ['#f6f1e2', 0.26], summer: ['#fff0c4', 0.4] };
 
-// Muted suits for the people in the galleries: staff, press, the public.
+// Muted suits for the people in the galleries: staff, press, the public; a few in colour when the room is
+// built rich, so the galleries read as a crowd rather than a row of grey.
 const GALLERY_SUITS = ['#4a4a4f', '#5c4a3a', '#3d4650', '#6b5a48', '#2f3a44', '#7a6a5a', '#444'];
+const GALLERY_COLOUR = ['#7a2a2a', '#2c4a7a', '#cbbfa6', '#4f6a3e', '#6a3a5a', '#8a6a2a'];
+// Where the windows sit along the long walls and how tall they are.
+const WINDOW_Z = [-3, -2, -1, 0, 1, 2, 3].map((i) => i * 3.4);
+const WINDOW = { y: 7.9, w: 1.6, h: 2.6 };
 
 function buildShell() {
   const L = G.floorLength / 2;
   const W = G.floorWidth / 2;
   const H = G.ceiling;
   // Parts grouped by surface, so each group gets its own grain: one mesh per group.
-  const g = { carpet: [], oak: [], walnut: [], leather: [], stone: [], plaster: [], metal: [], glow: [], pane: [], wash: [] };
+  const g = { carpet: [], oak: [], walnut: [], leather: [], stone: [], plaster: [], drape: [], paper: [], metal: [], glow: [], pane: [], wash: [] };
 
   // Floor, aisle runner and the tiered platforms that lift each row; oak riser faces read as steps.
   g.carpet.push(slab(-W, -0.05, -L, W, 0, L, C.carpet, 1.5));
@@ -72,13 +80,22 @@ function buildShell() {
     for (let z = -12; z <= 12; z += 1.2) g.oak.push(panel(0.06, 1.9, wx(0.02), 1.05, z, C.oakDark, facing));
     g.oak.push(panel(G.floorLength, 0.1, wx(0.02), 2.2, 0, C.oakDark, facing));
     g.oak.push(panel(G.floorLength, 0.06, wx(0.02), 0.2, 0, C.oakDark, facing));
-    for (let i = -3; i <= 3; i++) {
-      g.pane.push(panel(1.6, 2.6, wx(0.02), 7.9, i * 3.4, PALETTE.paneWarm, facing));
-      g.oak.push(panel(0.08, 2.6, wx(0.03), 7.9, i * 3.4, C.oakDark, facing));
-      g.oak.push(panel(1.6, 0.08, wx(0.03), 7.9, i * 3.4, C.oakDark, facing));
-      g.oak.push(panel(1.9, 0.12, wx(0.03), 6.55, i * 3.4, C.oakDark, facing));
-      g.wash.push(panel(3.6, 4.2, wx(0.04), 5.2, i * 3.4, PALETTE.paneWarm, facing));
+    // Each window: the pane, oak glazing bars, a stone surround (jambs, a sill and a header that stand
+    // proud of the wall) and the wash of light it throws on the wall below.
+    for (const z of WINDOW_Z) {
+      const { y, w, h } = WINDOW;
+      g.pane.push(panel(w, h, wx(0.02), y, z, PALETTE.paneWarm, facing));
+      for (const dx of [-0.4, 0, 0.4]) g.oak.push(panel(0.07, h, wx(0.03), y, z + dx, C.oakDark, facing));
+      for (const dy of [-0.65, 0, 0.65]) g.oak.push(panel(w, 0.07, wx(0.03), y + dy, z, C.oakDark, facing));
+      g.oak.push(panel(w + 0.3, 0.1, wx(0.03), y - h / 2 - 0.05, z, C.oakDark, facing));
+      for (const dz of [-1, 1]) g.stone.push(box(0.12, h + 0.5, 0.16, wx(0.06), y + 0.05, z + dz * (w / 2 + 0.1), C.stone));
+      g.stone.push(box(0.2, 0.14, w + 0.6, wx(0.1), y - h / 2 - 0.18, z, C.stone));
+      g.stone.push(box(0.14, 0.22, w + 0.6, wx(0.07), y + h / 2 + 0.25, z, C.stoneDark));
+      g.wash.push(panel(3.6, 4.2, wx(0.04), 5.2, z, PALETTE.paneWarm, facing));
     }
+    // A cornice where the wall meets the ceiling, and a string course at the gallery floor.
+    g.stone.push(slab(Math.min(wx(0), wx(0.3)), H - 0.45, -L, Math.max(wx(0), wx(0.3)), H, L, C.stone));
+    g.stone.push(slab(Math.min(wx(0.3), wx(0.42)), H - 0.3, -L, Math.max(wx(0.3), wx(0.42)), H - 0.12, L, C.stoneDark));
   }
   // End walls, the doors at the bar end, and a plaster ceiling with oak beams.
   for (const [z, facing, wain] of [[-L, '+z', 2.4], [L, '-z', 2.2]]) {
@@ -88,16 +105,51 @@ function buildShell() {
     g.oak.push(panel(G.floorWidth, wain, 0, wain / 2, z + in1 * 0.01, C.oak, facing, 2));
     for (let x = -7; x <= 7; x += 1.2) g.oak.push(panel(0.06, wain - 0.3, x, wain / 2 - 0.05, z + in1 * 0.02, C.oakDark, facing));
     g.oak.push(panel(G.floorWidth, 0.1, 0, wain, z + in1 * 0.02, C.oakDark, facing));
+    g.stone.push(slab(-W, H - 0.45, Math.min(z, z + in1 * 0.3), W, H, Math.max(z, z + in1 * 0.3), C.stone));
   }
   g.walnut.push(panel(1.8, 2.8, 0, 1.4, L - 0.03, C.oakLight, '-z'));
+  // A coffered ceiling: plaster panels in a grid of oak beams, each coffer with an inner moulding, a
+  // gilded boss where the beams cross.
   g.plaster.push(panel(G.floorWidth, G.floorLength, 0, H, 0, C.plaster, 'down', 2.5));
-  for (let i = -5; i <= 5; i++) g.oak.push(slab(-W, H - 0.35, i * 2.4 - 0.18, W, H, i * 2.4 + 0.18, C.oakDark));
-  g.oak.push(slab(-0.18, H - 0.35, -L, 0.18, H, L, C.oakDark));
-  // Three chandeliers down the centre: a lit dish on a stem with a brass ring.
+  const BEAM_Z = [];
+  for (let i = -5; i <= 5; i++) BEAM_Z.push(i * 2.4);
+  const BEAM_X = [-5, -2.5, 0, 2.5, 5];
+  for (const z of BEAM_Z) g.oak.push(slab(-W, H - 0.35, z - 0.18, W, H, z + 0.18, C.oakDark));
+  for (const x of BEAM_X) g.oak.push(slab(x - 0.18, H - 0.35, -L, x + 0.18, H, L, C.oakDark));
+  for (const x of BEAM_X) for (const z of BEAM_Z) g.metal.push(sphere(0.12, x, H - 0.36, z, C.gold, 8));
+  const XS = [-W, ...BEAM_X, W];
+  const ZS = [-L, ...BEAM_Z, L];
+  for (let i = 0; i + 1 < XS.length; i++) {
+    for (let j = 0; j + 1 < ZS.length; j++) {
+      const x0 = XS[i] + 0.4;
+      const x1 = XS[i + 1] - 0.4;
+      const z0 = ZS[j] + 0.4;
+      const z1 = ZS[j + 1] - 0.4;
+      if (x1 - x0 < 0.6 || z1 - z0 < 0.6) continue;
+      g.oak.push(slab(x0, H - 0.1, z0, x1, H, z0 + 0.06, C.oak));
+      g.oak.push(slab(x0, H - 0.1, z1 - 0.06, x1, H, z1, C.oak));
+      g.oak.push(slab(x0, H - 0.1, z0, x0 + 0.06, H, z1, C.oak));
+      g.oak.push(slab(x1 - 0.06, H - 0.1, z0, x1, H, z1, C.oak));
+    }
+  }
+  // Three chandeliers down the centre: a lit dish on a stem with a brass ring and six candle arms.
   for (const z of [-7, 0, 7]) {
     g.glow.push(cylinder(0.72, 0.55, 0.1, 0, H - 2.72, z, PALETTE.paneWarm, 16));
     g.walnut.push(cylinder(0.04, 0.04, 1.6, 0, H - 1.8, z, C.oakDark, 8));
     g.metal.push(cylinder(0.85, 0.85, 0.07, 0, H - 2.64, z, C.brass, 16));
+    g.metal.push(sphere(0.16, 0, H - 2.85, z, C.brass, 10));
+    for (let k = 0; k < 6; k++) {
+      const a = (k / 6) * Math.PI * 2;
+      const ax = Math.cos(a) * 0.95;
+      const az = Math.sin(a) * 0.95;
+      const arm = new THREE.CylinderGeometry(0.02, 0.02, 0.9, 6);
+      arm.rotateZ(Math.PI / 2);
+      arm.rotateY(-a);
+      arm.translate(Math.cos(a) * 0.5, H - 2.6, z + Math.sin(a) * 0.5);
+      g.metal.push(paint(arm, C.brass));
+      g.metal.push(cylinder(0.05, 0.04, 0.08, ax, H - 2.56, z + az, C.brass, 8));
+      g.glow.push(sphere(0.06, ax, H - 2.46, z + az, PALETTE.paneWarm, 8));
+    }
   }
 
   // Galleries along both long walls: an oak floor, a railed front with posts and a brass top rail, leather benches.
@@ -109,6 +161,11 @@ function buildShell() {
     g.oak.push(slab(x0 - 0.05, gy, -L + 1, x0 + 0.05, gy + 0.9, L - 1, C.oakLight));
     for (let z = -L + 1.5; z <= L - 1.5; z += 2) g.walnut.push(cylinder(0.035, 0.035, 0.95, x0, gy + 0.47, z, C.oakDark, 8));
     g.metal.push(cylinder(0.025, 0.025, G.floorLength - 2, x0, gy + 0.96, 0, C.brass, 8, 'z'));
+    // A green cloth hangs on the gallery front under a brass fringe rail; oak corbels carry the floor.
+    const inward = sign < 0 ? '+x' : '-x';
+    g.drape.push(panel(G.floorLength - 2.2, 0.8, x0 - sign * 0.06, gy + 0.46, 0, C.drape, inward, 1.5));
+    g.metal.push(cylinder(0.02, 0.02, G.floorLength - 2.2, x0 - sign * 0.07, gy + 0.86, 0, C.brass, 6, 'z'));
+    for (let z = -L + 1.5; z <= L - 1.5; z += 2) g.oak.push(box(0.5, 0.5, 0.18, x0 + sign * 0.2, gy - 0.55, z, C.oakDark));
     for (let s = 0; s < 3; s++) {
       const bx = x0 + sign * (0.6 + s * 0.8);
       g.leather.push(slab(bx - 0.3, gy, -L + 1.5, bx + 0.3, gy + 0.35 + s * 0.3, L - 1.5, C.leather));
@@ -142,6 +199,25 @@ function buildShell() {
     g.oak.push(box(0.46, 0.4, 0.46, x, 0.2, t.zFrom - 0.5, C.oak));
   }
 
+  // The two dispatch boxes at the Speaker's end of the Table, walnut with brass rails, and the papers of the
+  // day: bundles along the Table and at each clerk's place.
+  for (const x of [-0.42, 0.42]) {
+    const bz = t.zFrom + 0.55;
+    g.walnut.push(box(0.46, 0.2, 0.32, x, t.height + 0.1, bz, C.speakerChair));
+    g.metal.push(box(0.5, 0.012, 0.04, x, t.height + 0.205, bz - 0.14, C.brass));
+    g.metal.push(box(0.5, 0.012, 0.04, x, t.height + 0.205, bz + 0.14, C.brass));
+    g.metal.push(box(0.04, 0.012, 0.32, x - 0.23, t.height + 0.205, bz, C.brass));
+    g.metal.push(box(0.04, 0.012, 0.32, x + 0.23, t.height + 0.205, bz, C.brass));
+    g.metal.push(box(0.1, 0.06, 0.01, x, t.height + 0.1, bz + 0.165, C.gold));
+  }
+  const sheets = [
+    [-0.45, t.zFrom + 1.3, 0.03, 0.12], [0.5, t.zFrom + 1.1, 0.02, -0.2], [-0.5, t.zFrom + 2.2, 0.05, -0.08],
+    [0.45, t.zFrom + 2.6, 0.015, 0.3], [-0.4, t.zFrom + 3.3, 0.025, 0.05], [0.55, t.zFrom + 3.6, 0.04, -0.14],
+    [-0.45, t.zFrom - 0.5, 0.02, 0.1], [0.45, t.zFrom - 0.5, 0.03, -0.06],
+  ];
+  for (const [x, z, h, a] of sheets) g.paper.push(box(0.3, h, 0.42, x, t.height + h / 2 + 0.002, z, C.paper, a));
+  for (const [x, z] of [[0.05, t.zFrom + 1.9], [-0.08, t.zFrom + 3.0]]) g.leather.push(box(0.32, 0.05, 0.44, x, t.height + 0.027, z, '#5a1e1e', 0.08));
+
   // Brass and gold: the bar and its posts, the Mace.
   g.metal.push(cylinder(0.035, 0.035, G.aisleWidth, 0, 0.9, G.barZ, C.brass, 10, 'x'));
   for (const x of [-G.aisleWidth / 2, G.aisleWidth / 2]) g.metal.push(cylinder(0.05, 0.07, 0.95, x, 0.47, G.barZ, C.brass, 10));
@@ -151,13 +227,13 @@ function buildShell() {
 
   const bounds = { x0: -W, x1: W, z0: -L, z1: L };
   const group = new THREE.Group();
-  const textured = { carpet: 'carpet', oak: 'oak', walnut: 'walnut', leather: 'leather', stone: 'stone', plaster: 'plaster' };
+  const textured = { carpet: 'carpet', oak: 'oak', walnut: 'walnut', leather: 'leather', stone: 'marble', plaster: 'plaster', drape: 'drape', paper: 'paper' };
   for (const [kind, parts] of Object.entries(g)) {
     if (!parts.length) continue;
     let geo = merge(parts);
     let mat;
     if (textured[kind]) {
-      geo = worldUVs(bakeAO(geo, { bounds, ceilY: kind === 'stone' ? H : null, reach: kind === 'stone' ? 1.8 : 0.9, strength: kind === 'plaster' ? 0.2 : null }));
+      geo = worldUVs(bakeAO(geo, { bounds, ceilY: kind === 'stone' ? H : null, reach: kind === 'stone' ? 1.8 : 0.9, strength: kind === 'plaster' || kind === 'paper' ? 0.2 : null }));
       mat = surface(textured[kind]);
     } else if (kind === 'metal') mat = brass();
     else if (kind === 'glow' || kind === 'pane') mat = glowMaterial();
@@ -167,7 +243,37 @@ function buildShell() {
     if (kind === 'wash') mesh.renderOrder = 2;
     group.add(mesh);
   }
+  // The press gallery's mark on the cloth of the bay nearest the Speaker, on the opposition side.
+  const plaque = texturedPanel(1.4, 0.36, pressPlaque(), { x: W - G.gallery.depth - 0.07, y: G.gallery.y + 0.46, z: -7.5, rotY: -Math.PI / 2 });
+  plaque.name = 'plaque';
+  group.add(plaque);
+  // Brass sconces on the gallery walls between the windows, when the room is built rich: two draw calls.
+  if (DETAIL.rich) {
+    const placements = [];
+    for (const sign of [-1, 1]) {
+      for (let i = 0; i + 1 < WINDOW_Z.length; i++) {
+        placements.push({ x: sign * (W - 0.04), y: 6.9, z: (WINDOW_Z[i] + WINDOW_Z[i + 1]) / 2, rotY: sign < 0 ? Math.PI / 2 : -Math.PI / 2, scale: 0.8 });
+      }
+    }
+    instancedModel(group, 'lampWall', placements);
+  }
   return group;
+}
+
+// A small painted sign: gold capitals on the gallery green.
+function pressPlaque() {
+  return paintedTexture(512, 128, (c, w, h) => {
+    c.fillStyle = '#244a30';
+    c.fillRect(0, 0, w, h);
+    c.strokeStyle = '#c9a24a';
+    c.lineWidth = 6;
+    c.strokeRect(10, 10, w - 20, h - 20);
+    c.fillStyle = '#e2c46a';
+    c.font = 'bold 64px Georgia, serif';
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText('PRESS GALLERY', w / 2, h / 2 + 4);
+  });
 }
 
 // Sunlight falling from the windows on the sunward wall down across the government benches: for each window,
@@ -219,18 +325,28 @@ function buildSunShafts() {
   return mesh;
 }
 
-// A few people in the galleries, seated on the front bench, in muted clothes.
+// People in the galleries: fourteen on the front bench in muted clothes, and when the room is built rich
+// six more behind them on the second bench, a few in colour, and two doorkeepers standing at the bar in
+// black, facing the Chair. One crowd for all of them: eleven draw calls however many people.
 function buildSpectators() {
   const W = G.floorWidth / 2;
-  const n = 14;
+  const n = DETAIL.rich ? 22 : 14;
   const crowd = createFigureCrowd(n, { pose: 'seated' });
   for (let i = 0; i < n; i++) {
     const sign = i % 2 ? 1 : -1;
     const look = lookFor(`gallery-${i}`);
-    const x = sign * (W - G.gallery.depth + 0.6);
-    const z = -8 + Math.floor(i / 2) * 2.6 + look.yaw * 4;
-    crowd.place(i, { x, y: G.gallery.y - 0.12, z, rotY: sign < 0 ? Math.PI / 2 : -Math.PI / 2, scale: look.height, lean: look.lean, yaw: look.yaw });
-    crowd.dress(i, { ...look, suit: GALLERY_SUITS[i % GALLERY_SUITS.length] });
+    if (i >= 20) {
+      crowd.place(i, { x: sign * (G.aisleWidth / 2 + 0.55), y: 0, z: G.barZ + 0.5, rotY: Math.PI, scale: look.height });
+      crowd.dress(i, { ...look, suit: '#15161a' });
+      crowd.setPose(i, 'standing', { rate: 1000 });
+      continue;
+    }
+    const back = i >= 14;
+    const x = sign * (W - G.gallery.depth + (back ? 1.4 : 0.6));
+    const z = back ? -6.5 + Math.floor((i - 14) / 2) * 5.2 + look.yaw * 4 : -8 + Math.floor(i / 2) * 2.6 + look.yaw * 4;
+    crowd.place(i, { x, y: G.gallery.y + (back ? 0.18 : -0.12), z, rotY: sign < 0 ? Math.PI / 2 : -Math.PI / 2, scale: look.height, lean: look.lean, yaw: look.yaw });
+    const colour = i % 5 === 3 || back;
+    crowd.dress(i, { ...look, suit: colour ? GALLERY_COLOUR[i % GALLERY_COLOUR.length] : GALLERY_SUITS[i % GALLERY_SUITS.length] });
   }
   crowd.commit();
   return crowd;
@@ -249,6 +365,11 @@ export function create(ctx) {
   const keyBase = lightsRig.key.intensity;
   let weatherKey = null;
   for (const z of [-7, 0, 7]) lamp(scene, { intensity: tuning().look.chandelier, distance: 18, y: G.ceiling - 2.8, z });
+  // Rich rooms: a warm pool over the Table and another at the bar, so the two ends of the room read.
+  if (DETAIL.rich) {
+    lamp(scene, { intensity: tuning().look.tableLamp, distance: 12, x: 0, y: 5.5, z: -5.5 });
+    lamp(scene, { intensity: tuning().look.tableLamp, distance: 12, x: 0, y: 5.5, z: 9.5 });
+  }
 
   const shell = buildShell();
   scene.add(shell);
