@@ -1,6 +1,7 @@
 // The caucus room UI: the leader's line, grievances, the player's three moves (listen, speak, whisper), and
 // from Act 5 the Chief Whip's business: free a whipped vote, or put a member out of caucus.
 import { t, esc, mpName, jobLine, foldBlock } from './text.js';
+import { take } from './feel.js';
 import { neighbours, fillStance, stanceChoices, lineName } from '../sim/caucus.js';
 import { canUse, canRelease, expelCandidates } from '../sim/tools.js';
 import { data, tuning } from '../sim/config.js';
@@ -87,12 +88,12 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
       })
     );
     sheet.querySelectorAll('[data-revolt]').forEach((b) =>
-      b.addEventListener('click', () => {
+      b.addEventListener('click', () => take(b, () => {
         dispatch({ type: 'caucusRevolt', choice: b.dataset.revolt });
         if (b.dataset.revolt !== 'quiet') getRoom?.()?.focusHead(true);
         setTimeout(() => getRoom?.()?.focusHead(false), 2500);
         render(getState());
-      })
+      }))
     );
     on('[data-act="leave"]', () => dispatch({ type: 'resolve' }));
     on('[data-chief="release"]', () => {
