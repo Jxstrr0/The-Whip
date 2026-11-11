@@ -1725,3 +1725,11 @@ From Kelbo's play-test of the first minutes:
 Checked: `tests.html` 142 passed, 0 failed (four new tests). Played the first morning and the first evening's invite picker at 390 × 844 with no console errors.
 
 Kelbo to test: start a new career; read the side card on day one; vote with the line and watch "+¼ noticed." and the chip count; open Invite in the office and try a suggested name; in opposition, see what Question Period asks about.
+
+## 2026-11-11 · Locked three.js files (v1.1.2.0)
+
+From the studio security cycle. The game loads three.js 0.160.0 from jsdelivr through an import map. The import maps in `index.html`, `tests.html` and `tools/lineup.html` now carry an `integrity` section: a sha384 hash for each of the seven three.js files the game loads (three itself, RoomEnvironment, RoundedBoxGeometry, GLTFLoader, CSS2DRenderer, BufferGeometryUtils and the `?debug=1` stats panel). If the CDN ever served a changed file, the browser would refuse it instead of running it. The other Longlight games got the same protection for their CDN scripts on 2026-11-11. A new `three/addons/` import needs its hash added to all three maps.
+
+Checked: `tests.html` 142 passed, 0 failed; the game loads at 390 × 844 with no console errors; with one hash deliberately wrong, Chromium blocks three.js, so the check really runs.
+
+**For Kelbo to test on the phone:** open the live game and play the first morning. Nothing should look different; it should simply load.
