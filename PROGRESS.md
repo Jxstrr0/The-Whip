@@ -1741,3 +1741,9 @@ From the studio security cycle. Nothing in the game changes. The Pages workflow 
 Checked: the workflow file still parses, and the Pages run on this change.
 
 **For Kelbo to test on the phone:** nothing to test; the live game should simply still load.
+
+## 2026-11-12 · Visit counts (v1.1.2.1)
+
+Kelbo asked for Cloudflare Web Analytics on every Longlight game. A cookieless beacon is now the last script in `index.html`: page views and load speed, nothing about the player or the saves. It shares the studio's zone-wide analytics site (the account's free limit of 11 sites is used up), so pick thewhip.longlight.games in the dashboard's host filter. Nothing in the game changes.
+
+What to test: open https://thewhip.longlight.games/ on the phone; the game loads and plays as before.
