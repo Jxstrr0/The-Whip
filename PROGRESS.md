@@ -1733,3 +1733,11 @@ From the studio security cycle. The game loads three.js 0.160.0 from jsdelivr th
 Checked: `tests.html` 142 passed, 0 failed; the game loads at 390 × 844 with no console errors; with one hash deliberately wrong, Chromium blocks three.js, so the check really runs.
 
 **For Kelbo to test on the phone:** open the live game and play the first morning. Nothing should look different; it should simply load.
+
+## 2026-11-12 · Repo housekeeping (no version change)
+
+From the studio security cycle. Nothing in the game changes. The Pages workflow no longer keeps its GitHub login after checking out the code (`persist-credentials: false` on the checkout step); it only reads the files and uploads them, so it never needed it.
+
+Checked: the workflow file still parses, and the Pages run on this change.
+
+**For Kelbo to test on the phone:** nothing to test; the live game should simply still load.
