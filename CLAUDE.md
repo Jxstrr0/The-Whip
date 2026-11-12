@@ -27,7 +27,7 @@ Kelbo's words: "remember this is a flagship game, let's do this right." The Whip
 All of these were checked against the code on 2026-10-24 and hold.
 
 - No build step. Plain HTML, CSS and ES modules. No npm, no bundler, no framework. The files in the repo are the files Pages serves.
-- Three.js `0.160.0` only, through the import map from `cdn.jsdelivr.net` (in `index.html`, `tests.html` and `tools/lineup.html`). Each import map has an `integrity` section with a sha384 hash for every three.js file the game loads, so a changed CDN file is refused; a new addon import needs its hash added there (and in any file it imports). That CDN is the only outside resource. The Newsreader font is self-hosted in `assets/fonts/`; audio is synthesised in WebAudio, so no sound file is fetched.
+- Three.js `0.160.0` only, through the import map from `cdn.jsdelivr.net` (in `index.html`, `tests.html` and `tools/lineup.html`). Each import map has an `integrity` section with a sha384 hash for every three.js file the game loads, so a changed CDN file is refused; a new addon import needs its hash added there (and in any file it imports). That CDN is the only outside resource for the game itself; the other is Cloudflare Web Analytics, a cookieless visit counter at the end of `index.html` (Kelbo, 2026-11-12). The Newsreader font is self-hosted in `assets/fonts/`; audio is synthesised in WebAudio, so no sound file is fetched.
 - Phone-first. Deployed to GitHub Pages from `main` at the repo root (`.nojekyll`). `.github/workflows/pages.yml` publishes every push to `main`; after a merge, check the run went green and the live URL (https://thewhip.longlight.games/) loads.
 - Saves in `localStorage` under `whip:` keys (`whip:save:1` to `whip:save:3`, `whip:settings`), always wrapped in try/catch. Only `src/save.js` touches `localStorage`. Since November 2026 every Longlight game has its own subdomain, so The Whip has its own localStorage and quota; saves from before the move stay on the old shared origin, `jxstrr0.github.io` (Kelbo accepted that), and the old address forwards here. Keep the `whip:` prefix all the same.
 - Deterministic sim: no `Math.random` in `src/sim/`; all randomness through the seeded RNG (`src/sim/rng.js`). The renderer may use `Math.random` for cosmetic effects only.
@@ -84,7 +84,7 @@ On the live site, `tests.html` runs the same way at the live URL.
 
 ## Version
 
-- `src/version.js` holds `VERSION`, the game's player-facing version, in four numbers: `Major.Minor.Patch.Build` (now `1.0.0.0`). It shows as a quiet "v1.0.0.0" at the right of the start menu's colophon and at the foot of the Settings sheet.
+- `src/version.js` holds `VERSION`, the game's player-facing version, in four numbers: `Major.Minor.Patch.Build` (now `1.1.2.1`). It shows as a quiet "v1.0.0.0" at the right of the start menu's colophon and at the foot of the Settings sheet.
 - Bump it in the same pull request as the change: **Major** = an overhaul, **Minor** = a feature batch, **Patch** = a tweak or fix, **Build** = a republish with no change. Reset the numbers to the right of the one you bump.
 - It is not the save format. `SAVE_VERSION` (in `src/sim/modes.js`) and the migrations in `src/save.js` are separate and change only when the save's shape does.
 
