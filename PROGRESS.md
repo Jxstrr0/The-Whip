@@ -1747,3 +1747,11 @@ Checked: the workflow file still parses, and the Pages run on this change.
 Kelbo asked for Cloudflare Web Analytics on every Longlight game. A cookieless beacon is now the last script in `index.html`: page views and load speed, nothing about the player or the saves. It shares the studio's zone-wide analytics site (the account's free limit of 11 sites is used up), so pick thewhip.longlight.games in the dashboard's host filter. Nothing in the game changes.
 
 What to test: open https://thewhip.longlight.games/ on the phone; the game loads and plays as before.
+
+## 2026-11-12 · Kept out of search (v1.1.2.2)
+
+Kelbo asked for the hidden games to stay out of search results. A robots noindex tag in the page head asks search engines not to list the game. The game still loads and plays at its own address, and nothing about saves or play changes. Remove the tag when the game goes on the studio site.
+
+Checked: the page head carries the tag; the game loads as before.
+
+What to test: open https://thewhip.longlight.games/ on the phone; the game loads and plays as before.
