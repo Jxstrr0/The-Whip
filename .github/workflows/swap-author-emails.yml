@@ -17,7 +17,7 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -eu
-          git clone --quiet --mirror "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" r
+          git clone --quiet --bare "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" r
           cd r
           before=$(git rev-parse refs/heads/main)
           export FILTER_BRANCH_SQUELCH_WARNING=1
