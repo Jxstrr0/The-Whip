@@ -1763,3 +1763,9 @@ From the studio security cycle: the visit counter added on 12 November never cou
 Checked: on the live page the counter's request is accepted (it was blocked before); the game loads as before.
 
 What to test: open https://thewhip.longlight.games/ on the phone; the game loads and plays as before.
+
+## 2026-11-18 · Claude may merge on green
+
+Kelbo said yes to Claude merging its own pull requests here once they're green, the same as the other Longlight games. This repo has no pull-request check, so "green" means `tests.html` passes and the change plays through at phone size with no console errors. CLAUDE.md says so under "Working on this repo". Nothing in the game changes.
+
+What to test: nothing; the game is unchanged.
