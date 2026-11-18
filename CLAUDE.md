@@ -91,6 +91,7 @@ On the live site, `tests.html` runs the same way at the live URL.
 ## Working on this repo
 
 - Work on a branch and open a pull request into `main`. Pages publishes `main`, so a bad push breaks the live game.
+- **Merging on green is allowed** (Kelbo, 2026-11-18). This repo has no PR check, so green means `tests.html` passes (0 failed) and the change plays through at phone size with no console errors. Then merge the pull request yourself without asking (squash is fine), and check the Pages run went green and the live URL loads.
 - Keep pull requests small enough to review on a phone, and end each piece of work with a `PROGRESS.md` entry: what changed, what was checked, what Kelbo should test.
 - Explain changes in plain language. Kelbo is a beginner-plus coder who reads mostly on his phone.
 
