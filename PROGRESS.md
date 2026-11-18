@@ -1755,3 +1755,11 @@ Kelbo asked for the hidden games to stay out of search results. A robots noindex
 Checked: the page head carries the tag; the game loads as before.
 
 What to test: open https://thewhip.longlight.games/ on the phone; the game loads and plays as before.
+
+## 2026-11-18 · Visit counter fixed (v1.1.2.3)
+
+From the studio security cycle: the visit counter added on 12 November never counted anything. Cloudflare refused the token it used (the studio's zone-wide analytics site appears to take only pages that Cloudflare itself serves, and the game is served by GitHub Pages). The Whip now has its own Web Analytics site in Cloudflare (`thewhip.longlight.games`), and `index.html` carries that site's token. It is still cookieless: page views and load speed, nothing about the player or the saves. Nothing in the game changes.
+
+Checked: on the live page the counter's request is accepted (it was blocked before); the game loads as before.
+
+What to test: open https://thewhip.longlight.games/ on the phone; the game loads and plays as before.
