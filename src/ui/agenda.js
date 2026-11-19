@@ -43,7 +43,7 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
     const c = calendarOf(d);
     const C = tuning().calendar;
     // A desk calendar's leaf (the month on its band, the date large) with the weekday and the hour beside it.
-    const leaf = `<span class="leaf" aria-hidden="true"><b>${esc(C.monthsShort[c.monthIndex])}</b><span>${c.dayOfMonth}</span></span>`;
+    const leaf = `<span class="leaf" aria-hidden="true"><b>${esc(C.monthsShort[c.monthIndex])}</b><span>${esc(c.dayOfMonth)}</span></span>`;
     return `${leaf}<span class="when">${esc(C.daysShort[d.dayOfWeek - 1])} <span>· ${esc(t('time.' + hourOf(state)))}</span>${d.constituencyWeek ? ` <span>· ${esc(t('agenda.home'))}</span>` : ''}</span>`;
   }
 
@@ -54,7 +54,7 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
     // The morning paper and the weekly front page carry their own way on; a second Continue under them is noise.
     const ownButton = p?.kind === 'morning' || p?.kind === 'weekSummary';
     const last = state.log.slice(-1)[0]?.text || '';
-    const feed = expanded ? `<p class="feed-head">${esc(dateText(state))}</p><ol class="feed">${state.log.slice(-25).reverse().map((l) => `<li class="${l.kind}">${esc(l.text)}</li>`).join('')}</ol>` : '';
+    const feed = expanded ? `<p class="feed-head">${esc(dateText(state))}</p><ol class="feed">${state.log.slice(-25).reverse().map((l) => `<li class="${esc(l.kind)}">${esc(l.text)}</li>`).join('')}</ol>` : '';
     // One strip: the day and your aim on the top line, the latest news under them, then Continue and Skip.
     bar.innerHTML = `
       <div class="agenda-row">
@@ -111,7 +111,7 @@ export function createAgenda(root, { getState, onContinue, onSkip, photo = null 
           })
           .join('')
       : `<li>${t('agenda.noVotes')}</li>`;
-    sheet.innerHTML = `<div class="sheet-handle"></div><h2>${esc(dateText(state))}</h2>${jobLine(state, 'morning', { items: p.items })}${scenarioBrief(state)}${p.note ? `<p class="tutorial">${t(p.note)}</p>` : ''}${p.note === 'tutorial.d1' ? sideCard(state) : ''}<h3>${t('agenda.orderPaper')}</h3><ul class="order-paper">${rows}</ul>
+    sheet.innerHTML = `<div class="sheet-handle"></div><h2>${esc(dateText(state))}</h2>${jobLine(state, 'morning', { items: p.items })}${scenarioBrief(state)}${p.note ? `<p class="tutorial">${esc(t(p.note))}</p>` : ''}${p.note === 'tutorial.d1' ? sideCard(state) : ''}<h3>${t('agenda.orderPaper')}</h3><ul class="order-paper">${rows}</ul>
       <div class="card-actions"><button class="btn primary" data-act="go">${t('agenda.toHouse')}</button></div>`;
     sheet.querySelector('[data-act="go"]').onclick = onContinue;
     sheet.classList.remove('hidden');

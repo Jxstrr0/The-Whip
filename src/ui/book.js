@@ -75,7 +75,7 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
     if (!list.length) return '';
     const li = (x) => {
       const m = state.mps[x.id];
-      return `<li data-id="${m.id}"><span class="bar" style="background:${partyColor(state, m)}"></span><span class="main"><b>${esc(mpName(m))}</b><small>${esc(t('suggest.' + x.why, x.vars))}</small></span></li>`;
+      return `<li data-id="${esc(m.id)}"><span class="bar" style="background:${partyColor(state, m)}"></span><span class="main"><b>${esc(mpName(m))}</b><small>${esc(t('suggest.' + x.why, x.vars))}</small></span></li>`;
     };
     return `<h3 class="book-suggest">${t('suggest.title')}</h3><ul class="book-list suggest">${list.map(li).join('')}</ul><h3 class="book-suggest">${t('suggest.everyone')}</h3>`;
   }
@@ -104,7 +104,7 @@ export function createBook(root, { getState, onPick, onClose, riskOf = null }) {
           .map((m) => {
             const known = knownCount(state, m.id);
             const risk = riskOf && ui.sort === 'risk' ? `<span class="risk">${esc(riskOf(state, m.id, true) ?? '')}</span>` : '';
-            return `<li data-id="${m.id}">
+            return `<li data-id="${esc(m.id)}">
               <span class="bar" style="background:${partyColor(state, m)}"></span>
               <span class="main"><b>${esc(mpName(m))}</b>${m.id === state.player.mpId ? ` <span class="badge you">${t('card.you')}</span>` : myRow.has(m.id) ? ` <span class="row-tag" title="${t('row.tag')}">${rowIcon}</span>` : ''}<small>${esc(partyShort(state, m))} · ${esc(m.riding.name)}${m.caucusRole !== 'backbencher' ? ' · ' + esc(roleName(state, m)) : ''}</small></span>
               ${risk}<span class="known" title="fields known">${'●'.repeat(Math.min(5, Math.ceil(known / 2)))}${'○'.repeat(5 - Math.min(5, Math.ceil(known / 2)))}</span>

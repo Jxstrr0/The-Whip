@@ -1,6 +1,6 @@
 // The writ and election night as sheets of the Order Paper: the campaign choice, then the result with the
 // seats before and after, your riding stamped HELD or LOST, and the door into the next Parliament.
-import { t, esc, stamp, scenarioVerdict, jobLine } from './text.js';
+import { t, esc, safeColour, stamp, scenarioVerdict, jobLine } from './text.js';
 
 export function createElectionUI(root, { getState, dispatch }) {
   const sheet = document.createElement('section');
@@ -12,7 +12,7 @@ export function createElectionUI(root, { getState, dispatch }) {
     const me = state.mps[state.player.mpId];
     const nom = state.player.nominationThreat >= 60 ? `<p class="note bad">${t('dissolved.nomination')}</p>` : '';
     sheet.innerHTML = `<div class="sheet-handle"></div><h2>${t('dissolved.title')}</h2>
-      ${jobLine(state, 'campaign')}${scenarioVerdict(state)}<blockquote class="line">${t('dissolved.' + (p.reason || 'fixedDate'))}</blockquote>
+      ${jobLine(state, 'campaign')}${scenarioVerdict(state)}<blockquote class="line">${esc(t('dissolved.' + (p.reason || 'fixedDate')))}</blockquote>
       <p>${esc(t('dissolved.yourRiding', { riding: me.riding.name, margin: me.margin, standing: Math.round(state.player.ridingStanding) }))}</p>${nom}
       <div class="choices">
         <button class="btn primary" data-c="canvass">${t('dissolved.canvass')}<small class="approach">${t('dissolved.canvassNote')}</small></button>
@@ -28,7 +28,7 @@ export function createElectionUI(root, { getState, dispatch }) {
     const rows = p.seats
       .slice()
       .sort((a, b) => b.after - a.after)
-      .map((s) => `<div class="kv"><span class="k"><span class="chip" style="background:${esc(s.color)}"></span> ${esc(s.name)}</span><span class="v">${s.before} → <b>${s.after}</b>${s.after > s.before ? ' ▲' : s.after < s.before ? ' ▼' : ''}</span></div>`)
+      .map((s) => `<div class="kv"><span class="k"><span class="chip" style="background:${safeColour(s.color)}"></span> ${esc(s.name)}</span><span class="v">${esc(s.before)} → <b>${esc(s.after)}</b>${s.after > s.before ? ' ▲' : s.after < s.before ? ' ▼' : ''}</span></div>`)
       .join('');
     sheet.innerHTML = `<div class="sheet-handle"></div><h2>${t('election.title')}</h2>
       <p class="muted">${esc(p.campaignText || '')}</p>
@@ -38,7 +38,7 @@ export function createElectionUI(root, { getState, dispatch }) {
       <h3>${t('election.seats')} <small>${t('election.before')} → ${t('election.after')}</small></h3>
       <div class="kvs">${rows}</div>
       <p class="muted">${esc(t('election.cohortLost', { n: p.cohortLost }))} ${esc(t('election.newcomers', { n: p.newcomers, gone: p.gone }))}</p>
-      <div class="card-actions"><button class="btn primary" data-act="go">${lost ? t('election.continueLost') : t('election.continue', { n: p.parliament })}</button></div>`;
+      <div class="card-actions"><button class="btn primary" data-act="go">${lost ? t('election.continueLost') : esc(t('election.continue', { n: p.parliament }))}</button></div>`;
     sheet.querySelector('[data-act="go"]').onclick = () => dispatch({ type: 'resolve' });
   }
 

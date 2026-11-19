@@ -18,11 +18,34 @@ const MIGRATIONS = {
   },
 };
 
+// ---- Checking the ids in a save ----
+// A save can come from anywhere: pasted in as text, or loaded from a backup file somebody sent. The ids in it
+// (members like "m012", parties like "p3") are used all over the game to look things up, so a save is only
+// taken when they are plain ids: letters, digits and _ : . - and nothing else. Three names are refused
+// outright because JavaScript gives them a special meaning on every object. This is a light check, not a check
+// of the whole save; the screens also escape whatever they print (esc and safeColour in ui/text.js).
+const PLAIN_ID = /^[\w:.-]+$/;
+const RESERVED = ['__proto__', 'constructor', 'prototype'];
+const plainId = (id) => typeof id === 'string' && PLAIN_ID.test(id) && !RESERVED.includes(id);
+
+function idsArePlain(state) {
+  for (const table of [state.mps, state.parties || {}]) {
+    for (const [key, entry] of Object.entries(table)) {
+      // Both the name an entry is filed under and the id written inside it (the same thing in a real save).
+      if (!plainId(key) || !plainId(entry?.id)) return false;
+    }
+  }
+  // The player has to be one of the members.
+  return plainId(state.player.mpId) && Object.keys(state.mps).includes(state.player.mpId);
+}
+
+// Every way a save gets into the game (Continue, "Paste a save" and "Load backup file") comes through here.
 export function migrate(state) {
   if (!state || typeof state !== 'object') throw new Error('Not a save');
   state.version ||= 1;
   while (state.version < SAVE_VERSION && MIGRATIONS[state.version]) state = MIGRATIONS[state.version](state);
   if (state.version !== SAVE_VERSION || !state.player || !state.mps) throw new Error('Save from an unknown version');
+  if (!idsArePlain(state)) throw new Error('Not a save');
   return state;
 }
 

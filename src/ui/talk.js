@@ -58,8 +58,8 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
       const away = likelyAbsentees(state, bill.id).filter((m) => !paired.has(m.id)).slice(0, 4);
       const opp = oppositeParty(state);
       html += `<h3>${t('tool.pairsTitle')}</h3>`;
-      if (reqs.length) html += `<p class="muted">${t('tool.leaveRequests')}</p><ul class="book-list">${reqs.map((r) => { const m = state.mps[r.mpId]; return `<li><span class="bar" style="background:${partyColor(state, m)}"></span><span class="main"><b>${esc(mpName(m))}</b><small>${esc(t('tool.leaveReason', { reason: r.reason, bill: billName(bill) }))}</small></span><button class="btn" data-leave="${m.id}" data-grant="1">${t('tool.grant')}</button><button class="btn" data-leave="${m.id}" data-grant="0">${t('tool.refuse')}</button></li>`; }).join('')}</ul>`;
-      if (opp && canUse(state, 'pair').ok) html += away.length ? `<p class="muted">${t('tool.absentees')}</p><ul class="book-list">${away.map((m) => `<li><span class="bar" style="background:${partyColor(state, m)}"></span><span class="main"><b>${esc(mpName(m))}</b><small>${esc(t('tool.attendance', { n: m.attendance }))}</small></span><button class="btn" data-pair="${m.id}">${esc(t('tool.pair', { party: opp.short }))}</button></li>`).join('')}</ul>` : `<p class="muted">${t('tool.nobody')}</p>`;
+      if (reqs.length) html += `<p class="muted">${t('tool.leaveRequests')}</p><ul class="book-list">${reqs.map((r) => { const m = state.mps[r.mpId]; return `<li><span class="bar" style="background:${partyColor(state, m)}"></span><span class="main"><b>${esc(mpName(m))}</b><small>${esc(t('tool.leaveReason', { reason: r.reason, bill: billName(bill) }))}</small></span><button class="btn" data-leave="${esc(m.id)}" data-grant="1">${t('tool.grant')}</button><button class="btn" data-leave="${esc(m.id)}" data-grant="0">${t('tool.refuse')}</button></li>`; }).join('')}</ul>`;
+      if (opp && canUse(state, 'pair').ok) html += away.length ? `<p class="muted">${t('tool.absentees')}</p><ul class="book-list">${away.map((m) => `<li><span class="bar" style="background:${partyColor(state, m)}"></span><span class="main"><b>${esc(mpName(m))}</b><small>${esc(t('tool.attendance', { n: m.attendance }))}</small></span><button class="btn" data-pair="${esc(m.id)}">${esc(t('tool.pair', { party: opp.short }))}</button></li>`).join('')}</ul>` : `<p class="muted">${t('tool.nobody')}</p>`;
     }
     return html;
   }
@@ -81,7 +81,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
   }
 
   // The memo's letterhead: whose paper it is, and where in the meeting you are.
-  const letterhead = (mt, right) => `<p class="lh"><span>${t(mt.situation === 'whipCall' ? 'memo.whip' : 'memo.member')}</span><span>${right}</span></p>`;
+  const letterhead = (mt, right) => `<p class="lh"><span>${t(mt.situation === 'whipCall' ? 'memo.whip' : 'memo.member')}</span><span>${esc(right)}</span></p>`;
 
   function verdict(state, mt) {
     const m = state.mps[mt.mpId];
@@ -139,7 +139,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
             const asked = w.situation === 'rebelRecruit' && state.bills[w.billId] ? billStakes(state, state.bills[w.billId]).rebel : null;
             return `<li${seen ? ' class="done"' : ''}><span class="bar" style="background:${partyColor(state, m)}"></span>
               <span class="main"><b>${esc(mpName(m))}</b><small>${esc(partyShort(state, m))} · ${esc(fillLine(state, w.reason, { bill: w.billId }))}</small>${asked ? `<small class="stake-line">${delta(asked.riding, t('stake.riding'))}${delta(asked.whip, t('stake.whip'))}</small>` : ''}</span>
-              ${seen ? `<span class="muted">${t('office.seen')}</span>` : `<button class="btn" data-meet="${w.mpId}" ${left < 1 ? 'disabled' : ''}>${t('office.go')}</button>`}</li>`;
+              ${seen ? `<span class="muted">${t('office.seen')}</span>` : `<button class="btn" data-meet="${esc(w.mpId)}" ${left < 1 ? 'disabled' : ''}>${t('office.go')}</button>`}</li>`;
           })
           .join('')
       : `<li class="muted">${t('office.none')}</li>`;
@@ -185,7 +185,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
     sheet.classList.toggle('memo', memo);
     const head = `${HANDLE()}${memo ? `<i class="memo-clip" aria-hidden="true"></i>${letterhead(mt, t('talk.turn', { n: mt.turn, max: mt.maxTurns }))}` : ''}
       <header class="card-head"><span class="chip" style="background:${partyColor(state, m)}"></span>
-        <div class="who"><h2>${esc(mpName(m))}</h2><p>${memo ? `${esc(m.riding.name)} · ` : ''}<span class="badge mood-${mt.mood}">${t('mood.' + mt.mood)}</span></p></div></header>
+        <div class="who"><h2>${esc(mpName(m))}</h2><p>${memo ? `${esc(m.riding.name)} · ` : ''}<span class="badge mood-${esc(mt.mood)}">${esc(t('mood.' + mt.mood))}</span></p></div></header>
       ${later ? '' : jobLine(state, 'meeting', { situation: mt.situation, pos: mt.billId ? t('vote.' + state.bills[mt.billId]?.positions[state.mps[state.player.mpId].party]) : '' })}
       ${bill ? stakeStamps(state, bill) : ''}`;
     if (mt.phase === 'talk') {
@@ -194,7 +194,7 @@ export function createOfficeUI(root, { getState, dispatch, pickMp, onLedger, onV
       heights.set('half', mt.id);
       const note = lastNote ? `<p class="note ${lastNote}">${t(lastNote === 'good' ? 'talk.good' : lastNote === 'bad' ? 'talk.bad' : 'talk.ok')}</p>` : '';
       sheet.innerHTML = `${head}${note}<blockquote class="line in-room">${esc(mt.talk.current.text)}</blockquote>
-        <div class="choices talk-choices">${mt.talk.options.map((o, i) => `<button class="btn" data-i="${i}"><small class="approach">${t('approach.' + o.approach)}</small>${esc(o.text)}</button>`).join('')}</div>`;
+        <div class="choices talk-choices">${mt.talk.options.map((o, i) => `<button class="btn" data-i="${i}"><small class="approach">${esc(t('approach.' + o.approach))}</small>${esc(o.text)}</button>`).join('')}</div>`;
       sheet.querySelectorAll('[data-i]').forEach((b) => {
         b.onclick = () => take(b, () => {
           const r = dispatch({ type: 'talk', index: Number(b.dataset.i) });

@@ -2,7 +2,7 @@
 // airport road, with each of our absent members where the whip's office has them. Tap one to send a staffer;
 // the staffer walks the path in real time, and a trip that can no longer beat the doors greys out.
 // The sim settles every run when it starts (src/sim/tools.js chase); this file only draws it.
-import { t, esc, partyColor } from './text.js';
+import { t, esc, partyColor, safeColour } from './text.js';
 import { data } from '../sim/config.js';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -134,7 +134,7 @@ export function createHillMap(root, { getState, bells, onSend }) {
 
   // Members of every party walking in to vote: the building filling up while ours stay put.
   const crowd = [];
-  const colours = Object.values(state.parties).map((p) => p.color).filter(Boolean);
+  const colours = Object.values(state.parties).map((p) => p.color).filter(Boolean).map(safeColour);
   for (let i = 0; i < 14; i++) {
     const fromOffice = i % 3 !== 0;
     const sx = fromOffice ? 200 + Math.random() * 140 : 24 + Math.random() * 128;

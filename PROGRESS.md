@@ -1777,3 +1777,29 @@ From the studio security test: a link to the game with a made-up `?scenario=` na
 Checked: the crafted link now shows its text and runs nothing (it ran script before the fix); a real scenario link, the daily link and a plain load still start as before; `tests.html` passes with 0 failed; the start menu loads at phone size, portrait and landscape, with no console errors.
 
 What to test: open https://thewhip.longlight.games/ on the phone; the game loads and plays as before.
+
+## 2026-11-19 · Text from a pasted save is shown as text, never as markup (v1.1.4.0)
+
+From the studio security test, the second half. A save is just text, and the game trusted everything in it. Someone could hand-edit a save so that one of its "numbers", "moods", member ids or party colours was really a piece of web page, then pass it round as a save code or a backup file. A player who pasted it in (or loaded the file) would have had that person's script running inside the game, on the first screen and again on every Continue. It needed the player to bring the save in themselves; a link alone could not do it. Kelbo said yes to fixing it.
+
+What changed, in three layers:
+
+- **The screens.** Every place that printed something out of the save without making it safe first now does (the same `esc()` the game already used for names): the date leaf, the weekend front page's figures, the election table, the riding and town hall bars, the bells line, the meeting letterhead and mood, the reply labels, the feed, your row, the member card, the career record and memoir, and the member and party ids tucked into buttons. 13 files in `src/ui/`, a word or two each.
+- **Colours.** A party colour is only used if it is a plain hex colour such as `#2F6DB5`; anything else is drawn in a neutral grey (`safeColour()` in `src/ui/text.js`). Before, a "colour" could be a web address, and the game would quietly fetch it.
+- **The door.** Continue, "Paste a save" and "Load backup file" all go through `migrate()` in `src/save.js`. It now refuses a save whose member or party ids are not plain ids (letters, digits and `_ : . -`), whose player is not one of its members, or that files a member or party under one of three names JavaScript treats specially. It says the usual "That isn't a save this version can read." This is a light check on the ids, not on the whole save.
+
+Nothing about play, the wording or the sim changed, and the save format is the same (`SAVE_VERSION` stays 2). CLAUDE.md has a new line under the hard constraints so new screens keep to this.
+
+Checked, all on a local copy:
+
+- The 45 tampered saves that ran script before the fix, plus one more for the town hall bar: 0 ran script and 0 planted anything. 8 were refused at the door, 23 loaded and showed the tampered value as plain text, 12 loaded with the colour drawn grey, and 3 loaded with the value read as a number or written over a frame later.
+- The 8 refused ones were also put straight into the running game, round the door, to test the screens alone: nothing ran; the odd id sat inside its button as text.
+- A web address in place of a colour (the election table, the Book, the front page chart): nothing was fetched.
+- The same tampered date through Continue and through a backup file: shown as text. Two tampered saves left in storage: the start menu still opens and shows those slots as empty.
+- 49 real saves, one from every kind of stop (offices, meetings, votes, the bells, caucus, Question Period, the riding, career beats, elections, endings), pasted in unchanged: all 49 reached the game with no console errors. All 390 real saves from the test, and a version 1 copy of each, pass the new check.
+- `tests.html`: 143 passed, 0 failed. One test is new: ten tampered saves and one filed under `__proto__` are refused, a real save loads, and odd colours fall back to grey.
+- A new game at 390 × 844 and at 844 × 390: started from the menu, played by tapping the real buttons through the cold open, the first morning, the office, a meeting and Question Period, then on by the bot to week 3 with every stop drawn. No console errors, no sideways scroll, the Book lists all 120 members.
+
+Left alone on purpose: a tampered save that passes the id check can still make a screen stumble (a missing bill, a member with no riding). That shows an error or a blank sheet, not somebody else's script, so the save is not checked field by field. One thing noted and not chased: bill ids are not checked at the door the way member and party ids are. Nothing was found that turns that into script on the page; it is on the list for another day.
+
+**For Kelbo to test on the phone:** open https://thewhip.longlight.games/ once this is merged and live (the start menu should say v1.1.4.0). Continue your own game: it should open exactly where you left it, party colours and all. Then, on the start menu under Saved games, tap "Copy save" on your slot, pick an empty slot, open "Import a save", paste and import: it should load. If you have a backup file, "Load a backup file" should take it too.

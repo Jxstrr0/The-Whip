@@ -1,6 +1,6 @@
 // The ledger: every promise, favour, pair, threat and rival move on the books, from both sides, with what
 // came of it. Opened from the menu, the office, or an MP's card (filtered to them).
-import { t, esc, mpName, partyColor, stamp } from './text.js';
+import { t, esc, mpName, partyColor, safeColour, stamp } from './text.js';
 import { cardLabel } from '../sim/meetings.js';
 
 export function createLedger(root, { getState }) {
@@ -39,7 +39,7 @@ export function createLedger(root, { getState }) {
     const pid = state.player.mpId;
     const other = e.from === pid ? e.to : e.from;
     const m = state.mps[other] || state.alumni?.[other];
-    const bar = m ? partyColor(state, m) : state.parties[other]?.color || '#6b6f76';
+    const bar = m ? partyColor(state, m) : safeColour(state.parties[other]?.color);
     return `<li><span class="bar" style="background:${bar}"></span><span class="main"><b>${esc(who(state, other))}</b><small>${esc(label(state, e))}</small></span>${outcome(e)}</li>`;
   }
 

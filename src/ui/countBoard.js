@@ -73,7 +73,7 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
     sheet.innerHTML = `
       <div class="sheet-handle"></div>
       <div class="bells-head">
-        <p class="bells">🔔 ${t('div.bells')} · <span data-bells>${t('div.doorsClose', { s: total })}</span></p>
+        <p class="bells">🔔 ${t('div.bells')} · <span data-bells>${esc(t('div.doorsClose', { s: total }))}</span></p>
         <div class="bells-bar" aria-hidden="true"><i data-bells-bar></i></div>
       </div>
       <h2>${esc(bill.title)}</h2>
@@ -91,8 +91,8 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
       </div>
       ${whyWeBack(state, bill) ? `<p class="note">${esc(whyWeBack(state, bill))}</p>` : ''}
       <div class="choices">
-        <button class="btn primary" data-c="line">${t('div.choose.line', { pos: t('vote.' + pos) })}${impact(stkLine)}</button>
-        ${p.line === 'whipped' && pos !== 'abstain' ? `<button class="btn" data-c="rebel">${t('div.choose.rebel', { pos: t('vote.' + other) })}${impact(stkRebel)}</button>` : ''}
+        <button class="btn primary" data-c="line">${esc(t('div.choose.line', { pos: t('vote.' + pos) }))}${impact(stkLine)}</button>
+        ${p.line === 'whipped' && pos !== 'abstain' ? `<button class="btn" data-c="rebel">${esc(t('div.choose.rebel', { pos: t('vote.' + other) }))}${impact(stkRebel)}</button>` : ''}
         <button class="btn" data-c="absent">${t('div.choose.absent')}${impact(stkAbsent)}</button>
       </div>`;
     sheet.classList.remove('hidden');
@@ -239,7 +239,7 @@ export function createCountBoard(root, { getState, onChoose, onContinue, getRoom
     const me = getState().player.mpId;
     const mine = result.yeas.includes(me) ? 'yea' : result.nays.includes(me) ? 'nay' : 'absent';
     board.querySelector('[data-outcome]').innerHTML = `<p>${stamp(t(result.carried ? 'stamp.carried' : 'stamp.defeated'), result.carried ? 'yea' : 'nay', true)} <span class="verdict ${result.carried ? 'yea' : 'nay'}">${t(result.carried ? 'div.carried' : 'div.defeated', { y: result.yeas.length, n: result.nays.length })}</span></p>
-        ${result.speakerVote ? `<p>${t('div.speaker', { v: t('vote.' + result.speakerVote) })}</p>` : ''}
+        ${result.speakerVote ? `<p>${esc(t('div.speaker', { v: t('vote.' + result.speakerVote) }))}</p>` : ''}
         <p class="muted">${t('div.you', { v: t('vote.' + mine) })}</p>`;
     board.querySelector('.card-actions').innerHTML = `<button class="btn primary" data-act="cont">${t('div.continue')}</button>`;
     feelStamps(board);

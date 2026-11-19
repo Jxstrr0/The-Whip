@@ -47,7 +47,7 @@ export function createCaucusUI(root, { getState, dispatch, getRoom }) {
         <button class="btn" data-act="speak" ${c.actions < 1 || c.spoke ? 'disabled' : ''}>${c.spoke ? t('caucus.spoken') : t('caucus.speak')}</button>
         ${open === 'speak' ? stances.map((s) => `<button class="btn sub" data-stance="${s.id}">${esc(fillStance(state, s.text))}</button>`).join('') : ''}
         <button class="btn" data-act="whisper" ${c.actions < 1 || !nb.length ? 'disabled' : ''}>${t('caucus.whisper')}</button>
-        ${open === 'whisper' ? nb.map((id) => `<button class="btn sub" data-whisper="${id}">${esc(t('caucus.whisperTo', { name: mpName(state.mps[id]) }))}</button>`).join('') : ''}
+        ${open === 'whisper' ? nb.map((id) => `<button class="btn sub" data-whisper="${esc(id)}">${esc(t('caucus.whisperTo', { name: mpName(state.mps[id]) }))}</button>`).join('') : ''}
       </div>
       ${chiefHtml(state, c, bill)}
       <div class="choices"><button class="btn primary" data-act="leave">${t('caucus.leave')}</button></div>

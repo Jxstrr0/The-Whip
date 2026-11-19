@@ -2,7 +2,7 @@
 // week's biggest headline from the press gallery, the rest run below the fold, with the polls as a chart,
 // the week's numbers, and the player's photograph when the story is theirs. The player's own numbers come first,
 // under the masthead: it's their week the paper is closing.
-import { t, esc, scenarioVerdict, aimShort } from './text.js';
+import { t, esc, safeColour, scenarioVerdict, aimShort } from './text.js';
 import { data, tuning } from '../sim/config.js';
 import { quietLead } from '../sim/media.js';
 import { calendarOf, weatherOf } from '../sim/calendar.js';
@@ -40,7 +40,7 @@ function pollChart(state, polling) {
   const grid = [];
   for (let v = lo; v <= hi; v += 10) grid.push(`<line x1="${padL}" x2="${w - padR}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="grid"/>`);
   const lines = ids.map((id) => {
-    const color = state.parties[id].color;
+    const color = safeColour(state.parties[id].color);
     const pts = history.map((p, i) => `${x(i).toFixed(1)},${y(p.polling[id] ?? 0).toFixed(1)}`);
     const last = history[history.length - 1].polling[id] ?? 0;
     const path = history.length > 1 ? `<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>` : '';
@@ -69,7 +69,7 @@ export function renderFrontPage(state, p, photoUrl) {
   const byline = H.bylines[week % H.bylines.length];
   const caption = fill(H.captions[(week * 3 + 1) % H.captions.length], ctx);
   const photo = photoUrl && lead?.you ? `<figure class="press-photo"><img src="${photoUrl}" alt="" width="150" height="190"><figcaption>${esc(caption)}</figcaption></figure>` : '';
-  const delta = ([a, b]) => `${a} → <b class="tone-${b > a ? 'good' : b < a ? 'bad' : 'plain'}">${b}${b > a ? ' ▲' : b < a ? ' ▼' : ''}</b>`;
+  const delta = ([a, b]) => `${esc(a)} → <b class="tone-${b > a ? 'good' : b < a ? 'bad' : 'plain'}">${esc(b)}${b > a ? ' ▲' : b < a ? ' ▼' : ''}</b>`;
   // The paper is dated the Saturday of the week just closed; the date has already moved on to Monday.
   const cal = calendarOf({ week: s.week, year: s.year, dayOfWeek: 6 });
   const wx = weatherOf(state, Math.max(0, state.date.absWeek - 1));
@@ -92,8 +92,8 @@ export function renderFrontPage(state, p, photoUrl) {
         <div class="kvs">
           <div class="kv"><span class="k">${t('week.riding')}</span><span class="v">${delta(s.ridingStanding)}</span></div>
           <div class="kv"><span class="k">${t('week.whip')}</span><span class="v">${delta(s.whipRapport)}</span></div>
-          <div class="kv"><span class="k">${t('week.rebellions')}</span><span class="v">${s.rebellions}</span></div>
-          <div class="kv"><span class="k">${t('week.divisions')}</span><span class="v">${s.divisions}</span></div>
+          <div class="kv"><span class="k">${t('week.rebellions')}</span><span class="v">${esc(s.rebellions)}</span></div>
+          <div class="kv"><span class="k">${t('week.divisions')}</span><span class="v">${esc(s.divisions)}</span></div>
           ${state.player.act >= 3 ? `<div class="kv${(state.pressure || 0) >= 70 ? ' stale' : ''}"><span class="k">${t('week.pressure')}</span><span class="v">${Math.round(state.pressure || 0)} / 100</span></div>` : ''}
         </div>
         <p class="aim-week"><span class="k">${t('week.aim')}</span>${esc(aimShort(state))}</p>
