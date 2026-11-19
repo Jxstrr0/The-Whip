@@ -640,5 +640,12 @@ boot()
   .catch((err) => {
     console.error(err);
     ready();
-    document.getElementById('ui').innerHTML = `<div class="fatal">Something went wrong starting the game.<br><small>${String(err.message || err)}</small></div>`;
+    // The error text can hold words from the web address (an unknown ?scenario= name, say), so it goes in as
+    // plain text, never as HTML: a crafted link must not be able to put markup or script on the page.
+    const box = document.createElement('div');
+    box.className = 'fatal';
+    const detail = document.createElement('small');
+    detail.textContent = String(err.message || err).slice(0, 300);
+    box.append('Something went wrong starting the game.', document.createElement('br'), detail);
+    document.getElementById('ui').replaceChildren(box);
   });

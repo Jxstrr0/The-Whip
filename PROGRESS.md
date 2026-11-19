@@ -1769,3 +1769,11 @@ What to test: open https://thewhip.longlight.games/ on the phone; the game loads
 Kelbo said yes to Claude merging its own pull requests here once they're green, the same as the other Longlight games. This repo has no pull-request check, so "green" means `tests.html` passes and the change plays through at phone size with no console errors. CLAUDE.md says so under "Working on this repo". Nothing in the game changes.
 
 What to test: nothing; the game is unchanged.
+
+## 2026-11-19 · A crafted link can no longer put script on the page (v1.1.3.0)
+
+From the studio security test: a link to the game with a made-up `?scenario=` name on the end showed the "Something went wrong starting the game" screen with that name written into the page as HTML. Someone could build such a link so that their own script ran in the game when a player opened it. That screen now writes the error as plain text, so whatever is in the link is only ever shown as words. Nothing else about the game changed.
+
+Checked: the crafted link now shows its text and runs nothing (it ran script before the fix); a real scenario link, the daily link and a plain load still start as before; `tests.html` passes with 0 failed; the start menu loads at phone size, portrait and landscape, with no console errors.
+
+What to test: open https://thewhip.longlight.games/ on the phone; the game loads and plays as before.
