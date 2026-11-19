@@ -23,7 +23,7 @@ function pickName(list) {
 // The title page. One sheet, read top to bottom: continue the latest game, pick a slot, then start something
 // (a career, a scenario, today's seed, a friend's seed) or manage the saved games.
 // reminder: { lastBackup } when a quiet "back up your saves" note is due this visit, else null.
-export function createStartMenu(root, { saves, latest, scenarios, reminder, onContinue, onNew, onScenario, onDaily, onShared, onCheckImport, onImport, onDelete, onExport, onBackedUp, onSeed, onSettings }) {
+export function createStartMenu(root, { saves, latest, scenarios, reminder, onContinue, onNew, onScenario, onDaily, onShared, onReadSave, onImport, onDelete, onExport, onBackedUp, onSeed, onSettings }) {
   const D = data();
   const el = document.createElement('section');
   el.className = 'start-menu';
@@ -126,12 +126,14 @@ export function createStartMenu(root, { saves, latest, scenarios, reminder, onCo
     if (p) p.textContent = msg;
   };
   const confirmReplace = () => !saves[slot - 1] || confirm(t('menu.confirmReplace', { name: saves[slot - 1].name }));
-  // One way in for a pasted save and a backup file alike: check the whole text, ask before replacing a slot, then load.
+  // One way in for a pasted save and a backup file alike: read and check the whole text once, ask before replacing
+  // a slot, then load the game that was read.
   const restore = (text) => {
     if (!text) return status(t('menu.needImport'));
-    if (onCheckImport && !onCheckImport(text)) return status(t('menu.importFailed'));
+    const game = onReadSave(text);
+    if (!game) return status(t('menu.importFailed'));
     if (!confirmReplace()) return;
-    const ok = onImport(text, slot);
+    const ok = onImport(game, slot);
     if (!ok) return status(t('menu.importFailed'));
     el.remove();
   };
