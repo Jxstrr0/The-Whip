@@ -71,8 +71,8 @@ export function createColdOpenUI(root, { getState, dispatch, getRoom, audio, col
       <div class="co-line"></div>
       <div class="co-house">
         <p class="co-house-label">${esc(t('coldOpen.house', { need: night.need, total: houseTotal }))}</p>
-        <div class="co-seats">${night.parties.map((id) => `<i data-p="${id}" style="background:${colorOf(id)}"></i>`).join('')}<b class="co-need" style="left:${(night.need / houseTotal) * 100}%"></b></div>
-        <div class="co-seat-keys">${night.parties.map((id) => `<span data-p="${id}"><i style="background:${colorOf(id)}"></i>${esc(state.parties[id]?.short || id)} <b>0</b></span>`).join('')}</div>
+        <div class="co-seats">${night.parties.map((id) => `<i data-p="${esc(id)}" style="background:${colorOf(id)}"></i>`).join('')}<b class="co-need" style="left:${(night.need / houseTotal) * 100}%"></b></div>
+        <div class="co-seat-keys">${night.parties.map((id) => `<span data-p="${esc(id)}"><i style="background:${colorOf(id)}"></i>${esc(state.parties[id]?.short || id)} <b>0</b></span>`).join('')}</div>
       </div>
       <div class="co-result"></div>
       <div class="choices co-actions"></div>`;

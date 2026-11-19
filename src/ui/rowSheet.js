@@ -10,7 +10,7 @@ const side = (v) => `<b class="${v}">${esc(t('vote.' + v).toUpperCase())}</b>`;
 // side needed; the tick is where they turn firm; the dot is where the files put them.
 function meter(want, scale, r) {
   const at = (v) => `${Math.max(0, Math.min(100, ((v / scale.span + 1) / 2) * 100)).toFixed(1)}%`;
-  const dot = r.score == null ? '' : `<b class="dot ${r.mark}" style="left:${at(r.score)}"></b>`;
+  const dot = r.score == null ? '' : `<b class="dot ${esc(r.mark)}" style="left:${at(r.score)}"></b>`;
   return `<span class="aim" aria-hidden="true">
     <span class="aim-track"><i class="z nay${want === 'nay' ? ' need' : ''}" style="width:${at(scale.lower)}"></i><i class="z mid" style="width:calc(${at(scale.upper)} - ${at(scale.lower)})"></i><i class="z yea${want === 'yea' ? ' need' : ''}" style="width:calc(100% - ${at(scale.upper)})"></i><em class="tick" style="left:${at(scale.firm)}"></em>${dot}</span>
     <span class="aim-ends"><span class="${want === 'nay' ? 'need' : ''}">${want === 'nay' ? '▶ ' : ''}NAY</span><span class="${want === 'yea' ? 'need' : ''}">YEA${want === 'yea' ? ' ◀' : ''}</span></span>
@@ -22,7 +22,9 @@ function caption(want, r) {
   const other = want === 'yea' ? 'nay' : 'yea';
   const vars = { side: side(want), other: side(other) };
   const key = r.mark === 'absent' ? (r.why === 'undecided' ? 'undecided' : 'away') : r.mark;
-  return t('row.cap.' + key, vars);
+  // The mark comes out of the save. A mark the game doesn't know has no caption, and then t() hands back the
+  // key itself, so the key is escaped first. (The whole line can't be: {side} is filled with our own <b> tag.)
+  return t('row.cap.' + esc(key), vars);
 }
 
 export function createRowSheet(root, { getState, onPick }) {
@@ -43,9 +45,9 @@ export function createRowSheet(root, { getState, onPick }) {
     const list = members
       .map((r) => {
         const m = state.mps[r.id];
-        return `<li data-id="${m.id}"><span class="bar" style="background:${partyColor(state, m)}"></span>
+        return `<li data-id="${esc(m.id)}"><span class="bar" style="background:${partyColor(state, m)}"></span>
           <span class="main"><b>${esc(mpName(m))}</b>${r.friend ? ` <span class="badge">${esc(t('row.friend'))}</span>` : ''}<small>${esc(m.riding.name)} · ${esc(m.seatId || '')}</small></span>
-          <span class="row-mark ${r.mark}${r.stale ? ' stale' : ''}"><i aria-hidden="true">${GLYPH[r.mark]}</i> ${esc(t('row.mark.' + r.mark))}</span>
+          <span class="row-mark ${esc(r.mark)}${r.stale ? ' stale' : ''}"><i aria-hidden="true">${esc(GLYPH[r.mark])}</i> ${esc(t('row.mark.' + r.mark))}</span>
           ${bill ? `<span class="aim-wrap">${meter(want, scale, r)}<small class="aim-cap">${caption(want, r)}</small></span>` : ''}</li>`;
       })
       .join('');

@@ -70,7 +70,7 @@ export function createMpCard(root, { getState, onClose, actions = () => [] }) {
         </div>
         <button class="btn icon" data-act="close" aria-label="${t('btn.close')}">✕</button>
       </header>
-      <p class="riding">${esc(mp.riding.name)} · ${esc(mp.riding.province)} · ${t('type.' + mp.riding.type)}</p>
+      <p class="riding">${esc(mp.riding.name)} · ${esc(mp.riding.province)} · ${esc(t('type.' + mp.riding.type))}</p>
       <p class="seat">${esc(seatText(state, mp.seatId))}</p>
       ${v.isPlayer ? '' : `<p class="seat familiar">${t('card.face' + familiarity(state, mp.id))}</p>`}
       <h3>${t('card.known')}</h3>

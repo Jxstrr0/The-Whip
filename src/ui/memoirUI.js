@@ -48,7 +48,7 @@ export function timelineHTML(state) {
     if (parliament !== null && e.parliament !== parliament) out += `<p class="parl-mark"><span>${esc(t('memoir.parliament', { nth: ordinal(e.parliament) }))}</span></p>`;
     parliament = e.parliament;
     const ch = `${e.act}:${e.role}`;
-    if (ch !== chapter) out += `<h3 class="chapter"><small>${t('career.act', { n: e.act })}</small>${esc(t('role.' + e.role))}</h3>`;
+    if (ch !== chapter) out += `<h3 class="chapter"><small>${esc(t('career.act', { n: e.act }))}</small>${esc(t('role.' + e.role))}</h3>`;
     chapter = ch;
     out += moment(state, e);
   }

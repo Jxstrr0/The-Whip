@@ -71,7 +71,7 @@ import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveIn
 import { getSettings, setSetting } from './src/settings.js';
 import { canBuzz, buzz } from './src/haptics.js';
 import { glossTerms, unglossAll } from './src/ui/gloss.js';
-import { partyColor, quarters, whyWeBack } from './src/ui/text.js';
+import { partyColor, safeColour, quarters, whyWeBack } from './src/ui/text.js';
 import { inviteSuggestions } from './src/sim/suggest.js';
 import { actAim } from './src/sim/goals.js';
 import { createAudio } from './src/audio.js';
@@ -2109,6 +2109,46 @@ test('A version 1 save migrates to version 2 (mode and last revolt) and a bad sa
   }
   assert(refused === 4, 'four bad imports refused');
   return 'v1 → v2';
+});
+
+test('A save with a made-up id is refused, a real one loads, and a party colour is only ever a hex colour', () => {
+  const s = newGame({ seed: 'IDS-1', party: 'p3' });
+  const fresh = () => JSON.parse(JSON.stringify(s));
+  assert(migrate(fresh()).seed === 'IDS-1', 'a real save is taken');
+  const markup = '"><b>x</b>';
+  // Each of these changes one id in an otherwise real save.
+  const tampered = {
+    'member filed under markup': (g) => { g.mps[markup] = { ...g.mps[g.player.mpId], id: markup }; },
+    'member with markup for an id': (g) => { g.mps[g.player.mpId].id = markup; },
+    'member with no id': (g) => { delete g.mps[g.player.mpId].id; },
+    'party filed under markup': (g) => { g.parties[markup] = { ...g.parties.p1, id: markup }; },
+    'party with markup for an id': (g) => { g.parties.p1.id = markup; },
+    'player id is markup': (g) => { g.player.mpId = markup; },
+    'player is nobody in the House': (g) => { g.player.mpId = 'm9999'; },
+    'player id is a reserved name': (g) => { g.player.mpId = 'constructor'; },
+    'member filed under constructor': (g) => { g.mps.constructor = { ...g.mps[g.player.mpId], id: 'constructor' }; },
+    'party filed under prototype': (g) => { g.parties.prototype = { ...g.parties.p1, id: 'prototype' }; },
+  };
+  for (const [name, change] of Object.entries(tampered)) {
+    const g = fresh();
+    change(g);
+    let refused = false;
+    try { migrate(g); } catch { refused = true; }
+    assert(refused, `${name}: should be refused`);
+  }
+  // JSON text can carry a member filed under __proto__, which an object written in code can't.
+  let protoRefused = false;
+  try { migrate(JSON.parse(JSON.stringify(s).replace('"mps":{', `"mps":{"__proto__":${JSON.stringify({ ...s.mps[s.player.mpId], id: '__proto__' })},`))); } catch { protoRefused = true; }
+  assert(protoRefused, 'a member filed under __proto__ is refused');
+
+  assert(safeColour('#2F6DB5') === '#2F6DB5' && safeColour('#abc') === '#abc', 'hex colours pass through');
+  for (const bad of ['red', 'url(https://example.com/x.png)', '#12', '#2F6DB5;background:red', '"><b>', '', null, undefined, 7, {}]) {
+    assert(safeColour(bad) === '#6b6f76', `${String(bad)} should fall back to grey`);
+  }
+  const g = fresh();
+  g.parties.p3.color = 'url(https://example.com/x.png)';
+  assert(partyColor(g, g.mps[g.player.mpId]) === '#6b6f76', 'a tampered party colour falls back to grey');
+  return `${Object.keys(tampered).length + 1} tampered saves refused`;
 });
 
 test('Saves go to a slot and come back with their slot, time and a one-line description', () => {

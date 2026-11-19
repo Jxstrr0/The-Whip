@@ -15,7 +15,9 @@ export function createRidingUI(root, { getState, dispatch, getRoom = () => null 
   const speak = () => getRoom()?.setSpeech?.(sheet.dataset.h === 'full' ? null : lastSaid);
   const heights = drawer(sheet, { onChange: speak });
 
-  function bar(label, v) {
+  function bar(label, value) {
+    // The figure comes out of the save, so it is read as a number before it goes into the page.
+    const v = Number(value) || 0;
     const tone = standingTone(v);
     return `<div class="bar-row"><span>${label}</span><div class="bar"><i class="tone-${tone}" style="width:${v}%"></i><em style="left:50%"></em></div><b class="tone-${tone}">${v}</b></div>`;
   }
@@ -38,7 +40,7 @@ export function createRidingUI(root, { getState, dispatch, getRoom = () => null 
     const lastWord = w ? `<p class="muted last-word">${esc(t(w.who === 'you' ? 'riding.youSaid' : 'riding.presidentSaid', { role: t('role.' + w.role).toLowerCase(), text: w.text }))}</p>` : '';
     if (v.phase === 'visitors') {
       const item = v.queue[v.at];
-      const who = `${lastWord}<h3>${t('role.' + item.role)}</h3>`;
+      const who = `${lastWord}<h3>${esc(t('role.' + item.role))}</h3>`;
       if (item.kind === 'case') {
         const c = C.cases.find((x) => x.id === item.id);
         const k = caseStakes(c);

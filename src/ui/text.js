@@ -151,6 +151,14 @@ export function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
 
+// A colour is only ever used if it is a plain hex colour like "#2F6DB5"; anything else becomes a neutral grey.
+// Party colours travel inside the save, and a save can be pasted in from anywhere: a "colour" that was really
+// a web address or a piece of markup must never reach the page.
+const HEX_COLOUR = /^#[0-9a-f]{3,8}$/i;
+export function safeColour(c) {
+  return typeof c === 'string' && HEX_COLOUR.test(c) ? c : '#6b6f76';
+}
+
 export function mpName(mp) {
   return `${mp.name.first} ${mp.name.last}`;
 }
@@ -166,7 +174,7 @@ export function partyColor(state, mp) {
     if (mp.party === 'ind') return P.independentCbColor;
     return P.core.find((q) => q.id === mp.party)?.cbColor ?? P.fifthCbColor;
   }
-  return mp.party === 'ind' ? P.independentColor : state.parties[mp.party].color;
+  return mp.party === 'ind' ? P.independentColor : safeColour(state.parties[mp.party].color);
 }
 
 export function partyShort(state, mp) {

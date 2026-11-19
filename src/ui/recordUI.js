@@ -33,7 +33,7 @@ export function createRecordUI(root, { getState, onNewGame, onPerson }) {
       ${timelineHTML(state)}
       <h3>${t('memoir.numbers')}</h3>
       <div class="kvs">
-        <div class="kv"><span class="k">${t('record.act')}</span><span class="v">${esc(r.rank)} · ${t('career.act', { n: r.act })}</span></div>
+        <div class="kv"><span class="k">${t('record.act')}</span><span class="v">${esc(r.rank)} · ${esc(t('career.act', { n: r.act }))}</span></div>
         <div class="kv"><span class="k">${t('record.style')}</span><span class="v">${esc(t('rep.' + r.style))}</span></div>
         ${rows}
       </div>
