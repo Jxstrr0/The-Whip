@@ -1843,3 +1843,23 @@ Checked, all on a local copy:
 Worth knowing: the time between tapping Import and the game appearing is mostly the game building its rooms, the same as Continue; this change doesn't touch that.
 
 **For Kelbo to test on the phone:** open https://thewhip.longlight.games/ once this is live (the start menu should say v1.1.5.1). Under Saved games tap "Copy save" on your slot: the message should give a much smaller size in KB than before. Pick an empty slot, open "Import a save", paste and import: the text should appear in the box quickly and the game should load. If you have an older backup file, "Load a backup file" should still take it.
+
+## 2026-11-19 · A save that can't start says so; importing uses less memory (v1.1.6.0)
+
+Kelbo asked for a code review of 1.1.5.1 and picked "fix all six" of what it found.
+
+- **A save that reads but can't start now says so.** Import used to call the game's start without waiting for it, so a save that passed every check but broke deeper in (a piece missing inside it) closed the menu and left a half-drawn screen. Import now waits for the start: if it fails, the menu stays up with "That isn't a save this version can read." and the slot isn't written.
+- **The autosave waits for a game that has fully started.** Before, a game that failed partway through starting could still be written into its slot by the 0.8-second autosave. Now nothing is autosaved until the start has finished.
+- **The menu's message line is readable.** It shared a style name with the small readout in the game's corner, so its messages ("That isn't a save…", "Paste a save first") showed in pale grey typewriter letters over the title. They now sit under the button in the menu's own type.
+- **Opening a code uses less memory.** The squeezed-code reader set aside room for a million dictionary entries every time (about 10 MB). It now sets aside only what a code of that length could need: about 2.3 MB for a whole played Parliament, much less for a small save.
+- **Notes for whoever works on it next:** a warning beside the dictionary size that it is part of the `WHIP2:` format (changing it would break every code ever made; a new size needs `WHIP3:`), the size limit's note now says it counts bytes (an accented letter is two), `HANDOFF.md` describes the `WHIP2:` code, and the menu calls its import helpers as safely as its other buttons.
+
+Nothing about play or the save itself changed (`SAVE_VERSION` stays 2). The review called this "1.1.5.2"; the version rule makes a batch of fixes a Patch, so it is 1.1.6.0.
+
+Checked, all on a local copy:
+
+- `tests.html`: 145 passed, 0 failed.
+- Through the real Import box at 390 × 844, pasting with the clipboard: a played Parliament's code with a piece removed from inside it keeps the menu up with the message under the Import button, writes no slot and throws no uncaught error; the same save undamaged loads into the game and autosaves after a move; an old plain code (1,471 KB) still loads. No console errors.
+- The start menu at 390 × 844 and 844 × 390 shows v1.1.6.0 with no sideways scroll.
+
+**For Kelbo to test on the phone:** open https://thewhip.longlight.games/ once this is live (the start menu should say v1.1.6.0). Continue your own game: it should open where you left it. Back on the start menu, open "Import a save", tap Import with the box empty: "Paste a save first" should show under the button in normal letters, not over the title. Then Copy save from your slot, pick an empty slot, paste and import: it should load as before.

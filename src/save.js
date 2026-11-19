@@ -122,12 +122,15 @@ const CODE_PREFIX = 'WHIP2:';
 const CODE_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 // The dictionary stops growing here (20-bit numbers at most). Scrapline stops at 16 bits; a Whip save is several
 // times bigger, and the extra room makes its code about a third shorter again.
+// This is part of the WHIP2 format, not a tuning number: every code ever made was written with it, so changing
+// it would make them all unreadable. A different value needs a new prefix (WHIP3:).
 const MAX_CODES = 1 << 20;
 const bitsFor = (n) => (n < 2 ? 1 : 32 - Math.clz32(n)); // how many bits it takes to write n
 
 // The most text a save may be, pasted in or read from a backup file: tuning's backup.maxFileKb, many times the
 // size of a real save. Anything longer is refused before any work is done on it, so a huge paste can't hold
-// the phone up. The same limit caps what a squeezed code may open up to.
+// the phone up. The same number caps what a squeezed code may open up to, counted there in UTF-8 bytes (an
+// accented letter is 2 bytes). A real save is about 1.5 MB against the 20 MB limit, so the difference never bites.
 export const maxSaveChars = () => tuning().backup.maxFileKb * 1024;
 
 // Bytes in, letters out. Each step writes the longest run of bytes already in the dictionary as one number, then
@@ -184,10 +187,13 @@ function unsqueeze(str) {
     return v;
   };
   // Each dictionary entry is "an earlier entry plus one byte": prefix, last byte, first byte, length.
-  const prefix = new Int32Array(MAX_CODES);
-  const last = new Uint8Array(MAX_CODES);
-  const first = new Uint8Array(MAX_CODES);
-  const len = new Int32Array(MAX_CODES);
+  // Every number after the first takes at least 9 bits and adds at most one entry, so a code can't make more
+  // than 256 + total / 9 entries. The tables are sized to that, so a small code doesn't set aside 10 MB.
+  const room = Math.min(MAX_CODES, 257 + Math.ceil(total / 9));
+  const prefix = new Int32Array(room);
+  const last = new Uint8Array(room);
+  const first = new Uint8Array(room);
+  const len = new Int32Array(room);
   for (let i = 0; i < 256; i++) {
     prefix[i] = -1;
     last[i] = first[i] = i;
