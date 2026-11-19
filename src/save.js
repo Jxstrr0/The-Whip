@@ -20,7 +20,7 @@ const MIGRATIONS = {
 
 // ---- Checking the ids in a save ----
 // A save can come from anywhere: pasted in as text, or loaded from a backup file somebody sent. The ids in it
-// (members like "m012", parties like "p3") are used all over the game to look things up, so a save is only
+// (members like "m012", parties like "p3", bills like "b0007") are used all over the game to look things up, so a save is only
 // taken when they are plain ids: letters, digits and _ : . - and nothing else. Three names are refused
 // outright because JavaScript gives them a special meaning on every object. This is a light check, not a check
 // of the whole save; the screens also escape whatever they print (esc and safeColour in ui/text.js).
@@ -29,7 +29,7 @@ const RESERVED = ['__proto__', 'constructor', 'prototype'];
 const plainId = (id) => typeof id === 'string' && PLAIN_ID.test(id) && !RESERVED.includes(id);
 
 function idsArePlain(state) {
-  for (const table of [state.mps, state.parties || {}]) {
+  for (const table of [state.mps, state.parties || {}, state.bills || {}]) {
     for (const [key, entry] of Object.entries(table)) {
       // Both the name an entry is filed under and the id written inside it (the same thing in a real save).
       if (!plainId(key) || !plainId(entry?.id)) return false;
@@ -117,8 +117,15 @@ export function exportSave(state) {
   return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
 }
 
+// The most text a save may be, pasted in or read from a backup file: tuning's backup.maxFileKb, many times the
+// size of a real save. Anything longer is refused before any work is done on it, so a huge paste can't hold
+// the phone up.
+export const maxSaveChars = () => tuning().backup.maxFileKb * 1024;
+
 export function importSave(text) {
-  const clean = String(text || '').replace(/\s+/g, '');
+  const raw = String(text || '');
+  if (raw.length > maxSaveChars()) throw new Error('Too big to be a save');
+  const clean = raw.replace(/\s+/g, '');
   if (!clean) throw new Error('Nothing to import');
   return migrate(JSON.parse(decodeURIComponent(escape(atob(clean)))));
 }
@@ -197,7 +204,7 @@ export async function saveBackupFile(text) {
 
 // Reads a picked backup file back to text, trimmed. Rejects anything too big to be a save.
 export async function readBackupFile(file) {
-  if (!file || file.size > tuning().backup.maxFileKb * 1024) throw new Error('Not a backup file');
+  if (!file || file.size > maxSaveChars()) throw new Error('Not a backup file');
   return String(await file.text()).trim();
 }
 

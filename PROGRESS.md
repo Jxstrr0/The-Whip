@@ -1803,3 +1803,22 @@ Checked, all on a local copy:
 Left alone on purpose: a tampered save that passes the id check can still make a screen stumble (a missing bill, a member with no riding). That shows an error or a blank sheet, not somebody else's script, so the save is not checked field by field. One thing noted and not chased: bill ids are not checked at the door the way member and party ids are. Nothing was found that turns that into script on the page; it is on the list for another day.
 
 **For Kelbo to test on the phone:** open https://thewhip.longlight.games/ once this is merged and live (the start menu should say v1.1.4.0). Continue your own game: it should open exactly where you left it, party colours and all. Then, on the start menu under Saved games, tap "Copy save" on your slot, pick an empty slot, open "Import a save", paste and import: it should load. If you have a backup file, "Load a backup file" should take it too.
+
+## 2026-11-19 · Two leftovers from the security test: bill ids and a size limit on pasted saves (v1.1.5.0)
+
+Kelbo picked both from the list of leftovers after 1.1.4.0.
+
+- **Bill ids are checked at the door.** `migrate()` in `src/save.js` already refused a save whose member or party ids were not plain ids. It now checks bills the same way (a real one looks like `b0007`): the name a bill is filed under and the id written inside it must be letters, digits and `_ : . -`, and not one of the three names JavaScript treats specially. A save that fails gets the usual "That isn't a save this version can read."
+- **A pasted save has a size limit.** A backup file was already refused past 20 MB (`backup.maxFileKb` in `data/tuning.json`). Pasted text had no limit. Now `importSave()` refuses anything longer than that same number before doing any work on it, and the paste box will not take more than that many characters. One number covers both ways in (`maxSaveChars()`).
+
+Nothing about play changed and the save format is the same (`SAVE_VERSION` stays 2).
+
+Checked, all on a local copy:
+
+- `tests.html`: 144 passed, 0 failed. One test is new (a played Parliament's save loads and is under a tenth of the limit; text one character over is refused for its size, pasted or as a file), and the tampered-id test has three more saves, each with a bad bill id.
+- Through the real import box at 390 × 844: text one character over the limit is refused; a save with a piece of web page for a bill id is refused and nothing from it runs; a real save from a whole played Parliament (1,471 KB, 237 bills) loads into the game with no console errors.
+- The start menu at 390 × 844 and 844 × 390 shows v1.1.5.0 with no sideways scroll and no console errors.
+
+Worth knowing: the size check itself takes no time, but it was never the slow part. Reading 20 MB of rubbish took the game about a quarter of a second before this change; what takes seconds is the browser putting a very long text into the paste box, which the game cannot speed up. The limit on the box stops that at 20 MB. A real save is about 1.5 MB after one Parliament, so 20 MB leaves plenty of room; the number was left as it is.
+
+**For Kelbo to test on the phone:** open https://thewhip.longlight.games/ once this is live (the start menu should say v1.1.5.0). Continue your own game: it should open where you left it. Then under Saved games tap "Copy save", pick an empty slot, open "Import a save", paste and import: it should load as before.
