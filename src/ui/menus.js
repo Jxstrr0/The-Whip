@@ -128,12 +128,13 @@ export function createStartMenu(root, { saves, latest, scenarios, reminder, onCo
   const confirmReplace = () => !saves[slot - 1] || confirm(t('menu.confirmReplace', { name: saves[slot - 1].name }));
   // One way in for a pasted save and a backup file alike: read and check the whole text once, ask before replacing
   // a slot, then load the game that was read.
-  const restore = (text) => {
+  // onImport is async (it waits for the game to start), so this waits for its answer before closing the menu.
+  const restore = async (text) => {
     if (!text) return status(t('menu.needImport'));
-    const game = onReadSave(text);
+    const game = onReadSave?.(text);
     if (!game) return status(t('menu.importFailed'));
     if (!confirmReplace()) return;
-    const ok = onImport(game, slot);
+    const ok = await onImport?.(game, slot);
     if (!ok) return status(t('menu.importFailed'));
     el.remove();
   };

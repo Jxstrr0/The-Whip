@@ -2508,10 +2508,17 @@ details.import textarea {
   border-radius: var(--r-md);
   padding: 8px;
 }
+/* The menu's message line ("That isn't a save…") shares the .status class with the corner readout above,
+   so it undoes that one's pinned, pale, monospace look and sits in the menu as ordinary text. */
 .start-menu .status {
+  position: static;
   min-height: 20px;
   margin: 8px 0 0;
+  font: inherit;
   font-size: 14px;
+  color: var(--ink-2);
+  text-shadow: none;
+  pointer-events: auto;
 }
 
 /* ---- Settings: the two accessibility switches and the sheet itself ---- */

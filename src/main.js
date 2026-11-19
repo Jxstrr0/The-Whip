@@ -105,6 +105,9 @@ function roomFor(state) {
 }
 
 let world = null;
+// True once startGame has finished. The autosave waits for it, so a game that fails partway through starting
+// (a damaged import) is never written into a slot.
+let gameReady = false;
 
 // Everything that exists once a game is running: renderer, rooms, UI.
 function buildWorld() {
@@ -453,7 +456,9 @@ function buildWorld() {
   subscribe(() => {
     renderAll();
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => saveGame(getState()), 800);
+    saveTimer = setTimeout(() => {
+      if (gameReady) saveGame(getState());
+    }, 800);
   });
 
   function resize() {
@@ -507,6 +512,7 @@ function buildWorld() {
 async function startGame(state, slot = state.slot || 1, { resumed = false } = {}) {
   // The menu's preview room, if any, goes; the game builds its own.
   world?.rooms.reset();
+  gameReady = false;
   state.slot = slot;
   setState(state);
   if (!world) {
@@ -520,6 +526,7 @@ async function startGame(state, slot = state.slot || 1, { resumed = false } = {}
   // Back after a break: one line on where things stood.
   const note = resumed ? resumeNote(getState()) : null;
   if (note) world.toast.show(note, 12000);
+  gameReady = true;
   saveGame(getState());
 }
 
@@ -587,11 +594,15 @@ async function boot() {
       }
     },
     onBackedUp: () => setSetting('lastBackup', Date.now()),
-    onImport: (game, slot) => {
+    // Starts the game that was read. startGame is async, so it is awaited: a save that passes the checks but
+    // can't start (something missing deep inside it) then lands in the catch, and the menu says so instead of
+    // disappearing. The slot is only written at the end of startGame, so a save that fails here is never kept.
+    onImport: async (game, slot) => {
       try {
-        startGame(game, slot);
+        await startGame(game, slot);
         return true;
-      } catch {
+      } catch (err) {
+        console.warn('Import: the save was read but the game could not start.', err);
         return false;
       }
     },
