@@ -4,7 +4,7 @@ import { canBuzz } from '../haptics.js';
 import { VERSION } from '../version.js';
 import { t, esc, longlightMark } from './text.js';
 import { pickerHtml, wirePickers } from './picker.js';
-import { saveBackupFile, readBackupFile, storageKept, backupFileName, daysSince } from '../save.js';
+import { saveBackupFile, readBackupFile, storageKept, backupFileName, daysSince, maxSaveChars } from '../save.js';
 
 // The riding types are written for mid-sentence use; as a field's value they take a capital.
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -100,7 +100,7 @@ export function createStartMenu(root, { saves, latest, scenarios, reminder, onCo
       <p class="muted small-note">${t('menu.fileNote')}</p>
       <details class="import"${form.importOpen ? ' open' : ''}><summary>${t('menu.import')}</summary>
         <p class="muted small-note">${t('menu.importNote')}</p>
-        <textarea name="importText" rows="4" placeholder="${t('menu.importPlaceholder')}">${esc(form.importText)}</textarea>
+        <textarea name="importText" rows="4" maxlength="${maxSaveChars()}" placeholder="${t('menu.importPlaceholder')}">${esc(form.importText)}</textarea>
         <button class="btn wide" data-act="import">${esc(t('menu.importInto', { n: slot }))}</button>
       </details>
       <p class="status muted" aria-live="polite"></p>

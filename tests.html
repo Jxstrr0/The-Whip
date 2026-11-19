@@ -67,7 +67,7 @@ import { snapStop, STOPS } from './src/ui/drawer.js';
 import { stakeStamps } from './src/ui/stakes.js';
 import { readNumber, writeNumber } from './src/ui/feel.js';
 import { botAct } from './src/sim/bot.js';
-import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo, backupDue, backupFileName, readBackupFile } from './src/save.js';
+import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo, backupDue, backupFileName, readBackupFile, maxSaveChars } from './src/save.js';
 import { getSettings, setSetting } from './src/settings.js';
 import { canBuzz, buzz } from './src/haptics.js';
 import { glossTerms, unglossAll } from './src/ui/gloss.js';
@@ -2113,6 +2113,10 @@ test('A version 1 save migrates to version 2 (mode and last revolt) and a bad sa
 
 test('A save with a made-up id is refused, a real one loads, and a party colour is only ever a hex colour', () => {
   const s = newGame({ seed: 'IDS-1', party: 'p3' });
+  // Play on until there is a bill on the books, so the bill ids can be tampered with too.
+  const idRng = createRng('ids');
+  for (let i = 0; i < 4000 && !Object.keys(s.bills).length; i++) botAct(s, idRng);
+  assert(Object.keys(s.bills).length > 0, 'the game has a bill by now');
   const fresh = () => JSON.parse(JSON.stringify(s));
   assert(migrate(fresh()).seed === 'IDS-1', 'a real save is taken');
   const markup = '"><b>x</b>';
@@ -2128,6 +2132,9 @@ test('A save with a made-up id is refused, a real one loads, and a party colour 
     'player id is a reserved name': (g) => { g.player.mpId = 'constructor'; },
     'member filed under constructor': (g) => { g.mps.constructor = { ...g.mps[g.player.mpId], id: 'constructor' }; },
     'party filed under prototype': (g) => { g.parties.prototype = { ...g.parties.p1, id: 'prototype' }; },
+    'bill filed under markup': (g) => { g.bills[markup] = { ...Object.values(g.bills)[0], id: markup }; },
+    'bill with markup for an id': (g) => { Object.values(g.bills)[0].id = markup; },
+    'bill filed under constructor': (g) => { g.bills.constructor = { ...Object.values(g.bills)[0], id: 'constructor' }; },
   };
   for (const [name, change] of Object.entries(tampered)) {
     const g = fresh();
@@ -2191,6 +2198,24 @@ test('Backup files carry the save code, and the backup reminder waits for real p
   assert(backupDue([career], now - B.remindAfterDays * day, now), `${B.remindAfterDays} days since the last backup`);
   assert(!backupDue([{ ...career, savedAt: now - 30 * day }], now - 20 * day, now), 'nothing played since the last backup');
   return `reminder after ${B.remindAfterDays} days`;
+});
+
+test('A save code past the size limit is refused before it is read, and a played Parliament is far under it', async () => {
+  const s = newGame({ seed: 'BIG-1', party: 'p2' });
+  botPlayParliament(s, createRng('big'));
+  const code = exportSave(s);
+  const max = maxSaveChars();
+  assert(importSave(code).seed === 'BIG-1', 'a real, played save still loads');
+  assert(code.length * 10 < max, `a played Parliament (${Math.round(code.length / 1024)} KB) is under a tenth of the limit`);
+  // One character over: refused for its size, as pasted text and as a backup file.
+  const tooBig = 'A'.repeat(max + 1);
+  let why = '';
+  try { importSave(tooBig); } catch (e) { why = e.message; }
+  assert(why === 'Too big to be a save', 'a paste one character over the limit is refused for its size');
+  let fileRefused = false;
+  try { await readBackupFile(new File([tooBig], 'x.txt', { type: 'text/plain' })); } catch { fileRefused = true; }
+  assert(fileRefused, 'a backup file one byte over the limit is refused');
+  return `a played Parliament is ${Math.round(code.length / 1024)} KB; the limit is ${Math.round(max / 1024)} KB`;
 });
 
 test('Settings persist under whip:settings and the colour-blind palette swaps every party colour', () => {
