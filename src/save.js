@@ -112,21 +112,154 @@ export function latestSave() {
   return allSaves().filter(Boolean).sort((a, b) => b.savedAt - a.savedAt)[0] || null;
 }
 
-// A save as text, to copy between phones. Base64 of the JSON, UTF-8 safe.
-export function exportSave(state) {
-  return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-}
+// ---- Save codes ----
+// A save as text, to copy between phones or keep in a backup file. Since 1.1.5.1 a code is
+//   "WHIP2:" + the save as JSON, squeezed (LZW, written in the letters A-Z a-z 0-9 - _) + a 6-letter checksum.
+// A played Parliament comes out under a quarter of the size of the old code, so it pastes, copies and loads
+// much faster on a phone. Older codes (plain Base64 of the JSON, no prefix) still load.
+// The squeezing is adapted from Scrapline src/app/savecode.js (2026-11-19), the same as PEW's codes.
+const CODE_PREFIX = 'WHIP2:';
+const CODE_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+// The dictionary stops growing here (20-bit numbers at most). Scrapline stops at 16 bits; a Whip save is several
+// times bigger, and the extra room makes its code about a third shorter again.
+const MAX_CODES = 1 << 20;
+const bitsFor = (n) => (n < 2 ? 1 : 32 - Math.clz32(n)); // how many bits it takes to write n
 
 // The most text a save may be, pasted in or read from a backup file: tuning's backup.maxFileKb, many times the
 // size of a real save. Anything longer is refused before any work is done on it, so a huge paste can't hold
-// the phone up.
+// the phone up. The same limit caps what a squeezed code may open up to.
 export const maxSaveChars = () => tuning().backup.maxFileKb * 1024;
+
+// Bytes in, letters out. Each step writes the longest run of bytes already in the dictionary as one number, then
+// adds that run plus the next byte to the dictionary. A number's width is the bit length of the largest number
+// the reader could see next, so both sides always agree on it.
+function squeeze(bytes) {
+  const out = [];
+  let acc = 0;
+  let nacc = 0;
+  const put = (v, w) => {
+    for (let i = w - 1; i >= 0; i--) {
+      acc = (acc << 1) | ((v >>> i) & 1);
+      if (++nacc === 6) {
+        out.push(CODE_LETTERS[acc]);
+        acc = 0;
+        nacc = 0;
+      }
+    }
+  };
+  if (!bytes.length) return '';
+  const dict = new Map();
+  let next = 256;
+  let cur = bytes[0];
+  for (let i = 1; i < bytes.length; i++) {
+    const hit = dict.get(cur * 256 + bytes[i]);
+    if (hit !== undefined) {
+      cur = hit;
+      continue;
+    }
+    put(cur, bitsFor(next - 1));
+    if (next < MAX_CODES) dict.set(cur * 256 + bytes[i], next++);
+    cur = bytes[i];
+  }
+  put(cur, bitsFor(next - 1));
+  if (nacc) out.push(CODE_LETTERS[acc << (6 - nacc)]);
+  return out.join('');
+}
+
+// Letters back to bytes. Throws on a letter that isn't one of ours, a number that can't be there, or a code
+// that opens up past maxSaveChars() (a few thousand letters can be made to open up to gigabytes).
+function unsqueeze(str) {
+  const max = maxSaveChars();
+  const value = new Int8Array(128).fill(-1);
+  for (let i = 0; i < 64; i++) value[CODE_LETTERS.charCodeAt(i)] = i;
+  const total = str.length * 6;
+  let pos = 0;
+  const read = (w) => {
+    let v = 0;
+    for (let i = 0; i < w; i++, pos++) {
+      const d = value[str.charCodeAt((pos / 6) | 0)] ?? -1;
+      if (d < 0) throw new Error('Not a save');
+      v = v * 2 + ((d >> (5 - (pos % 6))) & 1);
+    }
+    return v;
+  };
+  // Each dictionary entry is "an earlier entry plus one byte": prefix, last byte, first byte, length.
+  const prefix = new Int32Array(MAX_CODES);
+  const last = new Uint8Array(MAX_CODES);
+  const first = new Uint8Array(MAX_CODES);
+  const len = new Int32Array(MAX_CODES);
+  for (let i = 0; i < 256; i++) {
+    prefix[i] = -1;
+    last[i] = first[i] = i;
+    len[i] = 1;
+  }
+  let out = new Uint8Array(Math.min(max, Math.max(1024, str.length * 8)));
+  let n = 0;
+  const emit = (code) => {
+    const need = n + len[code];
+    if (need > max) throw new Error('Too big to be a save');
+    if (need > out.length) {
+      const bigger = new Uint8Array(Math.min(max, Math.max(need, out.length * 2)));
+      bigger.set(out.subarray(0, n));
+      out = bigger;
+    }
+    // An entry's bytes are found back to front, so they're written from the end of its slot.
+    for (let k = need - 1, c = code; k >= n; k--, c = prefix[c]) out[k] = last[c];
+    n = need;
+  };
+  if (total < 8) return out.subarray(0, 0);
+  let size = 256;
+  let prev = read(8);
+  emit(prev);
+  for (;;) {
+    const w = bitsFor(Math.min(size, MAX_CODES - 1));
+    if (total - pos < w) break; // what's left is padding
+    const code = read(w);
+    let fb;
+    if (code < size) fb = first[code];
+    else if (code === size) fb = first[prev]; // the entry being defined right now (the classic LZW case)
+    else throw new Error('Not a save');
+    if (size < MAX_CODES) {
+      prefix[size] = prev;
+      last[size] = fb;
+      first[size] = first[prev];
+      len[size] = len[prev] + 1;
+      size++;
+    }
+    emit(code);
+    prev = code;
+  }
+  return out.subarray(0, n);
+}
+
+// FNV-1a of the squeezed text, as 6 letters: a missing, extra or changed letter almost surely won't match.
+function checksum(body) {
+  let h = 2166136261;
+  for (let i = 0; i < body.length; i++) h = Math.imul(h ^ body.charCodeAt(i), 16777619) >>> 0;
+  let s = '';
+  for (let i = 0; i < 6; i++) {
+    s += CODE_LETTERS[h & 63];
+    h = Math.floor(h / 64);
+  }
+  return s;
+}
+
+export function exportSave(state) {
+  const body = squeeze(new TextEncoder().encode(JSON.stringify(state)));
+  return CODE_PREFIX + body + checksum(body);
+}
 
 export function importSave(text) {
   const raw = String(text || '');
   if (raw.length > maxSaveChars()) throw new Error('Too big to be a save');
   const clean = raw.replace(/\s+/g, '');
   if (!clean) throw new Error('Nothing to import');
+  if (clean.startsWith(CODE_PREFIX)) {
+    const body = clean.slice(CODE_PREFIX.length, -6);
+    if (clean.length < CODE_PREFIX.length + 6 || checksum(body) !== clean.slice(-6)) throw new Error('Not a save');
+    return migrate(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(unsqueeze(body))));
+  }
+  // An older code: Base64 of the JSON.
   return migrate(JSON.parse(decodeURIComponent(escape(atob(clean)))));
 }
 

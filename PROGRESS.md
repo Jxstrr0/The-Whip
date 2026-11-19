@@ -1822,3 +1822,24 @@ Checked, all on a local copy:
 Worth knowing: the size check itself takes no time, but it was never the slow part. Reading 20 MB of rubbish took the game about a quarter of a second before this change; what takes seconds is the browser putting a very long text into the paste box, which the game cannot speed up. The limit on the box stops that at 20 MB. A real save is about 1.5 MB after one Parliament, so 20 MB leaves plenty of room; the number was left as it is.
 
 **For Kelbo to test on the phone:** open https://thewhip.longlight.games/ once this is live (the start menu should say v1.1.5.0). Continue your own game: it should open where you left it. Then under Saved games tap "Copy save", pick an empty slot, open "Import a save", paste and import: it should load as before.
+
+## 2026-11-19 · Shorter save codes, so a pasted save shows up and loads faster (v1.1.5.1)
+
+Kelbo asked why a real save takes seconds to appear in the Import box. The answer: the code was long. A save after one played Parliament made a code of about 1,471 KB, and the browser's own work putting a pasted text into the box grows with its length (about half a second on a desktop for that code, several times more on a phone). The last entry said the game couldn't speed that up; it can, by making the code shorter.
+
+- **Save codes are squeezed.** "Copy save" and backup files now hold `WHIP2:` followed by the save squeezed with LZW (the same method as Scrapline's and Prairie Engine Works' codes, with a bigger dictionary because a Whip save is bigger) and a 6-letter checksum. The same played Parliament now makes a 334 KB code, under a quarter of the old one. It only uses letters, digits, `-` and `_`, so it survives notes apps and messages.
+- **Older codes still load.** A code or backup file from before this change (no `WHIP2:` at the front) reads exactly as before.
+- **A damaged code is refused.** A code that is cut off, has a letter changed, or holds something that isn't ours fails its checksum and gets the usual "That isn't a save this version can read." A short code built to open up into something huge is stopped as soon as it passes the same 20 MB limit as everything else.
+- **The import reads the save once.** The Import button used to read the whole save twice (once to check it, once to load it). It now reads it once and loads what it read.
+
+Nothing about play changed and the save itself is the same (`SAVE_VERSION` stays 2); only the way it is written as text changed.
+
+Checked, all on a local copy:
+
+- `tests.html`: 145 passed, 0 failed. One test is new: a played Parliament's code starts `WHIP2:`, is under a third of the old code's size and brings back the same game; an old code still loads; names with accents survive; six damaged codes are refused; a 12 KB code that would open past the 20 MB limit is refused.
+- Through the real Import box at 390 × 844, pasting with the clipboard: the new code for a whole played Parliament takes the browser 109 ms to put in the box, against 489 ms for the old code, and both load into the game (the election screen, where that save stopped) with no console errors. Making the new code takes about 85 ms.
+- The start menu at 390 × 844 and 844 × 390 shows v1.1.5.1 with no sideways scroll and no console errors.
+
+Worth knowing: the time between tapping Import and the game appearing is mostly the game building its rooms, the same as Continue; this change doesn't touch that.
+
+**For Kelbo to test on the phone:** open https://thewhip.longlight.games/ once this is live (the start menu should say v1.1.5.1). Under Saved games tap "Copy save" on your slot: the message should give a much smaller size in KB than before. Pick an empty slot, open "Import a save", paste and import: the text should appear in the box quickly and the game should load. If you have an older backup file, "Load a backup file" should still take it.

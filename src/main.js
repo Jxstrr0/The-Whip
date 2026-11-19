@@ -578,18 +578,18 @@ async function boot() {
     onScenario: (id, person, slot) => startGame(scenarioGame(id, person), slot),
     onDaily: (person, slot) => startGame(dailyGame(person), slot),
     onShared: (opts, slot) => startGame(sharedGame(opts), slot),
-    onCheckImport: (text) => {
+    // A pasted code or backup file read into a game, or null when it isn't a save this version can read.
+    onReadSave: (text) => {
       try {
-        importSave(text);
-        return true;
+        return importSave(text);
       } catch {
-        return false;
+        return null;
       }
     },
     onBackedUp: () => setSetting('lastBackup', Date.now()),
-    onImport: (text, slot) => {
+    onImport: (game, slot) => {
       try {
-        startGame(importSave(text), slot);
+        startGame(game, slot);
         return true;
       } catch {
         return false;

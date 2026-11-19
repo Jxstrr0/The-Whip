@@ -1846,7 +1846,7 @@ test('Retirement is available from Act 2 and shows the whip\'s record', () => {
   const p = ACTIONS.retire(s);
   assert(p.kind === 'ending' && p.endingKind === 'retirement' && p.record.votesWon === 7 && p.record.promisesKept === 2 && p.record.name.includes(s.mps[s.player.mpId].name.last), 'the record');
   assert(['Backbencher', 'Committee chair'].includes(p.record.rank) && p.record.act === 2 && p.epilogue.length > 20, 'rank, act and an epilogue');
-  const save = JSON.parse(decodeURIComponent(escape(atob(exportSave(s)))));
+  const save = importSave(exportSave(s));
   assert(save.ending?.endingKind === 'retirement', 'the ending survives a save');
   return `${p.record.name}: ${p.record.rank}, ${p.record.votesWon} votes won`;
 });
@@ -2216,6 +2216,39 @@ test('A save code past the size limit is refused before it is read, and a played
   try { await readBackupFile(new File([tooBig], 'x.txt', { type: 'text/plain' })); } catch { fileRefused = true; }
   assert(fileRefused, 'a backup file one byte over the limit is refused');
   return `a played Parliament is ${Math.round(code.length / 1024)} KB; the limit is ${Math.round(max / 1024)} KB`;
+});
+
+test('Save codes are squeezed and checked, and older codes still load', () => {
+  const s = newGame({ seed: 'CODE-1', party: 'p1' });
+  botPlayParliament(s, createRng('code'));
+  const code = exportSave(s);
+  const oldCode = btoa(unescape(encodeURIComponent(JSON.stringify(s))));
+  assert(code.startsWith('WHIP2:') && /^WHIP2:[A-Za-z0-9_-]+$/.test(code), 'a code is WHIP2: and plain letters');
+  assert(code.length * 3 < oldCode.length, `the code (${Math.round(code.length / 1024)} KB) is under a third of the old one (${Math.round(oldCode.length / 1024)} KB)`);
+  assert(JSON.stringify(importSave(code)) === JSON.stringify(s), 'a squeezed code brings back the same game');
+  assert(JSON.stringify(importSave(oldCode)) === JSON.stringify(s), 'an older code still loads');
+  // Names with accents and other non-English letters survive the trip.
+  const named = newGame({ seed: 'CODE-2', party: 'p2', first: 'Zoë', last: 'Ōtake-Ñúñez' });
+  assert(importSave(exportSave(named)).mps[named.player.mpId].name.last === 'Ōtake-Ñúñez', 'accents survive');
+  const tries = {
+    'cut off at the end': code.slice(0, -40),
+    'cut off in the middle': code.slice(0, 5000) + code.slice(5100),
+    'one letter changed': code.slice(0, 900) + (code[900] === 'A' ? 'B' : 'A') + code.slice(901),
+    'a letter that isn\'t ours': code.slice(0, 900) + '*' + code.slice(901),
+    'the prefix alone': 'WHIP2:',
+    'prefix and rubbish': 'WHIP2:hello-there',
+  };
+  for (const [name, bad] of Object.entries(tries)) {
+    let refused = false;
+    try { importSave(bad); } catch { refused = true; }
+    assert(refused, `${name}: should be refused`);
+  }
+  // A short code that would open up past the size limit is stopped while opening, before anything reads it.
+  const bomb = exportSave({ junk: 'a'.repeat(maxSaveChars()) });
+  let why = '';
+  try { importSave(bomb); } catch (e) { why = e.message; }
+  assert(bomb.length < 100000 && why === 'Too big to be a save', `a ${Math.round(bomb.length / 1024)} KB code that opens past the limit is refused (${why})`);
+  return `played Parliament: ${Math.round(code.length / 1024)} KB code, was ${Math.round(oldCode.length / 1024)} KB`;
 });
 
 test('Settings persist under whip:settings and the colour-blind palette swaps every party colour', () => {
