@@ -554,6 +554,7 @@
   "menu.importInto": "Import into slot {n}",
   "menu.needImport": "Paste a save first.",
   "menu.importFailed": "That isn't a save this version can read.",
+  "menu.linkNoSlot": "That link starts a new game, but all three save slots are in use, so nothing was started and your saves are untouched. Delete a save to make room, then open the link again.",
   "menu.saveFile": "Save file",
   "menu.backupFile": "Save a backup file",
   "menu.loadFile": "Load a backup file into slot {n}",

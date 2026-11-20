@@ -61,6 +61,8 @@ Opening `index.html` straight from the file system won't work, because browsers 
 | `tests.html` | Run the sim test suite in the browser (serve the folder over http first; see Running locally) |
 | `tools/lineup.html` | Dev page: the figure in every pose, side by side, for checking the look |
 
+A link that starts a game (`?seed=`, `?scenario=`, `?daily=1`) never replaces a save: the game goes into the first empty slot, the same link opened again carries on the game it started, and with all three slots in use it starts nothing and the menu says so.
+
 ## Code layout
 
 `src/sim/` is the simulation. It's pure JavaScript with no DOM and no Three.js, and all randomness comes from the seeded RNG. `src/chamber/`, `src/office/`, `src/caucus/` and `src/riding/` are the four 3D rooms, and only one exists at a time. `src/ui/` holds the HTML overlays. Game content (names, ridings, bills, dialogue, constituents, caucus lines, headlines, UI text) and every tuning number live in `data/*.json`. `HANDOFF.md` section 4 has the full layout.

@@ -572,6 +572,8 @@ No test framework and no build step, so testing runs in the browser: URL switche
 | `?daily=1` | Starts today's daily seed |
 | `?debug=1` | FPS counter (`three/addons/libs/stats.module.js`), the Parliament hash on the top bar, tuning sliders for `data/tuning.json`, and `window.whip` exposing `state`, `dispatch` and the sim modules |
 
+A link that starts a game never replaces a save (1.1.7.0, `slotForLink` in `src/save.js`): it takes the first empty slot, the same link opened again resumes the game it started (the save keeps the link's query in `link`), and with all three slots in use the menu opens with the `menu.linkNoSlot` note instead.
+
 **`tests.html`.** A plain page that imports the sim modules and runs assertions, listing pass or fail on screen. Serve the repo root over http (`python3 -m http.server 8000`) and open `http://localhost:8000/tests.html`; it needs the CDN for Three.js and finishes in about 30 seconds with `N passed, M failed` at the top (132 passed, 0 failed on October 24, 2026). `CLAUDE.md` has the headless Playwright notes. Add checks with each piece of work:
 
 - The same seed gives the same Parliament hash, including cohorts and cliques.

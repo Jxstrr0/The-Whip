@@ -67,7 +67,7 @@ import { snapStop, STOPS } from './src/ui/drawer.js';
 import { stakeStamps } from './src/ui/stakes.js';
 import { readNumber, writeNumber } from './src/ui/feel.js';
 import { botAct } from './src/sim/bot.js';
-import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo, backupDue, backupFileName, readBackupFile, maxSaveChars } from './src/save.js';
+import { exportSave, importSave, migrate, saveGame, loadGame, deleteSave, saveInfo, slotForLink, backupDue, backupFileName, readBackupFile, maxSaveChars } from './src/save.js';
 import { getSettings, setSetting } from './src/settings.js';
 import { canBuzz, buzz } from './src/haptics.js';
 import { glossTerms, unglossAll } from './src/ui/gloss.js';
@@ -2156,6 +2156,32 @@ test('A save with a made-up id is refused, a real one loads, and a party colour 
   g.parties.p3.color = 'url(https://example.com/x.png)';
   assert(partyColor(g, g.mps[g.player.mpId]) === '#6b6f76', 'a tampered party colour falls back to grey');
   return `${Object.keys(tampered).length + 1} tampered saves refused`;
+});
+
+test('A game started from a link takes an empty slot, finds its own game again, and never replaces another', () => {
+  const slots = ['link-a', 'link-b'];
+  const tidy = () => slots.forEach((x) => deleteSave(x));
+  tidy();
+  const career = newGame({ seed: 'LINK-CAREER', party: 'p1' });
+  if (!saveGame(career, 'link-a')) return 'no storage here; skipped';
+  try {
+    const fresh = () => Object.assign(newGame({ seed: 'X', party: 'p1' }), { link: '?seed=X' });
+    let where = slotForLink('?seed=X', fresh(), slots);
+    assert(where.slot === 'link-b' && !where.resume, 'a career in the first slot is left alone: the link gets the empty one');
+    saveGame(fresh(), 'link-b');
+    where = slotForLink('?seed=X', fresh(), slots);
+    assert(where.slot === 'link-b' && where.resume, 'the same link again carries on with the game it started');
+    const other = Object.assign(newGame({ seed: 'Y', party: 'p1' }), { link: '?seed=Y' });
+    assert(slotForLink('?seed=Y', other, slots) === null, 'another link with every slot taken gets no slot at all');
+    const sameLinkOtherGame = Object.assign(newGame({ seed: 'Z', party: 'p1' }), { link: '?seed=X' });
+    assert(slotForLink('?seed=X', sameLinkOtherGame, slots) === null, 'the same address but a different game (a new day\'s daily) does not take over the old one');
+    assert(loadGame('link-a').seed === 'LINK-CAREER' && loadGame('link-b').seed === 'X', 'both games are still there');
+    deleteSave('link-a');
+    where = slotForLink('?seed=Y', other, slots);
+    assert(where.slot === 'link-a' && !where.resume, 'a freed slot can be used');
+  } finally {
+    tidy();
+  }
 });
 
 test('Saves go to a slot and come back with their slot, time and a one-line description', () => {

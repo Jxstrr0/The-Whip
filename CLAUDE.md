@@ -31,6 +31,7 @@ All of these were checked against the code on 2026-10-24 and hold.
 - Phone-first. Deployed to GitHub Pages from `main` at the repo root (`.nojekyll`). `.github/workflows/pages.yml` publishes every push to `main`; after a merge, check the run went green and the live URL (https://thewhip.longlight.games/) loads.
 - Saves in `localStorage` under `whip:` keys (`whip:save:1` to `whip:save:3`, `whip:settings`), always wrapped in try/catch. Only `src/save.js` touches `localStorage`. Since November 2026 every Longlight game has its own subdomain, so The Whip has its own localStorage and quota; saves from before the move stay on the old shared origin, `jxstrr0.github.io` (Kelbo accepted that), and the old address forwards here. Keep the `whip:` prefix all the same.
 - A save can come from anyone (a pasted code, a backup file), so nothing in one may reach the page as markup (1.1.4.0). Whatever a screen prints out of the game state goes through `esc()`, numbers and `t('some.' + value)` keys included (`t()` hands back the key itself when there is no such string); a colour goes through `safeColour()`; both are in `src/ui/text.js`. `migrate()` in `src/save.js` refuses a save whose member, party or bill ids are not plain ids (bills since 1.1.5.0). A pasted save or a backup file longer than `maxSaveChars()` (tuning's `backup.maxFileKb`) is refused before it is read. Save codes (Copy save and backup files) are `WHIP2:` + the JSON squeezed with LZW + a checksum (1.1.5.1, `exportSave`/`importSave`), opened up to `maxSaveChars()` at most; older plain Base64 codes still load. Import waits for `startGame` (1.1.6.0): a save that is read but can't start leaves the menu up with "importFailed", and the slot isn't written. A new screen keeps to this.
+- A link can come from anyone too, so a link never replaces a save (1.1.7.0). A game started by `?seed=`, `?scenario=` or `?daily=1` goes into the first empty slot (`slotForLink` in `src/save.js`); the same link opened again carries on the game it started (the save keeps its `link`); with all three slots in use the link starts nothing and the menu opens with the `menu.linkNoSlot` note. A new URL switch that starts a game goes through `slotForLink` as well.
 - Deterministic sim: no `Math.random` in `src/sim/`; all randomness through the seeded RNG (`src/sim/rng.js`). The renderer may use `Math.random` for cosmetic effects only.
 - `src/sim/` never touches the DOM or Three.js. It reads static data through `src/sim/config.js` (`tuning()`, `data()`, `say()`).
 - Every tuning number lives in `data/tuning.json`. Dialogue and content are data in `data/*.json`. UI and sim text lives in `data/strings.en.json` (`t()` in `src/ui/text.js`, `say()` in `src/sim/config.js`).
@@ -76,7 +77,7 @@ Standing guidance that still applies:
 There is no npm and no test runner. Everything runs in a browser over http (ES modules do not load from `file://`).
 
 1. Serve the repo root: `python3 -m http.server 8000` (or `npx serve .`).
-2. Open `http://localhost:8000/tests.html`. The page imports the sim modules, plays whole Parliaments with the bot, and prints `N passed, M failed` at the top in about 30 seconds. Failures are red with the message under them. As of 2026-11-19: 145 passed, 0 failed.
+2. Open `http://localhost:8000/tests.html`. The page imports the sim modules, plays whole Parliaments with the bot, and prints `N passed, M failed` at the top in about 30 seconds. Failures are red with the message under them. As of 2026-11-20: 146 passed, 0 failed.
 3. Open `http://localhost:8000/index.html` at a phone size (390 × 844 portrait, then landscape) with the console open, and play the piece you changed. No console errors.
 
 Headless (what the docs refresh used): Playwright's Chromium against the same local server. The page still needs the CDN for Three.js. Behind an HTTPS-only proxy, launch with `proxy: { server, bypass: '127.0.0.1,localhost' }` and set `PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK=1`, or the localhost request is sent through the proxy and the page never loads. Wait until `#summary` no longer reads "Running…".
@@ -85,7 +86,7 @@ On the live site, `tests.html` runs the same way at the live URL.
 
 ## Version
 
-- `src/version.js` holds `VERSION`, the game's player-facing version, in four numbers: `Major.Minor.Patch.Build` (now `1.1.6.0`). It shows as a quiet "v1.0.0.0" at the right of the start menu's colophon and at the foot of the Settings sheet.
+- `src/version.js` holds `VERSION`, the game's player-facing version, in four numbers: `Major.Minor.Patch.Build` (now `1.1.7.0`). It shows as a quiet "v1.0.0.0" at the right of the start menu's colophon and at the foot of the Settings sheet.
 - Bump it in the same pull request as the change: **Major** = an overhaul, **Minor** = a feature batch, **Patch** = a tweak or fix, **Build** = a republish with no change. Reset the numbers to the right of the one you bump.
 - It is not the save format. `SAVE_VERSION` (in `src/sim/modes.js`) and the migrations in `src/save.js` are separate and change only when the save's shape does.
 

@@ -1863,3 +1863,21 @@ Checked, all on a local copy:
 - The start menu at 390 × 844 and 844 × 390 shows v1.1.6.0 with no sideways scroll.
 
 **For Kelbo to test on the phone:** open https://thewhip.longlight.games/ once this is live (the start menu should say v1.1.6.0). Continue your own game: it should open where you left it. Back on the start menu, open "Import a save", tap Import with the box empty: "Paste a save first" should show under the button in normal letters, not over the title. Then Copy save from your slot, pick an empty slot, paste and import: it should load as before.
+
+## 2026-11-20 · A link can no longer replace a saved game (v1.1.7.0)
+
+The studio's attacker-style test found that a link alone could wipe a career. A link that starts a game (`?seed=...`, `?scenario=...` or `?daily=1`, the kind used for shared seeds and the daily seed) always started in slot 1, and the first autosave then wrote over whatever career was there. Anyone could send such a link. Kelbo picked the fix: use an empty slot.
+
+- **A link's game goes into the first empty slot.** Slot 1 if the phone has no saves, otherwise the next free one. A career already in a slot is never touched.
+- **The same link opened again carries on its game.** Before, opening a shared-seed link twice restarted it. Now the save remembers the link that started it, and that link opens the game where it was left. Yesterday's daily link does not pick up today's daily: it counts as a new game.
+- **With all three slots in use, the link starts nothing.** The normal start menu opens with a note: "That link starts a new game, but all three save slots are in use, so nothing was started and your saves are untouched. Delete a save to make room, then open the link again."
+
+Nothing about play or the save's shape changed (`SAVE_VERSION` stays 2; the save gains one small text, the link). Starting from the menu works as before.
+
+Checked, all on a local copy:
+
+- `tests.html`: 146 passed, 0 failed. One test is new: a link's game takes the empty slot, finds its own game again, treats another day's daily as new, and gets no slot when all are full.
+- Through the real page at 390 × 844 and 844 × 390: with careers in slots 1 and 2, a seed link started in slot 3 and both careers were unchanged to the letter; the same link again carried on its game; with all three slots full, another seed link and the daily link changed nothing and the menu showed the note with no sideways scroll; the plain game still continued a career. No console errors.
+- The 13 hostile links from the attacker-style test, run again: no script ran, nothing stuck, no save replaced.
+
+**For Kelbo to test on the phone:** open https://thewhip.longlight.games/ once this is live (the start menu should say v1.1.7.0). With your career in slot 1, open https://thewhip.longlight.games/?seed=TEST-1 : a new game starts. Go back to the plain address: Saved games should show your career still in slot 1 and the new game in another slot. Open the seed link again: it should carry on that game, not restart it. Delete the test game when done.
