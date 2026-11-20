@@ -23,7 +23,7 @@ function pickName(list) {
 // The title page. One sheet, read top to bottom: continue the latest game, pick a slot, then start something
 // (a career, a scenario, today's seed, a friend's seed) or manage the saved games.
 // reminder: { lastBackup } when a quiet "back up your saves" note is due this visit, else null.
-export function createStartMenu(root, { saves, latest, scenarios, reminder, onContinue, onNew, onScenario, onDaily, onShared, onReadSave, onImport, onDelete, onExport, onBackedUp, onSeed, onSettings }) {
+export function createStartMenu(root, { saves, latest, scenarios, reminder, notice, onContinue, onNew, onScenario, onDaily, onShared, onReadSave, onImport, onDelete, onExport, onBackedUp, onSeed, onSettings }) {
   const D = data();
   const el = document.createElement('section');
   el.className = 'start-menu';
@@ -45,6 +45,8 @@ export function createStartMenu(root, { saves, latest, scenarios, reminder, onCo
     ? `<div class="backup-note" role="status"><p>${esc(reminder.lastBackup ? t('menu.backupOld', { days: daysSince(reminder.lastBackup) }) : t('menu.backupNever'))}</p>
       <div class="backup-note-actions"><button class="btn primary" data-act="backup-now">${t('menu.backupNow')}</button><button class="btn" data-act="backup-later">${t('menu.backupLater')}</button></div></div>`
     : '');
+  // A line at the head of the page when a link's game could not be started (every slot is taken, 1.1.7.0).
+  const noticeHtml = () => (notice ? `<div class="backup-note" role="status"><p>${esc(notice)}</p></div>` : '');
   const modeLabel = (info) => (info.mode === 'scenario' ? info.title : info.mode === 'daily' ? t('menu.daily') : info.mode === 'shared' ? t('menu.shared') : t('menu.career'));
 
   function render() {
@@ -54,7 +56,7 @@ export function createStartMenu(root, { saves, latest, scenarios, reminder, onCo
       <h1>${t('title')}</h1>
       <p class="muted">${t('subtitle')}</p>
       <p class="tagline">${t('menu.tagline')}</p>
-      ${reminderHtml()}
+      ${noticeHtml()}${reminderHtml()}
       ${latest ? `<button class="btn primary wide" data-act="continue" data-slot="${latest.slot}">${t('menu.continue')}<small>${esc(t('menu.continueInfo', latest))} · ${esc(modeLabel(latest))}</small></button>` : ''}
 
       <h3>${t('menu.slot')}</h3>

@@ -14,7 +14,7 @@ import { caucusSeating } from './sim/caucus.js';
 import { townHallPlacards } from './sim/riding.js';
 import { weatherOf } from './sim/calendar.js';
 import { lightFor } from './light.js';
-import { saveGame, loadGame, deleteSave, exportSave, importSave, allSaves, latestSave, saveBackupFile, backupFileName, backupDue, remindedThisVisit, markReminded } from './save.js';
+import { saveGame, loadGame, deleteSave, exportSave, importSave, allSaves, latestSave, slotForLink, saveBackupFile, backupFileName, backupDue, remindedThisVisit, markReminded } from './save.js';
 import { createRooms } from './rooms.js';
 import * as chamber from './chamber/scene.js';
 import * as office from './office/officeScene.js';
@@ -564,11 +564,22 @@ async function boot() {
   document.title = t('title');
   const seed = params.get('seed');
   // Debug starts skip the menu: ?scenario=<id>, ?daily=1, or a seed (with ?guided=1 for the first-week walkthrough).
-  if (params.get('scenario')) return startGame(scenarioGame(params.get('scenario'), { seed: seed || undefined }));
-  if (params.get('daily') === '1') return startGame(dailyGame({}));
-  if (seed) {
-    // Debug and shared-seed starts skip the menu; ?guided=1 adds the first-week walkthrough.
-    return startGame(newGame({ seed, party: params.get('party') || undefined, guided: params.get('guided') === '1', act: params.get('act'), coldOpen: params.get('coldopen') === '1' }));
+  // Anyone can send a player a link like that, so a link's game never replaces anything they have (1.1.7.0):
+  // slotForLink gives it an empty slot, or the slot where this same link's game already is (it carries on from
+  // there). When all three slots are taken the menu opens instead, with a line saying so.
+  const fromLink = !!(params.get('scenario') || params.get('daily') === '1' || seed);
+  let linkFull = false;
+  if (fromLink) {
+    let game;
+    if (params.get('scenario')) game = scenarioGame(params.get('scenario'), { seed: seed || undefined });
+    else if (params.get('daily') === '1') game = dailyGame({});
+    // Debug and shared-seed starts; ?guided=1 adds the first-week walkthrough.
+    else game = newGame({ seed, party: params.get('party') || undefined, guided: params.get('guided') === '1', act: params.get('act'), coldOpen: params.get('coldopen') === '1' });
+    game.link = location.search.slice(0, 200); // how the same link finds its own game again
+    const where = slotForLink(game.link, game);
+    if (where?.resume) return startGame(loadGame(where.slot), where.slot, { resumed: true });
+    if (where) return startGame(game, where.slot);
+    linkFull = true;
   }
   const saves = allSaves();
   // A quiet note about backups, at most once a visit, only on the title page (never over a scene).
@@ -580,6 +591,7 @@ async function boot() {
     latest: latestSave(),
     scenarios: scenarioList(),
     reminder: remind ? { lastBackup } : null,
+    notice: linkFull ? t('menu.linkNoSlot') : '',
     onContinue: (slot) => startGame(loadGame(slot), slot, { resumed: true }),
     onNew: (opts, slot) => startGame(newGame({ ...opts, guided: true, coldOpen: true }), slot),
     onScenario: (id, person, slot) => startGame(scenarioGame(id, person), slot),

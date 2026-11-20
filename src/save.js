@@ -107,6 +107,26 @@ export function allSaves() {
   return SLOTS.map(saveInfo);
 }
 
+// Where a game started from the address bar (?seed=, ?scenario=, ?daily=1) is kept, so a link can never
+// replace anything a player has (1.1.7.0). `fresh` is the game the link would start. The answer is one of:
+//   { slot, resume: true }   this same link already started this same game there: carry on with it
+//   { slot, resume: false }  the first slot with nothing stored in it: start the game there
+//   null                     every slot is taken: don't start; the menu opens with a line saying so
+// A slot that holds anything at all counts as taken, even a save this version can't read. Yesterday's daily is
+// not today's (the mode's id is the date), so a new day's daily link takes an empty slot like any new game.
+export function slotForLink(link, fresh, slots = SLOTS) {
+  try {
+    for (const slot of slots) {
+      const s = link && fresh ? loadGame(slot) : null;
+      if (s && s.link === link && s.seed === fresh.seed && s.mode?.kind === fresh.mode?.kind && s.mode?.id === fresh.mode?.id) return { slot, resume: true };
+    }
+    for (const slot of slots) if (localStorage.getItem(KEY(slot)) === null) return { slot, resume: false };
+    return null;
+  } catch {
+    return { slot: slots[0], resume: false }; // no storage on this browser: nothing can be saved, so nothing can be replaced
+  }
+}
+
 // The most recent save, for the Continue button.
 export function latestSave() {
   return allSaves().filter(Boolean).sort((a, b) => b.savedAt - a.savedAt)[0] || null;
