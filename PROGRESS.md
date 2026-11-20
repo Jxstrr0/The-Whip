@@ -1881,3 +1881,16 @@ Checked, all on a local copy:
 - The 13 hostile links from the attacker-style test, run again: no script ran, nothing stuck, no save replaced.
 
 **For Kelbo to test on the phone:** open https://thewhip.longlight.games/ once this is live (the start menu should say v1.1.7.0). With your career in slot 1, open https://thewhip.longlight.games/?seed=TEST-1 : a new game starts. Go back to the plain address: Saved games should show your career still in slot 1 and the new game in another slot. Open the seed link again: it should carry on that game, not restart it. Delete the test game when done.
+
+## 2026-11-20 · The deploy no longer trips over itself
+
+After 1.1.7.0 merged, the "Deploy to Pages" run went red three times and the live game stayed on 1.1.6.0. Nothing was wrong with the game. The deploy did two things in one go: upload the site, then publish that upload. The publish step asked GitHub for the upload a fraction of a second after it was made, GitHub was slow that day and answered "none found", and the run failed. Running the same run again couldn't work either, because by then it found two uploads.
+
+- **The deploy is now two jobs**, the way the studio's other games do it: one uploads the site, the next publishes it. The second starts some seconds after the first, and only it holds the right to publish.
+- It uses the same pinned versions of GitHub's actions as Hull Down and Lombard.
+
+Nothing in the game changed, so the version stays 1.1.7.0.
+
+Checked: the run for this change went green and the live game shows v1.1.7.0 (see the pull request).
+
+**For Kelbo to test on the phone:** open https://thewhip.longlight.games/ : the start menu should say v1.1.7.0, and the 1.1.7.0 test above (the seed link) can be tried now.
