@@ -1902,3 +1902,11 @@ Kelbo deleted a retired game's repo, so `LONGLIGHT-STUDIO.md` is refreshed from 
 Checked: only that one file and this log changed, so the sim and the rooms are untouched.
 
 **For Kelbo to test on the phone:** nothing to test; https://thewhip.longlight.games/ plays as before.
+
+## 2026-11-21 · Studio catalogue recopied again
+
+Outwash, a new Longlight game, was added to the studio site (hidden), so `LONGLIGHT-STUDIO.md` is refreshed from the master on the studio site. Nothing in the game changed, so the version stays 1.1.7.0.
+
+Checked: only that one file and this log changed, so the sim and the rooms are untouched.
+
+**For Kelbo to test on the phone:** nothing to test; https://thewhip.longlight.games/ plays as before.
