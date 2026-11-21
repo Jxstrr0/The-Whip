@@ -1894,3 +1894,11 @@ Nothing in the game changed, so the version stays 1.1.7.0.
 Checked: the run for this change went green and the live game shows v1.1.7.0 (see the pull request).
 
 **For Kelbo to test on the phone:** open https://thewhip.longlight.games/ : the start menu should say v1.1.7.0, and the 1.1.7.0 test above (the seed link) can be tried now.
+
+## 2026-11-21 · Studio catalogue recopied
+
+Kelbo deleted a retired game's repo, so `LONGLIGHT-STUDIO.md` is refreshed from the master on the studio site. Nothing in the game changed, so the version stays 1.1.7.0.
+
+Checked: only that one file and this log changed, so the sim and the rooms are untouched.
+
+**For Kelbo to test on the phone:** nothing to test; https://thewhip.longlight.games/ plays as before.
